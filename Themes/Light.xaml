@@ -1,0 +1,45 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Material 3 · tema claro. Cores base da paleta: #00188f, #68217a, #ec008c, #e81123, #ff8c00, #009e49, #121212, #555555, #ffffff.
+         Contêineres tonais = cor primária/secundária sobre branco (camadas de estado do M3).
+         Contrastes medidos sobre o cartão #F2F2F9 (REVISAO-DESIGN.md): contornos e gráficos ≥ 3:1. -->
+    <SolidColorBrush x:Key="Surface" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SurfaceContainer" Color="#F2F2F9"/>
+    <SolidColorBrush x:Key="SurfaceVariant" Color="#EBEBF6"/>
+    <SolidColorBrush x:Key="OnSurface" Color="#121212"/>
+    <SolidColorBrush x:Key="OnSurfaceVariant" Color="#555555"/>
+    <SolidColorBrush x:Key="Outline" Color="#7A7A82"/>
+    <SolidColorBrush x:Key="OutlineVariant" Color="#D6D6E0"/>
+    <!-- Contorno dos cartões: invisível aqui; no Alto Contraste vira a cor do texto -->
+    <SolidColorBrush x:Key="CardBorder" Color="Transparent"/>
+    <SolidColorBrush x:Key="StateHover" Color="#14121212"/>
+    <!-- Superfície inversa (aviso flutuante / snackbar) -->
+    <SolidColorBrush x:Key="InverseSurface" Color="#121212"/>
+    <SolidColorBrush x:Key="InverseOnSurface" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="InversePrimary" Color="#00BCF2"/>
+
+    <SolidColorBrush x:Key="Primary" Color="#00188F"/>
+    <SolidColorBrush x:Key="OnPrimary" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="PrimaryContainer" Color="#E0E0F2"/>
+    <SolidColorBrush x:Key="OnPrimaryContainer" Color="#00188F"/>
+    <SolidColorBrush x:Key="SecondaryContainer" Color="#E0E0F2"/>
+    <SolidColorBrush x:Key="OnSecondaryContainer" Color="#00188F"/>
+
+    <SolidColorBrush x:Key="Error" Color="#E81123"/>
+    <SolidColorBrush x:Key="OnError" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Warning" Color="#FF8C00"/>
+    <SolidColorBrush x:Key="OnWarning" Color="#000000"/>
+    <SolidColorBrush x:Key="Success" Color="#009E49"/>
+    <SolidColorBrush x:Key="OnSuccess" Color="#000000"/>
+
+    <!-- Séries dos gráficos: nenhuma usa a cor de ação (Primary) nem as cores de estado -->
+    <SolidColorBrush x:Key="ChartCpu" Color="#68217A"/>
+    <SolidColorBrush x:Key="ChartRam" Color="#EC008C"/>
+    <SolidColorBrush x:Key="ChartDisk" Color="#555555"/>
+
+    <!-- Escala de carga das barras (livre → crítico). No claro, lima e amarelo somem no fundo: usa verde e laranja. -->
+    <SolidColorBrush x:Key="LevelLow" Color="#009E49"/>
+    <SolidColorBrush x:Key="LevelMid" Color="#009E49"/>
+    <SolidColorBrush x:Key="LevelHigh" Color="#FF8C00"/>
+    <SolidColorBrush x:Key="LevelCrit" Color="#E81123"/>
+</ResourceDictionary>
