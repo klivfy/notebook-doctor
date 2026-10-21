@@ -117,3 +117,18 @@ O CI abre o app num Windows real (`NotebookDoctor.exe --screenshots=PASTA`, job 
 Mudanças feitas nesta rodada: rótulos (`Label`) quebram linha; células de tabela cortam com reticências e mostram o texto inteiro na dica (`CellText`); combos de largura fixa viraram `MinWidth`; colunas numéricas da Limpeza ajustam ao conteúdo; título da seção quebra linha.
 
 Hipótese ainda não confirmada: no tema de Alto Contraste, `Error`, `Warning`, `Success` e a escala `Level*` apontam todos para a cor de destaque do sistema, então o estado só se distingue pelo texto. Conferir nas capturas `hc-preto-00-painel` e `hc-branco-00-painel`.
+
+### Atualização (commit `a03844f`, CI verde)
+
+Medições do CI depois das correções (54 capturas de uso e 18 de Alto Contraste por execução):
+
+| Verificação | Resultado |
+| --- | --- |
+| Tabelas com texto a 200% | **Corrigido.** `ProcGrid` e `SpaceGrid` tinham 0 px de altura, `StartupGrid` 121 px e `ActionsGrid` 107 px. As cinco páginas de tabela agora rolam e a tabela ganha altura mínima quando falta espaço (`UpdateTablePage`). Nenhuma tabela abaixo de 140 px no último relatório |
+| Painel a 200% | **Corrigido.** A coluna "Gargalo agora" chegava a largura 0; as ações descem para uma linha própria quando faltam pixels |
+| Texto cortado | 31 achados distintos no início, 4 no fim; todos inofensivos (campo de busca com 8 px de diferença, ícone, texto de ajuda e um número de 3 px) |
+| Alto Contraste | **Sem achados de contraste.** A seleção de linha passou a usar só contorno (`RowSelectedBorder`), porque os textos de uma linha têm cores próprias e não podiam ficar sobre a cor de destaque do sistema |
+| Contraste em temas claro e escuro | Medido por pixels da captura. Um achado restante: o texto do indicador de estado ("1 problema") aparece branco sobre branco **só com a janela em 720 px, tema claro**. Causa não identificada; conferir `estreita-01-processos-light` |
+| Rolagem horizontal em Processos | 120 px a 200% de texto e 185 px a 720 px de largura. Aberto |
+
+Lições registradas: (1) a primeira versão da correção de tabelas entrava em laço de layout e travou o app a 200% (o CI acusou em 7 minutos de espera); lógica que reage a `SizeChanged` precisa de medida válida e de pausa entre trocas; (2) cálculo de contraste por propriedades `Background` gera falsos positivos, pois os modelos de controle ignoram essa propriedade; a medição é feita nos pixels.
