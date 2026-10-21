@@ -105,7 +105,12 @@
                                             ToolTip="Limpa temporários antigos com segurança. Não apaga documentos, downloads nem a Lixeira."/>
                                     <Button x:Name="FocusBtn" Content="Modo Foco" Style="{StaticResource TonalButton}" Margin="0,8,0,0" Click="Focus_Click"
                                             ToolTip="Dá prioridade ao programa em uso: abaixa a prioridade dos pesados em segundo plano e ativa Alto desempenho, se existir. Nada é fechado; tudo volta ao desligar."/>
-                                    <Button Content="Exportar relatório" Style="{StaticResource TextButton}" Margin="0,4,0,0" Click="Export_Click"/>
+                                    <Button Content="Exportar relatório" Style="{StaticResource TextButton}" Margin="0,4,0,0" Click="Export_Click"
+                                            ToolTip="Relatório em HTML, que abre no navegador"/>
+                                    <Button Content="Exportar em PDF" Style="{StaticResource TextButton}" Margin="0,0,0,0" Click="ExportPdf_Click"
+                                            ToolTip="O mesmo relatório em PDF, para anexar em e-mail ou chamado"/>
+                                    <Button Content="Copiar resumo" Style="{StaticResource TextButton}" Margin="0,0,0,0" Click="CopySummary_Click"
+                                            ToolTip="Copia nota, uso atual e problemas encontrados, para colar numa conversa ou chamado"/>
                                 </StackPanel>
 
                                 <!-- Fatos de saúde do hardware -->
@@ -217,7 +222,7 @@
                             <TextBox x:Name="ProcSearch" Grid.Column="1" Tag="Buscar programa…" VerticalAlignment="Top" TextChanged="ProcSearch_Changed"
                                      AutomationProperties.Name="Buscar programa"/>
                         </Grid>
-                        <DataGrid x:Name="ProcGrid" Grid.Row="1" SelectionMode="Extended" MouseDoubleClick="ProcGrid_DoubleClick" AutomationProperties.Name="Programas em execução">
+                        <DataGrid x:Name="ProcGrid" Grid.Row="1" SelectionMode="Extended" MouseDoubleClick="ProcGrid_DoubleClick" PreviewKeyDown="ProcGrid_KeyDown" AutomationProperties.Name="Programas em execução">
                             <!-- M26: as mesmas ações dos botões, mais abrir o local e pesquisar o nome -->
                             <DataGrid.ContextMenu>
                                 <ContextMenu>
@@ -310,6 +315,9 @@
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
                             <Button Content="Analisar" Style="{StaticResource TonalButton}" Click="Scan_Click" Margin="0,0,8,6"/>
                             <Button Content="Limpar selecionados" Click="Clean_Click" Margin="0,0,8,6"/>
+                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="CleanSelectAll_Click" Margin="0,0,8,6"
+                                    ToolTip="Marca todos os locais que podem ser limpos, menos a Lixeira (apagar dela é definitivo)"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="CleanSelectNone_Click" Margin="0,0,8,6"/>
                             <TextBlock x:Name="CleanMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>
                         </WrapPanel>

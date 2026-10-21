@@ -200,6 +200,24 @@ public partial class MainWindow
 
     private static string FormatRate(double kbs) => kbs >= 1024 ? $"{kbs / 1024:0.0} MB/s" : $"{kbs:0} KB/s";
 
+    // ---------- B20: relatório em PDF; B18: resumo na área de transferência ----------
+    private void ExportPdf_Click(object sender, RoutedEventArgs e)
+    {
+        if (Host.Latest is not { } s) return;
+        var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects);
+        try { AppInfo.OpenShell(ReportExporter.ExportPdf(s, findings, Host.History.Load(TimeSpan.FromDays(7)))); }
+        catch (Exception ex) { ShowSnack("Não foi possível gerar o PDF", ex.Message); }
+    }
+
+    private void CopySummary_Click(object sender, RoutedEventArgs e)
+    {
+        if (Host.Latest is not { } s) return;
+        var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects);
+        string text = ReportContent.Summary(s, Host.Score, Insights.Bottleneck(Host.Recent), findings);
+        try { Clipboard.SetText(text); ShowSnack("Resumo copiado", "Cole com Ctrl+V numa conversa, e-mail ou chamado."); }
+        catch { ShowSnack("Não foi possível copiar", "Outro programa está usando a área de transferência. Tente de novo."); }
+    }
+
     // ---------- Relatório ----------
     public void ExportReport() => Export_Click(this, new RoutedEventArgs());
 

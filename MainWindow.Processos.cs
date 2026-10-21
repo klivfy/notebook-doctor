@@ -15,6 +15,13 @@ public partial class MainWindow
         if (ProcGrid.SelectedItem is ProcRow r) Dialogs.ShowProcessDetails(this, r.Name);
     }
 
+    // M12: Enter abre o detalhe e Delete encerra (sempre com a confirmação de sempre)
+    private void ProcGrid_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter) { ProcDetails_Click(sender, e); e.Handled = true; }
+        else if (e.Key == System.Windows.Input.Key.Delete) { KillSelected_Click(sender, e); e.Handled = true; }
+    }
+
     // Mesmo detalhe do clique duplo, alcançável pelo teclado
     private void ProcDetails_Click(object sender, RoutedEventArgs e)
     {

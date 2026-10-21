@@ -90,3 +90,74 @@ public class SettingsTransferTests
         Assert.Equal(120.5, (double?)reset["MiniLeft"]);
     }
 }
+
+public class SimplePdfTests
+{
+    private static string Ascii(byte[] b) => System.Text.Encoding.Latin1.GetString(b);
+
+    [Fact]
+    public void Gera_pdf_valido_com_xref_correto()
+    {
+        var pdf = SimplePdf.Build([(PdfStyle.Title, "Relatório"), (PdfStyle.Text, "Memória (RAM) em 90%")], "Teste");
+        string text = Ascii(pdf);
+        Assert.StartsWith("%PDF-1.4", text);
+        Assert.EndsWith("%%EOF\n", text);
+        // startxref aponta para a tabela, e cada entrada aponta para o início do objeto
+        int startxref = int.Parse(text[(text.LastIndexOf("startxref\n") + 10)..].Split('\n')[0]);
+        Assert.StartsWith("xref", text[startxref..]);
+        var entries = text[startxref..].Split('\n').Skip(3).TakeWhile(l => l.EndsWith(" n ")).ToList();
+        Assert.NotEmpty(entries);
+        for (int i = 0; i < entries.Count; i++)
+            Assert.StartsWith($"{i + 1} 0 obj", text[int.Parse(entries[i][..10])..]);
+        Assert.Contains("\\(RAM\\)", text); // parênteses escapados
+    }
+
+    [Fact]
+    public void Acentos_saem_em_WinAnsi()
+    {
+        var b = SimplePdf.Encode("ção – •");
+        Assert.Equal(new byte[] { 0xE7, 0xE3, 0x6F, 0x20, 0x96, 0x20, 0x95 }, b);
+        Assert.Equal((byte)'?', SimplePdf.Encode("▲")[0]);
+    }
+
+    [Fact]
+    public void Muitas_linhas_viram_varias_paginas()
+    {
+        var lines = Enumerable.Range(0, 200).Select(i => (PdfStyle.Text, $"Linha {i}"));
+        string text = Ascii(SimplePdf.Build(lines, "Teste"));
+        var count = System.Text.RegularExpressions.Regex.Match(text, @"/Count (\d+)").Groups[1].Value;
+        Assert.True(int.Parse(count) >= 4);
+    }
+
+    [Fact]
+    public void Quebra_linhas_longas_e_palavras_enormes()
+    {
+        var parts = SimplePdf.Wrap(string.Join(" ", Enumerable.Repeat("palavra", 60)) + " " + new string('x', 300), 11);
+        Assert.True(parts.Count > 3);
+        Assert.All(parts, p => Assert.True(p.Length <= 90));
+    }
+}
+
+public class ReportContentTests
+{
+    [Fact]
+    public void Resumo_tem_nota_metricas_e_problemas()
+    {
+        var s = Make.Snap(cpu: 75, ram: 88, groups: [new ProcGroup("chrome", 10, 40, 2000)]);
+        var findings = Diagnosis.Evaluate(Make.Minute(s), Make.Health(), uptime: Make.FreshBoot);
+        string text = ReportContent.Summary(s, new HealthScoreResult(62, "Regular"), new BottleneckResult("Processador", ""), findings);
+        Assert.Contains("Nota de saúde: 62 (Regular)", text);
+        Assert.Contains("CPU 75%", text);
+        Assert.Contains("[PROBLEMA] Memória RAM quase cheia", text);
+        Assert.Contains("chrome", text);
+    }
+
+    [Fact]
+    public void Relatorio_tem_secoes_principais()
+    {
+        var s = Make.Snap();
+        var lines = ReportContent.Lines(s, [new Finding("OK", "Tudo certo", "Nada", "")], [], "PC", "1.2.0", "suporte");
+        Assert.Contains(lines, l => l.Style == PdfStyle.Heading && l.Text == "Diagnóstico");
+        Assert.Contains(lines, l => l.Text == "[OK] Tudo certo");
+    }
+}

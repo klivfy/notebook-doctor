@@ -16,6 +16,17 @@ public static class ReportExporter
         return file;
     }
 
+    /// <summary>B20: o mesmo relatório em PDF (texto), para anexar em e-mail ou chamado.</summary>
+    public static string ExportPdf(Snapshot s, IReadOnlyList<Finding> findings, IReadOnlyList<HistSample> week)
+    {
+        string dir = AppPaths.ExportDir();
+        Directory.CreateDirectory(dir);
+        string file = Path.Combine(dir, $"relatorio-{DateTime.Now:yyyy-MM-dd_HHmm}.pdf");
+        var lines = ReportContent.Lines(s, findings, week, Environment.MachineName, AppInfo.Version, $"Suporte: {AppInfo.SupportUrl} · {AppInfo.Copyright}");
+        File.WriteAllBytes(file, SimplePdf.Build(lines, $"Relatório Notebook Doctor {s.Time:dd/MM/yyyy}"));
+        return file;
+    }
+
     private static string E(string t) => WebUtility.HtmlEncode(t);
 
     private static string Build(Snapshot s, IReadOnlyList<Finding> findings, IReadOnlyList<HistSample> week)

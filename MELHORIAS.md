@@ -80,7 +80,7 @@ Critérios de impacto
 | M09 | Cor de destaque do Windows (Material You) | 🟡 opção "Usar a cor de destaque do Windows": a cor é clareada ou escurecida até ter contraste 4,5:1 com o fundo; segue a troca de cor no Windows; não testado no Windows |
 | M10 | Tamanho de fonte ajustável | 🟡 (segue o "Tamanho do texto" do Windows) |
 | M11 | Suporte completo a leitores de tela (UI Automation nas abas) | ✅ (revisão de design + lote 6) |
-| M12 | Navegação completa por teclado e atalhos de aba | 🟡 Ctrl+1…8 e F5 feitos |
+| M12 | Navegação completa por teclado e atalhos de aba | 🟡 Ctrl+1…8, F5, Ctrl+F (busca da aba), Enter (detalhe) e Delete (encerrar) em Processos, Shift+F10 abre o menu de contexto; falta revisar a ordem do Tab em todas as abas |
 | M13 | Multi-idioma (EN, ES) | ⬜ |
 | M14 | Assistente de primeira execução | ✅ tela de boas-vindas na primeira execução com tema, iniciar com o Windows, avisos e limpeza semanal |
 | M15 | Explicações "por que isso importa?" em cada alerta | ✅ (diagnóstico e Ajustes) |
@@ -141,9 +141,9 @@ Critérios de impacto
 | B15 | Modo compacto da janela | ⬜ |
 | B16 | Escolha GB × GiB | ⬜ |
 | B17 | Unidades °C/°F | ⬜ |
-| B18 | Copiar métricas para a área de transferência | ⬜ |
+| B18 | Copiar métricas para a área de transferência | 🟡 botão "Copiar resumo" no Painel: nota, uso atual, gargalo, problemas e programas mais pesados; não testado no Windows |
 | B19 | Captura de tela do painel | ⬜ |
-| B20 | Exportar relatório em PDF | ⬜ |
+| B20 | Exportar relatório em PDF | 🟡 botão "Exportar em PDF" no Painel, gerado pelo próprio app (sem biblioteca externa, texto em Helvetica); não testado no Windows |
 | B21 | Atalho no Menu Iniciar pelo instalador | ⬜ |
 | B22 | Botão "Verificar atualização" | ⬜ |
 | B23 | Tela "Sobre" com versão, licenças e novidades | 🟡 versão, suporte e licença da fonte |
@@ -157,7 +157,7 @@ Critérios de impacto
 | B31 | Lembrar larguras de coluna | ⬜ |
 | B32 | Destaque de linha por severidade | ⬜ |
 | B33 | Totais no rodapé das tabelas | ⬜ |
-| B34 | "Marcar/desmarcar todos" na limpeza | ⬜ |
+| B34 | "Marcar/desmarcar todos" na limpeza | 🟡 "Marcar todos" (exceto a Lixeira) e "Desmarcar todos" na Limpeza; não testado no Windows |
 | B35 | Prévia dos arquivos antes de apagar | ⬜ |
 | B36 | "Não perguntar de novo" (só em ações não destrutivas) | ⬜ |
 | B37 | Tema automático por horário | ⬜ |

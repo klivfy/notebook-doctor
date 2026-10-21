@@ -44,9 +44,19 @@ public partial class MainWindow : Window
         {
             if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is >= Key.D1 and <= Key.D9) { Tabs.SelectedIndex = e.Key - Key.D1; e.Handled = true; }
             else if (e.Key == Key.F5) { RefreshCurrentTab(); e.Handled = true; }
+            else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.F && SearchBoxOfCurrentTab() is { } box) { box.Focus(); box.SelectAll(); e.Handled = true; }
             else if (e.Key == Key.Escape && Snack.IsVisible) { HideSnack(); e.Handled = true; }
         };
     }
+
+    /// <summary>M12: Ctrl+F vai para a busca da aba atual (Processos, Espaço e Inicialização têm uma).</summary>
+    private TextBox? SearchBoxOfCurrentTab() => Tabs.SelectedIndex switch
+    {
+        TabProcs => ProcSearch,
+        TabSpace => SpaceSearch,
+        TabStartup => StartupSearch,
+        _ => null,
+    };
 
     private void RefreshCurrentTab()
     {

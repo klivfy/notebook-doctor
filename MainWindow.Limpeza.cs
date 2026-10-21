@@ -42,4 +42,18 @@ public partial class MainWindow
         _ = Host.RefreshHealthAsync();
         Scan_Click(sender, e);
     }
+
+    // ---------- B34: marcar e desmarcar todos ----------
+    private void CleanSelectAll_Click(object sender, RoutedEventArgs e)
+    {
+        // A Lixeira fica de fora: esvaziar é definitivo e precisa de uma escolha explícita
+        foreach (var item in CleanItems()) item.Selected = item.CanClean && !item.IsRecycleBin;
+    }
+
+    private void CleanSelectNone_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var item in CleanItems()) item.Selected = false;
+    }
+
+    private IEnumerable<CleanItem> CleanItems() => (CleanGrid.ItemsSource as IEnumerable<CleanItem>) ?? Enumerable.Empty<CleanItem>();
 }
