@@ -20,7 +20,12 @@ Requer Windows 10/11 e o SDK do .NET 8. Para gerar o executável: `dotnet publis
 dotnet test NotebookDoctor.Tests/NotebookDoctor.Tests.csproj -c Release
 ```
 
-O CI (`.github/workflows/ci.yml`) compila e roda os testes em `windows-latest` a cada push na `main` e em cada pull request.
+O CI (`.github/workflows/ci.yml`) compila e roda os testes em `windows-latest` a cada push na `main` e em cada pull request. Um segundo job abre o app e publica, como artefato `telas-do-app`, uma captura de cada aba nos temas claro e escuro. Para gerar localmente:
+
+```powershell
+$env:NOTEBOOKDOCTOR_DATA_DIR = "$env:TEMP\nd-data"   # não toca nos seus dados reais
+.\bin\Release\net8.0-windows\NotebookDoctor.exe --screenshots=.\telas
+```
 
 ## Segurança
 

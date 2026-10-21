@@ -22,3 +22,41 @@ jobs:
         with:
           name: test-results
           path: NotebookDoctor.Tests/TestResults/*.trx
+
+  ui-screenshots:
+    # Abre o app de verdade e fotografa as 9 abas nos temas claro e escuro (modo --screenshots).
+    # Não falha por diferença visual: serve para revisar design sem um Windows à mão.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build
+        run: dotnet build NotebookDoctor.csproj -c Release
+      - name: Capturar telas
+        env:
+          NOTEBOOKDOCTOR_DATA_DIR: ${{ runner.temp }}\nd-data
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'telas'
+          $exe = Join-Path $PWD 'bin\Release\net8.0-windows\NotebookDoctor.exe'
+          $p = Start-Process -FilePath $exe -ArgumentList "--screenshots=$out" -PassThru
+          if (-not $p.WaitForExit(240000)) { $p.Kill(); throw 'O app não terminou as capturas em 4 minutos.' }
+          if (Test-Path "$out\resumo.txt") {
+            Get-Content "$out\resumo.txt"
+            "### Telas capturadas`n``````n$((Get-Content "$out\resumo.txt") -join "`n")`n``````" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          }
+          if (Test-Path "$env:NOTEBOOKDOCTOR_DATA_DIR\erros.log") {
+            Write-Host '--- erros.log do app ---'
+            Get-Content "$env:NOTEBOOKDOCTOR_DATA_DIR\erros.log" -TotalCount 60
+          }
+          if ($p.ExitCode -ne 0) { throw "O app terminou com código $($p.ExitCode); veja o resumo acima." }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: telas-do-app
+          path: |
+            ${{ runner.temp }}\telas\*.png
+            ${{ runner.temp }}\telas\resumo.txt
+            ${{ runner.temp }}\nd-data\erros.log
+          if-no-files-found: warn
