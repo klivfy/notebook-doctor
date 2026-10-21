@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ApplyCellTextStyle();
+        InitTablePages();
         FooterText.Text = AppInfo.Copyright;
         AboutText.Text = $"Notebook Doctor {AppInfo.Version}\nSuporte: klivfy.com/suporte";
         RefreshAdminCard();

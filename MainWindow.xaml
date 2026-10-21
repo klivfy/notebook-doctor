@@ -209,6 +209,7 @@
 
             <!-- PROCESSOS -->
             <TabItem Header="Processos">
+                <ScrollViewer x:Name="ProcPage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -268,10 +269,12 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- LIMPEZA -->
             <TabItem Header="Limpeza">
+                <ScrollViewer x:Name="CleanPage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -301,10 +304,12 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- ESPAÇO (mapa de uso do disco) -->
             <TabItem Header="Espaço">
+                <ScrollViewer x:Name="SpacePage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -355,10 +360,12 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- INICIALIZAÇÃO -->
             <TabItem Header="Inicialização">
+                <ScrollViewer x:Name="StartupPage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -384,6 +391,7 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- HISTÓRICO -->
@@ -461,6 +469,7 @@
 
             <!-- AÇÕES (registro + desfazer) -->
             <TabItem Header="Ações">
+                <ScrollViewer x:Name="ActionsPage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -481,6 +490,7 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- AJUSTES DO WINDOWS (A31–A35) com simulação (A38) -->

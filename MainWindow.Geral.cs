@@ -8,6 +8,43 @@ namespace NotebookDoctor;
 
 public partial class MainWindow
 {
+    private const double MinTableHeight = 220;
+
+    /// <summary>
+    /// Páginas de tabela: em condições normais a tabela ocupa o espaço que sobra. Com texto muito ampliado (ou janela baixa), o cabeçalho
+    /// e os botões consomem a altura toda e a tabela chegava a 0 px. Aí a página passa a rolar e a tabela ganha uma altura mínima.
+    /// </summary>
+    private void InitTablePages()
+    {
+        foreach (var (page, grid) in new[] { (ProcPage, ProcGrid), (CleanPage, CleanGrid), (SpacePage, SpaceGrid), (StartupPage, StartupGrid), (ActionsPage, ActionsGrid) })
+        {
+            void Update(object? s, SizeChangedEventArgs e) => UpdateTablePage(page, grid);
+            page.SizeChanged += Update;
+            grid.SizeChanged += Update;
+        }
+    }
+
+    private static void UpdateTablePage(ScrollViewer page, DataGrid grid)
+    {
+        if (!grid.IsVisible) return;
+        if (page.VerticalScrollBarVisibility == ScrollBarVisibility.Disabled)
+        {
+            if (grid.ActualHeight >= MinTableHeight) return;
+            page.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+            grid.Height = MinTableHeight + 40;
+        }
+        else
+        {
+            // Volta ao modo normal quando a tabela, esticada, ainda ficaria com folga acima do mínimo
+            double chrome = page.ExtentHeight - grid.ActualHeight;
+            if (page.ViewportHeight - chrome >= MinTableHeight + 60)
+            {
+                grid.ClearValue(FrameworkElement.HeightProperty);
+                page.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+            }
+        }
+    }
+
     /// <summary>Texto de tabela corta com reticências e mostra o conteúdo inteiro na dica; colunas que já têm estilo próprio ficam como estão.</summary>
     private void ApplyCellTextStyle()
     {
