@@ -5,3 +5,4 @@ publish/
 .vs/
 *.zip
 *.exe
+.claude-flow/
