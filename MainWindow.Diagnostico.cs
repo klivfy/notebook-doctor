@@ -8,6 +8,25 @@ namespace NotebookDoctor;
 
 public partial class MainWindow
 {
+    private bool _scoreNarrow;
+
+    /// <summary>
+    /// Nota, gargalo e ações cabem lado a lado em janelas largas. Com texto grande ou janela estreita a coluna do gargalo
+    /// sumia (largura 0); então as ações descem para uma linha própria abaixo da nota.
+    /// </summary>
+    private void ScoreGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        double needed = ScoreLeft.ActualWidth + ScoreLeft.Margin.Right + ScoreActions.DesiredSize.Width + ScoreActions.Margin.Left + 220;
+        bool narrow = ScoreGrid.ActualWidth < needed;
+        if (narrow == _scoreNarrow) return;
+        _scoreNarrow = narrow;
+        Grid.SetRow(ScoreActions, narrow ? 1 : 0);
+        Grid.SetColumn(ScoreActions, narrow ? 0 : 2);
+        Grid.SetColumnSpan(ScoreActions, narrow ? 3 : 1);
+        ScoreActions.HorizontalAlignment = narrow ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+        ScoreActions.Margin = narrow ? new Thickness(0, 16, 0, 0) : new Thickness(24, 0, 0, 0);
+    }
+
     // ---------- Correções do diagnóstico (A14) ----------
     private async void Fix_Click(object sender, RoutedEventArgs e)
     {

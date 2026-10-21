@@ -75,13 +75,14 @@
 
                         <!-- Nota de saúde: o elemento-assinatura (número grande + pulso da própria nota) -->
                         <Border Style="{StaticResource Card}" Padding="24,20">
-                            <Grid>
+                            <Grid x:Name="ScoreGrid" SizeChanged="ScoreGrid_SizeChanged">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="200"/><ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <!-- Linha 1 só é usada quando as ações descem para baixo da nota (texto grande ou janela estreita); linha 2 = fatos do hardware -->
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
-                                <StackPanel Margin="0,0,28,0">
+                                <StackPanel x:Name="ScoreLeft" Margin="0,0,28,0">
                                     <TextBlock Text="Nota de saúde" Style="{StaticResource Label}"/>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock x:Name="ScoreText" Text="–" FontFamily="{StaticResource FontDisplay}" FontSize="{DynamicResource FsHero}"/>
@@ -100,7 +101,7 @@
                                                      Stroke="{DynamicResource OnSurfaceVariant}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="2" Margin="24,0,0,0" VerticalAlignment="Top" MinWidth="170">
+                                <StackPanel x:Name="ScoreActions" Grid.Column="2" Margin="24,0,0,0" VerticalAlignment="Top" MinWidth="170">
                                     <Button x:Name="OptimizeBtn" Content="Otimizar agora" Margin="0" Click="Optimize_Click"
                                             ToolTip="Limpa temporários antigos com segurança. Não apaga documentos, downloads nem a Lixeira."/>
                                     <Button x:Name="FocusBtn" Content="Modo Foco" Style="{StaticResource TonalButton}" Margin="0,8,0,0" Click="Focus_Click"
@@ -109,7 +110,7 @@
                                 </StackPanel>
 
                                 <!-- Fatos de saúde do hardware -->
-                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,16,0,0">
+                                <WrapPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,16,0,0">
                                     <StackPanel Margin="0,0,40,0">
                                         <TextBlock x:Name="DiskHealthTitle" Text="Disco · saúde" Style="{StaticResource Label}"/>
                                         <TextBlock x:Name="DiskHealthText" Style="{StaticResource Value}"/>
@@ -220,7 +221,7 @@
                         <DataGrid x:Name="ProcGrid" Grid.Row="1" MouseDoubleClick="ProcGrid_DoubleClick" AutomationProperties.Name="Programas em execução">
                             <DataGrid.Columns>
                                 <!-- Ícone, nome e, numa segunda linha, o que é o programa -->
-                                <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="190" SortMemberPath="Name">
+                                <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="160" SortMemberPath="Name">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Grid Margin="0,6" ToolTip="{Binding About}">
@@ -239,11 +240,11 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Processos" Binding="{Binding Count}" Width="96" MinWidth="96"/>
+                                <DataGridTextColumn Header="Processos" Binding="{Binding Count}" Width="84" MinWidth="84"/>
                                 <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPct, StringFormat=0.0}" Width="64" MinWidth="64"/>
                                 <DataGridTextColumn Header="Memória (MB)" Binding="{Binding MemMB, StringFormat=N0}" Width="92" MinWidth="92"/>
                                 <DataGridTextColumn Header="Disco e rede (KB/s)" Binding="{Binding IoKBs, StringFormat=N0}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="92" MinWidth="92"/>
+                                <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="84" MinWidth="84"/>
                                 <DataGridTextColumn Header="Pode fechar?" Binding="{Binding SafetyText}" Width="130" MinWidth="120">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
@@ -372,7 +373,7 @@
                                 <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170"/>
                                 <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
                                 <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250"/>
-                                <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
+                                <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*" MinWidth="160"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">

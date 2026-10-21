@@ -95,11 +95,12 @@ internal static class A11yAudit
         var layers = new List<Color>();
         for (DependencyObject? d = e; d is not null; d = VisualTreeHelper.GetParent(d) ?? (d as FrameworkElement)?.Parent)
         {
+            if (d is ListBoxItem { IsSelected: true }) return null; // a pílula de seleção é irmã do texto: fundo desconhecido
             Brush? br = d switch
             {
                 Border bd => bd.Background,
                 Panel p => p.Background,
-                ButtonBase btn => btn.Background, // o modelo do botão usa a propriedade; nos demais controles ela é ignorada
+                Button btn => btn.Background, // o modelo do botão usa a propriedade; caixas, alternadores e demais controles a ignoram
                 Shape s => s.Fill,
                 _ => null,
             };
