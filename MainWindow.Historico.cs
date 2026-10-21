@@ -1,0 +1,127 @@
+﻿using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using NotebookDoctor.Services;
+
+namespace NotebookDoctor;
+
+public partial class MainWindow
+{
+    // ---------- Histórico ----------
+    private async void LoadHistory()
+    {
+        var window = PeriodBox.SelectedIndex switch { 1 => TimeSpan.FromDays(7), 2 => TimeSpan.FromDays(30), _ => TimeSpan.FromHours(24) };
+        var data = await Task.Run(() => Host.History.Load(window));
+        _histData = data;
+        LoadAlerts(window);
+        FillProcTimeline(data);
+        if (data.Count < 2)
+        {
+            HistInfo.Text = "Ainda sem dados suficientes: o app grava uma amostra por minuto.";
+            HCpu.SetValues(Array.Empty<double>()); HRam.SetValues(Array.Empty<double>()); HFree.SetValues(Array.Empty<double>()); HScore.SetValues(Array.Empty<double>());
+            HOffenders.Text = "–";
+            return;
+        }
+        HistInfo.Text = $"{data.Count} amostras";
+        var times = HistoryStore.DownsampleTimes(data.Select(d => d.T).ToList(), 300);
+        HCpu.SetValues(HistoryStore.Downsample(data.Select(d => d.Cpu).ToList(), 300), times);
+        HRam.SetValues(HistoryStore.Downsample(data.Select(d => d.Ram).ToList(), 300), times);
+        HFree.SetValues(HistoryStore.Downsample(data.Select(d => d.FreePct).ToList(), 300), times);
+        HCpuLabel.Text = $"CPU · média {data.Average(d => d.Cpu):0}% · pico {data.Max(d => d.Cpu):0}%";
+        HRamLabel.Text = $"RAM · média {data.Average(d => d.Ram):0}% · pico {data.Max(d => d.Ram):0}%";
+        HDiskLabel.Text = $"Espaço livre no disco · agora {data[^1].FreePct:0}%";
+        var scores = data.Where(d => d.Score >= 0).Select(d => (double)d.Score).ToList();
+        HScore.SetValues(HistoryStore.Downsample(scores, 300));
+        HScoreLabel.Text = scores.Count > 1 ? $"Nota de saúde · média {scores.Average():0} · mínima {scores.Min():0}" : "Nota de saúde · coletando dados";
+
+        var heavy = data.Where(d => d.Cpu >= 50 || d.Ram >= 80).ToList();
+        var basis = heavy.Count >= 5 ? heavy : data;
+        var ranking = basis.SelectMany(d => d.Top).GroupBy(n => n)
+            .Select(g => (Name: g.Key, Pct: g.Count() * 100.0 / basis.Count)).OrderByDescending(x => x.Pct).Take(6);
+        string head = heavy.Count >= 5 ? $"Nos {heavy.Count} momentos de carga alta (CPU ≥ 50% ou RAM ≥ 80%):\n" : "Nenhum período de carga alta registrado; ranking geral:\n";
+        HOffenders.Text = head + string.Join("\n", ranking.Select(r => $"• {r.Name} — entre os 3 maiores em {r.Pct:0}% das amostras"));
+    }
+
+    // ---------- Histórico: CSV (M06), linha do tempo por programa (M05) e avisos (M46) ----------
+    private List<HistSample> _histData = new();
+
+    private string PeriodLabel => PeriodBox.SelectedIndex switch { 1 => "7-dias", 2 => "30-dias", _ => "24-horas" };
+
+    private void ExportCsv_Click(object sender, RoutedEventArgs e)
+    {
+        if (_histData.Count == 0) { HistInfo.Text = "Ainda não há dados no período para exportar."; return; }
+        try
+        {
+            string file = HistoryCsv.Export(_histData, PeriodLabel);
+            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{file}\"");
+            ShowSnack("Histórico exportado", $"{Pt.N(_histData.Count, "amostra", "amostras")} em {System.IO.Path.GetFileName(file)}. O Explorador abriu na pasta do arquivo.");
+        }
+        catch (Exception ex) { ShowSnack("Não foi possível exportar", ex.Message); }
+    }
+
+    private void LoadAlerts(TimeSpan window)
+    {
+        var alerts = AlertLog.Load(window);
+        AlertsGrid.ItemsSource = alerts;
+        AlertsGrid.Visibility = alerts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        AlertsEmpty.Visibility = alerts.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void FillProcTimeline(List<HistSample> data)
+    {
+        string? keep = ProcTimelineBox.SelectedItem as string;
+        // Programas do período, dos que mais pesaram para os menos (CPU somada + memória, 1 GB ≈ 10 pontos de CPU)
+        var names = data.Where(d => d.P is not null).SelectMany(d => d.P!)
+            .GroupBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Name: g.Key, Weight: g.Sum(kv => kv.Value[0] + kv.Value[1] / 100)))
+            .Where(x => x.Weight > 0 && !ProcessTools.IsSystem(x.Name) || x.Weight > 50)
+            .OrderByDescending(x => x.Weight).Select(x => x.Name).Take(60).ToList();
+        ProcTimelineBox.ItemsSource = names;
+        if (names.Count == 0)
+        {
+            ProcTimelineInfo.Text = "Os dados por programa começam a ser gravados nesta versão (uma amostra por minuto).";
+            PCpu.SetValues(Array.Empty<double>()); PRam.SetValues(Array.Empty<double>());
+            return;
+        }
+        ProcTimelineBox.SelectedItem = keep is not null && names.Contains(keep) ? keep : names[0];
+    }
+
+    private void ProcTimeline_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (ProcTimelineBox.SelectedItem is not string name) return;
+        var rows = _histData.Where(d => d.P is not null).ToList();
+        // Ausente na amostra = não estava entre os mais pesados (fica como zero)
+        double[] Val(HistSample d, int i) => d.P!.TryGetValue(name, out var v) ? v : [0, 0];
+        var cpu = rows.Select(d => Val(d, 0)[0]).ToList();
+        var ram = rows.Select(d => Val(d, 0)[1]).ToList();
+        var times = HistoryStore.DownsampleTimes(rows.Select(d => d.T).ToList(), 300);
+        PCpu.SetValues(HistoryStore.Downsample(cpu, 300), times);
+        PRam.Max = Math.Max(100, ram.DefaultIfEmpty(0).Max() * 1.1);
+        PRam.SetValues(HistoryStore.Downsample(ram, 300), times);
+        int present = rows.Count(d => d.P!.ContainsKey(name));
+        PCpuLabel.Text = $"CPU · média {cpu.DefaultIfEmpty(0).Average():0.0}% · pico {cpu.DefaultIfEmpty(0).Max():0}%";
+        PRamLabel.Text = $"Memória · pico {ram.DefaultIfEmpty(0).Max():N0} MB";
+        ProcTimelineInfo.Text = rows.Count == 0 ? "" : $"Entre os mais pesados em {present * 100.0 / rows.Count:0}% das amostras";
+    }
+
+    // ---------- Exceções de avisos (M20) a partir da tabela de processos ----------
+    private void AlertException_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow g) { ProcMsg.Text = "Selecione um programa na lista."; return; }
+        var s = Host.Settings;
+        if (s.IsAlertException(g.Name)) { ProcMsg.Text = $"{g.Name} já está nas exceções."; return; }
+        s.AlertExceptions = AppSettings.ParseNames(string.Join("\n", s.AlertExceptions.Append(g.Name)));
+        s.Save();
+        LoadSettingsIntoForm();
+        if (Host.HeavyAlert?.Name.Equals(g.Name, StringComparison.OrdinalIgnoreCase) == true) Host.IgnoreHeavy(g.Name);
+        ActionLog.Add($"Sem avisos: {g.Name}", "Adicionado às exceções de avisos (Configurações › Exceções).");
+        ShowSnack($"{g.Name} não gera mais avisos", "Ele continua sendo medido e aparece normalmente nas tabelas.",
+                  "Desfazer", () =>
+                  {
+                      s.AlertExceptions.RemoveAll(n => n.Equals(g.Name, StringComparison.OrdinalIgnoreCase));
+                      s.Save();
+                      LoadSettingsIntoForm();
+                  });
+    }
+}
