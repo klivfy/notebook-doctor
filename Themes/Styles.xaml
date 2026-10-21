@@ -518,7 +518,11 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource StateHover}"/></Trigger>
-                        <Trigger Property="IsSelected" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource SecondaryContainer}"/></Trigger>
+                        <!-- O texto da linha selecionada usa a cor "sobre" o fundo escolhido; em Alto Contraste o fundo é a cor de destaque do sistema -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SecondaryContainer}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource OnSecondaryContainer}"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

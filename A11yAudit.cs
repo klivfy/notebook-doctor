@@ -75,7 +75,7 @@ internal static class A11yAudit
             add("CORTADO", $"{Describe(cut)} [{cut.ActualWidth:0}×{cut.ActualHeight:0} de {cut.DesiredSize.Width:0}×{cut.DesiredSize.Height:0}]{(cut.TextTrimming == TextTrimming.None ? " [sem reticências]" : "")}");
 
         // 4. Contraste do texto, medido nos pixels da captura (a cor do fundo vem do que foi desenhado, não de propriedades)
-        if (e is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text) && tb.Foreground is SolidColorBrush fg && tb.ActualWidth > 0 && tb.ActualHeight > 0
+        if (e is TextBlock tb && tb.IsEnabled && !string.IsNullOrWhiteSpace(tb.Text) && tb.Foreground is SolidColorBrush fg && tb.ActualWidth > 0 && tb.ActualHeight > 0
             && DominantColor(tb, root, pixels) is { } bg)
         {
             double opacity = fg.Opacity * EffectiveOpacity(tb);
