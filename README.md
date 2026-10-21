@@ -20,7 +20,7 @@ Requer Windows 10/11 e o SDK do .NET 8. Para gerar o executável: `dotnet publis
 dotnet test tests/NotebookDoctor.Tests
 ```
 
-As regras de diagnóstico, a nota de saúde, a detecção de vazamento de memória e os modelos de dados ficam em `src/NotebookDoctor.Core` (sem WPF nem chamadas ao Windows). Por isso os testes rodam em qualquer sistema. A CI (`.github/workflows/ci.yml`) compila o app e roda os testes no Windows a cada pull request.
+As regras de diagnóstico, a nota de saúde, a detecção de vazamento de memória e os modelos de dados ficam em `src/NotebookDoctor.Core` (sem WPF nem chamadas ao Windows). Por isso os testes rodam em qualquer sistema. A CI (`.github/workflows/ci.yml`) roda em Linux a cada pull request: compila o app (com `EnableWindowsTargeting`) e roda os testes. O app em si só executa no Windows.
 
 ## Estrutura
 
