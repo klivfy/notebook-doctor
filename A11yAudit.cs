@@ -4,6 +4,7 @@ using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace NotebookDoctor;
@@ -15,12 +16,13 @@ namespace NotebookDoctor;
 /// </summary>
 internal static class A11yAudit
 {
-    public static List<string> Run(FrameworkElement root, Brush? windowBackground)
+    /// <param name="pixels">Captura da própria janela; o contraste é medido nela (cor do texto contra a cor que domina o retângulo do texto).</param>
+    public static List<string> Run(FrameworkElement root, BitmapSource pixels)
     {
         var issues = new List<string>();
         var seen = new HashSet<string>();
         void Add(string kind, string msg) { if (seen.Add(kind + msg)) issues.Add($"{kind}: {msg}"); }
-        Walk(root, e => Check(e, windowBackground, Add));
+        Walk(root, e => Check(e, root, pixels, Add));
         return issues;
     }
 
@@ -46,7 +48,7 @@ internal static class A11yAudit
     private static bool InsideTemplateOf<T>(FrameworkElement e) where T : FrameworkElement =>
         e.TemplatedParent is T;
 
-    private static void Check(FrameworkElement e, Brush? windowBg, Action<string, string> add)
+    private static void Check(FrameworkElement e, FrameworkElement root, BitmapSource pixels, Action<string, string> add)
     {
         // 1. Nome acessível (é o que o Narrador lê)
         if (IsInteractive(e))
@@ -72,17 +74,15 @@ internal static class A11yAudit
         if (e is TextBlock cut && LayoutInformation.GetLayoutClip(cut) is not null && cut.ActualWidth > 0)
             add("CORTADO", $"{Describe(cut)} [{cut.ActualWidth:0}×{cut.ActualHeight:0} de {cut.DesiredSize.Width:0}×{cut.DesiredSize.Height:0}]{(cut.TextTrimming == TextTrimming.None ? " [sem reticências]" : "")}");
 
-        // 4. Contraste do texto
-        if (e is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text) && tb.Foreground is SolidColorBrush fg)
+        // 4. Contraste do texto, medido nos pixels da captura (a cor do fundo vem do que foi desenhado, não de propriedades)
+        if (e is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text) && tb.Foreground is SolidColorBrush fg && tb.ActualWidth > 0 && tb.ActualHeight > 0
+            && DominantColor(tb, root, pixels) is { } bg)
         {
-            var bg = BackgroundBehind(tb, windowBg);
-            if (bg is { } b)
-            {
-                var fgc = Over(fg.Color, fg.Opacity, b);
-                double ratio = Contrast(fgc, b);
-                bool large = tb.FontSize >= 24 || (tb.FontSize >= 18.66 && tb.FontWeight >= FontWeights.SemiBold);
-                if (ratio < (large ? 3.0 : 4.5)) add("CONTRASTE", $"{ratio:0.0}:1 em {Describe(tb)} ({Hex(fgc)} sobre {Hex(b)})");
-            }
+            double opacity = fg.Opacity * EffectiveOpacity(tb);
+            var fgc = Over(fg.Color, opacity, bg);
+            double ratio = Contrast(fgc, bg);
+            bool large = tb.FontSize >= 24 || (tb.FontSize >= 18.66 && tb.FontWeight >= FontWeights.SemiBold);
+            if (ratio < (large ? 3.0 : 4.5)) add("CONTRASTE", $"{ratio:0.0}:1 em {Describe(tb)} ({Hex(fgc)} sobre {Hex(bg)})");
         }
 
         // 5. Rolagem horizontal (em tabelas largas é esperado; em página, não)
@@ -90,34 +90,35 @@ internal static class A11yAudit
             add("ROLAGEM HORIZONTAL", $"{Describe(sv)} excede {sv.ScrollableWidth:0} px");
     }
 
-    private static Color? BackgroundBehind(FrameworkElement e, Brush? windowBg)
+    private static double EffectiveOpacity(DependencyObject d)
     {
-        var layers = new List<Color>();
-        for (DependencyObject? d = e; d is not null; d = VisualTreeHelper.GetParent(d) ?? (d as FrameworkElement)?.Parent)
+        double o = 1;
+        for (; d is not null; d = VisualTreeHelper.GetParent(d)) if (d is UIElement u) o *= u.Opacity;
+        return o;
+    }
+
+    /// <summary>Cor mais frequente no retângulo do texto: o fundo (o texto ocupa uma fração menor dos pixels). Null se o texto está fora da janela.</summary>
+    private static Color? DominantColor(FrameworkElement el, FrameworkElement root, BitmapSource bmp)
+    {
+        var dpi = VisualTreeHelper.GetDpi(root);
+        Rect r;
+        try { r = el.TransformToVisual(root).TransformBounds(new Rect(0, 0, el.ActualWidth, el.ActualHeight)); }
+        catch (InvalidOperationException) { return null; }
+        int x = (int)Math.Floor(r.X * dpi.DpiScaleX), y = (int)Math.Floor(r.Y * dpi.DpiScaleY);
+        int w = (int)Math.Ceiling(r.Width * dpi.DpiScaleX), h = (int)Math.Ceiling(r.Height * dpi.DpiScaleY);
+        if (x < 0 || y < 0 || w < 2 || h < 2 || x + w > bmp.PixelWidth || y + h > bmp.PixelHeight) return null;
+        var buf = new byte[w * h * 4];
+        bmp.CopyPixels(new Int32Rect(x, y, w, h), buf, w * 4, 0);
+        var counts = new Dictionary<int, int>();
+        int best = 0, bestCount = 0;
+        for (int i = 0; i < buf.Length; i += 4)
         {
-            if (d is ListBoxItem { IsSelected: true }) return null; // a pílula de seleção é irmã do texto: fundo desconhecido
-            Brush? br = d switch
-            {
-                Border bd => bd.Background,
-                Panel p => p.Background,
-                Button btn => btn.Background, // o modelo do botão usa a propriedade; caixas, alternadores e demais controles a ignoram
-                Shape s => s.Fill,
-                _ => null,
-            };
-            if (br is SolidColorBrush sb && sb.Color.A * sb.Opacity > 0)
-            {
-                layers.Add(Color.FromArgb((byte)(sb.Color.A * sb.Opacity), sb.Color.R, sb.Color.G, sb.Color.B));
-                if (sb.Color.A == 255 && sb.Opacity >= 1) break;
-            }
+            int key = buf[i] | buf[i + 1] << 8 | buf[i + 2] << 16; // B, G, R
+            int n = counts.GetValueOrDefault(key) + 1;
+            counts[key] = n;
+            if (n > bestCount) { bestCount = n; best = key; }
         }
-        if (layers.Count == 0 || layers[^1].A < 255)
-        {
-            if (windowBg is SolidColorBrush w) layers.Add(Color.FromArgb(255, w.Color.R, w.Color.G, w.Color.B));
-            else return null;
-        }
-        var acc = layers[^1];
-        for (int i = layers.Count - 2; i >= 0; i--) acc = Over(layers[i], 1, acc);
-        return acc;
+        return Color.FromRgb((byte)(best >> 16 & 255), (byte)(best >> 8 & 255), (byte)(best & 255));
     }
 
     /// <summary>Cor sobre fundo opaco, respeitando o alfa da cor e a opacidade do pincel.</summary>

@@ -100,16 +100,19 @@ internal static class ScreenshotMode
             win.SelectTab(i);
             await Task.Delay(v.Name == "normal" ? 1500 : 1000); // as abas carregam os dados de forma assíncrona
             string file = $"{v.Name}-{i:00}-{TabNames[i]}-{theme}.png";
+            RenderTargetBitmap? bmp = null;
             try
             {
-                Save(win, Path.Combine(dir, file));
+                bmp = Render(win);
+                Save(bmp, Path.Combine(dir, file));
                 saved++;
                 log.Add($"ok   {file} ({win.ActualWidth:0}×{win.ActualHeight:0})");
             }
             catch (Exception ex) { log.Add($"ERRO {file}: {ex.Message}"); }
+            if (bmp is null) continue;
             try
             {
-                foreach (var issue in A11yAudit.Run((FrameworkElement)win.Content, win.Background))
+                foreach (var issue in A11yAudit.Run((FrameworkElement)win.Content, bmp))
                     audit.Add($"[{v.Name}/{theme}/{TabNames[i]}] {issue}");
             }
             catch (Exception ex) { audit.Add($"[{v.Name}/{theme}/{TabNames[i]}] AUDITORIA FALHOU: {ex.Message}"); }
@@ -141,7 +144,7 @@ internal static class ScreenshotMode
     }
 
     /// <summary>Renderiza o conteúdo da janela (sem a moldura do Windows) sobre o fundo do tema.</summary>
-    private static void Save(MainWindow win, string path)
+    private static RenderTargetBitmap Render(MainWindow win)
     {
         win.UpdateLayout();
         var el = (FrameworkElement)win.Content;
@@ -159,6 +162,11 @@ internal static class ScreenshotMode
         var bmp = new RenderTargetBitmap((int)Math.Ceiling(w * dpi.DpiScaleX), (int)Math.Ceiling(h * dpi.DpiScaleY),
                                          dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
         bmp.Render(visual);
+        return bmp;
+    }
+
+    private static void Save(BitmapSource bmp, string path)
+    {
         var enc = new PngBitmapEncoder();
         enc.Frames.Add(BitmapFrame.Create(bmp));
         using var fs = File.Create(path);
