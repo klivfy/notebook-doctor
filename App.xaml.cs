@@ -110,8 +110,8 @@ public partial class App : Application
         if (tabArg is not null && int.TryParse(tabArg[6..], out int tab)) win.SelectTab(tab);
         if (uri is not null) HandleUri(uri);
 
-        _ = Task.Run(Toasts.EnsureRegistered);
-        if (!AppPaths.Demo) SetJumpList(); // a jump list é do app instalado, não da demonstração
+        // A jump list e o registro das notificações são do app instalado, não da demonstração
+        if (!AppPaths.Demo) { _ = Task.Run(Toasts.EnsureRegistered); SetJumpList(); }
         _overlayTimer.Tick += (_, _) => UpdateOverlay();
         _overlayTimer.Start();
         _ = ListenForOtherInstancesAsync(_cts.Token);
@@ -273,7 +273,7 @@ public partial class App : Application
 
     public void Notify(string title, string text, params (string label, string action)[] buttons)
     {
-        if (Settings.NativeNotifications && Toasts.Show(title, text, buttons)) return;
+        if (Settings.NativeNotifications && !AppPaths.Demo && Toasts.Show(title, text, buttons)) return;
         _tray.Notify(title, text);
     }
 
@@ -505,7 +505,7 @@ public partial class App : Application
             try { File.Delete(f); } catch { }
         var s = new AppSettings
         {
-            FirstRunDone = true, SimulationMode = true, CheckUpdates = false, GlobalHotkey = false,
+            FirstRunDone = true, SimulationMode = true, CheckUpdates = false, GlobalHotkey = false, NativeNotifications = false,
             WeeklyCleanup = false, StartWithWindows = false, LastWeeklySummary = DateTime.Now, LastUpdateCheck = DateTime.Now,
         };
         s.Save();
