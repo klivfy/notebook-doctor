@@ -118,3 +118,47 @@ public class HistoryInsightsTests
         Assert.Null(HistoryInsights.CompareWithLastWeek(data, now));
     }
 }
+
+public class HeatmapTests
+{
+    [Fact]
+    public void Marca_os_horarios_lentos()
+    {
+        // 2026-10-01 é quinta-feira; 15 amostras às 14h (todas lentas) e 15 às 9h (tranquilas)
+        var data = Enumerable.Range(0, 15).Select(i => new HistSample(Make.T0.Date.AddHours(14).AddMinutes(i), 90, 50, 5, 40, []))
+            .Concat(Enumerable.Range(0, 15).Select(i => new HistSample(Make.T0.Date.AddHours(9).AddMinutes(i), 10, 40, 5, 40, [])))
+            .ToList();
+        var map = HistoryInsights.SlownessHeatmap(data);
+        Assert.Equal(1.0, map[(int)DayOfWeek.Thursday, 14]);
+        Assert.Equal(0.0, map[(int)DayOfWeek.Thursday, 9]);
+        Assert.True(double.IsNaN(map[(int)DayOfWeek.Monday, 14]));
+        var worst = HistoryInsights.Worst(map);
+        Assert.Equal((DayOfWeek.Thursday, 14), (worst?.Day, worst?.Hour));
+    }
+
+    [Fact]
+    public void Poucas_amostras_ficam_sem_dado()
+    {
+        var data = Enumerable.Range(0, 5).Select(i => new HistSample(Make.T0.AddMinutes(i), 90, 50, 5, 40, [])).ToList();
+        Assert.Null(HistoryInsights.Worst(HistoryInsights.SlownessHeatmap(data)));
+    }
+}
+
+public class CommandLineTests
+{
+    [Theory]
+    [InlineData("\"C:\\Program Files\\App\\app.exe\" --min", "C:\\Program Files\\App\\app.exe")]
+    [InlineData("C:\\Program Files\\App\\app.exe /background", "C:\\Program Files\\App\\app.exe")]
+    [InlineData("C:\\Tools\\run.EXE", "C:\\Tools\\run.EXE")]
+    [InlineData("C:\\Users\\a\\Start Menu\\Programs\\Startup\\App.lnk", "C:\\Users\\a\\Start Menu\\Programs\\Startup\\App.lnk")]
+    [InlineData("\"C:\\sem fim.exe", "C:\\sem fim.exe")]
+    public void Extrai_o_programa(string command, string expected) =>
+        Assert.Equal(expected, CommandLine.ExecutablePath(command));
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    [InlineData("\"\"")]
+    public void Sem_caminho_retorna_nulo(string? command) => Assert.Null(CommandLine.ExecutablePath(command));
+}

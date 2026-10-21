@@ -372,11 +372,14 @@
                                 <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170"/>
                                 <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
                                 <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250"/>
+                                <DataGridTextColumn Header="Editor" Binding="{Binding Publisher}" Width="200"/>
                                 <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
                             <Button Content="Ativar / Desativar selecionado" Click="ToggleStartup_Click" Margin="0,0,8,6"/>
+                            <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="StartupOpen_Click" Margin="0,0,8,6"
+                                    ToolTip="Abre a pasta do programa com o arquivo selecionado"/>
                             <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="RefreshStartup_Click" Margin="0,0,8,6"/>
                             <TextBlock x:Name="StartupMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>
@@ -418,6 +421,16 @@
                                 <TextBlock Text="Tendências" Style="{StaticResource TitleMedium}"/>
                                 <TextBlock x:Name="HCompare" TextWrapping="Wrap" LineHeight="24"/>
                                 <TextBlock x:Name="HDiskForecast" TextWrapping="Wrap" LineHeight="24" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- M49: em que dias e horários o PC costuma ficar sob carga (último mês) -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Quando o computador fica mais lento" Style="{StaticResource TitleMedium}"/>
+                                <TextBlock x:Name="HHeatInfo" TextWrapping="Wrap" Style="{StaticResource Muted}" Margin="0,0,0,10"/>
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Focusable="False">
+                                    <Grid x:Name="HeatGrid" AutomationProperties.Name="Mapa de calor de lentidão por dia e hora"/>
+                                </ScrollViewer>
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource Card}">

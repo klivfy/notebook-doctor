@@ -95,19 +95,19 @@ Critérios de impacto
 | M24 | Busca e filtro nas tabelas | ✅ busca em Processos, Inicialização e Espaço |
 | M25 | Seleção múltipla e ações em lote | ⬜ |
 | M26 | Menu de contexto (abrir local, propriedades, pesquisar online) | ⬜ |
-| M27 | Abrir a pasta do item de inicialização | ⬜ |
-| M28 | Mostrar editor/assinatura do item de inicialização | ⬜ |
+| M27 | Abrir a pasta do item de inicialização | 🟡 botão "Abrir local" na aba Inicialização seleciona o arquivo no Explorador; não testado no Windows |
+| M28 | Mostrar editor/assinatura do item de inicialização | 🟡 coluna Editor: quem assinou o programa ou, sem assinatura, o fabricante declarado no arquivo; não testado no Windows |
 | M29 | Tarefas agendadas de terceiros, com opção de desativar | ⬜ |
 | M30 | Gerenciar serviços (listar e sugerir "manual") | ⬜ |
 | M31 | Listar extensões pesadas de navegador | ⬜ |
 | M32 | Detectar antivírus conflitantes | ⬜ |
 | M33 | Orientar OneDrive "arquivos sob demanda" | ⬜ |
-| M34 | Lixeira por unidade | ⬜ |
-| M35 | Limpar cache de miniaturas e ícones | ⬜ |
+| M34 | Lixeira por unidade | 🟡 uma linha de Lixeira por unidade com itens, para esvaziar só a do disco cheio; não testado no Windows |
+| M35 | Limpar cache de miniaturas e ícones | 🟡 miniaturas (thumbcache) e cache de ícones na Limpeza, desmarcados; arquivos em uso são pulados; não testado no Windows |
 | M36 | Limpar logs de eventos grandes (opcional) | ⬜ |
 | M37 | Limpar pontos de restauração antigos (manter o último) | ⬜ |
 | M38 | Caches de desenvolvimento (npm, NuGet, pip, Gradle) | ✅ npm, NuGet, Gradle, pip, Yarn e pnpm na Limpeza, desmarcados por padrão |
-| M39 | Caches de apps (Spotify, Teams, Discord, Slack) | ⬜ |
+| M39 | Caches de apps (Spotify, Teams, Discord, Slack) | 🟡 caches de Discord, Slack, Teams (clássico e novo) e VS Code, desmarcados; Spotify fica de fora porque o cache dele guarda as músicas offline; não testado no Windows |
 | M40 | Compactar disco virtual do WSL / detectar `vmmem` | ⬜ |
 | M41 | Avisar RAM alta do WSL/Docker e sugerir `.wslconfig` | 🟡 alerta quando vmmem passa de 2 GB, com dica de .wslconfig e botão "Encerrar WSL"; WSL não estava rodando no teste |
 | M42 | Reduzir a frequência de amostragem na bateria | ⬜ |
@@ -117,7 +117,7 @@ Critérios de impacto
 | M46 | Histórico de alertas disparados | ✅ |
 | M47 | Linha do tempo de eventos (instalações, updates, picos) | ⬜ |
 | M48 | Comparar hoje × semana passada | 🟡 aba Histórico compara as últimas 24 h com o mesmo horário da semana passada (CPU, RAM e nota); não testado no Windows |
-| M49 | Mapa de calor: horários em que o PC fica mais lento | ⬜ |
+| M49 | Mapa de calor: horários em que o PC fica mais lento | 🟡 aba Histórico mostra mapa de calor dia × hora (último mês) e o pior horário; não testado no Windows |
 | M50 | Previsão de quando o disco enche | 🟡 aba Histórico estima quando o disco enche (tendência do último mês, ignorando o que veio antes da última limpeza); não testado no Windows |
 
 ## 🟢 Baixo impacto (50)

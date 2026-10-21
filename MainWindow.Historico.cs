@@ -63,6 +63,54 @@ public partial class MainWindow
         HDiskForecast.Text = HistoryInsights.DiskFull(month, now) is { } f
             ? $"Disco: o espaço livre cai cerca de {f.PctPerDay:0.0}% do disco por dia. Nesse ritmo, ele enche por volta de {f.When:dd/MM/yyyy}."
             : "Disco: sem tendência de encher nos dados do último mês.";
+        ShowHeatmap(month);
+    }
+
+    // ---------- M49: mapa de calor de lentidão (dia da semana × hora) ----------
+    private static readonly string[] DayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    private static readonly string[] DayNamesLong = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+
+    private void ShowHeatmap(List<HistSample> month)
+    {
+        var map = HistoryInsights.SlownessHeatmap(month);
+        HeatGrid.Children.Clear();
+        HeatGrid.RowDefinitions.Clear();
+        HeatGrid.ColumnDefinitions.Clear();
+        HeatGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        for (int h = 0; h < 24; h++) HeatGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(18) });
+        for (int r = 0; r < 8; r++) HeatGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18) });
+
+        void Place(UIElement e, int row, int col) { Grid.SetRow(e, row); Grid.SetColumn(e, col); HeatGrid.Children.Add(e); }
+        TextBlock Label(string text) => new() { Text = text, FontSize = 10, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
+
+        for (int h = 0; h < 24; h += 3) Place(Label($"{h}h"), 0, h + 1);
+        for (int d = 0; d < 7; d++)
+        {
+            Place(Label(DayNames[d]), d + 1, 0);
+            for (int h = 0; h < 24; h++)
+            {
+                double v = map[d, h];
+                var cell = new Border { Margin = new Thickness(1), CornerRadius = new CornerRadius(3) };
+                if (double.IsNaN(v))
+                {
+                    cell.SetResourceReference(Border.BackgroundProperty, "SurfaceVariant");
+                    cell.ToolTip = $"{DayNamesLong[d]}, {h}h: sem dados";
+                }
+                else
+                {
+                    // Cor de carga do tema; a intensidade mostra a fração do tempo sob carga
+                    cell.SetResourceReference(Border.BackgroundProperty, "LevelCrit");
+                    cell.Opacity = 0.12 + 0.88 * v;
+                    cell.ToolTip = $"{DayNamesLong[d]}, {h}h: sob carga em {v:P0} do tempo";
+                }
+                System.Windows.Automation.AutomationProperties.SetName(cell, cell.ToolTip as string);
+                Place(cell, d + 1, h + 1);
+            }
+        }
+
+        HHeatInfo.Text = HistoryInsights.Worst(map) is { } w
+            ? $"Pior horário: {DayNamesLong[(int)w.Day]} por volta das {w.Hour}h, com CPU ou RAM no limite em {w.Share:P0} do tempo. Quanto mais forte a cor, mais tempo sob carga."
+            : "Nenhum horário com carga frequente no último mês. Quanto mais forte a cor, mais tempo sob carga; cinza é horário sem dados.";
     }
 
     // ---------- Histórico: CSV (M06), linha do tempo por programa (M05) e avisos (M46) ----------

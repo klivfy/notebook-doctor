@@ -46,6 +46,39 @@ public static class HistoryInsights
         return today is null || last is null ? null : new(today, last);
     }
 
+    /// <summary>
+    /// M49: mapa de calor [dia da semana, hora] com a fração das amostras em que o PC estava sob carga
+    /// (CPU ≥ 70% ou RAM ≥ 85%). Célula sem amostras suficientes fica NaN (sem dado, não "tranquilo").
+    /// Índice 0 = domingo, como <see cref="DayOfWeek"/>.
+    /// </summary>
+    public static double[,] SlownessHeatmap(IReadOnlyList<HistSample> data, int minSamples = 10)
+    {
+        var total = new int[7, 24];
+        var slow = new int[7, 24];
+        foreach (var d in data)
+        {
+            int day = (int)d.T.DayOfWeek, hour = d.T.Hour;
+            total[day, hour]++;
+            if (d.Cpu >= 70 || d.Ram >= 85) slow[day, hour]++;
+        }
+        var map = new double[7, 24];
+        for (int day = 0; day < 7; day++)
+            for (int hour = 0; hour < 24; hour++)
+                map[day, hour] = total[day, hour] >= minSamples ? slow[day, hour] / (double)total[day, hour] : double.NaN;
+        return map;
+    }
+
+    /// <summary>A célula mais carregada do mapa (nula se nenhuma passar de 10% de lentidão).</summary>
+    public static (DayOfWeek Day, int Hour, double Share)? Worst(double[,] map)
+    {
+        (DayOfWeek, int, double)? best = null;
+        for (int day = 0; day < 7; day++)
+            for (int hour = 0; hour < 24; hour++)
+                if (!double.IsNaN(map[day, hour]) && map[day, hour] >= 0.1 && (best is null || map[day, hour] > best.Value.Item3))
+                    best = ((DayOfWeek)day, hour, map[day, hour]);
+        return best;
+    }
+
     private static PeriodStats? Stats(List<HistSample> s)
     {
         if (s.Count < 30) return null; // menos de meia hora de uso: comparação não diria nada

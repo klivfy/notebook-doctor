@@ -38,4 +38,13 @@ public partial class MainWindow
         }
         catch (Exception ex) { StartupMsg.Text = "Falhou: " + ex.Message; }
     }
+
+    // ---------- M27: abrir a pasta do item ----------
+    private void StartupOpen_Click(object sender, RoutedEventArgs e)
+    {
+        if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = "Selecione um item na lista."; return; }
+        if (entry.FilePath is not { } path) { StartupMsg.Text = $"{entry.Name}: o arquivo do comando não foi encontrado."; return; }
+        // Argumento entre aspas: o Explorador só seleciona o arquivo, não o executa
+        try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
+    }
 }

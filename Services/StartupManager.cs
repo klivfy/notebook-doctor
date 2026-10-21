@@ -13,6 +13,10 @@ public sealed class StartupEntry
     /// <summary>Estimativa pelo que o programa já consumiu desde que abriu (CPU acumulada e RAM). Não é a medição do Windows.</summary>
     public string Impact { get; set; } = "";
     internal string ApprovalSubKey { get; init; } = "Run";
+    /// <summary>M27: arquivo que o item abre (o .exe, ou o atalho da pasta Inicializar).</summary>
+    public string? FilePath { get; set; }
+    /// <summary>M28: quem assinou o programa, ou o fabricante declarado quando não há assinatura.</summary>
+    public string Publisher { get; set; } = "";
 }
 
 /// <summary>
@@ -33,7 +37,31 @@ public static class StartupManager
         AddFolder(result, Environment.GetFolderPath(Environment.SpecialFolder.Startup), "Pasta Inicializar (usuário)");
         AddFolder(result, Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "Pasta Inicializar (todos)");
         FillImpact(result);
+        foreach (var e in result) FillPublisher(e);
         return result.OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static void FillPublisher(StartupEntry e)
+    {
+        string? path = CommandLine.ExecutablePath(e.Command);
+        // Sem caminho completo (ex.: "rundll32.exe ..."), procura na pasta do Windows
+        if (path is not null && !Path.IsPathRooted(path)) path = Path.Combine(Environment.SystemDirectory, path);
+        if (path is null || !File.Exists(path)) { e.Publisher = "Arquivo não encontrado"; return; }
+        e.FilePath = path;
+        if (!path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) { e.Publisher = "Atalho ou script (veja o local)"; return; }
+        try
+        {
+            string subject = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(path).Subject;
+            string? cn = subject.Split(',').Select(p => p.Trim()).FirstOrDefault(p => p.StartsWith("CN=", StringComparison.OrdinalIgnoreCase))?[3..];
+            e.Publisher = $"Assinado: {cn?.Trim('"') ?? subject}";
+        }
+        catch
+        {
+            // Sem assinatura Authenticode: mostra o fabricante que o próprio arquivo declara (não comprovado)
+            string? company = null;
+            try { company = System.Diagnostics.FileVersionInfo.GetVersionInfo(path).CompanyName?.Trim(); } catch { }
+            e.Publisher = string.IsNullOrEmpty(company) ? "Sem assinatura" : $"Sem assinatura ({company})";
+        }
     }
 
     private static void FillImpact(List<StartupEntry> entries)
