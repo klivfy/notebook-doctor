@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Regras de diagnóstico, nota e modelos de dados, sem WPF nem chamadas ao Windows: dá para testar em qualquer sistema -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>NotebookDoctor</RootNamespace>
+    <AssemblyName>NotebookDoctor.Core</AssemblyName>
+  </PropertyGroup>
+
+</Project>

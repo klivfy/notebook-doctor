@@ -1,7 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
-
-namespace NotebookDoctor.Services;
+﻿namespace NotebookDoctor.Services;
 
 /// <summary>
 /// Um achado do diagnóstico. Quando há correção, <see cref="FixId"/> diz qual:
@@ -64,7 +61,8 @@ public static class Diagnosis
 {
     public const int TabClean = 2, TabSpace = 3, TabStartup = 4, TabSettings = 8;
 
-    public static List<Finding> Evaluate(IReadOnlyList<Snapshot> recent, HealthInfo h, IReadOnlyList<LeakSuspect>? leaks = null)
+    /// <param name="uptime">Tempo ligado; nulo usa o do Windows (os testes passam um valor fixo).</param>
+    public static List<Finding> Evaluate(IReadOnlyList<Snapshot> recent, HealthInfo h, IReadOnlyList<LeakSuspect>? leaks = null, TimeSpan? uptime = null)
     {
         var f = new List<Finding>();
         if (recent.Count == 0) return f;
@@ -150,89 +148,12 @@ public static class Diagnosis
         }
 
         if (h.StartupEnabled > 10) f.Add(new("ATENCAO", "Muitos programas iniciam com o Windows", $"{h.StartupEnabled} ativos", "Desative os que não precisa.", $"tab:{TabStartup}", "Abrir Inicialização"));
-        if (h.TempBytes > 1L << 30) f.Add(new("ATENCAO", "Muito lixo em temporários", Cleaner.FormatBytes(h.TempBytes), "Limpeza segura de arquivos temporários antigos.", "clean", "Limpar agora"));
+        if (h.TempBytes > 1L << 30) f.Add(new("ATENCAO", "Muito lixo em temporários", Pt.Bytes(h.TempBytes), "Limpeza segura de arquivos temporários antigos.", "clean", "Limpar agora"));
 
-        double uptimeDays = TimeSpan.FromMilliseconds(Environment.TickCount64).TotalDays;
+        double uptimeDays = (uptime ?? Uptime.Current).TotalDays;
         if (uptimeDays >= 7) f.Add(new("ATENCAO", "Computador ligado há muito tempo", $"{uptimeDays:0.0} dias sem reiniciar", "Reinicie o Windows."));
 
         if (f.Count == 0) f.Add(new("OK", "Tudo certo", "Nenhum problema relevante agora.", ""));
         return f.OrderBy(x => x.Level == "PROBLEMA" ? 0 : x.Level == "ATENCAO" ? 1 : 2).ToList();
-    }
-}
-
-public static class ProcessTools
-{
-    // Nunca encerrados pelo app: derrubam o Windows, a sessão ou a proteção.
-    private static readonly HashSet<string> Protected = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "System", "Registry", "smss", "csrss", "wininit", "winlogon", "services", "lsass", "svchost", "dwm",
-        "explorer", "fontdrvhost", "MsMpEng", "SecurityHealthService", "NotebookDoctor", "Idle", "Memory Compression",
-    };
-
-    private static HashSet<string> _user = new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>M21: lista do usuário somada à do sistema (a do sistema não pode ser removida).</summary>
-    public static void SetUserProtected(IEnumerable<string> names) => _user = new(names, StringComparer.OrdinalIgnoreCase);
-
-    public static bool IsSystem(string name) => Protected.Contains(name);
-
-    // ---------- A19: modo eficiência (o mesmo do Gerenciador de Tarefas: EcoQoS + prioridade baixa) ----------
-    [StructLayout(LayoutKind.Sequential)]
-    private struct PowerThrottlingState { public uint Version, ControlMask, StateMask; }
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool SetProcessInformation(IntPtr process, int infoClass, ref PowerThrottlingState info, int size);
-
-    /// <summary>Liga ou desliga o modo eficiência em todos os processos do programa. Retorna quantos mudaram.</summary>
-    public static int SetEfficiency(string name, bool on)
-    {
-        if (IsProtected(name)) return 0;
-        int n = 0;
-        foreach (var p in Process.GetProcessesByName(name))
-            using (p)
-            {
-                // PROCESS_SET_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION
-                IntPtr h = Native.OpenProcess(0x0200 | 0x1000, false, p.Id);
-                if (h == IntPtr.Zero) continue;
-                try
-                {
-                    var st = new PowerThrottlingState { Version = 1, ControlMask = 1, StateMask = on ? 1u : 0u }; // 1 = EXECUTION_SPEED
-                    if (!SetProcessInformation(h, 4 /* ProcessPowerThrottling */, ref st, Marshal.SizeOf<PowerThrottlingState>())) continue;
-                    try { p.PriorityClass = on ? ProcessPriorityClass.Idle : ProcessPriorityClass.Normal; } catch { }
-                    n++;
-                }
-                finally { Native.CloseHandle(h); }
-            }
-        return n;
-    }
-    public static bool IsUserProtected(string name) => _user.Contains(name);
-    public static bool IsProtected(string name) => Protected.Contains(name) || _user.Contains(name);
-
-    /// <summary>Muda a prioridade de todos os processos com esse nome. Retorna quantos foram alterados.</summary>
-    public static int SetPriority(string name, ProcessPriorityClass priority)
-    {
-        if (IsProtected(name)) return 0;
-        int changed = 0;
-        foreach (var p in Process.GetProcessesByName(name))
-            using (p)
-            {
-                try { p.PriorityClass = priority; changed++; } catch { /* sem permissão ou já terminou */ }
-            }
-        return changed;
-    }
-
-    /// <summary>Encerra todos os processos com esse nome. Retorna quantos foram encerrados.</summary>
-    public static int Kill(string name)
-    {
-        if (IsProtected(name)) return 0;
-        int killed = 0;
-        foreach (var p in Process.GetProcessesByName(name))
-        {
-            using (p)
-            {
-                try { p.Kill(); killed++; } catch { /* sem permissão ou já terminou */ }
-            }
-        }
-        return killed;
     }
 }

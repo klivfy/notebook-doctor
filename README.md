@@ -14,6 +14,20 @@ dotnet run -c Release
 
 Requer Windows 10/11 e o SDK do .NET 8. Para gerar o executável: `dotnet publish -c Release -r win-x64 --self-contained false`.
 
+## Testes
+
+```powershell
+dotnet test tests/NotebookDoctor.Tests
+```
+
+As regras de diagnóstico, a nota de saúde, a detecção de vazamento de memória e os modelos de dados ficam em `src/NotebookDoctor.Core` (sem WPF nem chamadas ao Windows). Por isso os testes rodam em qualquer sistema. A CI (`.github/workflows/ci.yml`) compila o app e roda os testes no Windows a cada pull request.
+
+## Estrutura
+
+- Raiz: o app WPF (janelas, bandeja, temas) e `Services/` com o que conversa com o Windows (processos, registro, powercfg, PowerShell, arquivos)
+- `src/NotebookDoctor.Core`: lógica pura, testável
+- `tests/NotebookDoctor.Tests`: testes xUnit do Core
+
 ## Segurança
 
 - Nada é apagado ou encerrado sem confirmação; mudanças de sistema têm "Desfazer" na seção Ações.

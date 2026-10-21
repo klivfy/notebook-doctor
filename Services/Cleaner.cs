@@ -34,8 +34,7 @@ public static class Cleaner
         ReturnSpecialDirectories = false,
     };
 
-    public static string FormatBytes(long b) =>
-        b >= 1L << 30 ? $"{b / 1073741824.0:0.0} GB" : b >= 1L << 20 ? $"{b / 1048576.0:0} MB" : $"{b / 1024.0:0} KB";
+    public static string FormatBytes(long b) => Pt.Bytes(b);
 
     private static string Local => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 

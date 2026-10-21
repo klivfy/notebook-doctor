@@ -3,11 +3,6 @@ using System.Text.RegularExpressions;
 
 namespace NotebookDoctor.Services;
 
-public sealed record PowerPlan(string Guid, string Name, bool Active)
-{
-    public override string ToString() => Name;
-}
-
 /// <summary>Lista e troca planos de energia via powercfg (não exige administrador para o usuário atual).</summary>
 public static class PowerPlans
 {

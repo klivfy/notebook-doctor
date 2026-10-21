@@ -323,7 +323,7 @@ public partial class MainWindow : Window
         if (!Dialogs.Confirm(this, "Encerrar programa?",
                 $"Encerrar \"{name}\" ({Pt.N(count, "processo", "processos")}, {memMB:N0} MB)?\n\nO que é: {about.Description}.\nSeguro encerrar: {about.SafetyText}.\n\nTrabalho não salvo nesse programa será perdido.",
                 "Encerrar", danger: true)) return;
-        int n = ProcessTools.Kill(name);
+        int n = ProcessActions.Kill(name);
         string done = n == 1 ? $"1 processo de {name} encerrado." : $"{n} processos de {name} encerrados.";
         ProcMsg.Text = n > 0 ? done : "Não foi possível encerrar: falta permissão ou o programa já fechou.";
         if (n > 0) { ActionLog.Add("Programa encerrado", $"{name} ({Pt.N(n, "processo", "processos")}, {memMB:N0} MB)"); ShowSnack(done, $"{memMB:N0} MB de memória liberados."); }
@@ -666,7 +666,7 @@ public partial class MainWindow : Window
         if (ProcessTools.IsProtected(g.Name)) { ProcMsg.Text = $"{g.Name} é do sistema: a prioridade não é alterada."; return; }
         if (Simulate(lower ? $"Baixar a prioridade de {g.Name}" : $"Restaurar a prioridade de {g.Name}",
                      $"Mudaria {Pt.N(g.Count, "processo", "processos")} para prioridade {(lower ? "abaixo do normal" : "normal")}.")) return;
-        int n = ProcessTools.SetPriority(g.Name, lower ? System.Diagnostics.ProcessPriorityClass.BelowNormal : System.Diagnostics.ProcessPriorityClass.Normal);
+        int n = ProcessActions.SetPriority(g.Name, lower ? System.Diagnostics.ProcessPriorityClass.BelowNormal : System.Diagnostics.ProcessPriorityClass.Normal);
         ProcMsg.Text = n > 0 ? $"{g.Name}: prioridade {(lower ? "reduzida" : "normal")} em {Pt.N(n, "processo", "processos")}. Vale até o programa ser reaberto." : "Não foi possível alterar: falta permissão.";
         if (n > 0 && lower) ActionLog.Add($"Prioridade reduzida: {g.Name}", Pt.N(n, "processo", "processos"), "priority", g.Name);
     }
@@ -1017,7 +1017,7 @@ public partial class MainWindow : Window
         if (ProcGrid.SelectedItem is not ProcRow g) { ProcMsg.Text = "Selecione um programa na lista."; return; }
         if (ProcessTools.IsProtected(g.Name)) { ProcMsg.Text = $"{g.Name} é protegido: o modo eficiência não é aplicado."; return; }
         if (Simulate($"Modo eficiência em {g.Name}", $"Ligaria o modo econômico do Windows (EcoQoS) e a prioridade baixa em {Pt.N(g.Count, "processo", "processos")}. O programa continuaria aberto.")) return;
-        int n = ProcessTools.SetEfficiency(g.Name, on: true);
+        int n = ProcessActions.SetEfficiency(g.Name, on: true);
         ProcMsg.Text = n > 0 ? $"{g.Name}: modo eficiência em {Pt.N(n, "processo", "processos")}. Vale até o programa ser reaberto." : "Não foi possível aplicar: falta permissão.";
         if (n > 0) ActionLog.Add($"Modo eficiência: {g.Name}", Pt.N(n, "processo", "processos"), "efficiency", g.Name);
     }

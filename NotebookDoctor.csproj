@@ -21,6 +21,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- O app fica na raiz; a biblioteca e os testes têm projeto próprio e não entram na compilação dele -->
+    <Compile Remove="src/**;tests/**" />
+    <None Remove="src/**;tests/**" />
+    <Page Remove="src/**;tests/**" />
+    <ProjectReference Include="src/NotebookDoctor.Core/NotebookDoctor.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="app.ico" />
     <Resource Include="icon-256.png" />
   </ItemGroup>

@@ -66,11 +66,11 @@ public static class ActionLog
                 msg = "Item de inicialização restaurado.";
                 break;
             case "priority":
-                msg = ProcessTools.SetPriority(entry.UndoArg1, ProcessPriorityClass.Normal) > 0
+                msg = ProcessActions.SetPriority(entry.UndoArg1, ProcessPriorityClass.Normal) > 0
                     ? "Prioridade normal restaurada." : "O programa não está mais aberto: nada a restaurar.";
                 break;
             case "efficiency":
-                msg = ProcessTools.SetEfficiency(entry.UndoArg1, on: false) > 0
+                msg = ProcessActions.SetEfficiency(entry.UndoArg1, on: false) > 0
                     ? "Modo eficiência desligado." : "O programa não está mais aberto: nada a restaurar.";
                 break;
             case "tweak":
