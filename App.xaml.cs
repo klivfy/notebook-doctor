@@ -73,6 +73,7 @@ public partial class App : Application
 
         Settings = AppPaths.Demo ? StartDemo() : AppSettings.Load();
         CrashLog.Enabled = Settings.CrashReports;
+        Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
         ThemeManager.Apply(Settings.ThemeMode);
         TextScale.Apply();
@@ -104,7 +105,14 @@ public partial class App : Application
 
         var win = new MainWindow();
         MainWindow = win;
-        if (!e.Args.Contains("--background")) ShowWindow();
+        if (e.Args.Contains("--background")) { }
+        // B09: aberto pelo atalho, sem pedido de aba ou de notificação, começa minimizado na barra de tarefas
+        else if (Settings.StartMinimized && Settings.FirstRunDone && uri is null && !e.Args.Any(a => a.StartsWith("--tab=")))
+        {
+            win.WindowState = WindowState.Minimized;
+            win.Show();
+        }
+        else ShowWindow();
         // Atalho: --tab=N abre direto na aba N (0 = Painel). Útil para testes e atalhos do Windows.
         var tabArg = e.Args.FirstOrDefault(a => a.StartsWith("--tab="));
         if (tabArg is not null && int.TryParse(tabArg[6..], out int tab)) win.SelectTab(tab);
@@ -311,6 +319,7 @@ public partial class App : Application
     {
         _tray.SyncStartWithWindows(Settings.StartWithWindows);
         CrashLog.Enabled = Settings.CrashReports;
+        Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
         ThemeManager.Apply(Settings.ThemeMode);
     }
@@ -397,7 +406,7 @@ public partial class App : Application
         var last = _recent.Where(x => (s.Time - x.Time).TotalMinutes <= 2).ToList();
         string? msg = null;
         if (last.Count >= 6 && last.All(x => x.TempC >= 90))
-            msg = $"Temperatura em {s.TempC:0} °C há 2 minutos.";
+            msg = $"Temperatura em {Units.Temp(s.TempC)} há 2 minutos.";
         else
         {
             var loaded = _recent.TakeLast(12).Where(x => x.Cpu >= 70 && x.CpuPerf >= 0).ToList();
@@ -438,7 +447,7 @@ public partial class App : Application
         if (s.DiskFreePct < 10 && (DateTime.Now - _lastDiskAlert).TotalHours >= 6)
         {
             _lastDiskAlert = DateTime.Now;
-            Alert("Pouco espaço no disco", $"Só {s.DiskFreePct:0}% livre ({s.DiskFreeGB:0} GB).", ("Abrir Limpeza", "tab/2"), ("Ver o que ocupa", "tab/3"));
+            Alert("Pouco espaço no disco", $"Só {s.DiskFreePct:0}% livre ({Units.Gb(s.DiskFreeGB, "0")}).", ("Abrir Limpeza", "tab/2"), ("Ver o que ocupa", "tab/3"));
         }
         string? msg = null;
         int minutes = Settings.AlertMinutes;
@@ -553,8 +562,16 @@ public partial class App : Application
     /// <summary>Fecha para o instalador poder substituir o executável.</summary>
     public void QuitForUpdate() => Quit();
 
+    /// <summary>Verdadeiro durante o encerramento: a janela deixa de se esconder na bandeja e fecha de fato.</summary>
+    public bool Quitting { get; private set; }
+
+    /// <summary>B10: "fechar encerra o app".</summary>
+    public void ExitApp() => Quit();
+
     private void Quit()
     {
+        if (Quitting) return;
+        Quitting = true;
         (MainWindow as NotebookDoctor.MainWindow)?.SavePlacement();
         if (Focus.Active) Task.Run(Focus.StopAsync).Wait(3000); // devolve as prioridades e o plano de energia
         _cts.Cancel();

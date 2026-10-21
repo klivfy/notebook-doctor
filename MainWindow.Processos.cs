@@ -41,7 +41,8 @@ public partial class MainWindow
             return new ProcRow(g.Name, g.Count, g.CpuPct, g.MemMB, g.IoKBs, g.Conns, about.Description, about.SafetyText, ProcessIcons.Get(g.Name));
         }).ToList();
         ApplyFilter(ProcGrid, ProcSearch.Text, o => o is ProcRow r ? r.Name + " " + r.About : "");
-        foreach (var d in sort) ProcGrid.Items.SortDescriptions.Add(d);
+        if (ProcGrid.Items.SortDescriptions.Count == 0) // B29: a ordenação salva já pode ter voltado sozinha
+            foreach (var d in sort) ProcGrid.Items.SortDescriptions.Add(d);
         foreach (var row in ProcGrid.Items.OfType<ProcRow>().Where(r => selected.Contains(r.Name))) ProcGrid.SelectedItems.Add(row);
     }
 

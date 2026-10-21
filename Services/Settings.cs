@@ -108,6 +108,22 @@ public sealed class AppSettings
     /// <summary>M03: overlay de desempenho ("off", "fullscreen" ou "always") e o canto da tela.</summary>
     public string OverlayMode { get; set; } = Overlay.Off;
     public string OverlayCorner { get; set; } = "top-left";
+    /// <summary>B16/B17: "windows", "decimal" ou "binary"; "c" ou "f".</summary>
+    public string SizeUnit { get; set; } = "windows";
+    public string TempUnit { get; set; } = "c";
+    /// <summary>B09: ao abrir pelo atalho, a janela começa minimizada na barra de tarefas.</summary>
+    public bool StartMinimized { get; set; }
+    /// <summary>B10: o X da janela encerra o app em vez de deixá-lo na bandeja.</summary>
+    public bool CloseExits { get; set; }
+    /// <summary>B29/B31: ordenação e larguras de coluna de cada tabela.</summary>
+    public Dictionary<string, GridLayout> Grids { get; set; } = new();
+
+    /// <summary>Aplica as unidades escolhidas aos textos (o Core lê de <see cref="Units"/>).</summary>
+    public void ApplyUnits()
+    {
+        Units.Size = Units.ParseSize(SizeUnit);
+        Units.Temperature = Units.ParseTemp(TempUnit);
+    }
 
     public bool InQuietHours(DateTime now) =>
         QuietHours && AlertPolicy.TryParseClock(QuietStart, out var a) && AlertPolicy.TryParseClock(QuietEnd, out var b)

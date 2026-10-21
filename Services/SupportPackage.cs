@@ -68,7 +68,7 @@ public static class SupportPackage
         {
             sb.AppendLine($"CPU agora: {s.Cpu:0}% · RAM: {s.RamUsedGB:0.0} de {s.RamTotalGB:0.0} GB ({s.RamPct:0}%)");
             sb.AppendLine($"Disco do sistema: {s.DiskFreeGB:0} GB livres ({s.DiskFreePct:0}%) · atividade {s.DiskBusy:0}%");
-            if (s.TempC > 0) sb.AppendLine($"Temperatura: {s.TempC:0} °C");
+            if (s.TempC > 0) sb.AppendLine($"Temperatura: {Units.Temp(s.TempC)}");
             sb.AppendLine("Mais pesados agora: " + string.Join(", ", s.TopByCpu.Take(5).Select(g => $"{g.Name} {g.CpuPct:0}%/{g.MemMB} MB")));
         }
         if (h.HasDisk) sb.AppendLine($"Disco: {h.DiskType} · {(h.DiskHealthy ? "saudável" : h.DiskHealth)}" + (h.DiskWearPct is { } w ? $" · desgaste {w}%" : ""));

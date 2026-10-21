@@ -22,7 +22,7 @@ public static class Overlay
 
     /// <summary>Uma linha curta, legível de relance: "CPU 45% · RAM 72% · 64 °C".</summary>
     public static string Text(Snapshot s) =>
-        $"CPU {s.Cpu:0}% · RAM {s.RamPct:0}%" + (s.TempC > 0 ? $" · {s.TempC:0} °C" : "") + (s.DiskBusy >= 50 ? $" · disco {s.DiskBusy:0}%" : "");
+        $"CPU {s.Cpu:0}% · RAM {s.RamPct:0}%" + (s.TempC > 0 ? " · " + Units.Temp(s.TempC) : "") + (s.DiskBusy >= 50 ? $" · disco {s.DiskBusy:0}%" : "");
 
     /// <summary>Posição do canto escolhido dentro do monitor (em pixels), com margem.</summary>
     public static (double X, double Y) Place(string corner, Box monitor, double width, double height, double margin)

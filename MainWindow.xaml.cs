@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         RestorePlacement();
+        foreach (var grid in Grids()) GridMemory.Attach(grid, Host.Settings);
         FooterText.Text = AppInfo.Copyright;
         AboutText.Text = $"Notebook Doctor {AppInfo.Version}\nSuporte: klivfy.com/suporte"
                          + (AppPaths.Portable ? $"\nModo portátil: dados em {AppPaths.Dir}" : "");
@@ -148,7 +149,10 @@ public partial class MainWindow : Window
     // Fechar a janela só a esconde: o app continua na bandeja.
     protected override void OnClosing(CancelEventArgs e)
     {
+        if (Host.Quitting) return; // encerrando o app: fecha de fato
         e.Cancel = true;
+        // B10: encerra depois que este Closing terminar (fechar de dentro dele é reentrante); ExitApp salva a posição
+        if (Host.Settings.CloseExits) { Dispatcher.BeginInvoke(Host.ExitApp); return; }
         SavePlacement();
         Hide();
     }
@@ -176,12 +180,15 @@ public partial class MainWindow : Window
             .ToList();
     }
 
+    private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid];
+
     public void SavePlacement()
     {
         if (!IsLoaded || WindowState == WindowState.Minimized && RestoreBounds.IsEmpty) return;
         var r = WindowState == WindowState.Normal ? new Rect(Left, Top, ActualWidth, ActualHeight) : RestoreBounds;
         if (r.IsEmpty || r.Width <= 0) return;
         var s = Host.Settings;
+        GridMemory.SaveWidths(Grids(), s);
         (s.WinLeft, s.WinTop, s.WinWidth, s.WinHeight) = (r.Left, r.Top, r.Width, r.Height);
         s.WinMaximized = WindowState == WindowState.Maximized;
         s.Save();

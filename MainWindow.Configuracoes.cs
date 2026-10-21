@@ -258,6 +258,10 @@ public partial class MainWindow
         CfgMini.IsChecked = s.MiniWidget;
         CfgUpdates.IsChecked = s.CheckUpdates;
         CfgCrash.IsChecked = s.CrashReports;
+        CfgStartMin.IsChecked = s.StartMinimized;
+        CfgCloseExits.IsChecked = s.CloseExits;
+        SelectByTag(CfgSizeUnit, s.SizeUnit);
+        SelectByTag(CfgTempUnit, s.TempUnit);
         SelectByTag(CfgOverlay, s.OverlayMode);
         SelectByTag(CfgOverlayCorner, s.OverlayCorner);
         CfgHotkey.IsChecked = s.GlobalHotkey;
@@ -285,6 +289,10 @@ public partial class MainWindow
         s.RestorePointBeforeChanges = CfgRestore.IsChecked == true;
         s.CheckUpdates = CfgUpdates.IsChecked == true;
         s.CrashReports = CfgCrash.IsChecked == true;
+        s.StartMinimized = CfgStartMin.IsChecked == true;
+        s.CloseExits = CfgCloseExits.IsChecked == true;
+        s.SizeUnit = (CfgSizeUnit.SelectedItem as ComboBoxItem)?.Tag as string ?? "windows";
+        s.TempUnit = (CfgTempUnit.SelectedItem as ComboBoxItem)?.Tag as string ?? "c";
         s.OverlayMode = (CfgOverlay.SelectedItem as ComboBoxItem)?.Tag as string ?? Overlay.Off;
         s.OverlayCorner = (CfgOverlayCorner.SelectedItem as ComboBoxItem)?.Tag as string ?? "top-left";
         s.GlobalHotkey = CfgHotkey.IsChecked == true;

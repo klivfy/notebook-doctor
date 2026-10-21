@@ -132,15 +132,15 @@ Critérios de impacto
 | B06 | Transição entre abas | ⬜ |
 | B07 | Lembrar posição e tamanho da janela | 🟡 posição, tamanho e maximizada; reabre centralizada se a barra de título ficaria fora da tela |
 | B08 | Lembrar a última aba aberta | ✅ |
-| B09 | Opção de iniciar minimizado | ⬜ |
-| B10 | Opção "fechar encerra o app" | ⬜ |
+| B09 | Opção de iniciar minimizado | 🟡 aberto pelo atalho, começa minimizado na barra de tarefas (ao iniciar com o Windows já fica só na bandeja) |
+| B10 | Opção "fechar encerra o app" | 🟡 em Configurações; desligado, o X continua levando para a bandeja |
 | B11 | Dicas (tooltips) nos cartões | ⬜ |
 | B12 | Etapas de progresso na limpeza | ⬜ |
 | B13 | Som discreto ao concluir | ⬜ |
 | B14 | Mensagem de comemoração ao liberar mais de 1 GB | ⬜ |
 | B15 | Modo compacto da janela | ⬜ |
-| B16 | Escolha GB × GiB | ⬜ |
-| B17 | Unidades °C/°F | ⬜ |
+| B16 | Escolha GB × GiB | 🟡 GB como o Windows (1024), GB como a caixa do disco (1000) ou GiB; vale para tamanhos em GB e para Pt.Bytes. Colunas "(MB)" das tabelas continuam com esse título |
+| B17 | Unidades °C/°F | 🟡 em todo texto (painel, diagnóstico, avisos, overlay, relatórios); as regras continuam em °C |
 | B18 | Copiar métricas para a área de transferência | 🟡 botão "Copiar resumo" no Painel: nota, uso atual, gargalo, problemas e programas mais pesados; não testado no Windows |
 | B19 | Captura de tela do painel | ⬜ |
 | B20 | Exportar relatório em PDF | 🟡 botão "Exportar em PDF" no Painel, gerado pelo próprio app (sem biblioteca externa, texto em Helvetica); não testado no Windows |
@@ -152,9 +152,9 @@ Critérios de impacto
 | B26 | Modo demonstração com dados fictícios | 🟡 `--demo`: Painel, Processos e Histórico (7 dias) fictícios, simulação sempre ligada, pasta temporária própria. Limpeza, Espaço, Inicialização e Ajustes ainda leem o PC real (só leitura) |
 | B27 | Variações de texto mais amigáveis | ⬜ |
 | B28 | Ícones nas abas | ✅ (barra lateral) |
-| B29 | Ordenação persistente nas tabelas | ⬜ |
+| B29 | Ordenação persistente nas tabelas | 🟡 todas as tabelas; volta ao abrir e a cada atualização de Processos |
 | B30 | Colunas personalizáveis | ⬜ |
-| B31 | Lembrar larguras de coluna | ⬜ |
+| B31 | Lembrar larguras de coluna | 🟡 só as colunas que a pessoa ajustou, salvas ao fechar a janela |
 | B32 | Destaque de linha por severidade | ⬜ |
 | B33 | Totais no rodapé das tabelas | ⬜ |
 | B34 | "Marcar/desmarcar todos" na limpeza | 🟡 "Marcar todos" (exceto a Lixeira) e "Desmarcar todos" na Limpeza; não testado no Windows |

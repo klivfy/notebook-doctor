@@ -12,8 +12,8 @@ public static class ReportContent
             (PdfStyle.Subtitle, $"Relatório gerado em {s.Time:dd/MM/yyyy HH:mm} · {machine}"),
             (PdfStyle.Heading, "Agora"),
             (PdfStyle.Text, $"Processador: {s.Cpu:0}%"),
-            (PdfStyle.Text, $"Memória RAM: {s.RamPct:0}% ({s.RamUsedGB:0.0} de {s.RamTotalGB:0.0} GB)"),
-            (PdfStyle.Text, $"Disco livre: {s.DiskFreePct:0}% ({s.DiskFreeGB:0} GB)"),
+            (PdfStyle.Text, $"Memória RAM: {s.RamPct:0}% ({Units.GbOf(s.RamUsedGB, s.RamTotalGB)})"),
+            (PdfStyle.Text, $"Disco livre: {s.DiskFreePct:0}% ({Units.Gb(s.DiskFreeGB, "0")})"),
             (PdfStyle.Heading, "Diagnóstico"),
         };
         foreach (var f in findings)
@@ -44,7 +44,7 @@ public static class ReportContent
         {
             $"Notebook Doctor · {s.Time:dd/MM/yyyy HH:mm}",
             $"Nota de saúde: {score.Score} ({score.Label})",
-            $"CPU {s.Cpu:0}% · RAM {s.RamPct:0}% ({s.RamUsedGB:0.0}/{s.RamTotalGB:0.0} GB) · Disco livre {s.DiskFreePct:0}% ({s.DiskFreeGB:0} GB)",
+            $"CPU {s.Cpu:0}% · RAM {s.RamPct:0}% ({Units.GbOf(s.RamUsedGB, s.RamTotalGB)}) · Disco livre {s.DiskFreePct:0}% ({Units.Gb(s.DiskFreeGB, "0")})",
             $"Gargalo: {bottleneck.Resource}",
         }.Concat(findings.Where(f => f.Level != "OK").Take(5).Select(f => $"- [{f.Tag}] {f.Title}: {f.Detail}"))
          .Concat(s.Heavy.Any() ? [$"Mais pesados: {string.Join(", ", s.Heavy.Take(3).Select(g => $"{g.Name} ({g.CpuPct:0}% CPU, {g.MemMB:N0} MB)"))}"] : []));

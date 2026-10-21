@@ -141,7 +141,7 @@ public partial class MainWindow
         {
             DiskHealthTitle.Text = $"{(h.DiskType.Length > 0 ? h.DiskType : "Disco")} · saúde";
             string state = h.DiskHealthy ? "Saudável" : h.DiskHealth;
-            DiskHealthText.Text = state + (h.DiskWearPct is { } w ? $" · desgaste {w}%" : "") + (h.DiskTempC is { } t ? $" · {t} °C" : "");
+            DiskHealthText.Text = state + (h.DiskWearPct is { } w ? $" · desgaste {w}%" : "") + (h.DiskTempC is { } t ? " · " + Units.Temp(t) : "");
             DiskHealthText.ToolTip = h.DiskWearPct is null ? "Desgaste e temperatura do SSD só aparecem com o app em modo administrador." : null;
         }
         else DiskHealthText.Text = "indisponível";
@@ -170,7 +170,7 @@ public partial class MainWindow
         OptimizeBtn.IsEnabled = true;
 
         string compare = before is null || after is null ? "" :
-            $"Antes → depois: espaço livre {before.DiskFreeGB:0.0} → {after.DiskFreeGB:0.0} GB · memória {before.RamPct:0}% → {after.RamPct:0}% · nota {scoreBefore} → {Host.Score.Score}. ";
+            $"Antes → depois: espaço livre {Units.Gb(before.DiskFreeGB)} → {Units.Gb(after.DiskFreeGB)} · memória {before.RamPct:0}% → {after.RamPct:0}% · nota {scoreBefore} → {Host.Score.Score}. ";
         string admin = AppInfo.IsAdmin ? "O SSD também foi otimizado (TRIM)." : "Pastas do Windows e otimização do SSD exigem o modo administrador.";
         // Resultado no próprio app, sem diálogo modal; o detalhe fica no registro de Ações
         ShowSnack($"Otimização concluída: {Cleaner.FormatBytes(freed)} liberados", compare + admin,
@@ -238,11 +238,11 @@ public partial class MainWindow
         SubTitle.Text = $"Ligado há {(up.TotalDays >= 1 ? $"{(int)up.TotalDays} d {up.Hours} h" : $"{up.Hours} h {up.Minutes} min")} · {(AppInfo.IsAdmin ? "administrador" : "usuário padrão")} · rede ↓ {FormatRate(s.NetDownKBs)} ↑ {FormatRate(s.NetUpKBs)}";
 
         CpuText.Text = $"{s.Cpu:0}%";
-        CpuSub.Text = $"Maior: {s.TopByCpu.FirstOrDefault()?.Name ?? "–"}" + (s.TempC > 0 ? $" · {s.TempC:0} °C" : "");
+        CpuSub.Text = $"Maior: {s.TopByCpu.FirstOrDefault()?.Name ?? "–"}" + (s.TempC > 0 ? " · " + Units.Temp(s.TempC) : "");
         RamText.Text = $"{s.RamPct:0}%";
-        RamSub.Text = $"{s.RamUsedGB:0.0} de {s.RamTotalGB:0.0} GB";
+        RamSub.Text = Units.GbOf(s.RamUsedGB, s.RamTotalGB);
         DiskText.Text = $"{s.DiskBusy:0}%";
-        DiskSub.Text = $"ocupado · {s.DiskFreeGB:0} GB livres ({s.DiskFreePct:0}%)";
+        DiskSub.Text = $"ocupado · {Units.Gb(s.DiskFreeGB, "0")} livres ({s.DiskFreePct:0}%)";
 
         var recent = Host.Recent;
         var times = recent.Select(x => x.Time).ToList();

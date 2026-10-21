@@ -240,3 +240,66 @@ public class OverlayTests
         Assert.Equal((x, y), Overlay.Place(corner, monitor, 200, 40, 12));
     }
 }
+
+public class UnitsTests : IDisposable
+{
+    public void Dispose() { Units.Size = SizeUnit.Windows; Units.Temperature = TempUnit.Celsius; }
+
+    [Fact]
+    public void Padrao_e_como_o_Windows()
+    {
+        Assert.Equal("1,5 GB", Units.Bytes(1610612736));
+        Assert.Equal("15,9 GB", Units.Gb(15.9));
+        Assert.Equal("64 °C", Units.Temp(64.4));
+    }
+
+    [Fact]
+    public void Decimal_bate_com_a_caixa_do_disco()
+    {
+        Units.Size = SizeUnit.Decimal;
+        Assert.Equal("1,5 GB", Units.Bytes(1_500_000_000));
+        Assert.Equal("476 GB", Units.Gb(443.3, "0")); // SSD de "512 GB" que o Windows mostra como 476 GB
+        Assert.Equal("6,7 de 17,1 GB", Units.GbOf(6.2, 15.9));
+    }
+
+    [Fact]
+    public void Binario_usa_GiB_MiB_KiB()
+    {
+        Units.Size = SizeUnit.Binary;
+        Assert.Equal("1,5 GiB", Units.Bytes(1610612736));
+        Assert.Equal("120 MiB", Pt.Bytes(120L << 20));
+        Assert.Equal("6,2 de 15,9 GiB", Units.GbOf(6.2, 15.9));
+    }
+
+    [Fact]
+    public void Fahrenheit()
+    {
+        Units.Temperature = TempUnit.Fahrenheit;
+        Assert.Equal("147 °F", Units.Temp(64));
+        Assert.Equal("Temperatura muito alta", Diagnosis.Evaluate([Make.Snap(tempC: 92)], HealthInfo.Empty).First(f => f.Title.StartsWith("Temperatura")).Title);
+        Assert.Equal("198 °F", Diagnosis.Evaluate([Make.Snap(tempC: 92)], HealthInfo.Empty).First(f => f.Title.StartsWith("Temperatura")).Detail);
+    }
+
+    [Theory]
+    [InlineData("decimal", SizeUnit.Decimal)]
+    [InlineData("binary", SizeUnit.Binary)]
+    [InlineData("qualquer", SizeUnit.Windows)]
+    [InlineData(null, SizeUnit.Windows)]
+    public void Le_a_preferencia(string? v, SizeUnit expected) => Assert.Equal(expected, Units.ParseSize(v));
+
+    [Fact]
+    public void Larguras_absurdas_sao_ignoradas()
+    {
+        Assert.False(GridLayout.IsSaneWidth(0));
+        Assert.False(GridLayout.IsSaneWidth(5000));
+        Assert.True(GridLayout.IsSaneWidth(120));
+    }
+
+    [Fact]
+    public void Layout_das_tabelas_nao_vai_na_exportacao()
+    {
+        string json = SettingsTransfer.Export("""{"Grids":{"ProcGrid":{"Sort":"MemMB","Desc":true}},"SizeUnit":"binary"}""", "1.2.0");
+        Assert.DoesNotContain("Grids", json);
+        Assert.Contains("SizeUnit", json);
+    }
+}

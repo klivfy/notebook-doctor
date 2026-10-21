@@ -614,7 +614,26 @@
                                 <ComboBoxItem Content="Escuro" Tag="dark"/>
                             </ComboBox>
                         </Grid>
+                        <!-- B16/B17 -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Text="Tamanhos" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CfgSizeUnit" Grid.Column="1" AutomationProperties.Name="Unidade de tamanho">
+                                <ComboBoxItem Content="GB, como o Windows (base 1024)" Tag="windows"/>
+                                <ComboBoxItem Content="GB, como na caixa do disco (base 1000)" Tag="decimal"/>
+                                <ComboBoxItem Content="GiB (base 1024)" Tag="binary"/>
+                            </ComboBox>
+                            <TextBlock Grid.Row="1" Text="Temperatura" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                            <ComboBox x:Name="CfgTempUnit" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" AutomationProperties.Name="Unidade de temperatura">
+                                <ComboBoxItem Content="Celsius (°C)" Tag="c"/>
+                                <ComboBoxItem Content="Fahrenheit (°F)" Tag="f"/>
+                            </ComboBox>
+                        </Grid>
                         <CheckBox x:Name="CfgStart" Content="Iniciar com o Windows (fica na bandeja)"/>
+                        <CheckBox x:Name="CfgStartMin" Content="Ao abrir pelo atalho, começar minimizado na barra de tarefas"/>
+                        <CheckBox x:Name="CfgCloseExits" Content="Fechar a janela encerra o app (em vez de continuar na bandeja)"
+                                  ToolTip="Desligado, o X só esconde a janela: os avisos e o histórico continuam funcionando."/>
                         <CheckBox x:Name="CfgAlerts" Content="Avisar quando CPU ou RAM ficarem altas"/>
                         <CheckBox x:Name="CfgToasts" Content="Usar notificações do Windows (com botões)"/>
                         <CheckBox x:Name="CfgWeekly" Content="Limpar temporários toda semana, com o PC parado"/>

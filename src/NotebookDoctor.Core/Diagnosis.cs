@@ -75,7 +75,7 @@ public static class Diagnosis
         var now = recent[^1];
         double cpuAvg = recent.TakeLast(12).Average(s => s.Cpu);
 
-        if (now.RamPct >= 85) f.Add(new("PROBLEMA", "Memória RAM quase cheia", $"{now.RamPct:0}% em uso ({now.RamUsedGB:0.0} de {now.RamTotalGB:0.0} GB)", "Feche abas e programas pesados (veja a lista abaixo).", $"tab:{TabProcs}", "Ver programas"));
+        if (now.RamPct >= 85) f.Add(new("PROBLEMA", "Memória RAM quase cheia", $"{now.RamPct:0}% em uso ({Units.GbOf(now.RamUsedGB, now.RamTotalGB)})", "Feche abas e programas pesados (veja a lista abaixo).", $"tab:{TabProcs}", "Ver programas"));
         else if (now.RamPct >= 75) f.Add(new("ATENCAO", "Memória RAM alta", $"{now.RamPct:0}% em uso", "Reduza abas do navegador e apps em segundo plano.", $"tab:{TabProcs}", "Ver programas"));
 
         if (cpuAvg >= 70) f.Add(new("PROBLEMA", "CPU sobrecarregada", $"{cpuAvg:0}% em média no último minuto", "Veja quais programas mais consomem CPU.", $"tab:{TabProcs}", "Ver programas"));
@@ -90,13 +90,13 @@ public static class Diagnosis
                       h.HighPlanGuid is not null && h.IsBalancedPlan ? "power-high" : $"tab:{TabSettings}",
                       h.HighPlanGuid is not null && h.IsBalancedPlan ? "Ativar Alto desempenho" : "Ver energia", h.HighPlanGuid));
 
-        if (now.TempC >= 90) f.Add(new("PROBLEMA", "Temperatura muito alta", $"{now.TempC:0} °C", "Desligue pesados, limpe as saídas de ar e use o notebook em superfície firme.", $"tab:{TabProcs}", "Ver programas"));
-        else if (now.TempC >= 80) f.Add(new("ATENCAO", "Temperatura alta", $"{now.TempC:0} °C", "Verifique a ventilação; calor faz o processador reduzir a velocidade.", $"tab:{TabProcs}", "Ver programas"));
+        if (now.TempC >= 90) f.Add(new("PROBLEMA", "Temperatura muito alta", Units.Temp(now.TempC), "Desligue pesados, limpe as saídas de ar e use o notebook em superfície firme.", $"tab:{TabProcs}", "Ver programas"));
+        else if (now.TempC >= 80) f.Add(new("ATENCAO", "Temperatura alta", Units.Temp(now.TempC), "Verifique a ventilação; calor faz o processador reduzir a velocidade.", $"tab:{TabProcs}", "Ver programas"));
 
         // M41: a máquina virtual do WSL/Docker reserva RAM e quase nunca devolve sozinha
         long vmMB = now.Groups.Where(g => g.Name.StartsWith("vmmem", StringComparison.OrdinalIgnoreCase)).Sum(g => g.MemMB);
         if (vmMB >= 2048)
-            f.Add(new("ATENCAO", "WSL/Docker ocupando muita memória", $"{vmMB / 1024.0:0.0} GB reservados pela máquina virtual (vmmem)",
+            f.Add(new("ATENCAO", "WSL/Docker ocupando muita memória", $"{Units.Gb(vmMB / 1024.0)} reservados pela máquina virtual (vmmem)",
                       "Limite a memória em %UserProfile%\\.wslconfig (ex.: [wsl2] memory=4GB) ou encerre o WSL quando não estiver usando.",
                       "wsl-shutdown", "Encerrar WSL"));
 
@@ -149,7 +149,7 @@ public static class Diagnosis
                       $"tab:{TabSettings}", "Ver energia"));
 
         if (now.DiskBusy >= 80) f.Add(new("PROBLEMA", "Disco saturado", $"{now.DiskBusy:0}% ocupado", "Pode ser antivírus, indexação ou atualização em andamento. Veja quem mais movimenta dados.", $"tab:{TabProcs}", "Ver programas"));
-        if (now.DiskFreePct < 10) f.Add(new("PROBLEMA", "Disco quase cheio", $"{now.DiskFreePct:0}% livre ({now.DiskFreeGB:0} GB)", "Libere espaço.", $"tab:{TabClean}", "Abrir Limpeza"));
+        if (now.DiskFreePct < 10) f.Add(new("PROBLEMA", "Disco quase cheio", $"{now.DiskFreePct:0}% livre ({Units.Gb(now.DiskFreeGB, "0")})", "Libere espaço.", $"tab:{TabClean}", "Abrir Limpeza"));
         else if (now.DiskFreePct < 20) f.Add(new("ATENCAO", "Pouco espaço em disco", $"{now.DiskFreePct:0}% livre", "Mantenha pelo menos 20% livre em SSD.", $"tab:{TabClean}", "Abrir Limpeza"));
 
         if (h.HasDisk && !h.DiskHealthy)
@@ -157,7 +157,7 @@ public static class Diagnosis
         if (h.DiskWearPct >= 80)
             f.Add(new("ATENCAO", "SSD com desgaste alto", $"{h.DiskWearPct}% da vida útil consumida", "Planeje a troca do SSD e mantenha backups em dia.", "open-backup", "Abrir backup"));
         if (h.DiskTempC >= 70)
-            f.Add(new("ATENCAO", "Disco quente", $"{h.DiskTempC} °C", "Verifique a ventilação do notebook."));
+            f.Add(new("ATENCAO", "Disco quente", Units.Temp(h.DiskTempC.Value), "Verifique a ventilação do notebook."));
 
         if (h.BatteryHealthPct is < 60)
             f.Add(new("ATENCAO", "Bateria muito desgastada", $"{h.BatteryHealthPct}% da capacidade original" + (h.BatteryCycles is { } c ? $" · {c:N0} ciclos" : ""), "Sem a tomada, o desempenho tende a cair. Considere trocar a bateria.", "battery-report", "Relatório da bateria"));
