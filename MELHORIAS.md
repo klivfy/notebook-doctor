@@ -94,13 +94,13 @@ Critérios de impacto
 | M23 | Ícones reais dos programas nas tabelas | ✅ (tabela de Processos) |
 | M24 | Busca e filtro nas tabelas | ✅ busca em Processos, Inicialização e Espaço |
 | M25 | Seleção múltipla e ações em lote | ⬜ |
-| M26 | Menu de contexto (abrir local, propriedades, pesquisar online) | ⬜ |
+| M26 | Menu de contexto (abrir local, propriedades, pesquisar online) | 🟡 clique direito em Processos: detalhes, abrir local, pesquisar na internet, prioridade, modo eficiência, exceção de aviso e encerrar; não testado no Windows |
 | M27 | Abrir a pasta do item de inicialização | 🟡 botão "Abrir local" na aba Inicialização seleciona o arquivo no Explorador; não testado no Windows |
 | M28 | Mostrar editor/assinatura do item de inicialização | 🟡 coluna Editor: quem assinou o programa ou, sem assinatura, o fabricante declarado no arquivo; não testado no Windows |
 | M29 | Tarefas agendadas de terceiros, com opção de desativar | ⬜ |
 | M30 | Gerenciar serviços (listar e sugerir "manual") | ⬜ |
 | M31 | Listar extensões pesadas de navegador | ⬜ |
-| M32 | Detectar antivírus conflitantes | ⬜ |
+| M32 | Detectar antivírus conflitantes | 🟡 diagnóstico avisa quando há dois antivírus com proteção em tempo real ligada (inclui o Defender), pelo productState da Central de Segurança; não testado no Windows |
 | M33 | Orientar OneDrive "arquivos sob demanda" | ⬜ |
 | M34 | Lixeira por unidade | 🟡 uma linha de Lixeira por unidade com itens, para esvaziar só a do disco cheio; não testado no Windows |
 | M35 | Limpar cache de miniaturas e ícones | 🟡 miniaturas (thumbcache) e cache de ícones na Limpeza, desmarcados; arquivos em uso são pulados; não testado no Windows |
@@ -115,7 +115,7 @@ Critérios de impacto
 | M44 | Horário silencioso | 🟡 horário silencioso configurável (aceita faixa pela meia-noite, ex.: 22:00–07:00); avisos continuam no histórico; não testado no Windows |
 | M45 | Limites de alerta por métrica, com duração configurável | 🟡 minutos seguidos acima do limite configuráveis (padrão 3), valendo para CPU e agora também para RAM; não testado no Windows |
 | M46 | Histórico de alertas disparados | ✅ |
-| M47 | Linha do tempo de eventos (instalações, updates, picos) | ⬜ |
+| M47 | Linha do tempo de eventos (instalações, updates, picos) | 🟡 aba Histórico: linha do tempo com avisos (inclusive silenciados), ações do app, instalações e picos de CPU/RAM de 5+ min; não testado no Windows |
 | M48 | Comparar hoje × semana passada | 🟡 aba Histórico compara as últimas 24 h com o mesmo horário da semana passada (CPU, RAM e nota); não testado no Windows |
 | M49 | Mapa de calor: horários em que o PC fica mais lento | 🟡 aba Histórico mostra mapa de calor dia × hora (último mês) e o pior horário; não testado no Windows |
 | M50 | Previsão de quando o disco enche | 🟡 aba Histórico estima quando o disco enche (tendência do último mês, ignorando o que veio antes da última limpeza); não testado no Windows |

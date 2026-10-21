@@ -4,7 +4,9 @@ public sealed record UnsignedApp(string Name, string Path);
 
 /// <param name="DefenderRealtime">Proteção em tempo real do Windows Defender (null = não deu para ler)</param>
 /// <param name="OtherAv">Antivírus de terceiros registrados no Windows (quando há, o Defender pode estar desligado de propósito)</param>
-public sealed record SecurityInfo(bool? DefenderRealtime, int? SignatureAgeDays, IReadOnlyList<string> OtherAv, IReadOnlyList<string> FirewallOff)
+/// <param name="OtherAvActive">M32: dos antivírus de terceiros, os que estão com a proteção em tempo real ligada</param>
+public sealed record SecurityInfo(bool? DefenderRealtime, int? SignatureAgeDays, IReadOnlyList<string> OtherAv, IReadOnlyList<string> FirewallOff,
+                                  IReadOnlyList<string>? OtherAvActive = null)
 {
     public static readonly SecurityInfo Empty = new(null, null, Array.Empty<string>(), Array.Empty<string>());
 }

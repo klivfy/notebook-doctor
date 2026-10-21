@@ -88,4 +88,19 @@ public partial class MainWindow
         ProcMsg.Text = n > 0 ? $"{g.Name}: modo eficiência em {Pt.N(n, "processo", "processos")}. Vale até o programa ser reaberto." : "Não foi possível aplicar: falta permissão.";
         if (n > 0) ActionLog.Add($"Modo eficiência: {g.Name}", Pt.N(n, "processo", "processos"), "efficiency", g.Name);
     }
+
+    // ---------- M26: menu de clique direito ----------
+    private void ProcOpenLocation_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = "Selecione um programa na lista."; return; }
+        if (ProcessIcons.ExePath(r.Name) is not { } path) { ProcMsg.Text = $"O Windows não informa onde está {r.Name} (processo do sistema ou de outro usuário)."; return; }
+        // Argumento entre aspas: o Explorador só seleciona o arquivo, não o executa
+        try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
+    }
+
+    private void ProcSearchOnline_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = "Selecione um programa na lista."; return; }
+        AppInfo.OpenShell("https://www.bing.com/search?q=" + Uri.EscapeDataString($"{r.Name}.exe o que é processo"));
+    }
 }

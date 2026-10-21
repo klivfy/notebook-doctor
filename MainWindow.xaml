@@ -218,6 +218,21 @@
                                      AutomationProperties.Name="Buscar programa"/>
                         </Grid>
                         <DataGrid x:Name="ProcGrid" Grid.Row="1" MouseDoubleClick="ProcGrid_DoubleClick" AutomationProperties.Name="Programas em execução">
+                            <!-- M26: as mesmas ações dos botões, mais abrir o local e pesquisar o nome -->
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="_Detalhes" Click="ProcDetails_Click"/>
+                                    <MenuItem Header="Abrir _local do arquivo" Click="ProcOpenLocation_Click"/>
+                                    <MenuItem Header="_Pesquisar na internet o que é" Click="ProcSearchOnline_Click"/>
+                                    <Separator/>
+                                    <MenuItem Header="_Baixar prioridade" Click="LowerPriority_Click"/>
+                                    <MenuItem Header="_Restaurar prioridade" Click="RestorePriority_Click"/>
+                                    <MenuItem Header="Modo _eficiência" Click="Efficiency_Click"/>
+                                    <MenuItem Header="_Não avisar sobre este" Click="AlertException_Click"/>
+                                    <Separator/>
+                                    <MenuItem Header="E_ncerrar…" Click="KillSelected_Click"/>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
                             <DataGrid.Columns>
                                 <!-- Ícone, nome e, numa segunda linha, o que é o programa -->
                                 <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="190" SortMemberPath="Name">
@@ -453,15 +468,16 @@
                                 <local:Sparkline x:Name="PRam" Height="60" Unit=" MB" Title="Memória do programa no período" Stroke="{DynamicResource ChartRam}" GridBrush="{DynamicResource OutlineVariant}"/>
                             </StackPanel>
                         </Border>
-                        <!-- M46: avisos disparados -->
+                        <!-- M46/M47: linha do tempo do período (avisos, ações do app, instalações e picos de uso) -->
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
-                                <TextBlock Text="Avisos disparados no período" Style="{StaticResource TitleMedium}"/>
-                                <TextBlock x:Name="AlertsEmpty" Text="Nenhum aviso no período." Style="{StaticResource Muted}"/>
-                                <DataGrid x:Name="AlertsGrid" MaxHeight="320" AutomationProperties.Name="Avisos disparados">
+                                <TextBlock Text="Linha do tempo do período" Style="{StaticResource TitleMedium}"/>
+                                <TextBlock x:Name="AlertsEmpty" Text="Nada registrado no período." Style="{StaticResource Muted}"/>
+                                <DataGrid x:Name="AlertsGrid" MaxHeight="320" AutomationProperties.Name="Linha do tempo do período">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Quando" Binding="{Binding TimeText}" Width="110"/>
-                                        <DataGridTextColumn Header="Aviso" Binding="{Binding Title}" Width="200">
+                                        <DataGridTextColumn Header="Tipo" Binding="{Binding Kind}" Width="130"/>
+                                        <DataGridTextColumn Header="Evento" Binding="{Binding Title}" Width="200">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Margin" Value="0,6"/></Style>
                                             </DataGridTextColumn.ElementStyle>

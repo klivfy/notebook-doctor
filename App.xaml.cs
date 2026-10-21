@@ -246,7 +246,7 @@ public partial class App : Application
     private void Alert(string title, string text, params (string label, string action)[] buttons)
     {
         bool quiet = IsQuietNow();
-        AlertLog.Add(title, quiet ? text + " (sem notificação: horário silencioso ou tela cheia)" : text);
+        AlertLog.Add(title, text, silenced: quiet);
         if (!quiet) Notify(title, text, buttons);
     }
 

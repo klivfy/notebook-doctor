@@ -23,6 +23,8 @@ public sealed record Finding(string Level, string Title, string Detail, string A
             "O calor obriga o hardware a desacelerar e, com o tempo, encurta a vida da bateria, do SSD e da placa. Saídas de ar bloqueadas são a causa mais comum.",
         var t when t.StartsWith("WSL") =>
             "A máquina virtual do WSL/Docker reserva memória para si e raramente a devolve, mesmo parada. Essa RAM fica indisponível para o resto do Windows.",
+        var t when t.StartsWith("Mais de um antivírus") =>
+            "Cada antivírus examina todo arquivo aberto. Com dois ao mesmo tempo, o trabalho dobra e eles podem bloquear um ao outro, deixando abrir programas e copiar arquivos bem mais lento.",
         var t when t.Contains("Proteção") || t.Contains("vírus") || t.Contains("Firewall") =>
             "Sem proteção atualizada, um programa malicioso pode rodar escondido, gastar recursos e expor seus dados.",
         var t when t.StartsWith("Possível vazamento") =>
@@ -101,6 +103,14 @@ public static class Diagnosis
             f.Add(new("PROBLEMA", "Proteção em tempo real do Windows desativada", "Nenhum outro antivírus foi encontrado", "Reative a proteção na Segurança do Windows.", "open-security", "Abrir Segurança"));
         else if (sec.SignatureAgeDays >= 7 && sec.OtherAv.Count == 0)
             f.Add(new("ATENCAO", "Definições de vírus desatualizadas", $"Última atualização há {sec.SignatureAgeDays} dias", "Atualize pela Segurança do Windows (Windows Update).", "open-security", "Abrir Segurança"));
+        // M32: dois antivírus em tempo real examinam cada arquivo duas vezes e podem travar um ao outro
+        var activeAv = sec.OtherAvActive ?? Array.Empty<string>();
+        var avNames = activeAv.Concat(sec.DefenderRealtime == true ? ["Microsoft Defender"] : Array.Empty<string>()).ToList();
+        if (avNames.Count >= 2)
+            f.Add(new("ATENCAO", "Mais de um antivírus ativo", string.Join(", ", avNames),
+                      "Mantenha só um antivírus com proteção em tempo real. Desinstale o que não usa (o Windows reativa o Defender sozinho se ficar sem nenhum).",
+                      "open-apps", "Abrir Aplicativos"));
+
         if (sec.FirewallOff.Count > 0)
             f.Add(new("ATENCAO", "Firewall desativado", $"Perfis sem proteção: {string.Join(", ", sec.FirewallOff)}", "Reative o Firewall do Windows, a menos que outro firewall esteja em uso.", "open-security", "Abrir Segurança"));
 

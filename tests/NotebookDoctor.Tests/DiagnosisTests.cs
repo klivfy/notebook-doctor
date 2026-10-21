@@ -135,4 +135,31 @@ public class DiagnosisTests : IDisposable
     [Fact]
     public void Sem_bateria_nao_avisa_sobre_plano_na_bateria() =>
         Assert.Equal("Tudo certo", Assert.Single(Eval(Make.Snap(), Make.Health(onAc: false, plan: "Alto desempenho", battery: null))).Title);
+
+    private static HealthInfo WithAv(bool defender, params string[] othersOn) =>
+        Make.Health() with { Security = new SecurityInfo(defender, 0, othersOn, [], othersOn) };
+
+    [Fact]
+    public void Dois_antivirus_ativos_geram_aviso()
+    {
+        var f = Assert.Single(Eval(Make.Snap(), WithAv(false, "Avast", "Norton")));
+        Assert.Equal("Mais de um antivírus ativo", f.Title);
+        Assert.Equal("open-apps", f.FixId);
+        Assert.True(f.HasWhy);
+    }
+
+    [Fact]
+    public void Defender_e_outro_ativos_ao_mesmo_tempo_geram_aviso() =>
+        Assert.Equal("Avast, Microsoft Defender", Assert.Single(Eval(Make.Snap(), WithAv(true, "Avast"))).Detail);
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Um_antivirus_so_nao_gera_aviso(bool defender) =>
+        Assert.Equal("Tudo certo", Assert.Single(Eval(Make.Snap(), defender ? WithAv(true) : WithAv(false, "Avast"))).Title);
+
+    [Fact]
+    public void Antivirus_instalado_mas_desligado_nao_conta() =>
+        Assert.Equal("Tudo certo", Assert.Single(Eval(Make.Snap(), Make.Health() with
+        { Security = new SecurityInfo(true, 0, ["Avast"], [], []) })).Title);
 }

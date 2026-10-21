@@ -162,3 +162,62 @@ public class CommandLineTests
     [InlineData("\"\"")]
     public void Sem_caminho_retorna_nulo(string? command) => Assert.Null(CommandLine.ExecutablePath(command));
 }
+
+public class TimelineTests
+{
+    private static HistSample S(int minute, double cpu, double ram = 40, params string[] top) =>
+        new(Make.T0.AddMinutes(minute), cpu, ram, 5, 40, top);
+
+    [Fact]
+    public void Pico_longo_vira_evento()
+    {
+        var data = new List<HistSample> { S(0, 10) };
+        data.AddRange(Enumerable.Range(1, 10).Select(m => S(m, 95, 40, "chrome")));
+        data.Add(S(11, 10));
+        var e = Assert.Single(Timeline.Peaks(data));
+        Assert.Equal("CPU alta", e.Title);
+        Assert.Equal(Make.T0.AddMinutes(1), e.Time);
+        Assert.Contains("9 minutos", e.Detail);
+        Assert.Contains("chrome", e.Detail);
+    }
+
+    [Fact]
+    public void Pico_curto_nao_conta() =>
+        Assert.Empty(Timeline.Peaks(Enumerable.Range(0, 4).Select(m => S(m, 95)).ToList()));
+
+    [Fact]
+    public void Intervalo_sem_amostras_separa_os_episodios()
+    {
+        // 4 min de carga, 10 min sem amostras (PC suspenso), mais 4 min: nenhum dos dois chega a 5 min
+        var data = Enumerable.Range(0, 5).Select(m => S(m, 95)).Concat(Enumerable.Range(15, 5).Select(m => S(m, 95))).ToList();
+        Assert.Empty(Timeline.Peaks(data));
+    }
+
+    [Fact]
+    public void Memoria_alta_e_identificada()
+    {
+        var e = Assert.Single(Timeline.Peaks(Enumerable.Range(0, 8).Select(m => S(m, 20, 95)).ToList()));
+        Assert.Equal("Memória alta", e.Title);
+    }
+
+    [Theory]
+    [InlineData("20261003", 2026, 10, 3)]
+    [InlineData(" 20250101 ", 2025, 1, 1)]
+    public void Le_data_de_instalacao(string text, int y, int m, int d) =>
+        Assert.Equal(new DateTime(y, m, d), Timeline.ParseInstallDate(text));
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData("2026-10-03")]
+    [InlineData("20261399")]
+    public void Data_invalida_e_nula(string? text) => Assert.Null(Timeline.ParseInstallDate(text));
+
+    [Fact]
+    public void Junta_do_mais_recente_para_o_mais_antigo()
+    {
+        var a = new TimelineEvent(Make.T0, "Ação", "a", "");
+        var b = new TimelineEvent(Make.T0.AddHours(1), "Aviso", "b", "");
+        Assert.Equal(["b", "a"], Timeline.Merge([a], [b]).Select(e => e.Title));
+    }
+}

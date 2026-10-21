@@ -33,7 +33,9 @@ $ErrorActionPreference='SilentlyContinue'
 $o=[ordered]@{}
 $mp=Get-MpComputerStatus
 if($mp){ $o.rt=$mp.RealTimeProtectionEnabled; $o.sig=$mp.AntivirusSignatureAge }
-$o.av=@(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct | ForEach-Object { "$($_.displayName)" })
+$avs=@(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct)
+$o.av=@($avs | ForEach-Object { "$($_.displayName)" })
+$o.avon=@($avs | Where-Object { (([int]$_.productState -shr 12) -band 0xF) -eq 1 } | ForEach-Object { "$($_.displayName)" })
 $o.fwoff=@(Get-NetFirewallProfile | Where-Object { -not $_.Enabled } | ForEach-Object { "$($_.Name)" })
 $o | ConvertTo-Json -Compress -Depth 3
 """;
@@ -61,8 +63,11 @@ $o | ConvertTo-Json -Compress -Depth 3
             }
             bool? rt = r.TryGetProperty("rt", out var rtv) && rtv.ValueKind is JsonValueKind.True or JsonValueKind.False ? rtv.GetBoolean() : null;
             int? sig = r.TryGetProperty("sig", out var sv) && sv.ValueKind == JsonValueKind.Number && sv.TryGetInt32(out int days) ? days : null;
-            var others = Strings(r, "av").Where(n => !n.Contains("Defender", StringComparison.OrdinalIgnoreCase)).ToList();
-            return new SecurityInfo(rt, sig, others, Strings(r, "fwoff"));
+            static bool NotDefender(string n) => !n.Contains("Defender", StringComparison.OrdinalIgnoreCase);
+            var others = Strings(r, "av").Where(NotDefender).ToList();
+            // productState: o 4º dígito hexadecimal (da direita) igual a 1 significa proteção em tempo real ligada
+            var othersOn = Strings(r, "avon").Where(NotDefender).ToList();
+            return new SecurityInfo(rt, sig, others, Strings(r, "fwoff"), othersOn);
         }
         catch { return SecurityInfo.Empty; }
     }

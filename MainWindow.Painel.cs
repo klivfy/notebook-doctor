@@ -40,6 +40,9 @@ public partial class MainWindow
                 // Abre o Explorador já com o arquivo selecionado (argumento entre aspas: não executa o programa)
                 try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
                 break;
+            case "open-apps":
+                AppInfo.OpenShell("ms-settings:appsfeatures");
+                break;
             case "open-devices":
                 AppInfo.OpenShell("devmgmt.msc");
                 break;

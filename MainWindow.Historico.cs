@@ -16,7 +16,7 @@ public partial class MainWindow
         var data = window.TotalDays >= 30 ? month : month.Where(d => d.T >= DateTime.Now - window).ToList();
         ShowTrends(month);
         _histData = data;
-        LoadAlerts(window);
+        LoadTimeline(window, data);
         FillProcTimeline(data);
         if (data.Count < 2)
         {
@@ -130,12 +130,19 @@ public partial class MainWindow
         catch (Exception ex) { ShowSnack("Não foi possível exportar", ex.Message); }
     }
 
-    private void LoadAlerts(TimeSpan window)
+    // ---------- M47: linha do tempo do período ----------
+    private async void LoadTimeline(TimeSpan window, List<HistSample> data)
     {
-        var alerts = AlertLog.Load(window);
-        AlertsGrid.ItemsSource = alerts;
-        AlertsGrid.Visibility = alerts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        AlertsEmpty.Visibility = alerts.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        var from = DateTime.Now - window;
+        var events = await Task.Run(() => Timeline.Merge(
+            AlertLog.Load(window).Select(a => new TimelineEvent(a.Time, a.Silenced ? "Aviso (silenciado)" : "Aviso", a.Title, a.Text)),
+            ActionLog.Load().Where(a => a.Time >= from).Select(a => new TimelineEvent(a.Time, "Ação do app", a.Title, a.Detail)),
+            DiskUsage.InstalledApps().Where(a => a.InstallDate >= from.Date)
+                .Select(a => new TimelineEvent(a.InstallDate!.Value, "Instalação", a.Name, "Data informada pelo instalador (sem hora)")),
+            Timeline.Peaks(data)));
+        AlertsGrid.ItemsSource = events;
+        AlertsGrid.Visibility = events.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        AlertsEmpty.Visibility = events.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void FillProcTimeline(List<HistSample> data)

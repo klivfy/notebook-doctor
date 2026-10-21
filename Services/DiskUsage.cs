@@ -12,6 +12,8 @@ public sealed class FolderUsage
     /// <summary>Comando de desinstalação (só para aplicativos instalados).</summary>
     public string Tag { get; init; } = "";
     public bool IsFile { get; init; }
+    /// <summary>M47: data de instalação informada pelo instalador (nem todos informam).</summary>
+    public DateTime? InstallDate { get; init; }
     public string SizeText => Unknown ? "n/d" : Cleaner.FormatBytes(Bytes);
 }
 
@@ -169,6 +171,7 @@ public static class DiskUsage
                     Name = publisher.Length > 0 ? $"{display} — {publisher}" : display,
                     Path = k.GetValue("InstallLocation") as string ?? "",
                     Bytes = kb * 1024, Unknown = kb == 0, Tag = uninstall,
+                    InstallDate = Timeline.ParseInstallDate(k.GetValue("InstallDate") as string),
                 };
             }
         }
