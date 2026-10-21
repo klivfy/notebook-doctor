@@ -14,6 +14,7 @@ public static class SettingsTransfer
     private static readonly HashSet<string> MachineOnly = new(StringComparer.OrdinalIgnoreCase)
     {
         "MiniLeft", "MiniTop", "LastTab", "FirstRunDone", "LastWeeklySummary", "LastRestorePoint", "LastWeeklyRun", "LastUpdateCheck", "LastCrashSeen",
+        "WinLeft", "WinTop", "WinWidth", "WinHeight", "WinMaximized",
     };
 
     public static string Export(string settingsJson, string appVersion)

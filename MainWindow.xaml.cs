@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        RestorePlacement();
         FooterText.Text = AppInfo.Copyright;
         AboutText.Text = $"Notebook Doctor {AppInfo.Version}\nSuporte: klivfy.com/suporte"
                          + (AppPaths.Portable ? $"\nModo portátil: dados em {AppPaths.Dir}" : "");
@@ -142,10 +143,43 @@ public partial class MainWindow : Window
     protected override void OnClosing(CancelEventArgs e)
     {
         e.Cancel = true;
+        SavePlacement();
         Hide();
     }
 
     private void Window_SourceInitialized(object? sender, EventArgs e) => ThemeManager.ApplyTitleBar(this);
+
+    // ---------- B07/B45: reabrir no mesmo lugar e no mesmo monitor ----------
+    private void RestorePlacement()
+    {
+        var s = Host.Settings;
+        if (s.WinLeft is not { } x || s.WinTop is not { } y || s.WinWidth is not { } w || s.WinHeight is not { } h) return;
+        if (WindowPlacement.Fit(new Box(x, y, w, h), WorkAreas(), MinWidth, MinHeight) is not { } fit) return; // monitor sumiu: centraliza
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        (Left, Top, Width, Height) = (fit.X, fit.Y, fit.Width, fit.Height);
+        if (s.WinMaximized) WindowState = WindowState.Maximized;
+    }
+
+    /// <summary>Área útil de cada monitor (sem a barra de tarefas), convertida para as unidades do WPF.</summary>
+    private static List<Box> WorkAreas()
+    {
+        var primary = System.Windows.Forms.Screen.PrimaryScreen;
+        double scale = primary is null || SystemParameters.PrimaryScreenWidth <= 0 ? 1 : primary.Bounds.Width / SystemParameters.PrimaryScreenWidth;
+        return System.Windows.Forms.Screen.AllScreens
+            .Select(sc => new Box(sc.WorkingArea.X / scale, sc.WorkingArea.Y / scale, sc.WorkingArea.Width / scale, sc.WorkingArea.Height / scale))
+            .ToList();
+    }
+
+    public void SavePlacement()
+    {
+        if (!IsLoaded || WindowState == WindowState.Minimized && RestoreBounds.IsEmpty) return;
+        var r = WindowState == WindowState.Normal ? new Rect(Left, Top, ActualWidth, ActualHeight) : RestoreBounds;
+        if (r.IsEmpty || r.Width <= 0) return;
+        var s = Host.Settings;
+        (s.WinLeft, s.WinTop, s.WinWidth, s.WinHeight) = (r.Left, r.Top, r.Width, r.Height);
+        s.WinMaximized = WindowState == WindowState.Maximized;
+        s.Save();
+    }
 
     // ---------- A36: ponto de restauração antes de mudar o sistema ----------
     private bool _protectionWarned;

@@ -54,7 +54,9 @@ public partial class App : Application
         if (!first)
         {
             // Já está rodando: repassa o pedido (abrir o painel ou o link clicado na notificação) para a instância aberta
-            SendToRunningInstance(uri ?? $"{Toasts.Scheme}:open");
+            // --tab=N (jump list, atalhos) vira o mesmo pedido que a notificação usa para abrir uma aba
+            var tabRequest = e.Args.FirstOrDefault(a => a.StartsWith("--tab="));
+            SendToRunningInstance(uri ?? (tabRequest is not null ? $"{Toasts.Scheme}:tab/{tabRequest[6..]}" : $"{Toasts.Scheme}:open"));
             Shutdown();
             return;
         }
@@ -107,6 +109,7 @@ public partial class App : Application
         if (uri is not null) HandleUri(uri);
 
         _ = Task.Run(Toasts.EnsureRegistered);
+        SetJumpList();
         _ = ListenForOtherInstancesAsync(_cts.Token);
         if (Settings.LastWeeklySummary == DateTime.MinValue) { Settings.LastWeeklySummary = DateTime.Now; Settings.Save(); }
         if (!Settings.FirstRunDone && !e.Args.Contains("--background") && !e.Args.Any(a => a.StartsWith("--tab=")))
@@ -487,11 +490,35 @@ public partial class App : Application
         if (AppInfo.RestartElevated()) Quit();
     }
 
+    /// <summary>B48: atalhos no clique direito do ícone na barra de tarefas e no Menu Iniciar. Cada um abre o app na aba certa.</summary>
+    private void SetJumpList()
+    {
+        if (Environment.ProcessPath is not { } exe) return;
+        System.Windows.Shell.JumpTask Item(string title, int tab, string description) => new()
+        {
+            Title = title, Description = description, Arguments = $"--tab={tab}",
+            ApplicationPath = exe, IconResourcePath = exe, IconResourceIndex = 0,
+        };
+        try
+        {
+            var list = new System.Windows.Shell.JumpList(new System.Windows.Shell.JumpItem[]
+            {
+                Item("Limpeza", 2, "Ver o que pode ser limpo"),
+                Item("Processos", 1, "Ver os programas em execução"),
+                Item("Histórico", 5, "Ver o uso dos últimos dias"),
+            }, showFrequent: false, showRecent: false);
+            System.Windows.Shell.JumpList.SetJumpList(this, list);
+            list.Apply();
+        }
+        catch (Exception ex) { LogError(ex); } // a jump list é só conveniência
+    }
+
     /// <summary>Fecha para o instalador poder substituir o executável.</summary>
     public void QuitForUpdate() => Quit();
 
     private void Quit()
     {
+        (MainWindow as NotebookDoctor.MainWindow)?.SavePlacement();
         if (Focus.Active) Task.Run(Focus.StopAsync).Wait(3000); // devolve as prioridades e o plano de energia
         _cts.Cancel();
         _mini?.Close();

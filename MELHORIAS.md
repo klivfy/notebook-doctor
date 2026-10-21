@@ -72,7 +72,7 @@ Critérios de impacto
 | M01 | Atalho global de teclado para abrir o painel | ✅ (Ctrl+Alt+N) |
 | M02 | Mini-widget flutuante (CPU/RAM sempre visível) | ✅ |
 | M03 | Overlay de desempenho para jogos | ⬜ |
-| M04 | Gráficos maiores com zoom e dica ao passar o mouse | 🟡 dica com valor e horário ao passar o mouse e marcador no ponto; zoom ainda não |
+| M04 | Gráficos maiores com zoom e dica ao passar o mouse | 🟡 dica com valor e horário; nos gráficos do Histórico, roda do mouse aproxima, arrastar move, clique duplo volta, e pelo teclado +, −, setas e Home |
 | M05 | Linha do tempo por processo no histórico | ✅ (dados por programa gravados a partir desta versão) |
 | M06 | Exportar histórico em CSV/JSON | ✅ (CSV no formato do Excel brasileiro) |
 | M07 | Importar/exportar configurações | 🟡 Configurações › Backup das preferências: exportar e importar em JSON (sem dados da máquina, como posição do widget e datas); não testado no Windows |
@@ -130,7 +130,7 @@ Critérios de impacto
 | B04 | Animação suave nos medidores | ⬜ |
 | B05 | Efeito ripple nos botões | ⬜ |
 | B06 | Transição entre abas | ⬜ |
-| B07 | Lembrar posição e tamanho da janela | ⬜ |
+| B07 | Lembrar posição e tamanho da janela | 🟡 posição, tamanho e maximizada; reabre centralizada se a barra de título ficaria fora da tela |
 | B08 | Lembrar a última aba aberta | ✅ |
 | B09 | Opção de iniciar minimizado | ⬜ |
 | B10 | Opção "fechar encerra o app" | ⬜ |
@@ -162,16 +162,16 @@ Critérios de impacto
 | B36 | "Não perguntar de novo" (só em ações não destrutivas) | ⬜ |
 | B37 | Tema automático por horário | ⬜ |
 | B38 | Senha para alterar configurações (modo empresa) | ⬜ |
-| B39 | Documentar argumentos de linha de comando (`--tab`, `--background`) | ⬜ |
+| B39 | Documentar argumentos de linha de comando (`--tab`, `--background`) | ✅ README, seção Linha de comando |
 | B40 | Log de diagnóstico exportável | ⬜ |
 | B41 | Abrir a pasta de dados pelo app | ✅ (botão em Sobre) |
 | B42 | Redefinir configurações | 🟡 "Redefinir para o padrão" com confirmação; mantém datas e posição do widget; não testado no Windows |
 | B43 | Modo portátil | 🟡 com "portatil.txt" ao lado do executável, os dados ficam na pasta "dados" do app (o registro ainda é usado para iniciar com o Windows e para as notificações); não testado no Windows |
 | B44 | Compatibilidade com Windows 10 (barra de título) | 🟡 barra de título escura também no Windows 10 1809–1909 (atributo antigo do DWM); a cor da barra continua só no Windows 11; não testado no Windows 10 |
-| B45 | Lembrar o monitor usado | ⬜ |
+| B45 | Lembrar o monitor usado | 🟡 junto com B07; se o monitor não estiver conectado, abre no principal |
 | B46 | Testar DPI 125/150/200% | ⬜ |
-| B47 | Selo de status na barra de tarefas | ⬜ |
-| B48 | Jump list (Limpeza, Processos) | ⬜ |
+| B47 | Selo de status na barra de tarefas | 🟡 "!" vermelho com problema, laranja com ponto de atenção, sem selo com tudo certo; dica com nota e contagem |
+| B48 | Jump list (Limpeza, Processos) | 🟡 Limpeza, Processos e Histórico; com o app aberto, troca a aba da janela que já está aberta |
 | B49 | Mensagem de boas-vindas na bandeja | ⬜ |
 | B50 | Créditos | ⬜ |
 

@@ -89,6 +89,12 @@ public sealed class AppSettings
     /// <summary>M19: guardar relatórios de falha (sem dados pessoais) para o pacote de suporte. Desligado até a pessoa ligar.</summary>
     public bool CrashReports { get; set; }
     public DateTime LastCrashSeen { get; set; } = DateTime.MinValue;
+    /// <summary>B07/B45: posição, tamanho e monitor da janela (área sem maximizar) para reabrir no mesmo lugar.</summary>
+    public double? WinLeft { get; set; }
+    public double? WinTop { get; set; }
+    public double? WinWidth { get; set; }
+    public double? WinHeight { get; set; }
+    public bool WinMaximized { get; set; }
 
     public bool InQuietHours(DateTime now) =>
         QuietHours && AlertPolicy.TryParseClock(QuietStart, out var a) && AlertPolicy.TryParseClock(QuietEnd, out var b)

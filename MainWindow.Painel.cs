@@ -258,6 +258,7 @@ public partial class MainWindow
         foreach (var f in findings) f.WhyOpen = _whyOpen.Contains(f.Title);
         FindingsList.ItemsSource = findings;
         UpdateStatusChip(findings);
+        UpdateTaskbarBadge(findings);
 
         var bn = Insights.Bottleneck(recent);
         BottleneckName.Text = bn.Resource;
@@ -271,6 +272,43 @@ public partial class MainWindow
     // Escala de carga vinda do tema (LevelLow…LevelCrit): no escuro lima → amarelo → laranja → vermelho;
     // no claro verde → laranja → vermelho, porque lima e amarelo somem sobre o fundo claro.
     private static string LevelKey(double pct) => pct >= 85 ? "LevelCrit" : pct >= 70 ? "LevelHigh" : pct >= 50 ? "LevelMid" : "LevelLow";
+
+    // ---------- B47: selo na barra de tarefas ----------
+    private BadgeLevel _badgeLevel = (BadgeLevel)(-1);
+
+    private void UpdateTaskbarBadge(IReadOnlyList<Finding> findings)
+    {
+        var badge = TaskbarBadge.For(Host.Score.Score, findings);
+        TaskbarItemInfo ??= new System.Windows.Shell.TaskbarItemInfo();
+        TaskbarItemInfo.Description = badge.Description;
+        if (badge.Level == _badgeLevel) return;
+        _badgeLevel = badge.Level;
+        TaskbarItemInfo.Overlay = badge.Level switch
+        {
+            BadgeLevel.Problem => BadgeDot("Error", "!"),
+            BadgeLevel.Attention => BadgeDot("Warning", "!"),
+            _ => null,
+        };
+    }
+
+    /// <summary>Bolinha 16×16 na cor do estado com um "!" no contraste certo (OnError/OnWarning), como pede o Windows para selos.</summary>
+    private System.Windows.Media.ImageSource BadgeDot(string colorKey, string mark)
+    {
+        var fill = TryFindResource(colorKey) as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.OrangeRed;
+        var ink = TryFindResource("On" + colorKey) as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White;
+        var text = new System.Windows.Media.FormattedText(mark, System.Globalization.CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+            new System.Windows.Media.Typeface(new System.Windows.Media.FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal),
+            12, ink, 1.0);
+        var group = new System.Windows.Media.DrawingGroup();
+        using (var dc = group.Open())
+        {
+            dc.DrawEllipse(fill, new System.Windows.Media.Pen(System.Windows.Media.Brushes.White, 1), new Point(8, 8), 7.5, 7.5);
+            dc.DrawText(text, new Point(8 - text.Width / 2, 8 - text.Height / 2));
+        }
+        var img = new System.Windows.Media.DrawingImage(group);
+        img.Freeze();
+        return img;
+    }
 
     private void UpdateStatusChip(IReadOnlyList<Finding> findings)
     {

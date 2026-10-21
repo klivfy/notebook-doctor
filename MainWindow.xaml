@@ -429,13 +429,13 @@
                                             ToolTip="Salva o período escolhido em Documentos › Notebook Doctor, pronto para abrir no Excel."/>
                                 </WrapPanel>
                                 <TextBlock x:Name="HCpuLabel" Text="CPU" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="HCpu" Height="70" Title="CPU no período" Stroke="{DynamicResource ChartCpu}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="HCpu" Zoomable="True" Height="70" Title="CPU no período" Stroke="{DynamicResource ChartCpu}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 <TextBlock x:Name="HRamLabel" Text="Memória" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="HRam" Height="70" Title="Memória no período" Stroke="{DynamicResource ChartRam}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="HRam" Zoomable="True" Height="70" Title="Memória no período" Stroke="{DynamicResource ChartRam}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 <TextBlock x:Name="HDiskLabel" Text="Espaço livre no disco" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="HFree" Height="70" Title="Espaço livre no disco no período" Stroke="{DynamicResource ChartDisk}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="HFree" Zoomable="True" Height="70" Title="Espaço livre no disco no período" Stroke="{DynamicResource ChartDisk}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 <TextBlock x:Name="HScoreLabel" Text="Nota de saúde" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="HScore" Height="70" Unit="" Title="Nota de saúde no período" Stroke="{DynamicResource OnSurfaceVariant}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="HScore" Zoomable="True" Height="70" Unit="" Title="Nota de saúde no período" Stroke="{DynamicResource OnSurfaceVariant}" GridBrush="{DynamicResource OutlineVariant}"/>
                             </StackPanel>
                         </Border>
                         <!-- M48 e M50: comparação com a semana passada e previsão do disco -->
@@ -471,9 +471,9 @@
                                     <TextBlock x:Name="ProcTimelineInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="16,0,0,0" TextWrapping="Wrap"/>
                                 </WrapPanel>
                                 <TextBlock x:Name="PCpuLabel" Text="CPU" Margin="0,16,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="PCpu" Height="60" Title="CPU do programa no período" Stroke="{DynamicResource ChartCpu}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="PCpu" Zoomable="True" Height="60" Title="CPU do programa no período" Stroke="{DynamicResource ChartCpu}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 <TextBlock x:Name="PRamLabel" Text="Memória" Margin="0,16,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="PRam" Height="60" Unit=" MB" Title="Memória do programa no período" Stroke="{DynamicResource ChartRam}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="PRam" Zoomable="True" Height="60" Unit=" MB" Title="Memória do programa no período" Stroke="{DynamicResource ChartRam}" GridBrush="{DynamicResource OutlineVariant}"/>
                             </StackPanel>
                         </Border>
                         <!-- M46/M47: linha do tempo do período (avisos, ações do app, instalações e picos de uso) -->

@@ -14,6 +14,18 @@ dotnet run -c Release
 
 Requer Windows 10/11 e o SDK do .NET 8. Para gerar o executável: `dotnet publish -c Release -r win-x64 --self-contained false`.
 
+## Linha de comando
+
+O app tem uma instância só: abrir de novo com argumentos repassa o pedido para a que já está aberta.
+
+| Argumento | O que faz |
+|---|---|
+| `--tab=N` | Abre na aba N: 0 Painel, 1 Processos, 2 Limpeza, 3 Espaço, 4 Inicialização, 5 Histórico, 6 Ações, 7 Ajustes, 8 Configurações. É o que a jump list usa. |
+| `--background` | Inicia só na bandeja, sem abrir a janela (usado ao iniciar com o Windows). |
+| `notebookdoctor:open` | Abre o painel. Também aceita `tab/N`, `heavy`, `report` (exporta o relatório) e `update`. São os links das notificações; funcionam com `start notebookdoctor:tab/2`. |
+
+`--wait-parent=PID` é interno: o app usa ao reabrir como administrador.
+
 ## Testes
 
 ```powershell
