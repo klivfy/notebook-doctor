@@ -24,21 +24,30 @@ public partial class MainWindow
         }
     }
 
-    private static void UpdateTablePage(ScrollViewer page, DataGrid grid)
+    private readonly Dictionary<ScrollViewer, DateTime> _tableToggled = new();
+
+    private void UpdateTablePage(ScrollViewer page, DataGrid grid)
     {
-        if (!grid.IsVisible) return;
+        if (!grid.IsVisible || page.Content is not FrameworkElement content) return;
+        // Trocar de modo muda o layout, que dispara este método de novo: sem pausa entre trocas a tela entrava em laço
+        if (_tableToggled.TryGetValue(page, out var last) && DateTime.UtcNow - last < TimeSpan.FromMilliseconds(600)) return;
+
         if (page.VerticalScrollBarVisibility == ScrollBarVisibility.Disabled)
         {
-            if (grid.ActualHeight >= MinTableHeight) return;
+            if (grid.ActualHeight >= MinTableHeight || page.ViewportHeight <= 0) return;
+            _tableToggled[page] = DateTime.UtcNow;
             page.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
             grid.Height = MinTableHeight + 40;
         }
         else
         {
-            // Volta ao modo normal quando a tabela, esticada, ainda ficaria com folga acima do mínimo
-            double chrome = page.ExtentHeight - grid.ActualHeight;
+            // Volta ao modo normal quando a tabela, esticada, ainda ficaria com folga acima do mínimo.
+            // A altura "de moldura" é a do conteúdo medido sem a tabela; sem medida válida, não decide.
+            if (content.DesiredSize.Height <= 0 || double.IsNaN(grid.Height)) return;
+            double chrome = content.DesiredSize.Height - grid.Height;
             if (page.ViewportHeight - chrome >= MinTableHeight + 60)
             {
+                _tableToggled[page] = DateTime.UtcNow;
                 grid.ClearValue(FrameworkElement.HeightProperty);
                 page.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
             }
