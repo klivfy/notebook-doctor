@@ -25,6 +25,7 @@ As regras de diagnóstico, a nota de saúde, a detecção de vazamento de memór
 ## Estrutura
 
 - Raiz: o app WPF (janelas, bandeja, temas) e `Services/` com o que conversa com o Windows (processos, registro, powercfg, PowerShell, arquivos)
+- `MainWindow.xaml.cs`: o que é comum às abas (navegação, avisos, modo simulação); cada aba tem o seu `MainWindow.<Aba>.cs`
 - `src/NotebookDoctor.Core`: lógica pura, testável
 - `tests/NotebookDoctor.Tests`: testes xUnit do Core
 

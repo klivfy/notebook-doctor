@@ -29,6 +29,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Uma parte do MainWindow por aba; aparecem agrupadas sob MainWindow.xaml no Visual Studio -->
+    <Compile Update="MainWindow.*.cs" DependentUpon="MainWindow.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="app.ico" />
     <Resource Include="icon-256.png" />
   </ItemGroup>
