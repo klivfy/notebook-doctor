@@ -76,7 +76,7 @@ internal static class A11yAudit
 
         // 4. Contraste do texto, medido nos pixels da captura (a cor do fundo vem do que foi desenhado, não de propriedades)
         if (e is TextBlock tb && tb.IsEnabled && !string.IsNullOrWhiteSpace(tb.Text) && tb.Foreground is SolidColorBrush fg && tb.ActualWidth > 0 && tb.ActualHeight > 0
-            && DominantColor(tb, root, pixels) is { } bg)
+            && !ClippedByScroller(tb, root) && DominantColor(tb, root, pixels) is { } bg)
         {
             double opacity = fg.Opacity * EffectiveOpacity(tb);
             var fgc = Over(fg.Color, opacity, bg);
@@ -84,6 +84,10 @@ internal static class A11yAudit
             bool large = tb.FontSize >= 24 || (tb.FontSize >= 18.66 && tb.FontWeight >= FontWeights.SemiBold);
             if (ratio < (large ? 3.0 : 4.5)) add("CONTRASTE", $"{ratio:0.0}:1 em {Describe(tb)} ({Hex(fgc)} sobre {Hex(bg)}) [fundo de {FindPainter(tb, root, bg)}]");
         }
+
+        // 4b. Tabela sem altura útil (linhas ficam fora da área visível)
+        if (e is DataGrid dg && dg.ActualHeight < 140)
+            add("TABELA PEQUENA", $"{Describe(dg)} {dg.ActualWidth:0}×{dg.ActualHeight:0} px");
 
         // 5. Rolagem horizontal (em tabelas largas é esperado; em página, não)
         if (e is ScrollViewer sv && sv.ScrollableWidth > 1 && sv.HorizontalScrollBarVisibility != ScrollBarVisibility.Disabled)
@@ -125,6 +129,24 @@ internal static class A11yAudit
         for (var p = VisualTreeHelper.GetParent(d); p is not null && names.Count < 4; p = VisualTreeHelper.GetParent(p))
             if (p is Control or Border { Name.Length: > 0 }) names.Add(p.GetType().Name);
         return string.Join("<", names);
+    }
+
+    /// <summary>O texto existe na árvore, mas está fora da área visível de um ScrollViewer/DataGrid acima dele (linha rolada para fora ou tabela sem altura): não é desenhado.</summary>
+    private static bool ClippedByScroller(FrameworkElement text, FrameworkElement root)
+    {
+        Rect t;
+        try { t = text.TransformToVisual(root).TransformBounds(new Rect(0, 0, text.ActualWidth, text.ActualHeight)); }
+        catch (InvalidOperationException) { return true; }
+        for (var p = VisualTreeHelper.GetParent(text); p is not null; p = VisualTreeHelper.GetParent(p))
+        {
+            if (p is not (ScrollViewer or DataGrid)) continue;
+            var fe = (FrameworkElement)p;
+            Rect v;
+            try { v = fe.TransformToVisual(root).TransformBounds(new Rect(0, 0, fe.ActualWidth, fe.ActualHeight)); }
+            catch (InvalidOperationException) { return true; }
+            if (t.Top < v.Top - 1 || t.Bottom > v.Bottom + 1 || t.Left < v.Left - 1 || t.Right > v.Right + 1) return true;
+        }
+        return false;
     }
 
     private static double EffectiveOpacity(DependencyObject d)
