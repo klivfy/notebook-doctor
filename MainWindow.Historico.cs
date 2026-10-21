@@ -11,7 +11,10 @@ public partial class MainWindow
     private async void LoadHistory()
     {
         var window = PeriodBox.SelectedIndex switch { 1 => TimeSpan.FromDays(7), 2 => TimeSpan.FromDays(30), _ => TimeSpan.FromHours(24) };
-        var data = await Task.Run(() => Host.History.Load(window));
+        // Tendências usam o mês inteiro, qualquer que seja o período escolhido
+        var month = await Task.Run(() => Host.History.Load(TimeSpan.FromDays(30)));
+        var data = window.TotalDays >= 30 ? month : month.Where(d => d.T >= DateTime.Now - window).ToList();
+        ShowTrends(month);
         _histData = data;
         LoadAlerts(window);
         FillProcTimeline(data);
@@ -40,6 +43,26 @@ public partial class MainWindow
             .Select(g => (Name: g.Key, Pct: g.Count() * 100.0 / basis.Count)).OrderByDescending(x => x.Pct).Take(6);
         string head = heavy.Count >= 5 ? $"Nos {heavy.Count} momentos de carga alta (CPU ≥ 50% ou RAM ≥ 80%):\n" : "Nenhum período de carga alta registrado; ranking geral:\n";
         HOffenders.Text = head + string.Join("\n", ranking.Select(r => $"• {r.Name} — entre os 3 maiores em {r.Pct:0}% das amostras"));
+    }
+
+    // ---------- Tendências: hoje × semana passada (M48) e previsão do disco (M50) ----------
+    private void ShowTrends(List<HistSample> month)
+    {
+        var now = DateTime.Now;
+        if (HistoryInsights.CompareWithLastWeek(month, now) is { } c)
+        {
+            static string Diff(double today, double last, string unit) =>
+                Math.Abs(today - last) < 2 ? $"igual ({today:0}{unit})" : $"{today:0}{unit} contra {last:0}{unit} {(today > last ? "▲" : "▼")}";
+            HCompare.Text = "Últimas 24 h comparadas com o mesmo horário da semana passada:\n"
+                + $"• CPU média: {Diff(c.Today.Cpu, c.LastWeek.Cpu, "%")}\n"
+                + $"• RAM média: {Diff(c.Today.Ram, c.LastWeek.Ram, "%")}"
+                + (c.Today.Score is { } a && c.LastWeek.Score is { } b ? $"\n• Nota de saúde: {Diff(a, b, "")}" : "");
+        }
+        else HCompare.Text = "Comparação com a semana passada: aparece quando houver uso registrado hoje e no mesmo dia da semana passada.";
+
+        HDiskForecast.Text = HistoryInsights.DiskFull(month, now) is { } f
+            ? $"Disco: o espaço livre cai cerca de {f.PctPerDay:0.0}% do disco por dia. Nesse ritmo, ele enche por volta de {f.When:dd/MM/yyyy}."
+            : "Disco: sem tendência de encher nos dados do último mês.";
     }
 
     // ---------- Histórico: CSV (M06), linha do tempo por programa (M05) e avisos (M46) ----------

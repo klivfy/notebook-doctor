@@ -252,6 +252,11 @@ public partial class MainWindow
         CfgDays.Text = s.TempDays.ToString();
         CfgCpu.Text = s.CpuAlertPct.ToString();
         CfgRam.Text = s.RamAlertPct.ToString();
+        CfgAlertMin.Text = s.AlertMinutes.ToString();
+        CfgQuietFull.IsChecked = s.QuietFullscreen;
+        CfgQuiet.IsChecked = s.QuietHours;
+        CfgQuietStart.Text = s.QuietStart;
+        CfgQuietEnd.Text = s.QuietEnd;
     }
 
     private void SaveSettings_Click(object sender, RoutedEventArgs e)
@@ -272,13 +277,20 @@ public partial class MainWindow
         s.TempDays = ParseOr(CfgDays.Text, s.TempDays, 1, 365);
         s.CpuAlertPct = ParseOr(CfgCpu.Text, s.CpuAlertPct, 30, 100);
         s.RamAlertPct = ParseOr(CfgRam.Text, s.RamAlertPct, 30, 100);
+        s.AlertMinutes = ParseOr(CfgAlertMin.Text, s.AlertMinutes, 0, 60);
+        s.QuietFullscreen = CfgQuietFull.IsChecked == true;
+        s.QuietHours = CfgQuiet.IsChecked == true;
+        // Horário inválido mantém o anterior; o formulário recarregado mostra o que ficou valendo
+        bool clockOk = AlertPolicy.TryParseClock(CfgQuietStart.Text, out var qs) & AlertPolicy.TryParseClock(CfgQuietEnd.Text, out var qe);
+        if (clockOk) { s.QuietStart = qs.ToString("HH:mm"); s.QuietEnd = qe.ToString("HH:mm"); }
         s.Save();
         s.ApplyStartWithWindows();
         Host.ApplySettingsChanged();
         Host.SetMiniWidget(CfgMini.IsChecked == true);
         bool hotkeyOk = Host.ApplyHotkey();
         LoadSettingsIntoForm();
-        CfgMsg.Text = hotkeyOk ? "Salvo." : $"Salvo. O atalho {GlobalHotkey.Label} já é usado por outro programa, então ficou desligado.";
+        CfgMsg.Text = (hotkeyOk ? "Salvo." : $"Salvo. O atalho {GlobalHotkey.Label} já é usado por outro programa, então ficou desligado.")
+                      + (clockOk ? "" : " Horário silencioso inválido (use HH:mm, ex.: 22:00): ficou o anterior.");
     }
 
     private static int ParseOr(string text, int fallback, int min, int max) =>

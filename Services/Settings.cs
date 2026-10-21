@@ -68,6 +68,19 @@ public sealed class AppSettings
     /// <summary>M01: Ctrl+Alt+N abre ou esconde o painel de qualquer lugar.</summary>
     public bool GlobalHotkey { get; set; } = true;
 
+    /// <summary>M44: horário sem notificações (os avisos continuam no histórico).</summary>
+    public bool QuietHours { get; set; }
+    public string QuietStart { get; set; } = "22:00";
+    public string QuietEnd { get; set; } = "07:00";
+    /// <summary>M43: sem notificações com app em tela cheia, jogo ou apresentação.</summary>
+    public bool QuietFullscreen { get; set; } = true;
+    /// <summary>M45: minutos seguidos acima do limite antes de avisar de CPU ou RAM alta.</summary>
+    public int AlertMinutes { get; set; } = 3;
+
+    public bool InQuietHours(DateTime now) =>
+        QuietHours && AlertPolicy.TryParseClock(QuietStart, out var a) && AlertPolicy.TryParseClock(QuietEnd, out var b)
+        && AlertPolicy.InQuietHours(TimeOnly.FromDateTime(now), a, b);
+
     public bool IsAlertException(string name) => AlertExceptions.Contains(name, StringComparer.OrdinalIgnoreCase);
 
     public static AppSettings Load()

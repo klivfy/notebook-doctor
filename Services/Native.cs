@@ -90,6 +90,16 @@ internal static class Native
     public struct LASTINPUTINFO { public uint cbSize; public uint dwTime; }
     [DllImport("user32.dll")] public static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
 
+    [DllImport("shell32.dll")]
+    private static extern int SHQueryUserNotificationState(out int state);
+
+    /// <summary>M43: app em tela cheia (2), jogo Direct3D em tela cheia (3) ou modo de apresentação (4).</summary>
+    public static bool IsFullscreenOrPresenting()
+    {
+        try { return SHQueryUserNotificationState(out int state) == 0 && state is 2 or 3 or 4; }
+        catch { return false; }
+    }
+
     /// <summary>Há quanto tempo o usuário não mexe em mouse/teclado.</summary>
     public static TimeSpan IdleTime()
     {

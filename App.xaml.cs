@@ -13,7 +13,8 @@ public partial class App : Application
     private SystemMonitor _monitor = null!;
     private TrayIcon _tray = null!;
     private readonly List<Snapshot> _recent = new();           // ~últimos 3 minutos ao vivo
-    private DateTime _highCpuSince = DateTime.MinValue, _lastAlert = DateTime.MinValue, _lastDiskAlert = DateTime.MinValue, _lastHeatAlert = DateTime.MinValue;
+    private readonly Sustained _cpuHigh = new(), _ramHigh = new();
+    private DateTime _lastAlert = DateTime.MinValue, _lastDiskAlert = DateTime.MinValue, _lastHeatAlert = DateTime.MinValue;
 
     public AppSettings Settings { get; private set; } = new();
     public HistoryStore History { get; private set; } = null!;
@@ -218,7 +219,7 @@ public partial class App : Application
         var plans = await Task.Run(PowerPlans.List);
         if (PowerAdvice.Suggest(onAc, plans) is not { } s) return;
         if (MainWindow is NotebookDoctor.MainWindow { IsVisible: true } win) win.ShowPowerSuggestion(s);
-        else Notify(s.Title, s.Reason, ("Ver energia", $"tab/{Diagnosis.TabSettings}"));
+        else if (!IsQuietNow()) Notify(s.Title, s.Reason, ("Ver energia", $"tab/{Diagnosis.TabSettings}"));
     }
 
     /// <summary>
@@ -244,9 +245,13 @@ public partial class App : Application
     /// <summary>Aviso de problema: entra no histórico de alertas (M46) e vira notificação.</summary>
     private void Alert(string title, string text, params (string label, string action)[] buttons)
     {
-        AlertLog.Add(title, text);
-        Notify(title, text, buttons);
+        bool quiet = IsQuietNow();
+        AlertLog.Add(title, quiet ? text + " (sem notificação: horário silencioso ou tela cheia)" : text);
+        if (!quiet) Notify(title, text, buttons);
     }
+
+    /// <summary>M43/M44: horário silencioso ou alguém em tela cheia, jogo ou apresentação.</summary>
+    private bool IsQuietNow() => Settings.InQuietHours(DateTime.Now) || (Settings.QuietFullscreen && Native.IsFullscreenOrPresenting());
 
     public void Notify(string title, string text, params (string label, string action)[] buttons)
     {
@@ -392,19 +397,15 @@ public partial class App : Application
             Alert("Pouco espaço no disco", $"Só {s.DiskFreePct:0}% livre ({s.DiskFreeGB:0} GB).", ("Abrir Limpeza", "tab/2"), ("Ver o que ocupa", "tab/3"));
         }
         string? msg = null;
-        if (s.Cpu >= Settings.CpuAlertPct)
+        int minutes = Settings.AlertMinutes;
+        if (_cpuHigh.Update(s.Cpu >= Settings.CpuAlertPct, s.Time, minutes))
         {
-            if (_highCpuSince == DateTime.MinValue) _highCpuSince = s.Time;
-            if ((s.Time - _highCpuSince).TotalMinutes >= 3)
-            {
-                var top = s.TopByCpu.FirstOrDefault();
-                if (top is not null && Settings.IsAlertException(top.Name)) top = null; // carga esperada: não avisa
-                else msg = $"CPU em {s.Cpu:0}% há mais de 3 minutos." + (top is null ? "" : $" Maior consumo: {top.Name} ({top.CpuPct:0}%).");
-            }
+            var top = s.TopByCpu.FirstOrDefault();
+            if (top is not null && Settings.IsAlertException(top.Name)) top = null; // carga esperada: não avisa
+            else msg = $"CPU em {s.Cpu:0}% há {Pt.N(minutes, "minuto", "minutos")} ou mais." + (top is null ? "" : $" Maior consumo: {top.Name} ({top.CpuPct:0}%).");
         }
-        else _highCpuSince = DateTime.MinValue;
 
-        if (msg is null && s.RamPct >= Settings.RamAlertPct)
+        if (_ramHigh.Update(s.RamPct >= Settings.RamAlertPct, s.Time, minutes) && msg is null)
         {
             var top = s.TopByMem.FirstOrDefault();
             if (top is null || !Settings.IsAlertException(top.Name)) msg = $"Memória em {s.RamPct:0}%." + (top is null ? "" : $" Maior consumo: {top.Name} ({top.MemMB} MB).");

@@ -412,6 +412,14 @@
                                 <local:Sparkline x:Name="HScore" Height="70" Unit="" Title="Nota de saúde no período" Stroke="{DynamicResource OnSurfaceVariant}" GridBrush="{DynamicResource OutlineVariant}"/>
                             </StackPanel>
                         </Border>
+                        <!-- M48 e M50: comparação com a semana passada e previsão do disco -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Tendências" Style="{StaticResource TitleMedium}"/>
+                                <TextBlock x:Name="HCompare" TextWrapping="Wrap" LineHeight="24"/>
+                                <TextBlock x:Name="HDiskForecast" TextWrapping="Wrap" LineHeight="24" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
                                 <TextBlock Text="Programas que mais pesaram no período" Style="{StaticResource TitleMedium}"/>
@@ -557,15 +565,25 @@
                         <CheckBox x:Name="CfgMini" Content="Mini-widget sempre visível (CPU, memória e disco num canto da tela)"/>
                         <CheckBox x:Name="CfgUpdates" Content="Procurar nova versão uma vez por dia"/>
                         <CheckBox x:Name="CfgHotkey" Content="Atalho Ctrl+Alt+N abre o painel de qualquer lugar"/>
+                        <!-- M43/M44: sem notificações em tela cheia ou no horário escolhido (os avisos continuam no Histórico) -->
+                        <CheckBox x:Name="CfgQuietFull" Content="Sem notificações com app em tela cheia, jogo ou apresentação"/>
+                        <WrapPanel>
+                            <CheckBox x:Name="CfgQuiet" Content="Horário silencioso, das" VerticalAlignment="Center"/>
+                            <TextBox x:Name="CfgQuietStart" Width="70" Margin="8,0,8,6" VerticalAlignment="Center" AutomationProperties.Name="Início do horário silencioso"/>
+                            <TextBlock Text="às" VerticalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBox x:Name="CfgQuietEnd" Width="70" Margin="8,0,0,6" VerticalAlignment="Center" AutomationProperties.Name="Fim do horário silencioso"/>
+                        </WrapPanel>
                         <Grid Margin="0,16,0,20">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
                             <TextBlock x:Name="CfgDaysLabel" Text="Apagar temporários com mais de (dias)" VerticalAlignment="Center" Margin="0,0,12,10" TextWrapping="Wrap"/>
                             <TextBox x:Name="CfgDays" Grid.Column="1" Margin="0,0,0,10" AutomationProperties.LabeledBy="{Binding ElementName=CfgDaysLabel}"/>
                             <TextBlock x:Name="CfgCpuLabel" Text="Alerta de CPU a partir de (%)" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,12,10" TextWrapping="Wrap"/>
                             <TextBox x:Name="CfgCpu" Grid.Row="1" Grid.Column="1" Margin="0,0,0,10" AutomationProperties.LabeledBy="{Binding ElementName=CfgCpuLabel}"/>
-                            <TextBlock x:Name="CfgRamLabel" Text="Alerta de RAM a partir de (%)" Grid.Row="2" VerticalAlignment="Center" Margin="0,0,12,0" TextWrapping="Wrap"/>
-                            <TextBox x:Name="CfgRam" Grid.Row="2" Grid.Column="1" AutomationProperties.LabeledBy="{Binding ElementName=CfgRamLabel}"/>
+                            <TextBlock x:Name="CfgRamLabel" Text="Alerta de RAM a partir de (%)" Grid.Row="2" VerticalAlignment="Center" Margin="0,0,12,10" TextWrapping="Wrap"/>
+                            <TextBox x:Name="CfgRam" Grid.Row="2" Grid.Column="1" Margin="0,0,0,10" AutomationProperties.LabeledBy="{Binding ElementName=CfgRamLabel}"/>
+                            <TextBlock x:Name="CfgAlertMinLabel" Text="Avisar só depois de quantos minutos seguidos" Grid.Row="3" VerticalAlignment="Center" Margin="0,0,12,0" TextWrapping="Wrap"/>
+                            <TextBox x:Name="CfgAlertMin" Grid.Row="3" Grid.Column="1" AutomationProperties.LabeledBy="{Binding ElementName=CfgAlertMinLabel}"/>
                         </Grid>
                         <StackPanel Orientation="Horizontal">
                             <Button Content="Salvar" Click="SaveSettings_Click"/>

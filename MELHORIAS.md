@@ -111,14 +111,14 @@ Critérios de impacto
 | M40 | Compactar disco virtual do WSL / detectar `vmmem` | ⬜ |
 | M41 | Avisar RAM alta do WSL/Docker e sugerir `.wslconfig` | 🟡 alerta quando vmmem passa de 2 GB, com dica de .wslconfig e botão "Encerrar WSL"; WSL não estava rodando no teste |
 | M42 | Reduzir a frequência de amostragem na bateria | ⬜ |
-| M43 | Silenciar alertas em tela cheia/apresentação | ⬜ |
-| M44 | Horário silencioso | ⬜ |
-| M45 | Limites de alerta por métrica, com duração configurável | ⬜ |
+| M43 | Silenciar alertas em tela cheia/apresentação | 🟡 com app em tela cheia, jogo ou apresentação, o aviso vai só para o histórico (opção ligada por padrão); não testado no Windows |
+| M44 | Horário silencioso | 🟡 horário silencioso configurável (aceita faixa pela meia-noite, ex.: 22:00–07:00); avisos continuam no histórico; não testado no Windows |
+| M45 | Limites de alerta por métrica, com duração configurável | 🟡 minutos seguidos acima do limite configuráveis (padrão 3), valendo para CPU e agora também para RAM; não testado no Windows |
 | M46 | Histórico de alertas disparados | ✅ |
 | M47 | Linha do tempo de eventos (instalações, updates, picos) | ⬜ |
-| M48 | Comparar hoje × semana passada | ⬜ |
+| M48 | Comparar hoje × semana passada | 🟡 aba Histórico compara as últimas 24 h com o mesmo horário da semana passada (CPU, RAM e nota); não testado no Windows |
 | M49 | Mapa de calor: horários em que o PC fica mais lento | ⬜ |
-| M50 | Previsão de quando o disco enche | ⬜ |
+| M50 | Previsão de quando o disco enche | 🟡 aba Histórico estima quando o disco enche (tendência do último mês, ignorando o que veio antes da última limpeza); não testado no Windows |
 
 ## 🟢 Baixo impacto (50)
 
