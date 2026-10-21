@@ -117,6 +117,16 @@ public sealed class AppSettings
     public bool CloseExits { get; set; }
     /// <summary>B29/B31: ordenação e larguras de coluna de cada tabela.</summary>
     public Dictionary<string, GridLayout> Grids { get; set; } = new();
+    /// <summary>B01: número da CPU no ícone da bandeja.</summary>
+    public bool TrayCpu { get; set; }
+    /// <summary>B37: com o tema "schedule", claro a partir de ThemeLightAt e escuro a partir de ThemeDarkAt.</summary>
+    public string ThemeLightAt { get; set; } = "07:00";
+    public string ThemeDarkAt { get; set; } = "19:00";
+    /// <summary>B49: o aviso "continua na bandeja" já apareceu uma vez.</summary>
+    public bool TrayHintShown { get; set; }
+
+    /// <summary>Tema que vale agora ("system", "light" ou "dark"), resolvendo o modo por horário.</summary>
+    public string EffectiveTheme(DateTime now) => ThemeSchedule.Resolve(ThemeMode, TimeOnly.FromDateTime(now), ThemeLightAt, ThemeDarkAt);
 
     /// <summary>Aplica as unidades escolhidas aos textos (o Core lê de <see cref="Units"/>).</summary>
     public void ApplyUnits()

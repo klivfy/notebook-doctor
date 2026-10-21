@@ -75,12 +75,12 @@ public partial class App : Application
         CrashLog.Enabled = Settings.CrashReports;
         Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
-        ThemeManager.Apply(Settings.ThemeMode);
+        ApplyTheme();
         TextScale.Apply();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => Dispatcher.BeginInvoke(() =>
         {
             // Tema e cor de destaque do Windows podem mudar com o app aberto
-            if (Settings.ThemeMode == "system" || Settings.UseAccentColor) ThemeManager.Apply(Settings.ThemeMode);
+            if (Settings.ThemeMode == "system" || Settings.UseAccentColor) ApplyTheme();
             TextScale.Apply(); // o Windows avisa por aqui quando o "Tamanho do texto" muda
         });
         // A02: ao ligar ou tirar da tomada, sugere o plano de energia adequado
@@ -135,7 +135,7 @@ public partial class App : Application
         // M08: Alto Contraste ligado ou desligado com o app aberto
         SystemParameters.StaticPropertyChanged += (_, a) =>
         {
-            if (a.PropertyName == nameof(SystemParameters.HighContrast)) Dispatcher.BeginInvoke(() => ThemeManager.Apply(Settings.ThemeMode));
+            if (a.PropertyName == nameof(SystemParameters.HighContrast)) Dispatcher.BeginInvoke(() => ApplyTheme());
         };
         _ = RunLoopAsync(_cts.Token);
         _ = CheckUpdatesLaterAsync(_cts.Token);
@@ -315,13 +315,22 @@ public partial class App : Application
                ("Ver em Configurações", $"tab/{Diagnosis.TabSettings}"));
     }
 
+    private string _appliedTheme = "";
+
+    /// <summary>Aplica o tema escolhido; no modo por horário, o claro ou o escuro conforme a hora.</summary>
+    private void ApplyTheme()
+    {
+        _appliedTheme = Settings.EffectiveTheme(DateTime.Now);
+        ThemeManager.Apply(_appliedTheme);
+    }
+
     public void ApplySettingsChanged()
     {
         _tray.SyncStartWithWindows(Settings.StartWithWindows);
         CrashLog.Enabled = Settings.CrashReports;
         Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
-        ThemeManager.Apply(Settings.ThemeMode);
+        ApplyTheme();
     }
 
     private async Task RunLoopAsync(CancellationToken ct)
@@ -336,7 +345,8 @@ public partial class App : Application
                 if (_recent.Count > 36) _recent.RemoveAt(0);
                 Score = Insights.Score(_recent, Health);
                 History.Record(snap, Score.Score);
-                _tray.Update(snap);
+                _tray.Update(snap, Score.Score, Settings.TrayCpu);
+                if (Settings.ThemeMode == ThemeSchedule.Mode && Settings.EffectiveTheme(DateTime.Now) != _appliedTheme) ApplyTheme(); // B37
                 CheckAlerts(snap);
                 CheckHeavyPrograms(snap);
                 CheckHeat(snap);

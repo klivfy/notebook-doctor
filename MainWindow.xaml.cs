@@ -23,6 +23,9 @@ public partial class MainWindow : Window
         InitializeComponent();
         RestorePlacement();
         foreach (var grid in Grids()) GridMemory.Attach(grid, Host.Settings);
+        // B33: a lista muda (dados novos, busca, ordenação) e o rodapé acompanha
+        foreach (var grid in new[] { ProcGrid, SpaceGrid, StartupGrid })
+            ((System.Collections.Specialized.INotifyCollectionChanged)grid.Items).CollectionChanged += (_, _) => UpdateTotals(grid);
         FooterText.Text = AppInfo.Copyright;
         AboutText.Text = $"Notebook Doctor {AppInfo.Version}\nSuporte: klivfy.com/suporte"
                          + (AppPaths.Portable ? $"\nModo portátil: dados em {AppPaths.Dir}" : "");
@@ -151,6 +154,12 @@ public partial class MainWindow : Window
     {
         if (Host.Quitting) return; // encerrando o app: fecha de fato
         e.Cancel = true;
+        if (!Host.Settings.CloseExits && !Host.Settings.TrayHintShown)
+        {
+            // B49: na primeira vez, explica para onde o app foi
+            Host.Settings.TrayHintShown = true;
+            Host.Notify("O Notebook Doctor continua na bandeja", "Ele segue de olho no desempenho. Clique no ícone perto do relógio para abrir; para sair, use o menu desse ícone.");
+        }
         // B10: encerra depois que este Closing terminar (fechar de dentro dele é reentrante); ExitApp salva a posição
         if (Host.Settings.CloseExits) { Dispatcher.BeginInvoke(Host.ExitApp); return; }
         SavePlacement();
@@ -178,6 +187,20 @@ public partial class MainWindow : Window
         return System.Windows.Forms.Screen.AllScreens
             .Select(sc => new Box(sc.WorkingArea.X / scale, sc.WorkingArea.Y / scale, sc.WorkingArea.Width / scale, sc.WorkingArea.Height / scale))
             .ToList();
+    }
+
+    private void UpdateTotals(DataGrid grid)
+    {
+        int total = (grid.ItemsSource as System.Collections.ICollection)?.Count ?? 0;
+        if (grid == ProcGrid)
+            ProcTotal.Text = total == 0 ? "" : TableTotals.Processes(ProcGrid.Items.OfType<ProcRow>().Select(r => (r.Count, r.CpuPct, r.MemMB)).ToList(), total);
+        else if (grid == SpaceGrid)
+            SpaceTotal.Text = total == 0 ? "" : TableTotals.Space(SpaceGrid.Items.OfType<FolderUsage>().Select(f => f.Bytes).ToList(), total);
+        else if (grid == StartupGrid)
+        {
+            var visible = StartupGrid.Items.OfType<StartupEntry>().ToList();
+            StartupTotal.Text = total == 0 ? "" : TableTotals.Startup(visible.Count(x => x.Enabled), visible.Count, total);
+        }
     }
 
     private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid];

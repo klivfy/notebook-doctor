@@ -249,7 +249,10 @@ public partial class MainWindow
     private void LoadSettingsIntoForm()
     {
         var s = Host.Settings;
-        CfgTheme.SelectedIndex = s.ThemeMode switch { "light" => 1, "dark" => 2, _ => 0 };
+        SelectByTag(CfgTheme, s.ThemeMode);
+        CfgThemeLight.Text = s.ThemeLightAt;
+        CfgThemeDark.Text = s.ThemeDarkAt;
+        CfgTrayCpu.IsChecked = s.TrayCpu;
         CfgStart.IsChecked = s.StartWithWindows;
         CfgAlerts.IsChecked = s.AlertsEnabled;
         CfgToasts.IsChecked = s.NativeNotifications;
@@ -289,6 +292,9 @@ public partial class MainWindow
         s.RestorePointBeforeChanges = CfgRestore.IsChecked == true;
         s.CheckUpdates = CfgUpdates.IsChecked == true;
         s.CrashReports = CfgCrash.IsChecked == true;
+        s.TrayCpu = CfgTrayCpu.IsChecked == true;
+        bool themeClockOk = AlertPolicy.TryParseClock(CfgThemeLight.Text, out var tl) & AlertPolicy.TryParseClock(CfgThemeDark.Text, out var td);
+        if (themeClockOk) { s.ThemeLightAt = tl.ToString("HH:mm"); s.ThemeDarkAt = td.ToString("HH:mm"); }
         s.StartMinimized = CfgStartMin.IsChecked == true;
         s.CloseExits = CfgCloseExits.IsChecked == true;
         s.SizeUnit = (CfgSizeUnit.SelectedItem as ComboBoxItem)?.Tag as string ?? "windows";
@@ -317,7 +323,8 @@ public partial class MainWindow
         bool hotkeyOk = Host.ApplyHotkey();
         LoadSettingsIntoForm();
         CfgMsg.Text = (hotkeyOk ? "Salvo." : $"Salvo. O atalho {GlobalHotkey.Label} já é usado por outro programa, então ficou desligado.")
-                      + (clockOk ? "" : " Horário silencioso inválido (use HH:mm, ex.: 22:00): ficou o anterior.");
+                      + (clockOk ? "" : " Horário silencioso inválido (use HH:mm, ex.: 22:00): ficou o anterior.")
+                      + (themeClockOk ? "" : " Horário do tema inválido (use HH:mm, ex.: 07:00): ficou o anterior.");
     }
 
     private static void SelectByTag(ComboBox box, string tag) =>

@@ -222,55 +222,59 @@
                             <TextBox x:Name="ProcSearch" Grid.Column="1" Tag="Buscar programa…" VerticalAlignment="Top" TextChanged="ProcSearch_Changed"
                                      AutomationProperties.Name="Buscar programa"/>
                         </Grid>
-                        <DataGrid x:Name="ProcGrid" Grid.Row="1" SelectionMode="Extended" MouseDoubleClick="ProcGrid_DoubleClick" PreviewKeyDown="ProcGrid_KeyDown" AutomationProperties.Name="Programas em execução">
-                            <!-- M26: as mesmas ações dos botões, mais abrir o local e pesquisar o nome -->
-                            <DataGrid.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="_Detalhes" Click="ProcDetails_Click"/>
-                                    <MenuItem Header="Abrir _local do arquivo" Click="ProcOpenLocation_Click"/>
-                                    <MenuItem Header="_Pesquisar na internet o que é" Click="ProcSearchOnline_Click"/>
-                                    <Separator/>
-                                    <MenuItem Header="_Baixar prioridade" Click="LowerPriority_Click"/>
-                                    <MenuItem Header="_Restaurar prioridade" Click="RestorePriority_Click"/>
-                                    <MenuItem Header="Modo _eficiência" Click="Efficiency_Click"/>
-                                    <MenuItem Header="_Não avisar sobre este" Click="AlertException_Click"/>
-                                    <Separator/>
-                                    <MenuItem Header="E_ncerrar…" Click="KillSelected_Click"/>
-                                </ContextMenu>
-                            </DataGrid.ContextMenu>
-                            <DataGrid.Columns>
-                                <!-- Ícone, nome e, numa segunda linha, o que é o programa -->
-                                <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="190" SortMemberPath="Name">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,6" ToolTip="{Binding About}">
-                                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                                <Grid Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource OnSurfaceVariant}"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    <Image Source="{Binding Icon}" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"
-                                                           Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
+                        <!-- B33: totais do que está à vista (respeita a busca) -->
+                        <DockPanel Grid.Row="1">
+                            <TextBlock x:Name="ProcTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,6,0,0" TextTrimming="CharacterEllipsis"/>
+                            <DataGrid x:Name="ProcGrid" SelectionMode="Extended" MouseDoubleClick="ProcGrid_DoubleClick" PreviewKeyDown="ProcGrid_KeyDown" AutomationProperties.Name="Programas em execução">
+                                <!-- M26: as mesmas ações dos botões, mais abrir o local e pesquisar o nome -->
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="_Detalhes" Click="ProcDetails_Click"/>
+                                        <MenuItem Header="Abrir _local do arquivo" Click="ProcOpenLocation_Click"/>
+                                        <MenuItem Header="_Pesquisar na internet o que é" Click="ProcSearchOnline_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="_Baixar prioridade" Click="LowerPriority_Click"/>
+                                        <MenuItem Header="_Restaurar prioridade" Click="RestorePriority_Click"/>
+                                        <MenuItem Header="Modo _eficiência" Click="Efficiency_Click"/>
+                                        <MenuItem Header="_Não avisar sobre este" Click="AlertException_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="E_ncerrar…" Click="KillSelected_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
+                                <DataGrid.Columns>
+                                    <!-- Ícone, nome e, numa segunda linha, o que é o programa -->
+                                    <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="190" SortMemberPath="Name">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,6" ToolTip="{Binding About}">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <Grid Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource OnSurfaceVariant}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <Image Source="{Binding Icon}" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"
+                                                               Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
+                                                    </Grid>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding About}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
                                                 </Grid>
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding About}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
-                                                </StackPanel>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Processos" Binding="{Binding Count}" Width="96" MinWidth="96"/>
-                                <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPct, StringFormat=0.0}" Width="64" MinWidth="64"/>
-                                <DataGridTextColumn Header="Memória (MB)" Binding="{Binding MemMB, StringFormat=N0}" Width="92" MinWidth="92"/>
-                                <DataGridTextColumn Header="Disco e rede (KB/s)" Binding="{Binding IoKBs, StringFormat=N0}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="92" MinWidth="92"/>
-                                <DataGridTextColumn Header="Pode fechar?" Binding="{Binding SafetyText}" Width="130" MinWidth="120">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Processos" Binding="{Binding Count}" Width="96" MinWidth="96"/>
+                                    <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPct, StringFormat=0.0}" Width="64" MinWidth="64"/>
+                                    <DataGridTextColumn Header="Memória (MB)" Binding="{Binding MemMB, StringFormat=N0}" Width="92" MinWidth="92"/>
+                                    <DataGridTextColumn Header="Disco e rede (KB/s)" Binding="{Binding IoKBs, StringFormat=N0}" Width="110" MinWidth="110"/>
+                                    <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="92" MinWidth="92"/>
+                                    <DataGridTextColumn Header="Pode fechar?" Binding="{Binding SafetyText}" Width="130" MinWidth="120">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
                             <Button Content="Detalhes" Style="{StaticResource TonalButton}" Click="ProcDetails_Click" Margin="0,0,8,6"
                                     ToolTip="Cada processo do programa selecionado, com PID, memória e caminho (ou clique duplo na linha)."/>
@@ -348,26 +352,30 @@
                             <TextBox x:Name="SpaceSearch" Width="170" Tag="Filtrar…" VerticalAlignment="Center" TextChanged="SpaceSearch_Changed" Margin="0,0,0,6"
                                      AutomationProperties.Name="Filtrar resultados"/>
                         </WrapPanel>
-                        <DataGrid x:Name="SpaceGrid" Grid.Row="2" AutomationProperties.Name="Resultado da análise de espaço">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Item" Binding="{Binding Name}" Width="340">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                            <Setter Property="ToolTip" Value="{Binding Path}"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="110"/>
-                                <DataGridTemplateColumn Header="Proporção" Width="*">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ProgressBar Value="{Binding Percent, Mode=OneWay}" Foreground="{DynamicResource ChartDisk}" Margin="0,0,12,0"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <!-- B33: totais do que está à vista (respeita a busca) -->
+                        <DockPanel Grid.Row="2">
+                            <TextBlock x:Name="SpaceTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,6,0,0" TextTrimming="CharacterEllipsis"/>
+                            <DataGrid x:Name="SpaceGrid" AutomationProperties.Name="Resultado da análise de espaço">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Item" Binding="{Binding Name}" Width="340">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                <Setter Property="ToolTip" Value="{Binding Path}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="110"/>
+                                    <DataGridTemplateColumn Header="Proporção" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ProgressBar Value="{Binding Percent, Mode=OneWay}" Foreground="{DynamicResource ChartDisk}" Margin="0,0,12,0"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
                         <WrapPanel Grid.Row="3" Margin="0,14,0,0">
                             <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="SpaceOpen_Click" Margin="0,0,8,6"/>
                             <Button x:Name="SpaceUninstallBtn" Content="Desinstalar…" Visibility="Collapsed" Click="SpaceUninstall_Click" Margin="0,0,8,6"/>
@@ -390,15 +398,19 @@
                             <TextBox x:Name="StartupSearch" Grid.Column="1" Tag="Buscar…" VerticalAlignment="Top" TextChanged="StartupSearch_Changed"
                                      AutomationProperties.Name="Buscar na inicialização"/>
                         </Grid>
-                        <DataGrid x:Name="StartupGrid" Grid.Row="1" AutomationProperties.Name="Programas de inicialização">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170"/>
-                                <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
-                                <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250"/>
-                                <DataGridTextColumn Header="Editor" Binding="{Binding Publisher}" Width="200"/>
-                                <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <!-- B33: totais do que está à vista (respeita a busca) -->
+                        <DockPanel Grid.Row="1">
+                            <TextBlock x:Name="StartupTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,6,0,0" TextTrimming="CharacterEllipsis"/>
+                            <DataGrid x:Name="StartupGrid" AutomationProperties.Name="Programas de inicialização">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170"/>
+                                    <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
+                                    <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250"/>
+                                    <DataGridTextColumn Header="Editor" Binding="{Binding Publisher}" Width="200"/>
+                                    <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
                             <Button Content="Ativar / Desativar selecionado" Click="ToggleStartup_Click" Margin="0,0,8,6"/>
                             <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="StartupOpen_Click" Margin="0,0,8,6"
@@ -612,8 +624,16 @@
                                 <ComboBoxItem Content="Seguir o Windows" Tag="system"/>
                                 <ComboBoxItem Content="Claro" Tag="light"/>
                                 <ComboBoxItem Content="Escuro" Tag="dark"/>
+                                <ComboBoxItem Content="Claro de dia, escuro à noite" Tag="schedule"/>
                             </ComboBox>
                         </Grid>
+                        <!-- B37: horários do tema automático -->
+                        <WrapPanel Margin="0,0,0,8">
+                            <TextBlock Text="No tema por horário: claro a partir das" VerticalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBox x:Name="CfgThemeLight" Width="70" Margin="8,0,8,6" VerticalAlignment="Center" AutomationProperties.Name="Início do tema claro"/>
+                            <TextBlock Text="e escuro a partir das" VerticalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBox x:Name="CfgThemeDark" Width="70" Margin="8,0,0,6" VerticalAlignment="Center" AutomationProperties.Name="Início do tema escuro"/>
+                        </WrapPanel>
                         <!-- B16/B17 -->
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
@@ -631,6 +651,7 @@
                             </ComboBox>
                         </Grid>
                         <CheckBox x:Name="CfgStart" Content="Iniciar com o Windows (fica na bandeja)"/>
+                        <CheckBox x:Name="CfgTrayCpu" Content="Mostrar o uso da CPU (%) no ícone da bandeja"/>
                         <CheckBox x:Name="CfgStartMin" Content="Ao abrir pelo atalho, começar minimizado na barra de tarefas"/>
                         <CheckBox x:Name="CfgCloseExits" Content="Fechar a janela encerra o app (em vez de continuar na bandeja)"
                                   ToolTip="Desligado, o X só esconde a janela: os avisos e o histórico continuam funcionando."/>
@@ -795,7 +816,7 @@
                         <WrapPanel Margin="0,0,0,4">
                             <Button Content="Novidades" Style="{StaticResource TextButton}" Tag="Novidades" Click="AboutText_Click" Margin="0,0,8,8"/>
                             <Button Content="Seus dados e privacidade" Style="{StaticResource TextButton}" Tag="Privacidade" Click="AboutText_Click" Margin="0,0,8,8"/>
-                            <Button Content="Licenças" Style="{StaticResource TextButton}" Tag="Licencas" Click="AboutText_Click" Margin="0,0,8,8"/>
+                            <Button Content="Licenças e créditos" Style="{StaticResource TextButton}" Tag="Licencas" Click="AboutText_Click" Margin="0,0,8,8"/>
                         </WrapPanel>
                         <WrapPanel>
                             <Button Content="Abrir suporte" Click="Support_Click" Margin="0,0,8,8"/>

@@ -303,3 +303,69 @@ public class UnitsTests : IDisposable
         Assert.Contains("SizeUnit", json);
     }
 }
+
+public class TrayAndThemeTests
+{
+    [Theory]
+    [InlineData(10, 40, TrayBand.Ok)]
+    [InlineData(70, 40, TrayBand.Amber)]
+    [InlineData(20, 90, TrayBand.Red)]
+    public void Cor_pelo_recurso_mais_carregado(double cpu, double ram, TrayBand expected) => Assert.Equal(expected, Tray.Band(cpu, ram));
+
+    [Theory]
+    [InlineData(7.4, "7")]
+    [InlineData(45.6, "46")]
+    [InlineData(100, "99")]
+    [InlineData(-1, "0")]
+    public void Numero_cabe_no_icone(double cpu, string expected) => Assert.Equal(expected, Tray.CpuLabel(cpu));
+
+    [Fact]
+    public void Menu_mostra_uso_e_nota()
+    {
+        var (usage, health) = Tray.MenuLines(Make.Snap(cpu: 45, ram: 72, freePct: 18, tempC: 61), 82);
+        Assert.Equal("CPU 45% · RAM 72% · 61 °C", usage);
+        Assert.Equal("Disco livre 18% · nota 82", health);
+        Assert.Equal("Disco livre 18%", Tray.MenuLines(Make.Snap(freePct: 18), 0).Health);
+    }
+
+    [Theory]
+    [InlineData("06:59", true)]
+    [InlineData("07:00", false)]
+    [InlineData("18:59", false)]
+    [InlineData("19:00", true)]
+    [InlineData("23:30", true)]
+    public void Escuro_a_noite(string now, bool dark) =>
+        Assert.Equal(dark, ThemeSchedule.IsDark(TimeOnly.Parse(now), "07:00", "19:00"));
+
+    [Fact]
+    public void Modo_por_horario_vira_claro_ou_escuro_e_os_outros_passam_direto()
+    {
+        Assert.Equal("dark", ThemeSchedule.Resolve("schedule", new TimeOnly(22, 0), "07:00", "19:00"));
+        Assert.Equal("light", ThemeSchedule.Resolve("schedule", new TimeOnly(12, 0), "07:00", "19:00"));
+        Assert.Equal("system", ThemeSchedule.Resolve("system", new TimeOnly(22, 0), "07:00", "19:00"));
+        Assert.Equal("light", ThemeSchedule.Resolve("schedule", new TimeOnly(22, 0), "xx", "19:00")); // horário inválido: claro
+    }
+
+    [Fact]
+    public void Aviso_da_bandeja_nao_vai_na_exportacao() =>
+        Assert.DoesNotContain("TrayHintShown", SettingsTransfer.Export("""{"TrayHintShown":true,"TrayCpu":true}""", "1.2.0"));
+}
+
+public class TableTotalsTests
+{
+    [Fact]
+    public void Processos_soma_o_que_esta_a_vista()
+    {
+        var rows = new List<(int, double, long)> { (18, 9.5, 1900), (6, 4.2, 950) };
+        Assert.Equal("2 programas · 24 processos · CPU 14% · memória 2,8 GB", TableTotals.Processes(rows, 2));
+        Assert.StartsWith("2 de 85 programas", TableTotals.Processes(rows, 85));
+    }
+
+    [Fact]
+    public void Espaco_e_inicializacao()
+    {
+        Assert.Equal("1 item · 512 MB", TableTotals.Space([512L << 20], 1));
+        Assert.Equal("3 de 22 programas · 1 ativado", TableTotals.Startup(1, 3, 22));
+        Assert.Equal("22 programas · 14 ativados", TableTotals.Startup(14, 22, 22));
+    }
+}

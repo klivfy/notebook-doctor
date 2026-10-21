@@ -1,10 +1,16 @@
 Notebook Doctor
 © 2026 Klivfy Tecnologia e Consultoria em TI LTDA. Todos os direitos reservados.
 
+Créditos
+Desenvolvido pela Klivfy Tecnologia e Consultoria em TI LTDA, com sugestões de quem usa o app pelo suporte (klivfy.com/suporte).
+
 Componentes de terceiros
 
 Google Sans Flex
 Fonte embutida no aplicativo. Licença SIL Open Font License 1.1 (scripts.sil.org/OFL).
 
-.NET 8 e Windows Presentation Foundation (WPF)
-© .NET Foundation e colaboradores. Licença MIT (github.com/dotnet/runtime e github.com/dotnet/wpf).
+Segoe Fluent Icons e Segoe UI
+Ícones e fonte do próprio Windows, usados pelo app sem serem distribuídos com ele. © Microsoft.
+
+.NET 8, Windows Presentation Foundation (WPF) e Windows Forms
+© .NET Foundation e colaboradores. Licença MIT (github.com/dotnet/runtime, github.com/dotnet/wpf e github.com/dotnet/winforms).

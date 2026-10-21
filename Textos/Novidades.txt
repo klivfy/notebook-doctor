@@ -24,7 +24,23 @@ Avisos
 • Horário silencioso e silêncio com app em tela cheia ou apresentação.
 • Aviso de CPU ou memória alta só depois de alguns minutos seguidos.
 
+Barra de tarefas e bandeja
+• Selo de alerta no ícone da barra de tarefas e atalhos (Limpeza, Processos, Histórico) no clique direito.
+• Uso da CPU no ícone da bandeja (opcional) e CPU, RAM, disco e nota no menu dela.
+
+Gráficos e tabelas
+• Zoom nos gráficos do Histórico: roda do mouse, arrastar e clique duplo para voltar.
+• As tabelas lembram a ordenação e a largura das colunas, e mostram totais no rodapé.
+
+Jogos e apresentações
+• Overlay com CPU, RAM e temperatura por cima de jogos em tela cheia (opcional).
+• Modo demonstração com dados fictícios (NotebookDoctor.exe --demo).
+
 Configurações
+• Tamanhos em GB do Windows, GB da caixa do disco ou GiB, e temperatura em °C ou °F.
+• Tema claro de dia e escuro à noite, nos horários que você escolher.
+• Começar minimizado e opção de o X encerrar o app.
+• A janela reabre no mesmo lugar e no mesmo monitor.
 • Exportar, importar e redefinir as preferências.
 • Cor de destaque do Windows, ajustada para manter a leitura.
 • Modo portátil: com um arquivo portatil.txt ao lado do app, os dados ficam na pasta "dados".

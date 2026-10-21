@@ -124,9 +124,9 @@ Critérios de impacto
 
 | # | Melhoria | Status |
 |---|---|---|
-| B01 | Número de CPU no ícone da bandeja | ⬜ |
+| B01 | Número de CPU no ícone da bandeja | 🟡 opcional; quadrado na cor do estado com o número em contraste ≥ 4,5:1 |
 | B02 | Clique simples no ícone da bandeja abre o painel | ✅ |
-| B03 | Mini-métricas no menu da bandeja | ⬜ |
+| B03 | Mini-métricas no menu da bandeja | 🟡 CPU, RAM, temperatura, disco livre e nota no topo do menu; clicar abre o painel |
 | B04 | Animação suave nos medidores | ⬜ |
 | B05 | Efeito ripple nos botões | ⬜ |
 | B06 | Transição entre abas | ⬜ |
@@ -156,11 +156,11 @@ Critérios de impacto
 | B30 | Colunas personalizáveis | ⬜ |
 | B31 | Lembrar larguras de coluna | 🟡 só as colunas que a pessoa ajustou, salvas ao fechar a janela |
 | B32 | Destaque de linha por severidade | ⬜ |
-| B33 | Totais no rodapé das tabelas | ⬜ |
+| B33 | Totais no rodapé das tabelas | 🟡 Processos, Espaço e Inicialização (respeitam a busca); a Limpeza já mostra os totais no título |
 | B34 | "Marcar/desmarcar todos" na limpeza | 🟡 "Marcar todos" (exceto a Lixeira) e "Desmarcar todos" na Limpeza; não testado no Windows |
 | B35 | Prévia dos arquivos antes de apagar | ⬜ |
 | B36 | "Não perguntar de novo" (só em ações não destrutivas) | ⬜ |
-| B37 | Tema automático por horário | ⬜ |
+| B37 | Tema automático por horário | 🟡 "Claro de dia, escuro à noite" com horários configuráveis; troca sozinho com o app aberto |
 | B38 | Senha para alterar configurações (modo empresa) | ⬜ |
 | B39 | Documentar argumentos de linha de comando (`--tab`, `--background`) | ✅ README, seção Linha de comando |
 | B40 | Log de diagnóstico exportável | ⬜ |
@@ -172,8 +172,8 @@ Critérios de impacto
 | B46 | Testar DPI 125/150/200% | ⬜ |
 | B47 | Selo de status na barra de tarefas | 🟡 "!" vermelho com problema, laranja com ponto de atenção, sem selo com tudo certo; dica com nota e contagem |
 | B48 | Jump list (Limpeza, Processos) | 🟡 Limpeza, Processos e Histórico; com o app aberto, troca a aba da janela que já está aberta |
-| B49 | Mensagem de boas-vindas na bandeja | ⬜ |
-| B50 | Créditos | ⬜ |
+| B49 | Mensagem de boas-vindas na bandeja | 🟡 na primeira vez que a janela vai para a bandeja |
+| B50 | Créditos | 🟡 "Licenças e créditos" no Sobre |
 
 ---
 
