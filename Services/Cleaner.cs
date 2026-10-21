@@ -158,6 +158,15 @@ public static class Cleaner
             }
     }
 
+    /// <summary>B35: os arquivos que a limpeza apagaria neste local (sem apagar nada).</summary>
+    public static List<PreviewFile> Preview(CleanItem item, int days)
+    {
+        var list = new List<PreviewFile>();
+        foreach (var f in Files(item, days))
+            try { list.Add(new PreviewFile(f.FullName, f.Length, f.LastWriteTime)); } catch { /* sumiu ou sem permissão */ }
+        return list;
+    }
+
     private static void Measure(CleanItem item, int days)
     {
         long bytes = 0; int n = 0;

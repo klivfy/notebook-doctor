@@ -220,6 +220,38 @@ public partial class MainWindow
         catch { ShowSnack("Não foi possível copiar", "Outro programa está usando a área de transferência. Tente de novo."); }
     }
 
+    // ---------- B19: imagem do painel ----------
+    private void PainelImage_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            // O painel inteiro, inclusive a parte fora da tela, no fundo do tema e na escala do monitor
+            var el = PainelContent;
+            double w = el.ActualWidth, h = el.ActualHeight;
+            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(el);
+            var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(w * dpi.DpiScaleX), (int)Math.Ceiling(h * dpi.DpiScaleY),
+                                                                          dpi.PixelsPerInchX, dpi.PixelsPerInchY, System.Windows.Media.PixelFormats.Pbgra32);
+            var visual = new System.Windows.Media.DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                dc.DrawRectangle(Background ?? System.Windows.Media.Brushes.White, null, new Rect(0, 0, w, h));
+                dc.DrawRectangle(new System.Windows.Media.VisualBrush(el), null, new Rect(0, 0, w, h));
+            }
+            bmp.Render(visual);
+            bmp.Freeze();
+
+            string file = System.IO.Path.Combine(AppPaths.ExportDir(), $"painel-{DateTime.Now:yyyy-MM-dd_HHmm}.png");
+            var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
+            png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+            using (var fs = System.IO.File.Create(file)) png.Save(fs);
+            bool copied = true;
+            try { Clipboard.SetImage(bmp); } catch { copied = false; } // outro programa segurando a área de transferência
+            ShowSnack("Imagem do painel salva", (copied ? "Também foi copiada: cole com Ctrl+V. " : "") + System.IO.Path.GetFileName(file),
+                      "Abrir", () => AppInfo.OpenShell(file), seconds: 12);
+        }
+        catch (Exception ex) { ShowSnack("Não foi possível salvar a imagem", ex.Message); }
+    }
+
     // ---------- Relatório ----------
     public void ExportReport() => Export_Click(this, new RoutedEventArgs());
 
@@ -252,9 +284,9 @@ public partial class MainWindow
         RamSpark.SetValues(recent.Select(x => x.RamPct).ToList(), times);
         DiskSpark.SetValues(recent.Select(x => x.DiskBusy).ToList(), times);
 
-        CpuBar.Value = s.Cpu; CpuBar.SetResourceReference(ProgressBar.ForegroundProperty, LevelKey(s.Cpu));
-        RamBar.Value = s.RamPct; RamBar.SetResourceReference(ProgressBar.ForegroundProperty, LevelKey(s.RamPct));
-        DiskBar.Value = s.DiskBusy; DiskBar.SetResourceReference(ProgressBar.ForegroundProperty, LevelKey(s.DiskBusy));
+        Motion.SetValue(CpuBar, s.Cpu); CpuBar.SetResourceReference(ProgressBar.ForegroundProperty, LevelKey(s.Cpu));
+        Motion.SetValue(RamBar, s.RamPct); RamBar.SetResourceReference(ProgressBar.ForegroundProperty, LevelKey(s.RamPct));
+        Motion.SetValue(DiskBar, s.DiskBusy); DiskBar.SetResourceReference(ProgressBar.ForegroundProperty, LevelKey(s.DiskBusy));
 
         var findings = Diagnosis.Evaluate(recent, Host.Health, Host.Memory.Suspects);
         foreach (var f in findings) f.WhyOpen = _whyOpen.Contains(f.Title);

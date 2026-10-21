@@ -55,7 +55,7 @@
             <!-- PAINEL: nota de saúde primeiro, métricas compactas, diagnóstico com as correções -->
             <TabItem Header="Painel">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
-                    <StackPanel>
+                    <StackPanel x:Name="PainelContent">
                         <!-- Alerta de programa pesado (A41) -->
                         <Border x:Name="HeavyBanner" Style="{StaticResource Card}" Visibility="Collapsed"
                                 Background="{DynamicResource SecondaryContainer}" Padding="18,12">
@@ -82,7 +82,7 @@
                                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
                                 <StackPanel Margin="0,0,28,0">
-                                    <TextBlock Text="Nota de saúde" Style="{StaticResource Label}"/>
+                                    <TextBlock Text="Nota de saúde" Style="{StaticResource Label}" ToolTip="De 0 a 100. Junta uso de CPU e memória, espaço livre, saúde do disco e da bateria e problemas encontrados. 75 ou mais é bom." AutomationProperties.HelpText="De 0 a 100. Junta uso de CPU e memória, espaço livre, saúde do disco e da bateria e problemas encontrados. 75 ou mais é bom."/>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock x:Name="ScoreText" Text="–" FontFamily="{StaticResource FontDisplay}" FontSize="{DynamicResource FsHero}"/>
                                         <TextBlock Text="/100" Style="{StaticResource Muted}" VerticalAlignment="Bottom" Margin="4,0,0,12"/>
@@ -93,7 +93,7 @@
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1" VerticalAlignment="Top">
-                                    <TextBlock Text="Gargalo agora" Style="{StaticResource Label}"/>
+                                    <TextBlock Text="Gargalo agora" Style="{StaticResource Label}" ToolTip="O recurso que mais limita o computador neste momento, pelos últimos minutos de uso." AutomationProperties.HelpText="O recurso que mais limita o computador neste momento, pelos últimos minutos de uso."/>
                                     <TextBlock x:Name="BottleneckName" Style="{StaticResource Value}"/>
                                     <TextBlock x:Name="BottleneckText" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                     <local:Sparkline x:Name="ScoreSpark" Height="40" Margin="0,12,0,0" Unit="" Title="Nota de saúde, última hora"
@@ -111,16 +111,18 @@
                                             ToolTip="O mesmo relatório em PDF, para anexar em e-mail ou chamado"/>
                                     <Button Content="Copiar resumo" Style="{StaticResource TextButton}" Margin="0,0,0,0" Click="CopySummary_Click"
                                             ToolTip="Copia nota, uso atual e problemas encontrados, para colar numa conversa ou chamado"/>
+                                    <Button Content="Salvar imagem do painel" Style="{StaticResource TextButton}" Margin="0,0,0,0" Click="PainelImage_Click"
+                                            ToolTip="Salva o painel inteiro em PNG e copia a imagem, para colar num chamado"/>
                                 </StackPanel>
 
                                 <!-- Fatos de saúde do hardware -->
                                 <WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,16,0,0">
                                     <StackPanel Margin="0,0,40,0">
-                                        <TextBlock x:Name="DiskHealthTitle" Text="Disco · saúde" Style="{StaticResource Label}"/>
+                                        <TextBlock x:Name="DiskHealthTitle" Text="Disco · saúde" Style="{StaticResource Label}" ToolTip="Estado informado pelo próprio disco (SMART). Desgaste e temperatura do SSD aparecem com o app em modo administrador." AutomationProperties.HelpText="Estado informado pelo próprio disco (SMART). Desgaste e temperatura do SSD aparecem com o app em modo administrador."/>
                                         <TextBlock x:Name="DiskHealthText" Style="{StaticResource Value}"/>
                                     </StackPanel>
                                     <StackPanel>
-                                        <TextBlock Text="Bateria · tempo de inicialização" Style="{StaticResource Label}"/>
+                                        <TextBlock Text="Bateria · tempo de inicialização" Style="{StaticResource Label}" ToolTip="Capacidade da bateria comparada à de fábrica e quanto o Windows levou para iniciar da última vez." AutomationProperties.HelpText="Capacidade da bateria comparada à de fábrica e quanto o Windows levou para iniciar da última vez."/>
                                         <TextBlock x:Name="BatteryBootText" Style="{StaticResource Value}"/>
                                     </StackPanel>
                                 </WrapPanel>
@@ -133,7 +135,7 @@
                                 <StackPanel Margin="0,0,20,0">
                                     <DockPanel>
                                         <TextBlock x:Name="CpuText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
-                                        <TextBlock Text="Processador" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Processador" Style="{StaticResource Label}" VerticalAlignment="Center" ToolTip="Quanto do processador está ocupado. Picos curtos são normais; acima de 85% por minutos seguidos deixa tudo lento." AutomationProperties.HelpText="Quanto do processador está ocupado. Picos curtos são normais; acima de 85% por minutos seguidos deixa tudo lento."/>
                                     </DockPanel>
                                     <ProgressBar x:Name="CpuBar" Margin="0,6,0,8" AutomationProperties.Name="Uso do processador"/>
                                     <local:Sparkline x:Name="CpuSpark" Height="32" Title="Processador, últimos minutos"
@@ -143,7 +145,7 @@
                                 <StackPanel Margin="0,0,20,0">
                                     <DockPanel>
                                         <TextBlock x:Name="RamText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
-                                        <TextBlock Text="Memória" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Memória" Style="{StaticResource Label}" VerticalAlignment="Center" ToolTip="Memória RAM em uso. Acima de 85%, o Windows começa a usar o disco como memória e fica lento." AutomationProperties.HelpText="Memória RAM em uso. Acima de 85%, o Windows começa a usar o disco como memória e fica lento."/>
                                     </DockPanel>
                                     <ProgressBar x:Name="RamBar" Margin="0,6,0,8" AutomationProperties.Name="Uso da memória"/>
                                     <local:Sparkline x:Name="RamSpark" Height="32" Title="Memória, últimos minutos"
@@ -153,7 +155,7 @@
                                 <StackPanel>
                                     <DockPanel>
                                         <TextBlock x:Name="DiskText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
-                                        <TextBlock Text="Disco (atividade)" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Disco (atividade)" Style="{StaticResource Label}" VerticalAlignment="Center" ToolTip="Quanto do tempo o disco está ocupado lendo ou gravando. Perto de 100% por muito tempo trava abrir programas e arquivos." AutomationProperties.HelpText="Quanto do tempo o disco está ocupado lendo ou gravando. Perto de 100% por muito tempo trava abrir programas e arquivos."/>
                                     </DockPanel>
                                     <ProgressBar x:Name="DiskBar" Margin="0,6,0,8" AutomationProperties.Name="Atividade do disco"/>
                                     <local:Sparkline x:Name="DiskSpark" Height="32" Title="Atividade do disco, últimos minutos"
@@ -312,7 +314,7 @@
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <TextBlock x:Name="CleanHeader" Text="Clique em Analisar para ver o que pode ser removido." Style="{StaticResource TitleMedium}"
                                    AutomationProperties.LiveSetting="Polite"/>
-                        <DataGrid x:Name="CleanGrid" Grid.Row="1" PreviewKeyDown="CleanGrid_KeyDown" AutomationProperties.Name="Locais que podem ser limpos">
+                        <DataGrid x:Name="CleanGrid" Grid.Row="1" PreviewKeyDown="CleanGrid_KeyDown" MouseDoubleClick="CleanPreview_Click" AutomationProperties.Name="Locais que podem ser limpos">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn Header="Limpar" Width="Auto" MinWidth="88">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -331,6 +333,9 @@
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
                             <Button Content="Analisar" Style="{StaticResource TonalButton}" Click="Scan_Click" Margin="0,0,8,6"/>
                             <Button Content="Limpar selecionados" Click="Clean_Click" Margin="0,0,8,6"/>
+                            <!-- B35: o que seria apagado no local selecionado, sem apagar nada -->
+                            <Button Content="Ver arquivos" Style="{StaticResource TonalButton}" Click="CleanPreview_Click" Margin="0,0,8,6"
+                                    ToolTip="Lista o que a limpeza apagaria no local selecionado (clique duplo na linha faz o mesmo)."/>
                             <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="CleanSelectAll_Click" Margin="0,0,8,6"
                                     ToolTip="Marca todos os locais que podem ser limpos, menos a Lixeira (apagar dela é definitivo)"/>
                             <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="CleanSelectNone_Click" Margin="0,0,8,6"/>

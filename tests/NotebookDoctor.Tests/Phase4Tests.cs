@@ -429,3 +429,40 @@ public class DiagnosticLogTests
         Assert.Contains("falha-1.txt", log);
     }
 }
+
+public class CleanPreviewTests
+{
+    private static readonly string[] Roots = [@"C:\Users\ana\AppData\Local\Temp"];
+
+    [Fact]
+    public void Caminho_relativo_a_pasta_do_local()
+    {
+        Assert.Equal(@"Temp\sub\a.tmp", CleanPreview.Relative(@"C:\Users\ana\AppData\Local\Temp\sub\a.tmp", Roots));
+        Assert.Equal(@"Temp\a.tmp", CleanPreview.Relative(@"c:\users\ana\appdata\local\temp\a.tmp", [@"C:\Users\ana\AppData\Local\Temp\"]));
+        Assert.Equal(@"D:\outro\b.tmp", CleanPreview.Relative(@"D:\outro\b.tmp", Roots));
+        Assert.Equal(@"C:\Users\ana\AppData\Local\Temp2\c.tmp", CleanPreview.Relative(@"C:\Users\ana\AppData\Local\Temp2\c.tmp", Roots)); // não confunde Temp com Temp2
+    }
+
+    [Fact]
+    public void Lista_os_maiores_primeiro_com_total()
+    {
+        var d = new DateTime(2026, 10, 1);
+        var files = new List<PreviewFile>
+        {
+            new(@"C:\Users\ana\AppData\Local\Temp\pequeno.tmp", 2048, d),
+            new(@"C:\Users\ana\AppData\Local\Temp\grande.tmp", 50L << 20, d),
+        };
+        string text = CleanPreview.Format("Temporários", Roots, files);
+        Assert.StartsWith("Temporários: 2 arquivos, 50 MB.", text);
+        Assert.True(text.IndexOf("grande.tmp") < text.IndexOf("pequeno.tmp"));
+        Assert.Contains("01/10/2026", text);
+    }
+
+    [Fact]
+    public void Lista_longa_diz_quantos_ficaram_de_fora()
+    {
+        var files = Enumerable.Range(0, CleanPreview.MaxListed + 3).Select(i => new PreviewFile($@"C:\t\{i}.tmp", 1000 + i, DateTime.Now)).ToList();
+        Assert.EndsWith("… e mais 3 arquivos menores.", CleanPreview.Format("X", [@"C:\t"], files));
+        Assert.EndsWith("Nada a apagar aqui agora.", CleanPreview.Format("X", [@"C:\t"], []));
+    }
+}

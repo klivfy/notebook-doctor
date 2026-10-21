@@ -127,14 +127,14 @@ Critérios de impacto
 | B01 | Número de CPU no ícone da bandeja | 🟡 opcional; quadrado na cor do estado com o número em contraste ≥ 4,5:1 |
 | B02 | Clique simples no ícone da bandeja abre o painel | ✅ |
 | B03 | Mini-métricas no menu da bandeja | 🟡 CPU, RAM, temperatura, disco livre e nota no topo do menu; clicar abre o painel |
-| B04 | Animação suave nos medidores | ⬜ |
+| B04 | Animação suave nos medidores | 🟡 barras do Painel deslizam até o valor novo; desligado com "Efeitos de animação" do Windows ou Alto Contraste |
 | B05 | Efeito ripple nos botões | ⬜ |
-| B06 | Transição entre abas | ⬜ |
+| B06 | Transição entre abas | 🟡 fade com leve subida (180–220 ms); mesma regra de acessibilidade |
 | B07 | Lembrar posição e tamanho da janela | 🟡 posição, tamanho e maximizada; reabre centralizada se a barra de título ficaria fora da tela |
 | B08 | Lembrar a última aba aberta | ✅ |
 | B09 | Opção de iniciar minimizado | 🟡 aberto pelo atalho, começa minimizado na barra de tarefas (ao iniciar com o Windows já fica só na bandeja) |
 | B10 | Opção "fechar encerra o app" | 🟡 em Configurações; desligado, o X continua levando para a bandeja |
-| B11 | Dicas (tooltips) nos cartões | ⬜ |
+| B11 | Dicas (tooltips) nos cartões | 🟡 nota, gargalo, processador, memória, disco e bateria; o Narrador lê a mesma explicação |
 | B12 | Etapas de progresso na limpeza | 🟡 "Limpando 2 de 5: Cache do Chrome…" |
 | B13 | Som discreto ao concluir | 🟡 opcional (desligado por padrão); som de aviso suave do Windows ao terminar limpeza ou otimização |
 | B14 | Mensagem de comemoração ao liberar mais de 1 GB | 🟡 com a conta em fotos de celular |
@@ -142,7 +142,7 @@ Critérios de impacto
 | B16 | Escolha GB × GiB | 🟡 GB como o Windows (1024), GB como a caixa do disco (1000) ou GiB; vale para tamanhos em GB e para Pt.Bytes. Colunas "(MB)" das tabelas continuam com esse título |
 | B17 | Unidades °C/°F | 🟡 em todo texto (painel, diagnóstico, avisos, overlay, relatórios); as regras continuam em °C |
 | B18 | Copiar métricas para a área de transferência | 🟡 botão "Copiar resumo" no Painel: nota, uso atual, gargalo, problemas e programas mais pesados; não testado no Windows |
-| B19 | Captura de tela do painel | ⬜ |
+| B19 | Captura de tela do painel | 🟡 "Salvar imagem do painel": PNG do painel inteiro (inclusive fora da tela), também copiado |
 | B20 | Exportar relatório em PDF | 🟡 botão "Exportar em PDF" no Painel, gerado pelo próprio app (sem biblioteca externa, texto em Helvetica); não testado no Windows |
 | B21 | Atalho no Menu Iniciar pelo instalador | ⬜ |
 | B22 | Botão "Verificar atualização" | 🟡 "Procurar atualização" no Sobre; falta publicar o versao.json em klivfy.com |
@@ -158,7 +158,7 @@ Critérios de impacto
 | B32 | Destaque de linha por severidade | 🟡 barra vermelha/laranja em Processos; impacto alto em semi-negrito na Inicialização; o Narrador lê "uso alto" |
 | B33 | Totais no rodapé das tabelas | 🟡 Processos, Espaço e Inicialização (respeitam a busca); a Limpeza já mostra os totais no título |
 | B34 | "Marcar/desmarcar todos" na limpeza | 🟡 "Marcar todos" (exceto a Lixeira) e "Desmarcar todos" na Limpeza; não testado no Windows |
-| B35 | Prévia dos arquivos antes de apagar | ⬜ |
+| B35 | Prévia dos arquivos antes de apagar | 🟡 "Ver arquivos" ou clique duplo: até 200 maiores, com tamanho e data; a Lixeira abre na tela do Windows |
 | B36 | "Não perguntar de novo" (só em ações não destrutivas) | 🟡 reabrir como administrador e criar plano de energia; "Voltar a pedir todas as confirmações" em Configurações |
 | B37 | Tema automático por horário | 🟡 "Claro de dia, escuro à noite" com horários configuráveis; troca sozinho com o app aberto |
 | B38 | Senha para alterar configurações (modo empresa) | ⬜ |

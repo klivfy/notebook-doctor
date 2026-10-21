@@ -49,6 +49,23 @@ public partial class MainWindow
         Scan_Click(sender, e);
     }
 
+    // ---------- B35: prévia do que seria apagado ----------
+    private async void CleanPreview_Click(object sender, RoutedEventArgs e)
+    {
+        if (CleanGrid.SelectedItem is not CleanItem item) { CleanMsg.Text = "Selecione um local para ver os arquivos."; return; }
+        if (item.IsRecycleBin)
+        {
+            // A Lixeira não é uma pasta comum: a própria tela do Windows mostra o conteúdo
+            AppInfo.OpenShell("shell:RecycleBinFolder");
+            return;
+        }
+        CleanMsg.Text = "Listando…";
+        int days = Host.Settings.TempDays;
+        var files = await Task.Run(() => Cleaner.Preview(item, days));
+        CleanMsg.Text = "";
+        Dialogs.ShowText(this, $"O que seria apagado: {item.Label}", CleanPreview.Format(item.Label, item.Paths, files));
+    }
+
     // ---------- B34: marcar e desmarcar todos ----------
     private void CleanSelectAll_Click(object sender, RoutedEventArgs e)
     {

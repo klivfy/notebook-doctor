@@ -274,6 +274,7 @@ public partial class MainWindow : Window
     private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (e.Source != Tabs) return; // ignora seleções de DataGrid/ComboBox internos
+        Motion.EnterContent((Tabs.SelectedItem as TabItem)?.Content as FrameworkElement);
         switch (Tabs.SelectedIndex)
         {
             case TabProcs when Host.Latest is { } s: RefreshProcesses(s); break;
