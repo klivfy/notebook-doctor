@@ -2,6 +2,9 @@ namespace NotebookDoctor.Services;
 
 public sealed record UnsignedApp(string Name, string Path);
 
+/// <summary>M40: disco virtual (.vhdx) de uma distribuição do WSL ou do Docker Desktop.</summary>
+public sealed record VirtualDisk(string Name, string Path, long Bytes);
+
 /// <param name="DefenderRealtime">Proteção em tempo real do Windows Defender (null = não deu para ler)</param>
 /// <param name="OtherAv">Antivírus de terceiros registrados no Windows (quando há, o Defender pode estar desligado de propósito)</param>
 /// <param name="OtherAvActive">M32: dos antivírus de terceiros, os que estão com a proteção em tempo real ligada</param>
@@ -17,7 +20,8 @@ public sealed record HealthInfo(
     int? BootSeconds, int? BootAvgSeconds,
     bool RebootPending, bool OnAc, string ActivePlan, string? HighPlanGuid,
     int StartupEnabled, long TempBytes,
-    IReadOnlyList<string> DriverErrors, IReadOnlyList<UnsignedApp> Unsigned, SecurityInfo? Security = null)
+    IReadOnlyList<string> DriverErrors, IReadOnlyList<UnsignedApp> Unsigned, SecurityInfo? Security = null,
+    IReadOnlyList<VirtualDisk>? VirtualDisks = null)
 {
     public SecurityInfo Sec => Security ?? SecurityInfo.Empty;
     public static readonly HealthInfo Empty = new("", "", "", null, null, null, null, null, null, false, false, "", null, 0, 0,

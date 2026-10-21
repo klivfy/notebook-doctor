@@ -93,12 +93,12 @@ Critérios de impacto
 | M22 | Agrupar processos por aplicativo | ⬜ |
 | M23 | Ícones reais dos programas nas tabelas | ✅ (tabela de Processos) |
 | M24 | Busca e filtro nas tabelas | ✅ busca em Processos, Inicialização e Espaço |
-| M25 | Seleção múltipla e ações em lote | ⬜ |
+| M25 | Seleção múltipla e ações em lote | 🟡 seleção múltipla (Ctrl/Shift) em Processos e "Encerrar" com uma confirmação para todos; protegidos ficam de fora; não testado no Windows |
 | M26 | Menu de contexto (abrir local, propriedades, pesquisar online) | 🟡 clique direito em Processos: detalhes, abrir local, pesquisar na internet, prioridade, modo eficiência, exceção de aviso e encerrar; não testado no Windows |
 | M27 | Abrir a pasta do item de inicialização | 🟡 botão "Abrir local" na aba Inicialização seleciona o arquivo no Explorador; não testado no Windows |
 | M28 | Mostrar editor/assinatura do item de inicialização | 🟡 coluna Editor: quem assinou o programa ou, sem assinatura, o fabricante declarado no arquivo; não testado no Windows |
 | M29 | Tarefas agendadas de terceiros, com opção de desativar | ⬜ |
-| M30 | Gerenciar serviços (listar e sugerir "manual") | ⬜ |
+| M30 | Gerenciar serviços (listar e sugerir "manual") | 🟡 aba Ajustes lista serviços de terceiros que iniciam sozinhos, com recomendação; "Mudar para manual" exige administrador e tem Desfazer; serviços do Windows, segurança, drivers e rede nunca são alterados; não testado no Windows |
 | M31 | Listar extensões pesadas de navegador | ⬜ |
 | M32 | Detectar antivírus conflitantes | 🟡 diagnóstico avisa quando há dois antivírus com proteção em tempo real ligada (inclui o Defender), pelo productState da Central de Segurança; não testado no Windows |
 | M33 | Orientar OneDrive "arquivos sob demanda" | ⬜ |
@@ -108,7 +108,7 @@ Critérios de impacto
 | M37 | Limpar pontos de restauração antigos (manter o último) | ⬜ |
 | M38 | Caches de desenvolvimento (npm, NuGet, pip, Gradle) | ✅ npm, NuGet, Gradle, pip, Yarn e pnpm na Limpeza, desmarcados por padrão |
 | M39 | Caches de apps (Spotify, Teams, Discord, Slack) | 🟡 caches de Discord, Slack, Teams (clássico e novo) e VS Code, desmarcados; Spotify fica de fora porque o cache dele guarda as músicas offline; não testado no Windows |
-| M40 | Compactar disco virtual do WSL / detectar `vmmem` | ⬜ |
+| M40 | Compactar disco virtual do WSL / detectar `vmmem` | 🟡 diagnóstico avisa disco virtual do WSL/Docker com 20 GB+ e explica como compactar (não compacta sozinho); não testado no Windows |
 | M41 | Avisar RAM alta do WSL/Docker e sugerir `.wslconfig` | 🟡 alerta quando vmmem passa de 2 GB, com dica de .wslconfig e botão "Encerrar WSL"; WSL não estava rodando no teste |
 | M42 | Reduzir a frequência de amostragem na bateria | ⬜ |
 | M43 | Silenciar alertas em tela cheia/apresentação | 🟡 com app em tela cheia, jogo ou apresentação, o aviso vai só para o histórico (opção ligada por padrão); não testado no Windows |

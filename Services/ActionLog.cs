@@ -65,6 +65,13 @@ public static class ActionLog
                 StartupManager.SetEnabled(parts[0], entry.UndoArg1, bool.Parse(parts[1]));
                 msg = "Item de inicialização restaurado.";
                 break;
+            case "service":
+                // UndoArg1 = nome do serviço; UndoArg2 = tipo de início anterior (2 = automático)
+                try { ServiceManager.SetStart(entry.UndoArg1, int.Parse(entry.UndoArg2)); }
+                catch (UnauthorizedAccessException) { return "Serviços são do sistema: abra o app como administrador para desfazer."; }
+                catch (Exception ex) { return "Não foi possível desfazer: " + ex.Message; }
+                msg = "O serviço volta a iniciar com o Windows no próximo boot.";
+                break;
             case "priority":
                 msg = ProcessActions.SetPriority(entry.UndoArg1, ProcessPriorityClass.Normal) > 0
                     ? "Prioridade normal restaurada." : "O programa não está mais aberto: nada a restaurar.";

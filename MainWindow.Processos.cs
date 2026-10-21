@@ -25,7 +25,8 @@ public partial class MainWindow
     // ---------- Processos ----------
     private void RefreshProcesses(Snapshot s)
     {
-        var selected = (ProcGrid.SelectedItem as ProcRow)?.Name;
+        // M25: guarda todos os selecionados (Ctrl/Shift), não só o primeiro, para a atualização a cada 3 s não desfazer a seleção
+        var selected = ProcGrid.SelectedItems.OfType<ProcRow>().Select(r => r.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var sort = ProcGrid.Items.SortDescriptions.ToList();
         ProcGrid.ItemsSource = s.Groups.OrderByDescending(g => g.CpuPct).ThenByDescending(g => g.MemMB).Select(g =>
         {
@@ -34,13 +35,42 @@ public partial class MainWindow
         }).ToList();
         ApplyFilter(ProcGrid, ProcSearch.Text, o => o is ProcRow r ? r.Name + " " + r.About : "");
         foreach (var d in sort) ProcGrid.Items.SortDescriptions.Add(d);
-        if (selected is not null) ProcGrid.SelectedItem = ProcGrid.Items.OfType<ProcRow>().FirstOrDefault(g => g.Name == selected);
+        foreach (var row in ProcGrid.Items.OfType<ProcRow>().Where(r => selected.Contains(r.Name))) ProcGrid.SelectedItems.Add(row);
     }
 
     private void KillSelected_Click(object sender, RoutedEventArgs e)
     {
-        if (ProcGrid.SelectedItem is not ProcRow g) { ProcMsg.Text = "Selecione um programa na lista."; return; }
-        KillProgram(g.Name, g.Count, g.MemMB);
+        var rows = ProcGrid.SelectedItems.OfType<ProcRow>().ToList();
+        if (rows.Count == 0) { ProcMsg.Text = "Selecione um programa na lista (Ctrl ou Shift para vários)."; return; }
+        if (rows.Count == 1) { KillProgram(rows[0].Name, rows[0].Count, rows[0].MemMB); return; }
+        KillPrograms(rows);
+    }
+
+    /// <summary>M25: encerra vários programas com uma só confirmação. Os protegidos ficam de fora e são listados.</summary>
+    private void KillPrograms(List<ProcRow> rows)
+    {
+        var allowed = rows.Where(r => !ProcessTools.IsProtected(r.Name)).ToList();
+        var skipped = rows.Except(allowed).Select(r => r.Name).ToList();
+        string skippedText = skipped.Count > 0 ? $"\n\nFicam de fora (protegidos): {string.Join(", ", skipped)}." : "";
+        if (allowed.Count == 0) { ProcMsg.Text = "Todos os selecionados são protegidos: nada a encerrar."; return; }
+        long mem = allowed.Sum(r => r.MemMB);
+        string list = string.Join("\n", allowed.Select(r => $"• {r.Name} ({Pt.N(r.Count, "processo", "processos")}, {r.MemMB:N0} MB) — {r.SafetyText}"));
+        if (Simulate($"Encerrar {Pt.N(allowed.Count, "programa", "programas")}", $"Fecharia {string.Join(", ", allowed.Select(r => r.Name))} ({mem:N0} MB).")) return;
+        if (!Dialogs.Confirm(this, $"Encerrar {Pt.N(allowed.Count, "programa", "programas")}?",
+                $"{list}{skippedText}\n\nTrabalho não salvo nesses programas será perdido.", "Encerrar todos", danger: true)) return;
+
+        int done = 0; long freed = 0;
+        foreach (var r in allowed)
+        {
+            int n = ProcessActions.Kill(r.Name);
+            if (n == 0) continue;
+            done++; freed += r.MemMB;
+            ActionLog.Add("Programa encerrado", $"{r.Name} ({Pt.N(n, "processo", "processos")}, {r.MemMB:N0} MB)");
+        }
+        ProcMsg.Text = done == allowed.Count ? $"{Pt.N(done, "programa encerrado", "programas encerrados")}."
+                     : $"{done} de {allowed.Count} encerrados; os outros já tinham fechado ou falta permissão.";
+        if (done > 0) ShowSnack(ProcMsg.Text, $"{freed:N0} MB de memória liberados.");
+        RefreshHeavyBanner();
     }
 
     // ---------- Prioridade manual (A18) ----------

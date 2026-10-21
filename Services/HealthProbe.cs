@@ -81,7 +81,8 @@ $o | ConvertTo-Json -Compress -Depth 3
         var tJunk = Task.Run(() => Cleaner.SafeJunkBytes(7));
         var tStart = Task.Run(() => StartupManager.List().Count(e => e.Enabled));
         var tUnsigned = Task.Run(FindUnsigned);
-        await Task.WhenAll(tPs, tBat, tPlan, tJunk, tStart, tUnsigned, tSec);
+        var tVhd = Task.Run(FindVirtualDisks);
+        await Task.WhenAll(tPs, tBat, tPlan, tJunk, tStart, tUnsigned, tSec, tVhd);
 
         var (name, type, health, wear, temp, boots, drivers) = tPs.Result;
         var (batPct, cycles) = tBat.Result;
@@ -92,7 +93,7 @@ $o | ConvertTo-Json -Compress -Depth 3
 
         return new HealthInfo(name, type, health, wear, temp, batPct, cycles, bootLast, bootAvg,
             RebootPending(), System.Windows.SystemParameters.PowerLineStatus == System.Windows.PowerLineStatus.Online,
-            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result);
+            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result, tVhd.Result);
     }
 
     // Pastas de dados do usuário, onde malware costuma rodar. Pastas de desenvolvimento ficam de fora para evitar alarme falso.
@@ -134,6 +135,42 @@ $o | ConvertTo-Json -Compress -Depth 3
             catch { s = false; } // sem assinatura Authenticode (ou ilegível)
             return SignedCache[path] = s;
         }
+    }
+
+    /// <summary>
+    /// M40: discos virtuais do WSL (distribuições da Microsoft Store e as instaladas com "wsl --install") e do Docker Desktop.
+    /// Só lê o tamanho dos arquivos.
+    /// </summary>
+    private static List<VirtualDisk> FindVirtualDisks()
+    {
+        string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var found = new List<VirtualDisk>();
+        void Add(string name, string path)
+        {
+            try { if (File.Exists(path)) found.Add(new VirtualDisk(name, path, new FileInfo(path).Length)); } catch { }
+        }
+        try
+        {
+            // Distribuições da Store: Packages\CanonicalGroupLimited.Ubuntu_...\LocalState\ext4.vhdx
+            foreach (var pkg in Directory.EnumerateDirectories(Path.Combine(local, "Packages")))
+            {
+                string name = Path.GetFileName(pkg).Split('_')[0];
+                // "CanonicalGroupLimited.Ubuntu22.04LTS" vira "Ubuntu22.04LTS": o nome vem depois do editor
+                Add(name.Contains('.') ? name[(name.IndexOf('.') + 1)..] : name, Path.Combine(pkg, "LocalState", "ext4.vhdx"));
+            }
+        }
+        catch { }
+        try
+        {
+            // WSL moderno: %LocalAppData%\wsl\{guid}\ext4.vhdx
+            string wsl = Path.Combine(local, "wsl");
+            if (Directory.Exists(wsl))
+                foreach (var dir in Directory.EnumerateDirectories(wsl)) Add("WSL", Path.Combine(dir, "ext4.vhdx"));
+        }
+        catch { }
+        Add("Docker Desktop", Path.Combine(local, @"Docker\wsl\data\ext4.vhdx"));
+        Add("Docker Desktop", Path.Combine(local, @"Docker\wsl\disk\docker_data.vhdx"));
+        return found;
     }
 
     private static bool RebootPending()

@@ -217,7 +217,7 @@
                             <TextBox x:Name="ProcSearch" Grid.Column="1" Tag="Buscar programa…" VerticalAlignment="Top" TextChanged="ProcSearch_Changed"
                                      AutomationProperties.Name="Buscar programa"/>
                         </Grid>
-                        <DataGrid x:Name="ProcGrid" Grid.Row="1" MouseDoubleClick="ProcGrid_DoubleClick" AutomationProperties.Name="Programas em execução">
+                        <DataGrid x:Name="ProcGrid" Grid.Row="1" SelectionMode="Extended" MouseDoubleClick="ProcGrid_DoubleClick" AutomationProperties.Name="Programas em execução">
                             <!-- M26: as mesmas ações dos botões, mais abrir o local e pesquisar o nome -->
                             <DataGrid.ContextMenu>
                                 <ContextMenu>
@@ -530,6 +530,26 @@
                                            Text="Cada ajuste explica por que importa e mostra exatamente o que muda antes de aplicar. Tudo pode ser desfeito na seção Ações."/>
                                 <CheckBox x:Name="SimMode" Click="SimMode_Click"
                                           Content="Modo simulação: mostrar o que cada correção faria, sem alterar nada (vale para todo o app)"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- M30: serviços de terceiros que iniciam com o Windows -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Serviços de terceiros que iniciam com o Windows" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Serviços do próprio Windows não aparecem aqui. Em manual, o serviço continua instalado e o programa ainda pode iniciá-lo quando precisar; só deixa de abrir sozinho no boot."/>
+                                <DataGrid x:Name="ServicesGrid" MaxHeight="320" AutomationProperties.Name="Serviços de terceiros">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Serviço" Binding="{Binding DisplayName}" Width="220"/>
+                                        <DataGridTextColumn Header="Recomendação" Binding="{Binding Advice}" Width="140"/>
+                                        <DataGridTextColumn Header="Por quê" Binding="{Binding Reason}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Mudar para manual" Click="ServiceManual_Click" Margin="0,0,8,6"/>
+                                    <TextBlock x:Name="ServicesMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
+                                               AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
                             </StackPanel>
                         </Border>
                         <ItemsControl x:Name="TweaksList" Focusable="False" AutomationProperties.Name="Ajustes do Windows">

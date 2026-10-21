@@ -21,6 +21,8 @@ public sealed record Finding(string Level, string Title, string Detail, string A
             "Para não superaquecer ou gastar bateria, o processador baixa a própria velocidade. Ele fica bem mais lento sem que nada pareça errado.",
         var t when t.StartsWith("Temperatura") || t.StartsWith("Disco quente") =>
             "O calor obriga o hardware a desacelerar e, com o tempo, encurta a vida da bateria, do SSD e da placa. Saídas de ar bloqueadas são a causa mais comum.",
+        var t when t.StartsWith("Disco virtual do") =>
+            "O disco virtual do Linux cresce quando você baixa ou cria arquivos dentro dele, mas não encolhe sozinho quando eles são apagados. O espaço continua ocupado no disco do Windows.",
         var t when t.StartsWith("WSL") =>
             "A máquina virtual do WSL/Docker reserva memória para si e raramente a devolve, mesmo parada. Essa RAM fica indisponível para o resto do Windows.",
         var t when t.StartsWith("Mais de um antivírus") =>
@@ -97,6 +99,12 @@ public static class Diagnosis
             f.Add(new("ATENCAO", "WSL/Docker ocupando muita memória", $"{vmMB / 1024.0:0.0} GB reservados pela máquina virtual (vmmem)",
                       "Limite a memória em %UserProfile%\\.wslconfig (ex.: [wsl2] memory=4GB) ou encerre o WSL quando não estiver usando.",
                       "wsl-shutdown", "Encerrar WSL"));
+
+        // M40: o .vhdx do WSL/Docker cresce conforme o uso, mas não devolve o espaço quando arquivos são apagados dentro dele
+        foreach (var vd in (h.VirtualDisks ?? Array.Empty<VirtualDisk>()).Where(v => v.Bytes >= 20L << 30).OrderByDescending(v => v.Bytes).Take(2))
+            f.Add(new("ATENCAO", $"Disco virtual do {vd.Name} ocupa {Pt.Bytes(vd.Bytes)}", vd.Path,
+                      "Com o WSL desligado (wsl --shutdown), compacte: no WSL 2.0+ use \"wsl --manage <distro> --set-sparse true\"; no Docker Desktop, \"Clean / Purge data\" em Troubleshoot.",
+                      "open-folder", "Abrir local", vd.Path));
 
         var sec = h.Sec;
         if (sec.DefenderRealtime == false && sec.OtherAv.Count == 0)
