@@ -67,6 +67,7 @@ public static class ThemeManager
         foreach (var k in new[] { "Primary", "SecondaryContainer", "Error", "Warning", "Success",
                                   "LevelLow", "LevelMid", "LevelHigh", "LevelCrit" }) Set(k, hi);
         foreach (var k in new[] { "OnPrimary", "OnSecondaryContainer", "OnError", "OnWarning", "OnSuccess" }) Set(k, hiText);
+        Set("RowSelected", Colors.Transparent); Set("RowSelectedBorder", hi); // seleção de linha só por contorno
         Set("InverseSurface", text); Set("InverseOnSurface", win); Set("InversePrimary", win);
         return d;
     }

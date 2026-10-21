@@ -507,7 +507,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="DataGridRow">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="10" SnapsToDevicePixels="True">
+                    <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent" BorderThickness="2" CornerRadius="10" SnapsToDevicePixels="True">
                         <SelectiveScrollingGrid>
                             <SelectiveScrollingGrid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/>
@@ -518,10 +518,11 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource StateHover}"/></Trigger>
-                        <!-- O texto da linha selecionada usa a cor "sobre" o fundo escolhido; em Alto Contraste o fundo é a cor de destaque do sistema -->
+                        <!-- Linha selecionada: preenchimento tonal (RowSelected) e/ou contorno (RowSelectedBorder). No Alto Contraste só o contorno,
+                             porque os textos da linha mantêm a cor normal e não podem ficar sobre a cor de destaque -->
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SecondaryContainer}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource OnSecondaryContainer}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource RowSelected}"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource RowSelectedBorder}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
