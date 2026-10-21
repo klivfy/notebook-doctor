@@ -59,9 +59,17 @@ public partial class App : Application
             return;
         }
 
-        DispatcherUnhandledException += (_, a) => { LogError(a.Exception); a.Handled = true; };
+        DispatcherUnhandledException += (_, a) => { LogError(a.Exception); CrashLog.Save(a.Exception, "tela (o app continuou aberto)"); a.Handled = true; };
+        AppDomain.CurrentDomain.UnhandledException += (_, a) =>
+        {
+            if (a.ExceptionObject is not Exception ex) return;
+            LogError(ex);
+            CrashLog.Save(ex, "segundo plano (o app fechou)");
+        };
+        TaskScheduler.UnobservedTaskException += (_, a) => { LogError(a.Exception); CrashLog.Save(a.Exception, "tarefa em segundo plano"); a.SetObserved(); };
 
         Settings = AppSettings.Load();
+        CrashLog.Enabled = Settings.CrashReports;
         ThemeManager.UseAccent = Settings.UseAccentColor;
         ThemeManager.Apply(Settings.ThemeMode);
         TextScale.Apply();
@@ -106,6 +114,7 @@ public partial class App : Application
                                    System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
         if (Settings.MiniWidget) SetMiniWidget(true);
+        OfferCrashReport();
         _hotkey.Pressed += ToggleWindow;
         ApplyHotkey();
         // M08: Alto Contraste ligado ou desligado com o app aberto
@@ -279,9 +288,22 @@ public partial class App : Application
         (MainWindow as NotebookDoctor.MainWindow)?.ReloadSettings();
     }
 
+    /// <summary>M19: depois de uma falha, avisa uma vez e leva ao "Gerar pacote para o suporte" (nada é enviado sozinho).</summary>
+    private void OfferCrashReport()
+    {
+        if (!Settings.CrashReports || CrashReport.CountSince(CrashLog.Files(), Settings.LastCrashSeen) == 0) return;
+        Settings.LastCrashSeen = DateTime.Now;
+        Settings.Save();
+        string what = CrashLog.LatestHeadline();
+        Notify("O Notebook Doctor teve um erro", (what.Length > 0 ? what + ". " : "") +
+               "O relatório ficou guardado sem dados pessoais e vai no pacote para o suporte, se você quiser enviar.",
+               ("Ver em Configurações", $"tab/{Diagnosis.TabSettings}"));
+    }
+
     public void ApplySettingsChanged()
     {
         _tray.SyncStartWithWindows(Settings.StartWithWindows);
+        CrashLog.Enabled = Settings.CrashReports;
         ThemeManager.UseAccent = Settings.UseAccentColor;
         ThemeManager.Apply(Settings.ThemeMode);
     }

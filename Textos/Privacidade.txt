@@ -1,0 +1,17 @@
+O Notebook Doctor funciona no seu computador e não envia seus dados para a Klivfy nem para ninguém.
+
+O que fica guardado no computador
+• Uso de CPU, memória e disco a cada minuto, com os nomes dos programas mais pesados (Histórico, até 30 dias).
+• Suas preferências, as ações feitas pelo app (para "Desfazer") e os avisos mostrados.
+• Erros do app (erros.log) e, só se você ligar a opção, relatórios de falha sem nome de usuário, nome do computador ou pasta pessoal.
+Tudo fica na pasta de dados do app (botão "Abrir pasta de dados"). Desinstalar o app ou apagar a pasta remove esses dados.
+
+Quando o app usa a internet
+• Procurar atualização: consulta klivfy.com uma vez por dia, se a opção estiver ligada, ou quando você pede. A consulta não leva dados seus.
+• Teste de rede: só quando você clica, faz ping no roteador, em 1.1.1.1 e 8.8.8.8 e consulta o DNS de klivfy.com, github.com e wikipedia.org.
+• Abrir suporte: abre klivfy.com/suporte no seu navegador.
+
+Pacote para o suporte
+O arquivo .zip é criado no seu computador e só vai para a Klivfy se você mesmo anexá-lo num atendimento. Ele troca seu nome de usuário, o nome do computador e a pasta pessoal por marcadores. Dá para abrir e conferir antes de enviar.
+
+O app não tem telemetria, propaganda nem rastreamento.

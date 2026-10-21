@@ -296,7 +296,7 @@
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <TextBlock x:Name="CleanHeader" Text="Clique em Analisar para ver o que pode ser removido." Style="{StaticResource TitleMedium}"
                                    AutomationProperties.LiveSetting="Polite"/>
-                        <DataGrid x:Name="CleanGrid" Grid.Row="1" AutomationProperties.Name="Locais que podem ser limpos">
+                        <DataGrid x:Name="CleanGrid" Grid.Row="1" PreviewKeyDown="CleanGrid_KeyDown" AutomationProperties.Name="Locais que podem ser limpos">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn Header="Limpar" Width="Auto" MinWidth="88">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -621,6 +621,9 @@
                         <CheckBox x:Name="CfgRestore" Content="Criar ponto de restauração antes de mudar o sistema (só no modo administrador)"/>
                         <CheckBox x:Name="CfgMini" Content="Mini-widget sempre visível (CPU, memória e disco num canto da tela)"/>
                         <CheckBox x:Name="CfgUpdates" Content="Procurar nova versão uma vez por dia"/>
+                        <!-- M19: opt-in; o relatório fica no PC e só sai no pacote de suporte que a pessoa anexar -->
+                        <CheckBox x:Name="CfgCrash" Content="Guardar relatórios de falha, sem dados pessoais, para o pacote do suporte"
+                                  ToolTip="Nada é enviado pela internet. Os relatórios ficam na pasta de dados do app e vão no pacote para o suporte."/>
                         <CheckBox x:Name="CfgHotkey" Content="Atalho Ctrl+Alt+N abre o painel de qualquer lugar"/>
                         <CheckBox x:Name="CfgAccent" Content="Usar a cor de destaque do Windows (ajustada para manter a leitura)"/>
                         <!-- M43/M44: sem notificações em tela cheia ou no horário escolhido (os avisos continuam no Histórico) -->
@@ -750,6 +753,12 @@
                         <TextBlock Text="Sobre" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
                         <TextBlock x:Name="AboutText" TextWrapping="Wrap" Margin="0,0,0,4"/>
                         <TextBlock Text="Fonte Google Sans Flex, licença SIL Open Font License 1.1." Style="{StaticResource Label}" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                        <!-- B23/B24: textos embutidos no app, abrem sem internet -->
+                        <WrapPanel Margin="0,0,0,4">
+                            <Button Content="Novidades" Style="{StaticResource TextButton}" Tag="Novidades" Click="AboutText_Click" Margin="0,0,8,8"/>
+                            <Button Content="Seus dados e privacidade" Style="{StaticResource TextButton}" Tag="Privacidade" Click="AboutText_Click" Margin="0,0,8,8"/>
+                            <Button Content="Licenças" Style="{StaticResource TextButton}" Tag="Licencas" Click="AboutText_Click" Margin="0,0,8,8"/>
+                        </WrapPanel>
                         <WrapPanel>
                             <Button Content="Abrir suporte" Click="Support_Click" Margin="0,0,8,8"/>
                             <Button Content="Gerar pacote para o suporte" Style="{StaticResource TonalButton}" Click="SupportPackage_Click" Margin="0,0,8,8"

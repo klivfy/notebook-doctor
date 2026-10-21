@@ -27,6 +27,7 @@ As regras de diagnóstico, a nota de saúde, a detecção de vazamento de memór
 - Raiz: o app WPF (janelas, bandeja, temas) e `Services/` com o que conversa com o Windows (processos, registro, powercfg, PowerShell, arquivos)
 - `MainWindow.xaml.cs`: o que é comum às abas (navegação, avisos, modo simulação); cada aba tem o seu `MainWindow.<Aba>.cs`
 - `src/NotebookDoctor.Core`: lógica pura, testável
+- `Textos/`: novidades, licenças e "Seus dados e privacidade", embutidos no executável e mostrados no Sobre
 - `tests/NotebookDoctor.Tests`: testes xUnit do Core
 
 ## Segurança
@@ -35,6 +36,7 @@ As regras de diagnóstico, a nota de saúde, a detecção de vazamento de memór
 - Modo simulação mostra o que cada correção faria sem alterar nada.
 - O app grava apenas em `%LOCALAPPDATA%\NotebookDoctor` e, para integração com o Windows, em chaves do `HKCU`.
 - Modo portátil: com um arquivo `portatil.txt` ao lado do executável, os dados ficam na pasta `dados` junto do app (o `HKCU` ainda é usado para iniciar com o Windows e para as notificações).
+- Sem telemetria. Com a opção ligada, relatórios de falha ficam na pasta `falhas`, sem nome de usuário, nome do computador nem pasta pessoal, e só saem no pacote de suporte que a pessoa anexar.
 
 ## Documentos
 

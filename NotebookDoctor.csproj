@@ -44,6 +44,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- B23/B24: novidades, licenças e "Seus dados" mostrados no Sobre, sem depender de internet -->
+    <EmbeddedResource Include="Textos\*.txt" LogicalName="Textos.%(Filename).txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- WinForms só é usado para o NotifyIcon da bandeja; evita ambiguidade com WPF -->
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />

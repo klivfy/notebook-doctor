@@ -120,6 +120,26 @@ public static class Dialogs
         return t;
     }
 
+    /// <summary>B23/B24: texto longo (novidades, licenças, privacidade) com rolagem.</summary>
+    public static void ShowText(Window owner, string title, string text)
+    {
+        var dlg = NewWindow(owner, title, 600);
+        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var body = new TextBox
+        {
+            Text = text, TextWrapping = TextWrapping.Wrap, IsReadOnly = true, BorderThickness = new Thickness(0),
+            Background = System.Windows.Media.Brushes.Transparent, Padding = new Thickness(0),
+        };
+        body.SetResourceReference(Control.ForegroundProperty, "OnSurfaceVariant");
+        System.Windows.Automation.AutomationProperties.SetName(body, title);
+        var scroll = new ScrollViewer { Content = body, MaxHeight = 440, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(0, 0, 0, 16) };
+        var ok = new Button { Content = "Fechar", HorizontalAlignment = HorizontalAlignment.Right, IsDefault = true, IsCancel = true };
+        ok.Click += (_, _) => dlg.Close();
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, scroll, ok } };
+        dlg.Loaded += (_, _) => body.Focus(); // leitor de tela começa pelo texto; setas rolam
+        dlg.ShowDialog();
+    }
+
     private static bool Show(Window owner, string title, string message, string ok, string? cancel, bool danger)
     {
         var dlg = new Window

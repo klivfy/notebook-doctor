@@ -86,6 +86,9 @@ public sealed class AppSettings
     public bool QuietFullscreen { get; set; } = true;
     /// <summary>M45: minutos seguidos acima do limite antes de avisar de CPU ou RAM alta.</summary>
     public int AlertMinutes { get; set; } = 3;
+    /// <summary>M19: guardar relatórios de falha (sem dados pessoais) para o pacote de suporte. Desligado até a pessoa ligar.</summary>
+    public bool CrashReports { get; set; }
+    public DateTime LastCrashSeen { get; set; } = DateTime.MinValue;
 
     public bool InQuietHours(DateTime now) =>
         QuietHours && AlertPolicy.TryParseClock(QuietStart, out var a) && AlertPolicy.TryParseClock(QuietEnd, out var b)

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using NotebookDoctor.Services;
 
 namespace NotebookDoctor;
@@ -53,6 +54,14 @@ public partial class MainWindow
     private void CleanSelectNone_Click(object sender, RoutedEventArgs e)
     {
         foreach (var item in CleanItems()) item.Selected = false;
+    }
+
+    /// <summary>M12: barra de espaço marca ou desmarca a linha com foco, sem precisar chegar na caixa com o Tab.</summary>
+    private void CleanGrid_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Space || e.OriginalSource is CheckBox || CleanGrid.SelectedItem is not CleanItem { CanClean: true } item) return;
+        item.Selected = !item.Selected;
+        e.Handled = true;
     }
 
     private IEnumerable<CleanItem> CleanItems() => (CleanGrid.ItemsSource as IEnumerable<CleanItem>) ?? Enumerable.Empty<CleanItem>();

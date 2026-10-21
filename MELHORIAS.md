@@ -80,14 +80,14 @@ Critérios de impacto
 | M09 | Cor de destaque do Windows (Material You) | 🟡 opção "Usar a cor de destaque do Windows": a cor é clareada ou escurecida até ter contraste 4,5:1 com o fundo; segue a troca de cor no Windows; não testado no Windows |
 | M10 | Tamanho de fonte ajustável | 🟡 (segue o "Tamanho do texto" do Windows) |
 | M11 | Suporte completo a leitores de tela (UI Automation nas abas) | ✅ (revisão de design + lote 6) |
-| M12 | Navegação completa por teclado e atalhos de aba | 🟡 Ctrl+1…8, F5, Ctrl+F (busca da aba), Enter (detalhe) e Delete (encerrar) em Processos, Shift+F10 abre o menu de contexto; falta revisar a ordem do Tab em todas as abas |
+| M12 | Navegação completa por teclado e atalhos de aba | 🟡 Ctrl+1…8, F5, Ctrl+F (busca da aba), Enter (detalhe) e Delete (encerrar) em Processos, Shift+F10 abre o menu de contexto, Espaço marca a linha na Limpeza; ordem do Tab conferida contra o layout no XAML, falta testar no Windows |
 | M13 | Multi-idioma (EN, ES) | ⬜ |
 | M14 | Assistente de primeira execução | ✅ tela de boas-vindas na primeira execução com tema, iniciar com o Windows, avisos e limpeza semanal |
 | M15 | Explicações "por que isso importa?" em cada alerta | ✅ (diagnóstico e Ajustes) |
 | M16 | Central de ajuda embutida | 🟡 botão Suporte → klivfy.com/suporte |
 | M17 | "Enviar diagnóstico ao suporte" (pacote .zip sem dados pessoais) | ✅ (fica salvo para anexar; nada é enviado sozinho) |
-| M18 | Telemetria anônima opcional | ⬜ |
-| M19 | Relatório de falhas opcional | ⬜ |
+| M18 | Telemetria anônima opcional | ⬜ depende de um servidor da Klivfy para receber e da política de privacidade publicada |
+| M19 | Relatório de falhas opcional | 🟡 opt-in em Configurações; fica no PC sem dados pessoais, vai no pacote de suporte e o app avisa na abertura seguinte. Sem envio automático |
 | M20 | Lista de exceções de alertas | ✅ |
 | M21 | Lista editável de processos protegidos | ✅ |
 | M22 | Agrupar processos por aplicativo | ⬜ |
@@ -145,9 +145,9 @@ Critérios de impacto
 | B19 | Captura de tela do painel | ⬜ |
 | B20 | Exportar relatório em PDF | 🟡 botão "Exportar em PDF" no Painel, gerado pelo próprio app (sem biblioteca externa, texto em Helvetica); não testado no Windows |
 | B21 | Atalho no Menu Iniciar pelo instalador | ⬜ |
-| B22 | Botão "Verificar atualização" | ⬜ |
-| B23 | Tela "Sobre" com versão, licenças e novidades | 🟡 versão, suporte e licença da fonte |
-| B24 | Links de termos e privacidade | ⬜ |
+| B22 | Botão "Verificar atualização" | 🟡 "Procurar atualização" no Sobre; falta publicar o versao.json em klivfy.com |
+| B23 | Tela "Sobre" com versão, licenças e novidades | 🟡 versão, suporte, Novidades e Licenças (textos embutidos em Textos/) |
+| B24 | Links de termos e privacidade | 🟡 "Seus dados e privacidade" embutido no app; faltam os termos de uso e o endereço da política publicada |
 | B25 | Avaliação do app dentro dele | ⬜ |
 | B26 | Modo demonstração com dados fictícios | ⬜ |
 | B27 | Variações de texto mais amigáveis | ⬜ |

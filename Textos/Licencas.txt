@@ -1,0 +1,10 @@
+Notebook Doctor
+© 2026 Klivfy Tecnologia e Consultoria em TI LTDA. Todos os direitos reservados.
+
+Componentes de terceiros
+
+Google Sans Flex
+Fonte embutida no aplicativo. Licença SIL Open Font License 1.1 (scripts.sil.org/OFL).
+
+.NET 8 e Windows Presentation Foundation (WPF)
+© .NET Foundation e colaboradores. Licença MIT (github.com/dotnet/runtime e github.com/dotnet/wpf).

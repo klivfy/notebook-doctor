@@ -180,6 +180,17 @@ public partial class MainWindow
         finally { btn.IsEnabled = true; }
     }
 
+    // ---------- Sobre: novidades, privacidade e licenças (B23/B24) ----------
+    private void AboutText_Click(object sender, RoutedEventArgs e)
+    {
+        var btn = (Button)sender;
+        string name = (string)btn.Tag;
+        using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream($"Textos.{name}.txt");
+        if (stream is null) return;
+        using var reader = new System.IO.StreamReader(stream);
+        Dialogs.ShowText(this, (string)btn.Content, reader.ReadToEnd());
+    }
+
     // ---------- Atualização (A50) ----------
     private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
     {
@@ -246,6 +257,7 @@ public partial class MainWindow
         CfgRestore.IsChecked = s.RestorePointBeforeChanges;
         CfgMini.IsChecked = s.MiniWidget;
         CfgUpdates.IsChecked = s.CheckUpdates;
+        CfgCrash.IsChecked = s.CrashReports;
         CfgHotkey.IsChecked = s.GlobalHotkey;
         CfgExceptions.Text = string.Join(Environment.NewLine, s.AlertExceptions);
         CfgProtected.Text = string.Join(Environment.NewLine, s.ExtraProtected);
@@ -270,6 +282,7 @@ public partial class MainWindow
         s.WeeklyCleanup = CfgWeekly.IsChecked == true;
         s.RestorePointBeforeChanges = CfgRestore.IsChecked == true;
         s.CheckUpdates = CfgUpdates.IsChecked == true;
+        s.CrashReports = CfgCrash.IsChecked == true;
         s.GlobalHotkey = CfgHotkey.IsChecked == true;
         s.AlertExceptions = AppSettings.ParseNames(CfgExceptions.Text);
         // Os do Windows já são protegidos; a lista do usuário guarda só os extras

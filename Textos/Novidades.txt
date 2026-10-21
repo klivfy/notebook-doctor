@@ -1,0 +1,31 @@
+Painel e diagnóstico
+• "Corrigir" em todos os problemas encontrados, com explicação de cada um.
+• Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.
+• Sugestão de plano de energia ao ligar ou tirar o notebook da tomada.
+• Relatório em PDF e botão "Copiar resumo" para colar num chamado.
+
+Processos
+• Selecionar vários programas e encerrar de uma vez.
+• Menu do botão direito (Shift+F10 pelo teclado), Enter abre o detalhe e Delete encerra, sempre com confirmação.
+
+Limpeza e espaço
+• Caches do Discord, Slack, Teams e VS Code, e miniaturas do Windows.
+• Lixeira de cada unidade e botões "Marcar todos" e "Desmarcar todos".
+
+Inicialização e ajustes
+• Coluna com o editor de cada programa e botão "Abrir local".
+• Serviços de outros fabricantes que podem ficar no modo manual, com "Desfazer".
+
+Histórico
+• Tendências da semana, previsão de disco cheio e mapa de horários de lentidão.
+• Linha do tempo com avisos, ações e programas instalados.
+
+Avisos
+• Horário silencioso e silêncio com app em tela cheia ou apresentação.
+• Aviso de CPU ou memória alta só depois de alguns minutos seguidos.
+
+Configurações
+• Exportar, importar e redefinir as preferências.
+• Cor de destaque do Windows, ajustada para manter a leitura.
+• Modo portátil: com um arquivo portatil.txt ao lado do app, os dados ficam na pasta "dados".
+• Relatório de falhas opcional, guardado sem dados pessoais.

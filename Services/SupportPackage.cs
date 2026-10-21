@@ -39,6 +39,9 @@ public static class SupportPackage
             string text = File.ReadAllText(errors);
             Add("erros.log", text.Length > 200_000 ? text[^200_000..] : text); // só o final, se for grande
         }
+        // M19: relatórios de falha (só existem com o opt-in ligado; já foram gravados sem dados pessoais)
+        foreach (var f in CrashLog.Files())
+            Add("falhas/" + Path.GetFileName(f), File.ReadAllText(f));
         return zip;
     }
 
@@ -50,15 +53,9 @@ public static class SupportPackage
     }
 
     /// <summary>Troca dados que identificam a pessoa ou o computador por marcadores.</summary>
-    public static string Redact(string text)
-    {
-        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        if (home.Length > 3) text = text.Replace(home, "<pasta-pessoal>", StringComparison.OrdinalIgnoreCase)
-                                        .Replace(home.Replace("\\", "\\\\"), "<pasta-pessoal>", StringComparison.OrdinalIgnoreCase);
-        foreach (var (value, mark) in new[] { (Environment.UserName, "<usuario>"), (Environment.MachineName, "<computador>"), (Environment.UserDomainName, "<dominio>") })
-            if (value.Length >= 3) text = text.Replace(value, mark, StringComparison.OrdinalIgnoreCase);
-        return text;
-    }
+    public static string Redact(string text) =>
+        Redaction.Apply(text, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        Environment.UserName, Environment.MachineName, Environment.UserDomainName);
 
     private static string SystemText(Snapshot? s, HealthInfo h)
     {
