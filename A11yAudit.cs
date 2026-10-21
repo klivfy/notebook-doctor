@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -51,8 +52,15 @@ internal static class A11yAudit
         if (IsInteractive(e))
         {
             string? name = null;
-            try { name = UIElementAutomationPeer.CreatePeerForElement(e)?.GetName(); } catch { }
-            if (string.IsNullOrWhiteSpace(name)) add("SEM NOME", Describe(e));
+            try
+            {
+                name = UIElementAutomationPeer.CreatePeerForElement(e)?.GetName();
+                // LabeledBy também vale: o UI Automation usa o rótulo associado como nome do campo
+                if (string.IsNullOrWhiteSpace(name) && AutomationProperties.GetLabeledBy(e) is UIElement lb)
+                    name = UIElementAutomationPeer.CreatePeerForElement(lb)?.GetName() ?? (lb as TextBlock)?.Text;
+            }
+            catch { }
+            if (string.IsNullOrWhiteSpace(name)) { if (!e.Name.StartsWith("PART_")) add("SEM NOME", Describe(e)); }
             else if (name.All(c => c is >= '' and <= '' || char.IsWhiteSpace(c))) add("NOME É ÍCONE", Describe(e));
 
             // 2. Alvo de clique (WCAG 2.2: 24×24 px)
@@ -61,8 +69,8 @@ internal static class A11yAudit
         }
 
         // 3. Texto cortado pelo layout
-        if (e is TextBlock or ContentPresenter or Button && LayoutInformation.GetLayoutClip(e) is not null && e.ActualWidth > 0)
-            add("CORTADO", Describe(e));
+        if (e is TextBlock cut && LayoutInformation.GetLayoutClip(cut) is not null && cut.ActualWidth > 0)
+            add("CORTADO", $"{Describe(cut)}{(cut.TextTrimming == TextTrimming.None ? " [sem reticências]" : "")}");
 
         // 4. Contraste do texto
         if (e is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text) && tb.Foreground is SolidColorBrush fg)
@@ -91,7 +99,7 @@ internal static class A11yAudit
             {
                 Border bd => bd.Background,
                 Panel p => p.Background,
-                Control c => c.Background,
+                ButtonBase btn => btn.Background, // o modelo do botão usa a propriedade; nos demais controles ela é ignorada
                 Shape s => s.Fill,
                 _ => null,
             };

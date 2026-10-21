@@ -28,13 +28,13 @@ public static class ThemeManager
     public static void Apply(string mode)
     {
         if (Application.Current is null) return; // app encerrando (ex.: "Sair" com a tela de boas-vindas aberta)
-        HighContrast = SystemParameters.HighContrast;
+        HighContrast = SimulatedHighContrast is not null || SystemParameters.HighContrast;
         bool dark = mode switch { "dark" => true, "light" => false, _ => SystemPrefersDark() };
         var dicts = Application.Current.Resources.MergedDictionaries;
         // M08: com Alto Contraste do Windows ligado, só as cores do sistema valem (o tema e a paleta ficam de fora)
         var next = HighContrast ? HighContrastTheme()
                                 : new ResourceDictionary { Source = new Uri($"pack://application:,,,/Themes/{(dark ? "Dark" : "Light")}.xaml") };
-        if (HighContrast) dark = SystemColors.WindowColor.R + SystemColors.WindowColor.G + SystemColors.WindowColor.B < 384;
+        if (HighContrast) { var w = HcColors().Window; dark = w.R + w.G + w.B < 384; }
         if (_current is not null) dicts.Remove(_current);
         dicts.Insert(0, next); // antes dos estilos, para que o DynamicResource encontre as cores
         _current = next;
@@ -45,13 +45,21 @@ public static class ThemeManager
 
     public static bool HighContrast { get; private set; }
 
+    /// <summary>
+    /// Paleta de Alto Contraste fixa, no lugar de SystemColors. Só o modo --screenshots usa: um runner de CI não tem o tema
+    /// de Alto Contraste do Windows de verdade, então isto exercita o mapeamento do app com as cores dos esquemas clássicos.
+    /// </summary>
+    internal static (Color Window, Color Text, Color Highlight, Color HighlightText)? SimulatedHighContrast { get; set; }
+
+    private static (Color Window, Color Text, Color Highlight, Color HighlightText) HcColors() =>
+        SimulatedHighContrast ?? (SystemColors.WindowColor, SystemColors.WindowTextColor, SystemColors.HighlightColor, SystemColors.HighlightTextColor);
+
     /// <summary>Tokens do app mapeados para as cores do esquema de Alto Contraste escolhido no Windows.</summary>
     private static ResourceDictionary HighContrastTheme()
     {
         var d = new ResourceDictionary();
         void Set(string key, Color c) => d[key] = new SolidColorBrush(c);
-        Color win = SystemColors.WindowColor, text = SystemColors.WindowTextColor, hi = SystemColors.HighlightColor,
-              hiText = SystemColors.HighlightTextColor;
+        var (win, text, hi, hiText) = HcColors();
         foreach (var k in new[] { "Surface", "SurfaceContainer", "SurfaceVariant", "PrimaryContainer" }) Set(k, win);
         foreach (var k in new[] { "OnSurface", "OnSurfaceVariant", "Outline", "OutlineVariant", "CardBorder", "OnPrimaryContainer",
                                   "ChartCpu", "ChartRam", "ChartDisk" }) Set(k, text);

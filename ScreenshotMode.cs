@@ -1,5 +1,4 @@
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -13,7 +12,7 @@ namespace NotebookDoctor;
 /// em cada pull request; quem revisa design vê o resultado sem precisar de um Windows. Combine com NOTEBOOKDOCTOR_DATA_DIR
 /// para não tocar nos dados do usuário.
 /// <para>Sem <c>--high-contrast</c>: variantes "normal" (1160 px), "texto200" (texto a 200%) e "estreita" (720 px), em tema claro e escuro.
-/// Com <c>--high-contrast</c>: liga de verdade o Alto Contraste do Windows (preto e branco) durante a execução e fotografa.</para>
+/// Com <c>--high-contrast</c>: aplica as paletas dos esquemas clássicos de Alto Contraste (preto e branco) ao tema do app e fotografa.</para>
 /// </summary>
 internal static class ScreenshotMode
 {
@@ -50,17 +49,21 @@ internal static class ScreenshotMode
 
         if (highContrast)
         {
-            foreach (var (scheme, label) in new[] { ("High Contrast Black", "hc-preto"), ("High Contrast White", "hc-branco") })
+            var schemes = new[]
             {
-                bool on = await SetHighContrastAsync(true, scheme);
-                log.Add($"{label}: Alto Contraste {(on ? "ligado" : "NÃO foi possível ligar")} ({scheme}); SystemParameters.HighContrast={SystemParameters.HighContrast}");
-                if (!on) continue;
+                ("hc-preto", (Color.FromRgb(0, 0, 0), Color.FromRgb(255, 255, 255), Color.FromRgb(0x1A, 0xEB, 0xFF), Color.FromRgb(0, 0, 0))),
+                ("hc-branco", (Color.FromRgb(255, 255, 255), Color.FromRgb(0, 0, 0), Color.FromRgb(0x37, 0x00, 0x6E), Color.FromRgb(255, 255, 255))),
+            };
+            foreach (var (label, palette) in schemes)
+            {
+                ThemeManager.SimulatedHighContrast = palette;
                 ThemeManager.Apply("system");
+                log.Add($"{label}: Alto Contraste simulado (janela {palette.Item1}, texto {palette.Item2}, destaque {palette.Item3})");
                 var v = new Variant(label, 1160, null, ["system"]);
-                (int s, int e) = await CaptureAsync(win, dir, v, "system", log, audit);
-                saved += s; expected += e;
+                (int s2, int e2) = await CaptureAsync(win, dir, v, "system", log, audit);
+                saved += s2; expected += e2;
             }
-            await SetHighContrastAsync(false, "");
+            ThemeManager.SimulatedHighContrast = null;
             ThemeManager.Apply("light");
         }
         else
@@ -114,39 +117,27 @@ internal static class ScreenshotMode
         return (saved, TabNames.Length);
     }
 
-    /// <summary>Resumo por tipo de achado no topo, seguido da lista completa.</summary>
+    /// <summary>Contagem por tipo no topo; abaixo, cada achado uma vez só, com as variantes e abas em que aparece.</summary>
     private static IEnumerable<string> Summarize(List<string> audit)
     {
-        yield return $"{audit.Count} achados";
-        foreach (var g in audit.GroupBy(a => a[(a.IndexOf("] ") + 2)..].Split(':')[0]).OrderByDescending(g => g.Count()))
-            yield return $"  {g.Key}: {g.Count()}";
-        yield return "";
-        foreach (var a in audit) yield return a;
-    }
-
-    // ---------- Alto Contraste de verdade (só no CI; a VM é descartada no fim) ----------
-    private const uint SPI_SETHIGHCONTRAST = 0x0043, SPIF_SENDCHANGE = 0x0002, HCF_HIGHCONTRASTON = 0x1;
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    private struct HIGHCONTRAST
-    {
-        public uint cbSize, dwFlags;
-        [MarshalAs(UnmanagedType.LPWStr)] public string lpszDefaultScheme;
-    }
-
-    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern bool SystemParametersInfo(uint action, uint param, ref HIGHCONTRAST value, uint flags);
-
-    private static async Task<bool> SetHighContrastAsync(bool on, string scheme)
-    {
-        var hc = new HIGHCONTRAST { cbSize = (uint)Marshal.SizeOf<HIGHCONTRAST>(), dwFlags = on ? HCF_HIGHCONTRASTON : 0, lpszDefaultScheme = scheme };
-        if (!SystemParametersInfo(SPI_SETHIGHCONTRAST, hc.cbSize, ref hc, SPIF_SENDCHANGE)) return false;
-        for (int i = 0; i < 40; i++) // o Windows avisa por mensagem; espera o WPF perceber
+        // "[variante/tema/aba] TIPO: descrição"
+        var rows = audit.Select(a =>
         {
-            if (SystemParameters.HighContrast == on) { await Task.Delay(1500); return true; }
-            await Task.Delay(250);
+            int close = a.IndexOf("] ", StringComparison.Ordinal);
+            var where = a[1..close].Split('/');
+            return (Variant: where[0], Theme: where[1], Tab: where[2], What: a[(close + 2)..]);
+        }).ToList();
+        yield return $"{rows.Count} ocorrências, {rows.Select(r => r.What).Distinct().Count()} achados distintos";
+        foreach (var g in rows.GroupBy(r => r.What.Split(':')[0]).OrderByDescending(g => g.Select(r => r.What).Distinct().Count()))
+            yield return $"  {g.Key}: {g.Select(r => r.What).Distinct().Count()} distintos";
+        yield return "";
+        foreach (var g in rows.GroupBy(r => r.What).OrderBy(g => g.Key.Split(':')[0]).ThenBy(g => g.Key))
+        {
+            string variants = string.Join(",", g.Select(r => r.Variant).Distinct());
+            string tabs = string.Join(",", g.Select(r => r.Tab).Distinct());
+            string themes = string.Join(",", g.Select(r => r.Theme).Distinct());
+            yield return $"{g.Key}   <= {variants} | {themes} | {tabs}";
         }
-        return !on;
     }
 
     /// <summary>Renderiza o conteúdo da janela (sem a moldura do Windows) sobre o fundo do tema.</summary>
