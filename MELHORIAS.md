@@ -135,9 +135,9 @@ Critérios de impacto
 | B09 | Opção de iniciar minimizado | 🟡 aberto pelo atalho, começa minimizado na barra de tarefas (ao iniciar com o Windows já fica só na bandeja) |
 | B10 | Opção "fechar encerra o app" | 🟡 em Configurações; desligado, o X continua levando para a bandeja |
 | B11 | Dicas (tooltips) nos cartões | ⬜ |
-| B12 | Etapas de progresso na limpeza | ⬜ |
-| B13 | Som discreto ao concluir | ⬜ |
-| B14 | Mensagem de comemoração ao liberar mais de 1 GB | ⬜ |
+| B12 | Etapas de progresso na limpeza | 🟡 "Limpando 2 de 5: Cache do Chrome…" |
+| B13 | Som discreto ao concluir | 🟡 opcional (desligado por padrão); som de aviso suave do Windows ao terminar limpeza ou otimização |
+| B14 | Mensagem de comemoração ao liberar mais de 1 GB | 🟡 com a conta em fotos de celular |
 | B15 | Modo compacto da janela | ⬜ |
 | B16 | Escolha GB × GiB | 🟡 GB como o Windows (1024), GB como a caixa do disco (1000) ou GiB; vale para tamanhos em GB e para Pt.Bytes. Colunas "(MB)" das tabelas continuam com esse título |
 | B17 | Unidades °C/°F | 🟡 em todo texto (painel, diagnóstico, avisos, overlay, relatórios); as regras continuam em °C |
@@ -155,15 +155,15 @@ Critérios de impacto
 | B29 | Ordenação persistente nas tabelas | 🟡 todas as tabelas; volta ao abrir e a cada atualização de Processos |
 | B30 | Colunas personalizáveis | ⬜ |
 | B31 | Lembrar larguras de coluna | 🟡 só as colunas que a pessoa ajustou, salvas ao fechar a janela |
-| B32 | Destaque de linha por severidade | ⬜ |
+| B32 | Destaque de linha por severidade | 🟡 barra vermelha/laranja em Processos; impacto alto em semi-negrito na Inicialização; o Narrador lê "uso alto" |
 | B33 | Totais no rodapé das tabelas | 🟡 Processos, Espaço e Inicialização (respeitam a busca); a Limpeza já mostra os totais no título |
 | B34 | "Marcar/desmarcar todos" na limpeza | 🟡 "Marcar todos" (exceto a Lixeira) e "Desmarcar todos" na Limpeza; não testado no Windows |
 | B35 | Prévia dos arquivos antes de apagar | ⬜ |
-| B36 | "Não perguntar de novo" (só em ações não destrutivas) | ⬜ |
+| B36 | "Não perguntar de novo" (só em ações não destrutivas) | 🟡 reabrir como administrador e criar plano de energia; "Voltar a pedir todas as confirmações" em Configurações |
 | B37 | Tema automático por horário | 🟡 "Claro de dia, escuro à noite" com horários configuráveis; troca sozinho com o app aberto |
 | B38 | Senha para alterar configurações (modo empresa) | ⬜ |
 | B39 | Documentar argumentos de linha de comando (`--tab`, `--background`) | ✅ README, seção Linha de comando |
-| B40 | Log de diagnóstico exportável | ⬜ |
+| B40 | Log de diagnóstico exportável | 🟡 .txt sem dados pessoais com diagnóstico, erros, falhas, ações e avisos |
 | B41 | Abrir a pasta de dados pelo app | ✅ (botão em Sobre) |
 | B42 | Redefinir configurações | 🟡 "Redefinir para o padrão" com confirmação; mantém datas e posição do widget; não testado no Windows |
 | B43 | Modo portátil | 🟡 com "portatil.txt" ao lado do executável, os dados ficam na pasta "dados" do app (o registro ainda é usado para iniciar com o Windows e para as notificações); não testado no Windows |

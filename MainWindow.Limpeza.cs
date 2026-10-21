@@ -37,8 +37,13 @@ public partial class MainWindow
 
         CleanMsg.Text = "Limpando…";
         int days = Host.Settings.TempDays;
-        long freed = await Task.Run(() => Cleaner.Clean(items, days));
-        CleanMsg.Text = $"{Cleaner.FormatBytes(freed)} liberados. Arquivos em uso foram mantidos.";
+        // B12: mostra em que etapa está, para limpezas longas não parecerem travadas
+        var progress = new Progress<(int Step, int Steps, string Label)>(p => CleanMsg.Text = $"Limpando {p.Step} de {p.Steps}: {p.Label}…");
+        long freed = await Task.Run(() => Cleaner.Clean(items, days, progress));
+        var (title, text, celebrate) = CleanOutcome.Describe(freed);
+        CleanMsg.Text = $"{title} {text}";
+        if (celebrate) ShowSnack(title, text, seconds: 12); // B14
+        PlayDoneSound();
         ActionLog.Add("Limpeza (seção Limpeza)", $"{Cleaner.FormatBytes(freed)} liberados: {string.Join(", ", chosen.Select(i => i.Label.Split('(')[0].Trim()))}");
         _ = Host.RefreshHealthAsync();
         Scan_Click(sender, e);

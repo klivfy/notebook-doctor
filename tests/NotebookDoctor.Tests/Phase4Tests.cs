@@ -369,3 +369,63 @@ public class TableTotalsTests
         Assert.Equal("22 programas · 14 ativados", TableTotals.Startup(14, 22, 22));
     }
 }
+
+public class SeverityAndCleanTests
+{
+    [Theory]
+    [InlineData(55, 100, 16, "high")]   // CPU alta
+    [InlineData(5, 4200, 16, "high")]   // um quarto da RAM
+    [InlineData(25, 100, 16, "mid")]
+    [InlineData(2, 1700, 16, "mid")]    // 10% da RAM
+    [InlineData(2, 300, 16, "")]
+    [InlineData(2, 300, 0, "")]         // RAM total desconhecida
+    public void Processo(double cpu, long mem, double ram, string expected) => Assert.Equal(expected, RowSeverity.Process(cpu, mem, ram));
+
+    [Theory]
+    [InlineData("Alto (30 s de CPU, 400 MB)", "high")]
+    [InlineData("Médio (6 s de CPU, 120 MB)", "mid")]
+    [InlineData("Não está em execução", "")]
+    public void Inicializacao(string impact, string expected) => Assert.Equal(expected, RowSeverity.Startup(impact));
+
+    [Fact]
+    public void Narrador_le_o_peso() => Assert.Equal("uso alto", RowSeverity.Spoken("high"));
+
+    [Fact]
+    public void Comemora_a_partir_de_1_GB()
+    {
+        var big = CleanOutcome.Describe(3L << 30);
+        Assert.True(big.Celebrate);
+        Assert.Equal("Ótimo: 3,0 GB liberados!", big.Title);
+        Assert.Contains("1.024 fotos", big.Text);
+
+        var small = CleanOutcome.Describe(200L << 20);
+        Assert.False(small.Celebrate);
+        Assert.Equal("200 MB liberados", small.Title);
+
+        Assert.Equal("Nada para liberar", CleanOutcome.Describe(0).Title);
+    }
+}
+
+public class DiagnosticLogTests
+{
+    [Fact]
+    public void Tem_todas_as_secoes_e_diz_quando_esta_vazio()
+    {
+        string log = DiagnosticLog.Build("1.2.0", "Windows 11", new DateTime(2026, 10, 21, 9, 0, 0), [], "", [], [], []);
+        Assert.StartsWith("Notebook Doctor 1.2.0 · log de diagnóstico · 21/10/2026 09:00\r\n", log);
+        foreach (var s in new[] { "Diagnóstico agora", "Relatórios de falha", "Últimas ações", "Últimos avisos", "Erros do app" })
+            Assert.Contains($"== {s} ==", log);
+        Assert.Contains("Nenhum problema encontrado.", log);
+    }
+
+    [Fact]
+    public void Erros_longos_ficam_so_com_o_final()
+    {
+        string errors = new string('a', DiagnosticLog.MaxErrorChars) + "ULTIMO ERRO";
+        string log = DiagnosticLog.Build("1.2.0", "W", DateTime.Now, [new Finding("PROBLEMA", "Disco quase cheio", "5% livre", "")], errors, ["falha-1.txt"], ["acao"], ["aviso"]);
+        Assert.Contains("ULTIMO ERRO", log);
+        Assert.DoesNotContain(new string('a', DiagnosticLog.MaxErrorChars), log);
+        Assert.Contains("[PROBLEMA] Disco quase cheio — 5% livre", log);
+        Assert.Contains("falha-1.txt", log);
+    }
+}

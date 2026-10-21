@@ -12,6 +12,18 @@ public static class Dialogs
     public static void Info(Window owner, string title, string message) =>
         Show(owner, title, message, "OK", null, false);
 
+    /// <summary>
+    /// B36: confirmação com "Não perguntar de novo". Só para ações que não apagam nem fecham nada
+    /// (ex.: reabrir como administrador, criar um plano de energia). Dispensada, devolve true sem mostrar.
+    /// </summary>
+    public static bool ConfirmOnce(Window owner, Services.AppSettings s, string key, string title, string message, string confirmText)
+    {
+        if (s.SkipConfirm.Contains(key)) return true;
+        bool ok = Show(owner, title, message, confirmText, "Cancelar", false, out bool dontAsk, dontAskOption: true);
+        if (ok && dontAsk) { s.SkipConfirm.Add(key); s.Save(); }
+        return ok;
+    }
+
     /// <summary>M14: boas-vindas na primeira execução, com as escolhas principais já à mão.</summary>
     public static void ShowWelcome(Window owner, Services.AppSettings s)
     {
@@ -140,7 +152,10 @@ public static class Dialogs
         dlg.ShowDialog();
     }
 
-    private static bool Show(Window owner, string title, string message, string ok, string? cancel, bool danger)
+    private static bool Show(Window owner, string title, string message, string ok, string? cancel, bool danger) =>
+        Show(owner, title, message, ok, cancel, danger, out _, dontAskOption: false);
+
+    private static bool Show(Window owner, string title, string message, string ok, string? cancel, bool danger, out bool dontAsk, bool dontAskOption)
     {
         var dlg = new Window
         {
@@ -171,8 +186,13 @@ public static class Dialogs
         o.Click += (_, _) => { result = true; dlg.Close(); };
         buttons.Children.Add(o);
 
-        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, body, buttons } };
+        var panel = new StackPanel { Margin = new Thickness(24), Children = { heading, body } };
+        var skip = new CheckBox { Content = "Não perguntar de novo", Margin = new Thickness(0, -12, 0, 16) };
+        if (dontAskOption) panel.Children.Add(skip);
+        panel.Children.Add(buttons);
+        dlg.Content = panel;
         dlg.ShowDialog();
+        dontAsk = skip.IsChecked == true;
         return result;
     }
 }

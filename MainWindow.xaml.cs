@@ -7,9 +7,11 @@ using NotebookDoctor.Services;
 namespace NotebookDoctor;
 
 public sealed record ProcRow(string Name, int Count, double CpuPct, long MemMB, double IoKBs, int Conns, string About, string SafetyText,
-                             System.Windows.Media.ImageSource? Icon = null)
+                             System.Windows.Media.ImageSource? Icon = null, string Severity = "")
 {
     public bool HasIcon => Icon is not null;
+    /// <summary>B32: lido pelo Narrador junto com o nome ("uso alto").</summary>
+    public string SeverityText => RowSeverity.Spoken(Severity);
 }
 
 public partial class MainWindow : Window
@@ -201,6 +203,12 @@ public partial class MainWindow : Window
             var visible = StartupGrid.Items.OfType<StartupEntry>().ToList();
             StartupTotal.Text = total == 0 ? "" : TableTotals.Startup(visible.Count(x => x.Enabled), visible.Count, total);
         }
+    }
+
+    /// <summary>B13: som discreto ao terminar uma limpeza, se ligado em Configurações (o mesmo aviso suave do Windows).</summary>
+    private void PlayDoneSound()
+    {
+        if (Host.Settings.PlaySounds) System.Media.SystemSounds.Asterisk.Play();
     }
 
     private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid];

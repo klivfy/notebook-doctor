@@ -38,7 +38,8 @@ public partial class MainWindow
         ProcGrid.ItemsSource = s.Groups.OrderByDescending(g => g.CpuPct).ThenByDescending(g => g.MemMB).Select(g =>
         {
             var about = ProcessKnowledge.Describe(g.Name);
-            return new ProcRow(g.Name, g.Count, g.CpuPct, g.MemMB, g.IoKBs, g.Conns, about.Description, about.SafetyText, ProcessIcons.Get(g.Name));
+            return new ProcRow(g.Name, g.Count, g.CpuPct, g.MemMB, g.IoKBs, g.Conns, about.Description, about.SafetyText, ProcessIcons.Get(g.Name),
+                               RowSeverity.Process(g.CpuPct, g.MemMB, s.RamTotalGB));
         }).ToList();
         ApplyFilter(ProcGrid, ProcSearch.Text, o => o is ProcRow r ? r.Name + " " + r.About : "");
         if (ProcGrid.Items.SortDescriptions.Count == 0) // B29: a ordenação salva já pode ter voltado sozinha

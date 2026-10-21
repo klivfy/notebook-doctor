@@ -216,11 +216,15 @@ public static class Cleaner
     }
 
     /// <summary>Apaga os itens marcados. Arquivos em uso ou protegidos são ignorados. Retorna bytes liberados.</summary>
-    public static long Clean(IEnumerable<CleanItem> items, int days)
+    /// <param name="progress">B12: etapa atual (1-based), total de etapas e o nome do local.</param>
+    public static long Clean(IEnumerable<CleanItem> items, int days, IProgress<(int Step, int Steps, string Label)>? progress = null)
     {
         long freed = 0;
-        foreach (var item in items.Where(i => i.Selected && i.CanClean))
+        var chosen = items.Where(i => i.Selected && i.CanClean).ToList();
+        for (int step = 0; step < chosen.Count; step++)
         {
+            var item = chosen[step];
+            progress?.Report((step + 1, chosen.Count, item.Label));
             if (item.IsRecycleBin)
             {
                 if (Native.SHEmptyRecycleBinW(IntPtr.Zero, item.RecycleRoot, Native.SHERB_NOCONFIRMATION | Native.SHERB_NOPROGRESSUI | Native.SHERB_NOSOUND) == 0)

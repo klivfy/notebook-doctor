@@ -246,15 +246,27 @@
                                     <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="190" SortMemberPath="Name">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Grid Margin="0,6" ToolTip="{Binding About}">
-                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                                    <Grid Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                <Grid Margin="0,6" ToolTip="{Binding About}" AutomationProperties.HelpText="{Binding SeverityText}">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <!-- B32: barra na cor do peso (o número da coluna diz o mesmo) -->
+                                                    <Border Width="4" CornerRadius="2" Margin="0,0,8,0">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="Transparent"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Severity}" Value="high"><Setter Property="Background" Value="{DynamicResource Error}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Severity}" Value="mid"><Setter Property="Background" Value="{DynamicResource Warning}"/></DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                    </Border>
+                                                    <Grid Grid.Column="1" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center">
                                                         <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource OnSurfaceVariant}"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         <Image Source="{Binding Icon}" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"
                                                                Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
                                                     </Grid>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
                                                         <TextBlock Text="{Binding About}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
@@ -405,7 +417,19 @@
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170"/>
                                     <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
-                                    <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250"/>
+                                    <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250">
+                                        <!-- B32: impacto alto em semi-negrito (vermelho em texto não teria contraste no tema escuro) -->
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Severity}" Value="high">
+                                                        <Setter Property="FontFamily" Value="{StaticResource FontSemi}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
                                     <DataGridTextColumn Header="Editor" Binding="{Binding Publisher}" Width="200"/>
                                     <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
                                 </DataGrid.Columns>
@@ -652,6 +676,7 @@
                         </Grid>
                         <CheckBox x:Name="CfgStart" Content="Iniciar com o Windows (fica na bandeja)"/>
                         <CheckBox x:Name="CfgTrayCpu" Content="Mostrar o uso da CPU (%) no ícone da bandeja"/>
+                        <CheckBox x:Name="CfgSounds" Content="Som discreto ao terminar uma limpeza"/>
                         <CheckBox x:Name="CfgStartMin" Content="Ao abrir pelo atalho, começar minimizado na barra de tarefas"/>
                         <CheckBox x:Name="CfgCloseExits" Content="Fechar a janela encerra o app (em vez de continuar na bandeja)"
                                   ToolTip="Desligado, o X só esconde a janela: os avisos e o histórico continuam funcionando."/>
@@ -801,6 +826,8 @@
                             <Button Content="Exportar…" Style="{StaticResource TonalButton}" Click="ExportSettings_Click" Margin="0,0,8,8"/>
                             <Button Content="Importar…" Style="{StaticResource TonalButton}" Click="ImportSettings_Click" Margin="0,0,8,8"/>
                             <Button Content="Redefinir para o padrão" Style="{StaticResource TextButton}" Click="ResetSettings_Click" Margin="0,0,8,8"/>
+                            <!-- B36 -->
+                            <Button Content="Voltar a pedir todas as confirmações" Style="{StaticResource TextButton}" Click="ResetConfirms_Click" Margin="0,0,8,8"/>
                         </WrapPanel>
                         <TextBlock x:Name="BackupMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
                     </StackPanel>
@@ -820,6 +847,8 @@
                         </WrapPanel>
                         <WrapPanel>
                             <Button Content="Abrir suporte" Click="Support_Click" Margin="0,0,8,8"/>
+                            <Button Content="Exportar log de diagnóstico" Style="{StaticResource TextButton}" Click="DiagnosticLog_Click" Margin="0,0,8,8"
+                                    ToolTip="Um .txt com diagnóstico, erros recentes, ações e avisos, sem nome de usuário nem do computador. Bom para colar num e-mail."/>
                             <Button Content="Gerar pacote para o suporte" Style="{StaticResource TonalButton}" Click="SupportPackage_Click" Margin="0,0,8,8"
                                     ToolTip="Cria um .zip só com dados técnicos (sem seu nome de usuário nem o nome do computador) para anexar no atendimento."/>
                             <Button x:Name="UpdateBtn" Content="Procurar atualização" Style="{StaticResource TextButton}" Click="CheckUpdate_Click" Margin="0,0,8,8"/>

@@ -124,6 +124,10 @@ public sealed class AppSettings
     public string ThemeDarkAt { get; set; } = "19:00";
     /// <summary>B49: o aviso "continua na bandeja" já apareceu uma vez.</summary>
     public bool TrayHintShown { get; set; }
+    /// <summary>B13: som discreto ao terminar uma limpeza.</summary>
+    public bool PlaySounds { get; set; }
+    /// <summary>B36: confirmações não destrutivas que a pessoa pediu para não repetir.</summary>
+    public List<string> SkipConfirm { get; set; } = new();
 
     /// <summary>Tema que vale agora ("system", "light" ou "dark"), resolvendo o modo por horário.</summary>
     public string EffectiveTheme(DateTime now) => ThemeSchedule.Resolve(ThemeMode, TimeOnly.FromDateTime(now), ThemeLightAt, ThemeDarkAt);

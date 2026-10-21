@@ -173,8 +173,10 @@ public partial class MainWindow
             $"Antes → depois: espaço livre {Units.Gb(before.DiskFreeGB)} → {Units.Gb(after.DiskFreeGB)} · memória {before.RamPct:0}% → {after.RamPct:0}% · nota {scoreBefore} → {Host.Score.Score}. ";
         string admin = AppInfo.IsAdmin ? "O SSD também foi otimizado (TRIM)." : "Pastas do Windows e otimização do SSD exigem o modo administrador.";
         // Resultado no próprio app, sem diálogo modal; o detalhe fica no registro de Ações
-        ShowSnack($"Otimização concluída: {Cleaner.FormatBytes(freed)} liberados", compare + admin,
+        var outcome = CleanOutcome.Describe(freed);
+        ShowSnack(outcome.Celebrate ? outcome.Title : $"Otimização concluída: {Cleaner.FormatBytes(freed)} liberados", compare + admin,
                   "Mais opções", () => Tabs.SelectedIndex = TabClean, seconds: 15);
+        PlayDoneSound();
     }
 
     // ---------- Pulso da nota de saúde (última hora) ----------

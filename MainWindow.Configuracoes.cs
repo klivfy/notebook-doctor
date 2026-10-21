@@ -50,7 +50,7 @@ public partial class MainWindow
     {
         if (!AppInfo.IsAdmin)
         {
-            if (Dialogs.Confirm(this, "Precisa de administrador", "SFC e DISM só funcionam com privilégios elevados. Reiniciar o Notebook Doctor como administrador agora?", "Reiniciar"))
+            if (Dialogs.ConfirmOnce(this, Host.Settings, "admin-restart", "Precisa de administrador", "SFC e DISM só funcionam com privilégios elevados. Reiniciar o Notebook Doctor como administrador agora?", "Reiniciar"))
                 Host.RestartAsAdmin();
             return;
         }
@@ -137,7 +137,7 @@ public partial class MainWindow
     private async void CreateHigh_Click(object sender, RoutedEventArgs e)
     {
         if (Simulate("Criar plano Alto desempenho", "Executaria \"powercfg /duplicatescheme\" a partir do modelo oficial. O plano não seria ativado.")) return;
-        if (!Dialogs.Confirm(this, "Criar plano Alto desempenho?", "O Windows ganhará um novo plano de energia (cópia do modelo oficial Alto desempenho). Ele não é ativado automaticamente. Pode consumir mais bateria.", "Criar")) return;
+        if (!Dialogs.ConfirmOnce(this, Host.Settings, "create-plan", "Criar plano Alto desempenho?", "O Windows ganhará um novo plano de energia (cópia do modelo oficial Alto desempenho). Ele não é ativado automaticamente. Pode consumir mais bateria.", "Criar")) return;
         var plan = await Task.Run(PowerPlans.CreateHighPerformance);
         PlanMsg.Text = plan is null ? "O Windows não permitiu criar o plano neste computador." : $"Plano \"{plan.Name}\" criado.";
         if (plan is not null) ActionLog.Add("Plano de energia criado", plan.Name, "plan-created", plan.Guid);
@@ -156,7 +156,7 @@ public partial class MainWindow
 
     private void Admin_Click(object sender, RoutedEventArgs e)
     {
-        if (Dialogs.Confirm(this, "Reiniciar como administrador?", "O Notebook Doctor será fechado e aberto novamente com privilégios elevados. O Windows vai pedir sua confirmação.", "Reiniciar"))
+        if (Dialogs.ConfirmOnce(this, Host.Settings, "admin-restart", "Reiniciar como administrador?", "O Notebook Doctor será fechado e aberto novamente com privilégios elevados. O Windows vai pedir sua confirmação.", "Reiniciar"))
             Host.RestartAsAdmin();
     }
 
@@ -189,6 +189,35 @@ public partial class MainWindow
         if (stream is null) return;
         using var reader = new System.IO.StreamReader(stream);
         Dialogs.ShowText(this, (string)btn.Content, reader.ReadToEnd());
+    }
+
+    // ---------- B36: confirmações dispensadas ----------
+    private void ResetConfirms_Click(object sender, RoutedEventArgs e)
+    {
+        int n = Host.Settings.SkipConfirm.Count;
+        Host.Settings.SkipConfirm.Clear();
+        Host.Settings.Save();
+        BackupMsg.Text = n == 0 ? "Nenhuma confirmação estava dispensada." : $"{Pt.N(n, "confirmação volta", "confirmações voltam")} a aparecer.";
+    }
+
+    // ---------- B40: log de diagnóstico ----------
+    private void DiagnosticLog_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string errorsFile = System.IO.Path.Combine(AppPaths.Dir, "erros.log");
+            string errors = System.IO.File.Exists(errorsFile) ? System.IO.File.ReadAllText(errorsFile) : "";
+            string text = DiagnosticLog.Build(AppInfo.Version, Environment.OSVersion.VersionString, DateTime.Now,
+                Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects), errors,
+                CrashLog.Files().OrderByDescending(f => f).Take(5).Select(f => System.IO.Path.GetFileName(f)).ToList(),
+                ActionLog.Load().OrderByDescending(a => a.Time).Take(20).Select(a => $"{a.Time:dd/MM HH:mm}  {a.Title}: {a.Detail}").ToList(),
+                AlertLog.Load(TimeSpan.FromDays(7)).OrderByDescending(a => a.Time).Take(20).Select(a => $"{a.TimeText}  {a.Title}: {a.Text}").ToList());
+            string file = System.IO.Path.Combine(AppPaths.ExportDir(), $"log-diagnostico-{DateTime.Now:yyyy-MM-dd_HHmm}.txt");
+            System.IO.File.WriteAllText(file, SupportPackage.Redact(text), new System.Text.UTF8Encoding(true));
+            AppInfo.OpenShell(file);
+            ShowSnack("Log de diagnóstico salvo", $"{System.IO.Path.GetFileName(file)}, em {System.IO.Path.GetDirectoryName(file)}. Sem nome de usuário nem do computador.");
+        }
+        catch (Exception ex) { ShowSnack("Não foi possível salvar o log", ex.Message); }
     }
 
     // ---------- Atualização (A50) ----------
@@ -253,6 +282,7 @@ public partial class MainWindow
         CfgThemeLight.Text = s.ThemeLightAt;
         CfgThemeDark.Text = s.ThemeDarkAt;
         CfgTrayCpu.IsChecked = s.TrayCpu;
+        CfgSounds.IsChecked = s.PlaySounds;
         CfgStart.IsChecked = s.StartWithWindows;
         CfgAlerts.IsChecked = s.AlertsEnabled;
         CfgToasts.IsChecked = s.NativeNotifications;
@@ -293,6 +323,7 @@ public partial class MainWindow
         s.CheckUpdates = CfgUpdates.IsChecked == true;
         s.CrashReports = CfgCrash.IsChecked == true;
         s.TrayCpu = CfgTrayCpu.IsChecked == true;
+        s.PlaySounds = CfgSounds.IsChecked == true;
         bool themeClockOk = AlertPolicy.TryParseClock(CfgThemeLight.Text, out var tl) & AlertPolicy.TryParseClock(CfgThemeDark.Text, out var td);
         if (themeClockOk) { s.ThemeLightAt = tl.ToString("HH:mm"); s.ThemeDarkAt = td.ToString("HH:mm"); }
         s.StartMinimized = CfgStartMin.IsChecked == true;

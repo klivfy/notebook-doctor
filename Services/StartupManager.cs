@@ -12,6 +12,8 @@ public sealed class StartupEntry
     public string State => Enabled ? "Ativado" : "Desativado";
     /// <summary>Estimativa pelo que o programa já consumiu desde que abriu (CPU acumulada e RAM). Não é a medição do Windows.</summary>
     public string Impact { get; set; } = "";
+    /// <summary>B32: "high" ou "mid" para destacar a linha.</summary>
+    public string Severity => RowSeverity.Startup(Impact);
     internal string ApprovalSubKey { get; init; } = "Run";
     /// <summary>M27: arquivo que o item abre (o .exe, ou o atalho da pasta Inicializar).</summary>
     public string? FilePath { get; set; }

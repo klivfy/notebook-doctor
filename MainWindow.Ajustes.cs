@@ -37,7 +37,7 @@ public partial class MainWindow
         if (Simulate($"Serviço {r.DisplayName} em manual", $"Mudaria o início de \"{r.Name}\" de automático para manual. O serviço não seria parado nem apagado.")) return;
         if (!AppInfo.IsAdmin)
         {
-            if (Dialogs.Confirm(this, "Precisa de administrador", "Mudar serviços exige privilégios elevados. Reiniciar o Notebook Doctor como administrador agora?", "Reiniciar"))
+            if (Dialogs.ConfirmOnce(this, Host.Settings, "admin-restart", "Precisa de administrador", "Mudar serviços exige privilégios elevados. Reiniciar o Notebook Doctor como administrador agora?", "Reiniciar"))
                 Host.RestartAsAdmin();
             return;
         }
@@ -65,7 +65,7 @@ public partial class MainWindow
         if ((sender as FrameworkElement)?.DataContext is not Tweak t) return;
         if (t.NeedsAdmin && !AppInfo.IsAdmin)
         {
-            if (Dialogs.Confirm(this, "Precisa de administrador", $"\"{t.Title}\" muda uma configuração do sistema. Reiniciar o Notebook Doctor como administrador agora? O Windows vai pedir sua confirmação.", "Reiniciar"))
+            if (Dialogs.ConfirmOnce(this, Host.Settings, "admin-restart", "Precisa de administrador", $"\"{t.Title}\" muda uma configuração do sistema. Reiniciar o Notebook Doctor como administrador agora? O Windows vai pedir sua confirmação.", "Reiniciar"))
                 Host.RestartAsAdmin();
             return;
         }
