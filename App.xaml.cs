@@ -98,7 +98,7 @@ public partial class App : Application
         if (shotsArg is not null)
             Dispatcher.BeginInvoke(async () =>
             {
-                try { _exitCode = await ScreenshotMode.RunAsync(win, shotsArg["--screenshots=".Length..]); }
+                try { _exitCode = await ScreenshotMode.RunAsync(win, shotsArg["--screenshots=".Length..], e.Args.Contains("--high-contrast")); }
                 catch (Exception ex) { LogError(ex); _exitCode = 1; }
                 Quit();
             }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
