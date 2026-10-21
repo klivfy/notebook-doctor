@@ -35,7 +35,7 @@
         <Grid Grid.Column="1" Margin="12,18,24,8">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
-                <TextBlock x:Name="PageTitle" Text="{Binding SelectedItem.Header, ElementName=Tabs}" Style="{StaticResource TitleLarge}"
+                <TextBlock x:Name="PageTitle" Text="{Binding SelectedItem.Header, ElementName=Tabs}" Style="{StaticResource TitleLarge}" TextWrapping="Wrap"
                            AutomationProperties.HeadingLevel="Level1"/>
                 <TextBlock x:Name="SubTitle" Text="Monitor de desempenho" Style="{StaticResource Label}" Margin="0,2,0,0" TextWrapping="Wrap"/>
             </StackPanel>
@@ -288,8 +288,8 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Local" Binding="{Binding Label}" Width="*"/>
-                                <DataGridTextColumn Header="Arquivos" Binding="{Binding Files, StringFormat=N0}" Width="110"/>
-                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="120"/>
+                                <DataGridTextColumn Header="Arquivos" Binding="{Binding Files, StringFormat=N0}" Width="Auto" MinWidth="96"/>
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="Auto" MinWidth="104"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
@@ -309,13 +309,13 @@
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <TextBlock Text="O que ocupa espaço no disco" Style="{StaticResource TitleMedium}"/>
                         <WrapPanel Grid.Row="1" Margin="0,0,0,6">
-                            <ComboBox x:Name="SpaceMode" Width="210" Margin="0,0,12,6" SelectedIndex="0" SelectionChanged="SpaceMode_Changed" AutomationProperties.Name="O que analisar">
+                            <ComboBox x:Name="SpaceMode" MinWidth="210" Margin="0,0,12,6" SelectedIndex="0" SelectionChanged="SpaceMode_Changed" AutomationProperties.Name="O que analisar">
                                 <ComboBoxItem Content="Pastas por tamanho" Tag="folders"/>
                                 <ComboBoxItem Content="Maiores arquivos" Tag="large"/>
                                 <ComboBoxItem Content="Arquivos duplicados" Tag="dupes"/>
                                 <ComboBoxItem Content="Aplicativos instalados" Tag="apps"/>
                             </ComboBox>
-                            <ComboBox x:Name="SpaceRoot" Width="270" Margin="0,0,12,6" SelectedIndex="0" AutomationProperties.Name="Onde analisar">
+                            <ComboBox x:Name="SpaceRoot" MinWidth="270" Margin="0,0,12,6" SelectedIndex="0" AutomationProperties.Name="Onde analisar">
                                 <ComboBoxItem Content="Minha pasta de usuário" Tag="user"/>
                                 <ComboBoxItem Content="Dados de aplicativos (AppData)" Tag="appdata"/>
                                 <ComboBoxItem Content="Disco inteiro (C:\) — demora" Tag="drive"/>
@@ -393,7 +393,7 @@
                             <StackPanel>
                                 <WrapPanel>
                                     <TextBlock Text="Período" VerticalAlignment="Center" Margin="0,0,12,0" Style="{StaticResource Muted}"/>
-                                    <ComboBox x:Name="PeriodBox" Width="190" SelectedIndex="0" SelectionChanged="Period_Changed" AutomationProperties.Name="Período">
+                                    <ComboBox x:Name="PeriodBox" MinWidth="190" SelectedIndex="0" SelectionChanged="Period_Changed" AutomationProperties.Name="Período">
                                         <ComboBoxItem Content="Últimas 24 horas"/>
                                         <ComboBoxItem Content="Últimos 7 dias"/>
                                         <ComboBoxItem Content="Últimos 30 dias"/>
@@ -423,7 +423,7 @@
                             <StackPanel>
                                 <TextBlock Text="Linha do tempo de um programa" Style="{StaticResource TitleMedium}"/>
                                 <WrapPanel>
-                                    <ComboBox x:Name="ProcTimelineBox" Width="260" SelectionChanged="ProcTimeline_Changed" AutomationProperties.Name="Programa"/>
+                                    <ComboBox x:Name="ProcTimelineBox" MinWidth="260" SelectionChanged="ProcTimeline_Changed" AutomationProperties.Name="Programa"/>
                                     <TextBlock x:Name="ProcTimelineInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="16,0,0,0" TextWrapping="Wrap"/>
                                 </WrapPanel>
                                 <TextBlock x:Name="PCpuLabel" Text="CPU" Margin="0,16,0,4" FontFamily="{StaticResource FontMedium}"/>

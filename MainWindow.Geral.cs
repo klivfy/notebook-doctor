@@ -8,6 +8,24 @@ namespace NotebookDoctor;
 
 public partial class MainWindow
 {
+    /// <summary>Texto de tabela corta com reticências e mostra o conteúdo inteiro na dica; colunas que já têm estilo próprio ficam como estão.</summary>
+    private void ApplyCellTextStyle()
+    {
+        var style = (Style)FindResource("CellText");
+        foreach (var grid in LogicalDescendants<DataGrid>(this))
+            foreach (var col in grid.Columns.OfType<DataGridTextColumn>().Where(c => ReferenceEquals(c.ElementStyle, DataGridTextColumn.DefaultElementStyle)))
+                col.ElementStyle = style;
+    }
+
+    private static IEnumerable<T> LogicalDescendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+        {
+            if (child is T hit) yield return hit;
+            foreach (var deeper in LogicalDescendants<T>(child)) yield return deeper;
+        }
+    }
+
     // ---------- Aviso flutuante (snackbar) ----------
     private readonly System.Windows.Threading.DispatcherTimer _snackTimer = new();
     private Action? _snackAction;

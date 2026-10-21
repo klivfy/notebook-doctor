@@ -70,7 +70,7 @@ internal static class A11yAudit
 
         // 3. Texto cortado pelo layout
         if (e is TextBlock cut && LayoutInformation.GetLayoutClip(cut) is not null && cut.ActualWidth > 0)
-            add("CORTADO", $"{Describe(cut)}{(cut.TextTrimming == TextTrimming.None ? " [sem reticências]" : "")}");
+            add("CORTADO", $"{Describe(cut)} [{cut.ActualWidth:0}×{cut.ActualHeight:0} de {cut.DesiredSize.Width:0}×{cut.DesiredSize.Height:0}]{(cut.TextTrimming == TextTrimming.None ? " [sem reticências]" : "")}");
 
         // 4. Contraste do texto
         if (e is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text) && tb.Foreground is SolidColorBrush fg)

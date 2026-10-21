@@ -38,6 +38,14 @@
     <Style x:Key="Label" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{DynamicResource FsLabel}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}"/>
+        <!-- Quebra em vez de cortar: com o texto do Windows ampliado, rótulos em colunas estreitas ficam em duas linhas -->
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <!-- Células de tabela: reticências quando não cabe, texto completo na dica (aplicado a todas as DataGridTextColumn em ApplyCellTextStyle) -->
+    <Style x:Key="CellText" TargetType="TextBlock">
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
     </Style>
     <Style x:Key="Muted" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}"/>
