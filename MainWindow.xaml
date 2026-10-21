@@ -35,7 +35,7 @@
         <Grid Grid.Column="1" Margin="12,18,24,8">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
-                <TextBlock x:Name="PageTitle" Text="{Binding SelectedItem.Header, ElementName=Tabs}" Style="{StaticResource TitleLarge}"
+                <TextBlock x:Name="PageTitle" Text="{Binding SelectedItem.Header, ElementName=Tabs}" Style="{StaticResource TitleLarge}" TextWrapping="Wrap"
                            AutomationProperties.HeadingLevel="Level1"/>
                 <TextBlock x:Name="SubTitle" Text="Monitor de desempenho" Style="{StaticResource Label}" Margin="0,2,0,0" TextWrapping="Wrap"/>
             </StackPanel>
@@ -75,13 +75,14 @@
 
                         <!-- Nota de saúde: o elemento-assinatura (número grande + pulso da própria nota) -->
                         <Border Style="{StaticResource Card}" Padding="24,20">
-                            <Grid>
+                            <Grid x:Name="ScoreGrid" SizeChanged="ScoreGrid_SizeChanged">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*" MinWidth="200"/><ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <!-- Linha 1 só é usada quando as ações descem para baixo da nota (texto grande ou janela estreita); linha 2 = fatos do hardware -->
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
-                                <StackPanel Margin="0,0,28,0">
+                                <StackPanel x:Name="ScoreLeft" Margin="0,0,28,0">
                                     <TextBlock Text="Nota de saúde" Style="{StaticResource Label}"/>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock x:Name="ScoreText" Text="–" FontFamily="{StaticResource FontDisplay}" FontSize="{DynamicResource FsHero}"/>
@@ -100,7 +101,7 @@
                                                      Stroke="{DynamicResource OnSurfaceVariant}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="2" Margin="24,0,0,0" VerticalAlignment="Top" MinWidth="170">
+                                <StackPanel x:Name="ScoreActions" Grid.Column="2" Margin="24,0,0,0" VerticalAlignment="Top" MinWidth="170">
                                     <Button x:Name="OptimizeBtn" Content="Otimizar agora" Margin="0" Click="Optimize_Click"
                                             ToolTip="Limpa temporários antigos com segurança. Não apaga documentos, downloads nem a Lixeira."/>
                                     <Button x:Name="FocusBtn" Content="Modo Foco" Style="{StaticResource TonalButton}" Margin="0,8,0,0" Click="Focus_Click"
@@ -109,7 +110,7 @@
                                 </StackPanel>
 
                                 <!-- Fatos de saúde do hardware -->
-                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,16,0,0">
+                                <WrapPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,16,0,0">
                                     <StackPanel Margin="0,0,40,0">
                                         <TextBlock x:Name="DiskHealthTitle" Text="Disco · saúde" Style="{StaticResource Label}"/>
                                         <TextBlock x:Name="DiskHealthText" Style="{StaticResource Value}"/>
@@ -208,6 +209,7 @@
 
             <!-- PROCESSOS -->
             <TabItem Header="Processos">
+                <ScrollViewer x:Name="ProcPage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -220,7 +222,7 @@
                         <DataGrid x:Name="ProcGrid" Grid.Row="1" MouseDoubleClick="ProcGrid_DoubleClick" AutomationProperties.Name="Programas em execução">
                             <DataGrid.Columns>
                                 <!-- Ícone, nome e, numa segunda linha, o que é o programa -->
-                                <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="190" SortMemberPath="Name">
+                                <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="160" SortMemberPath="Name">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Grid Margin="0,6" ToolTip="{Binding About}">
@@ -239,11 +241,11 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Processos" Binding="{Binding Count}" Width="96" MinWidth="96"/>
+                                <DataGridTextColumn Header="Processos" Binding="{Binding Count}" Width="84" MinWidth="84"/>
                                 <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPct, StringFormat=0.0}" Width="64" MinWidth="64"/>
                                 <DataGridTextColumn Header="Memória (MB)" Binding="{Binding MemMB, StringFormat=N0}" Width="92" MinWidth="92"/>
                                 <DataGridTextColumn Header="Disco e rede (KB/s)" Binding="{Binding IoKBs, StringFormat=N0}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="92" MinWidth="92"/>
+                                <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="84" MinWidth="84"/>
                                 <DataGridTextColumn Header="Pode fechar?" Binding="{Binding SafetyText}" Width="130" MinWidth="120">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
@@ -267,10 +269,12 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- LIMPEZA -->
             <TabItem Header="Limpeza">
+                <ScrollViewer x:Name="CleanPage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -288,8 +292,8 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Local" Binding="{Binding Label}" Width="*"/>
-                                <DataGridTextColumn Header="Arquivos" Binding="{Binding Files, StringFormat=N0}" Width="110"/>
-                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="120"/>
+                                <DataGridTextColumn Header="Arquivos" Binding="{Binding Files, StringFormat=N0}" Width="Auto" MinWidth="96"/>
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="Auto" MinWidth="104"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
@@ -300,22 +304,24 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- ESPAÇO (mapa de uso do disco) -->
             <TabItem Header="Espaço">
+                <ScrollViewer x:Name="SpacePage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <TextBlock Text="O que ocupa espaço no disco" Style="{StaticResource TitleMedium}"/>
                         <WrapPanel Grid.Row="1" Margin="0,0,0,6">
-                            <ComboBox x:Name="SpaceMode" Width="210" Margin="0,0,12,6" SelectedIndex="0" SelectionChanged="SpaceMode_Changed" AutomationProperties.Name="O que analisar">
+                            <ComboBox x:Name="SpaceMode" MinWidth="210" Margin="0,0,12,6" SelectedIndex="0" SelectionChanged="SpaceMode_Changed" AutomationProperties.Name="O que analisar">
                                 <ComboBoxItem Content="Pastas por tamanho" Tag="folders"/>
                                 <ComboBoxItem Content="Maiores arquivos" Tag="large"/>
                                 <ComboBoxItem Content="Arquivos duplicados" Tag="dupes"/>
                                 <ComboBoxItem Content="Aplicativos instalados" Tag="apps"/>
                             </ComboBox>
-                            <ComboBox x:Name="SpaceRoot" Width="270" Margin="0,0,12,6" SelectedIndex="0" AutomationProperties.Name="Onde analisar">
+                            <ComboBox x:Name="SpaceRoot" MinWidth="270" Margin="0,0,12,6" SelectedIndex="0" AutomationProperties.Name="Onde analisar">
                                 <ComboBoxItem Content="Minha pasta de usuário" Tag="user"/>
                                 <ComboBoxItem Content="Dados de aplicativos (AppData)" Tag="appdata"/>
                                 <ComboBoxItem Content="Disco inteiro (C:\) — demora" Tag="drive"/>
@@ -354,10 +360,12 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- INICIALIZAÇÃO -->
             <TabItem Header="Inicialização">
+                <ScrollViewer x:Name="StartupPage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -372,7 +380,7 @@
                                 <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170"/>
                                 <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
                                 <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250"/>
-                                <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
+                                <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*" MinWidth="160"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
@@ -383,6 +391,7 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- HISTÓRICO -->
@@ -393,7 +402,7 @@
                             <StackPanel>
                                 <WrapPanel>
                                     <TextBlock Text="Período" VerticalAlignment="Center" Margin="0,0,12,0" Style="{StaticResource Muted}"/>
-                                    <ComboBox x:Name="PeriodBox" Width="190" SelectedIndex="0" SelectionChanged="Period_Changed" AutomationProperties.Name="Período">
+                                    <ComboBox x:Name="PeriodBox" MinWidth="190" SelectedIndex="0" SelectionChanged="Period_Changed" AutomationProperties.Name="Período">
                                         <ComboBoxItem Content="Últimas 24 horas"/>
                                         <ComboBoxItem Content="Últimos 7 dias"/>
                                         <ComboBoxItem Content="Últimos 30 dias"/>
@@ -423,7 +432,7 @@
                             <StackPanel>
                                 <TextBlock Text="Linha do tempo de um programa" Style="{StaticResource TitleMedium}"/>
                                 <WrapPanel>
-                                    <ComboBox x:Name="ProcTimelineBox" Width="260" SelectionChanged="ProcTimeline_Changed" AutomationProperties.Name="Programa"/>
+                                    <ComboBox x:Name="ProcTimelineBox" MinWidth="260" SelectionChanged="ProcTimeline_Changed" AutomationProperties.Name="Programa"/>
                                     <TextBlock x:Name="ProcTimelineInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="16,0,0,0" TextWrapping="Wrap"/>
                                 </WrapPanel>
                                 <TextBlock x:Name="PCpuLabel" Text="CPU" Margin="0,16,0,4" FontFamily="{StaticResource FontMedium}"/>
@@ -460,6 +469,7 @@
 
             <!-- AÇÕES (registro + desfazer) -->
             <TabItem Header="Ações">
+                <ScrollViewer x:Name="ActionsPage" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -480,6 +490,7 @@
                         </WrapPanel>
                     </Grid>
                 </Border>
+                </ScrollViewer>
             </TabItem>
 
             <!-- AJUSTES DO WINDOWS (A31–A35) com simulação (A38) -->

@@ -17,8 +17,12 @@ public static class TextScale
 
     public static double Factor { get; private set; } = 1;
 
+    /// <summary>Força um fator (só o modo --screenshots usa, para simular 200% sem mexer nas configurações do Windows).</summary>
+    internal static double? Override { get; set; }
+
     public static double ReadFactor()
     {
+        if (Override is { } forced) return forced;
         try
         {
             using var k = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Accessibility");

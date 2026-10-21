@@ -38,6 +38,14 @@
     <Style x:Key="Label" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{DynamicResource FsLabel}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}"/>
+        <!-- Quebra em vez de cortar: com o texto do Windows ampliado, rótulos em colunas estreitas ficam em duas linhas -->
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <!-- Células de tabela: reticências quando não cabe, texto completo na dica (aplicado a todas as DataGridTextColumn em ApplyCellTextStyle) -->
+    <Style x:Key="CellText" TargetType="TextBlock">
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
     </Style>
     <Style x:Key="Muted" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}"/>
@@ -499,7 +507,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="DataGridRow">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="10" SnapsToDevicePixels="True">
+                    <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent" BorderThickness="2" CornerRadius="10" SnapsToDevicePixels="True">
                         <SelectiveScrollingGrid>
                             <SelectiveScrollingGrid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/>
@@ -510,7 +518,12 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource StateHover}"/></Trigger>
-                        <Trigger Property="IsSelected" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource SecondaryContainer}"/></Trigger>
+                        <!-- Linha selecionada: preenchimento tonal (RowSelected) e/ou contorno (RowSelectedBorder). No Alto Contraste só o contorno,
+                             porque os textos da linha mantêm a cor normal e não podem ficar sobre a cor de destaque -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource RowSelected}"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource RowSelectedBorder}"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

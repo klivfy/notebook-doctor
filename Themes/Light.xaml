@@ -23,6 +23,8 @@
     <SolidColorBrush x:Key="PrimaryContainer" Color="#E0E0F2"/>
     <SolidColorBrush x:Key="OnPrimaryContainer" Color="#00188F"/>
     <SolidColorBrush x:Key="SecondaryContainer" Color="#E0E0F2"/>
+    <SolidColorBrush x:Key="RowSelected" Color="#E0E0F2"/>
+    <SolidColorBrush x:Key="RowSelectedBorder" Color="Transparent"/>
     <SolidColorBrush x:Key="OnSecondaryContainer" Color="#00188F"/>
 
     <SolidColorBrush x:Key="Error" Color="#E81123"/>

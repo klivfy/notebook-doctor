@@ -9,6 +9,7 @@ public sealed record HeavyAlertInfo(string Name, double CpuPct, long MemMB, Date
 public partial class App : Application
 {
     private Mutex? _single;
+    private int _exitCode;
     private CancellationTokenSource _cts = new();
     private SystemMonitor _monitor = null!;
     private TrayIcon _tray = null!;
@@ -92,7 +93,16 @@ public partial class App : Application
         _ = Task.Run(Toasts.EnsureRegistered);
         _ = ListenForOtherInstancesAsync(_cts.Token);
         if (Settings.LastWeeklySummary == DateTime.MinValue) { Settings.LastWeeklySummary = DateTime.Now; Settings.Save(); }
-        if (!Settings.FirstRunDone && !e.Args.Contains("--background") && !e.Args.Any(a => a.StartsWith("--tab=")))
+        // --screenshots=PASTA: modo de CI. Fotografa todas as abas nos dois temas e encerra (ver ScreenshotMode)
+        var shotsArg = e.Args.FirstOrDefault(a => a.StartsWith("--screenshots="));
+        if (shotsArg is not null)
+            Dispatcher.BeginInvoke(async () =>
+            {
+                try { _exitCode = await ScreenshotMode.RunAsync(win, shotsArg["--screenshots=".Length..], e.Args.Contains("--high-contrast")); }
+                catch (Exception ex) { LogError(ex); _exitCode = 1; }
+                Quit();
+            }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        if (!Settings.FirstRunDone && shotsArg is null && !e.Args.Contains("--background") && !e.Args.Any(a => a.StartsWith("--tab=")))
             Dispatcher.BeginInvoke(() => { Dialogs.ShowWelcome(win, Settings); ApplySettingsChanged(); win.ReloadSettings(); },
                                    System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
@@ -440,7 +450,7 @@ public partial class App : Application
         _tray.Dispose();
         _monitor.Dispose();
         _single?.ReleaseMutex();
-        Shutdown();
+        Shutdown(_exitCode);
     }
 
     private static void LogError(Exception ex)

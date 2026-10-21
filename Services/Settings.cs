@@ -5,7 +5,10 @@ namespace NotebookDoctor.Services;
 
 public static class AppPaths
 {
-    public static readonly string Dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NotebookDoctor");
+    /// <summary>NOTEBOOKDOCTOR_DATA_DIR isola configurações, histórico e logs (usado pelo modo --screenshots no CI e em testes).</summary>
+    public static readonly string Dir = Environment.GetEnvironmentVariable("NOTEBOOKDOCTOR_DATA_DIR") is { Length: > 0 } custom
+        ? custom
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NotebookDoctor");
     public static string Settings => Path.Combine(Dir, "settings.json");
     public static string History => Path.Combine(Dir, "history.jsonl");
     public static string Reports => Path.Combine(Dir, "relatorios");

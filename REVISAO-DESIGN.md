@@ -97,5 +97,38 @@ Material analisado: `MainWindow.xaml`, `Themes/Styles.xaml`, `Themes/Light.xaml`
 | 13 | Feito | O tema saiu da tela de boas-vindas (segue o Windows; troca em Configurações). |
 | 14 | Feito | O logo e o título saíram do cabeçalho, que agora mostra o nome da seção atual. |
 
-Ficaram de fora: a coluna de diagnóstico à direita em telas largas, o Mica e o modo Alto Contraste (notas de plataforma).
+Ficaram de fora: a coluna de diagnóstico à direita em telas largas e o Mica (notas de plataforma). O Alto Contraste existe (`ThemeManager.HighContrastTheme`) e foi exercitado no CI com paletas simuladas; veja a seção seguinte.
 Também corrigido durante o teste: o texto das seções herdava o preto do sistema pelo `TabItem` e sumia no tema escuro.
+
+## Verificação automatizada (Fase 1, 21/10/2026)
+
+O CI abre o app num Windows real (`NotebookDoctor.exe --screenshots=PASTA`, job `ui-screenshots`), percorre as 9 abas e publica o artefato `telas-do-app` com os PNGs e um relatório (`acessibilidade.txt`). Variantes: normal, texto a 200%, janela de 720 px, e Alto Contraste preto e branco. O monitor virtual do runner limita a janela a 1044 px de largura, não os 1160 px padrão.
+
+| Verificação | Resultado | Situação |
+| --- | --- | --- |
+| Nome acessível dos controles (o que o Narrador lê) | Nenhum controle sem nome; campos `Cfg*` nomeados por `LabeledBy` | Verificado por máquina. Narrador real **não testado** |
+| Alvo de clique mínimo de 24×24 px | Nenhum abaixo disso | Verificado |
+| Texto cortado pelo layout | De 31 achados distintos para 3 inofensivos (reticências no limite do pixel, ícone, texto de ajuda) | Corrigido em `c39f7ce` e `d08b06f` |
+| Painel a 200% | A coluna "Gargalo agora" chegava a largura 0 (texto quebrava letra por letra). Agora as ações descem para uma linha própria quando faltam pixels | Corrigido |
+| Rolagem horizontal em Processos | 0 px a 1044 px; **99 px** a 200% de texto e **181 px** a 720 px de largura | Aberto: tabela precisa de coluna fixa ou colunas flexíveis |
+| Alto Contraste | Mapeamento do tema roda sem erros com as paletas clássicas preta e branca (simuladas, não o modo real do Windows) | Falta olhar as capturas `hc-*` e testar com o modo real |
+| Contraste de texto | O cálculo automático por fundo de elementos não é confiável (modelos de controle ignoram `Background`); os valores medidos por fórmula acima seguem valendo | Pendente: medir por amostragem de pixels das capturas |
+
+Mudanças feitas nesta rodada: rótulos (`Label`) quebram linha; células de tabela cortam com reticências e mostram o texto inteiro na dica (`CellText`); combos de largura fixa viraram `MinWidth`; colunas numéricas da Limpeza ajustam ao conteúdo; título da seção quebra linha.
+
+Hipótese ainda não confirmada: no tema de Alto Contraste, `Error`, `Warning`, `Success` e a escala `Level*` apontam todos para a cor de destaque do sistema, então o estado só se distingue pelo texto. Conferir nas capturas `hc-preto-00-painel` e `hc-branco-00-painel`.
+
+### Atualização (commit `a03844f`, CI verde)
+
+Medições do CI depois das correções (54 capturas de uso e 18 de Alto Contraste por execução):
+
+| Verificação | Resultado |
+| --- | --- |
+| Tabelas com texto a 200% | **Corrigido.** `ProcGrid` e `SpaceGrid` tinham 0 px de altura, `StartupGrid` 121 px e `ActionsGrid` 107 px. As cinco páginas de tabela agora rolam e a tabela ganha altura mínima quando falta espaço (`UpdateTablePage`). Nenhuma tabela abaixo de 140 px no último relatório |
+| Painel a 200% | **Corrigido.** A coluna "Gargalo agora" chegava a largura 0; as ações descem para uma linha própria quando faltam pixels |
+| Texto cortado | 31 achados distintos no início, 4 no fim; todos inofensivos (campo de busca com 8 px de diferença, ícone, texto de ajuda e um número de 3 px) |
+| Alto Contraste | **Sem achados de contraste.** A seleção de linha passou a usar só contorno (`RowSelectedBorder`), porque os textos de uma linha têm cores próprias e não podiam ficar sobre a cor de destaque do sistema |
+| Contraste em temas claro e escuro | Medido por pixels da captura. Um achado restante: o texto do indicador de estado ("1 problema") aparece branco sobre branco **só com a janela em 720 px, tema claro**. Causa não identificada; conferir `estreita-01-processos-light` |
+| Rolagem horizontal em Processos | 120 px a 200% de texto e 185 px a 720 px de largura. Aberto |
+
+Lições registradas: (1) a primeira versão da correção de tabelas entrava em laço de layout e travou o app a 200% (o CI acusou em 7 minutos de espera); lógica que reage a `SizeChanged` precisa de medida válida e de pausa entre trocas; (2) cálculo de contraste por propriedades `Background` gera falsos positivos, pois os modelos de controle ignoram essa propriedade; a medição é feita nos pixels.

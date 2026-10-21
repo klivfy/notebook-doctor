@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build
+        run: dotnet build NotebookDoctor.csproj -c Release
+      - name: Testes
+        run: dotnet test NotebookDoctor.Tests/NotebookDoctor.Tests.csproj -c Release --logger "trx;LogFileName=results.trx"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: NotebookDoctor.Tests/TestResults/*.trx
+
+  ui-screenshots:
+    # Abre o app de verdade e fotografa as 9 abas em variantes (normal, texto a 200%, janela estreita, Alto Contraste real),
+    # com auditoria automática de acessibilidade. Não falha por diferença visual nem por achado de auditoria:
+    # serve para revisar design sem um Windows à mão. Falha só se o app não conseguir gerar as telas.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build
+        run: dotnet build NotebookDoctor.csproj -c Release
+      - name: Capturar telas e auditar acessibilidade
+        env:
+          NOTEBOOKDOCTOR_DATA_DIR: ${{ runner.temp }}\nd-data
+        run: |
+          $exe = Join-Path $PWD 'bin\Release\net8.0-windows\NotebookDoctor.exe'
+          $falhou = $false
+          foreach ($modo in @(@{ Pasta = 'telas'; Extra = @() }, @{ Pasta = 'telas-alto-contraste'; Extra = @('--high-contrast') })) {
+            $out = Join-Path $env:RUNNER_TEMP $modo.Pasta
+            $args = @("--screenshots=$out") + $modo.Extra
+            $p = Start-Process -FilePath $exe -ArgumentList $args -PassThru
+            if (-not $p.WaitForExit(420000)) { $p.Kill(); Write-Host "::error::Tempo esgotado em $($modo.Pasta)"; $falhou = $true; continue }
+            Write-Host "===== $($modo.Pasta) (código $($p.ExitCode)) ====="
+            if (Test-Path "$out\resumo.txt") { Get-Content "$out\resumo.txt" | Select-Object -First 8 }
+            if (Test-Path "$out\acessibilidade.txt") {
+              Get-Content "$out\acessibilidade.txt" -TotalCount 220
+              "### Acessibilidade ($($modo.Pasta))`n``````n$((Get-Content "$out\acessibilidade.txt" -TotalCount 12) -join "`n")`n``````" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+            }
+            if ($p.ExitCode -ne 0) { $falhou = $true }
+          }
+          if (Test-Path "$env:NOTEBOOKDOCTOR_DATA_DIR\erros.log") {
+            Write-Host '--- erros.log do app ---'
+            Get-Content "$env:NOTEBOOKDOCTOR_DATA_DIR\erros.log" -TotalCount 60
+          }
+          if ($falhou) { throw 'O app não gerou todas as telas; veja o resumo acima.' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: telas-do-app
+          path: |
+            ${{ runner.temp }}\telas\*
+            ${{ runner.temp }}\telas-alto-contraste\*
+            ${{ runner.temp }}\nd-data\erros.log
+          if-no-files-found: warn
