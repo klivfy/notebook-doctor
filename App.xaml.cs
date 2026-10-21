@@ -50,7 +50,8 @@ public partial class App : Application
             try { System.Diagnostics.Process.GetProcessById(parentPid).WaitForExit(15000); } catch { }
         }
         string? uri = e.Args.FirstOrDefault(a => a.StartsWith(Toasts.Scheme + ":", StringComparison.OrdinalIgnoreCase));
-        _single = new Mutex(true, @"Local\NotebookDoctor.SingleInstance", out bool first);
+        // A demonstração é uma instância à parte: abre mesmo com o app de verdade rodando
+        _single = new Mutex(true, @"Local\NotebookDoctor.SingleInstance" + (AppPaths.Demo ? ".Demo" : ""), out bool first);
         if (!first)
         {
             // Já está rodando: repassa o pedido (abrir o painel ou o link clicado na notificação) para a instância aberta
@@ -70,7 +71,7 @@ public partial class App : Application
         };
         TaskScheduler.UnobservedTaskException += (_, a) => { LogError(a.Exception); CrashLog.Save(a.Exception, "tarefa em segundo plano"); a.SetObserved(); };
 
-        Settings = AppSettings.Load();
+        Settings = AppPaths.Demo ? StartDemo() : AppSettings.Load();
         CrashLog.Enabled = Settings.CrashReports;
         ThemeManager.UseAccent = Settings.UseAccentColor;
         ThemeManager.Apply(Settings.ThemeMode);
@@ -88,6 +89,7 @@ public partial class App : Application
             if (a.Mode == Microsoft.Win32.PowerModes.StatusChange) Dispatcher.BeginInvoke(() => _ = OnPowerSourceChangedAsync());
         };
         History = new HistoryStore();
+        if (AppPaths.Demo) History.Seed(DemoData.Week(DateTime.Now));
         _monitor = new SystemMonitor();
 
         _tray = new TrayIcon(Settings.StartWithWindows);
@@ -109,7 +111,9 @@ public partial class App : Application
         if (uri is not null) HandleUri(uri);
 
         _ = Task.Run(Toasts.EnsureRegistered);
-        SetJumpList();
+        if (!AppPaths.Demo) SetJumpList(); // a jump list é do app instalado, não da demonstração
+        _overlayTimer.Tick += (_, _) => UpdateOverlay();
+        _overlayTimer.Start();
         _ = ListenForOtherInstancesAsync(_cts.Token);
         if (Settings.LastWeeklySummary == DateTime.MinValue) { Settings.LastWeeklySummary = DateTime.Now; Settings.Save(); }
         if (!Settings.FirstRunDone && !e.Args.Contains("--background") && !e.Args.Any(a => a.StartsWith("--tab=")))
@@ -189,7 +193,7 @@ public partial class App : Application
     public void SetPendingUpdate(UpdateInfo? info) => PendingUpdate = info;
 
     // ---------- Instância única + links "notebookdoctor:" ----------
-    private static string PipeName => $"NotebookDoctor.{Environment.UserName}";
+    private static string PipeName => $"NotebookDoctor.{Environment.UserName}" + (AppPaths.Demo ? ".Demo" : "");
 
     private static void SendToRunningInstance(string message)
     {
@@ -317,7 +321,7 @@ public partial class App : Application
         {
             try
             {
-                var snap = await Task.Run(_monitor.Sample, ct);
+                var snap = AppPaths.Demo ? DemoData.Sample(DateTime.Now, _demoTick++) : await Task.Run(_monitor.Sample, ct);
                 Latest = snap;
                 _recent.Add(snap);
                 if (_recent.Count > 36) _recent.RemoveAt(0);
@@ -332,12 +336,13 @@ public partial class App : Application
                 if ((DateTime.Now - _lastProbe).TotalMinutes >= 30) _ = RefreshHealthAsync();
                 await CheckWeeklyAsync();
                 SnapshotReady?.Invoke(snap);
+                if (_overlay is { IsVisible: true }) _overlay.Update(snap);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex) { LogError(ex); }
 
             // Janela aberta: atualiza a cada 3 s. Em segundo plano: a cada 15 s para quase não gastar CPU.
-            try { await Task.Delay(WindowVisible ? 3000 : 15000, ct); } catch (OperationCanceledException) { break; }
+            try { await Task.Delay(WindowVisible || _overlay is { IsVisible: true } ? 3000 : 15000, ct); } catch (OperationCanceledException) { break; }
         }
     }
 
@@ -349,7 +354,7 @@ public partial class App : Application
         _lastProbe = DateTime.Now;
         try
         {
-            Health = await HealthProbe.RunAsync();
+            Health = AppPaths.Demo ? DemoData.Health() : await HealthProbe.RunAsync();
             HealthUpdated?.Invoke();
         }
         catch (Exception ex) { LogError(ex); }
@@ -458,7 +463,7 @@ public partial class App : Application
 
     private async Task CheckWeeklyAsync()
     {
-        if (!Settings.WeeklyCleanup || (DateTime.Now - Settings.LastWeeklyRun).TotalDays < 7) return;
+        if (AppPaths.Demo || !Settings.WeeklyCleanup || (DateTime.Now - Settings.LastWeeklyRun).TotalDays < 7) return;
         // Manutenção em horário ocioso: só roda quando ninguém mexe no computador há 10 minutos (e não durante o Modo Foco)
         if (Native.IdleTime() < TimeSpan.FromMinutes(10) || Focus.Active) return;
         Settings.LastWeeklyRun = DateTime.Now;
@@ -488,6 +493,38 @@ public partial class App : Application
     public void RestartAsAdmin()
     {
         if (AppInfo.RestartElevated()) Quit();
+    }
+
+    // ---------- B26: modo demonstração ----------
+    private int _demoTick;
+
+    /// <summary>Começa do zero a cada abertura: apaga a pasta da demonstração anterior e liga a simulação.</summary>
+    private static AppSettings StartDemo()
+    {
+        foreach (var f in Directory.GetFiles(AppPaths.Dir))
+            try { File.Delete(f); } catch { }
+        var s = new AppSettings
+        {
+            FirstRunDone = true, SimulationMode = true, CheckUpdates = false, GlobalHotkey = false,
+            WeeklyCleanup = false, StartWithWindows = false, LastWeeklySummary = DateTime.Now, LastUpdateCheck = DateTime.Now,
+        };
+        s.Save();
+        return s;
+    }
+
+    // ---------- M03: overlay em jogos ----------
+    private OverlayWindow? _overlay;
+    private readonly System.Windows.Threading.DispatcherTimer _overlayTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+
+    /// <summary>A cada 2 s confere se tem jogo ou app em tela cheia e mostra ou esconde o overlay no monitor dele.</summary>
+    private void UpdateOverlay()
+    {
+        // Desligado (o padrão) nem consulta o Windows
+        bool show = Settings.OverlayMode != Overlay.Off && Latest is not null && Overlay.ShouldShow(Settings.OverlayMode, Native.NotificationState());
+        if (!show) { _overlay?.Hide(); return; }
+        if (_overlay is null) { _overlay = new OverlayWindow(); }
+        if (!_overlay.IsVisible) { _overlay.Update(Latest!); _overlay.Show(); _overlay.UpdateLayout(); } // tamanho certo antes de posicionar
+        if (Native.ForegroundMonitor() is { } monitor) _overlay.PlaceOn(monitor, Settings.OverlayCorner);
     }
 
     /// <summary>B48: atalhos no clique direito do ícone na barra de tarefas e no Menu Iniciar. Cada um abre o app na aba certa.</summary>
@@ -522,6 +559,8 @@ public partial class App : Application
         if (Focus.Active) Task.Run(Focus.StopAsync).Wait(3000); // devolve as prioridades e o plano de energia
         _cts.Cancel();
         _mini?.Close();
+        _overlayTimer.Stop();
+        _overlay?.Close();
         _hotkey.Dispose();
         _tray.Dispose();
         _monitor.Dispose();

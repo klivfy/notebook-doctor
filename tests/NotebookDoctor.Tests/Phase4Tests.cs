@@ -144,3 +144,99 @@ public class TaskbarBadgeTests
         Assert.Equal("Notebook Doctor · tudo certo", b.Description);
     }
 }
+
+public class DemoDataTests
+{
+    private static readonly DateTime Now = new(2026, 10, 21, 16, 0, 0); // quarta-feira
+
+    [Fact]
+    public void Mesmo_tick_gera_o_mesmo_dado()
+    {
+        var a = DemoData.Sample(Now, 42);
+        var b = DemoData.Sample(Now, 42);
+        Assert.Equal(a.Cpu, b.Cpu);
+        Assert.Equal(a.Groups.Select(g => g.MemMB), b.Groups.Select(g => g.MemMB));
+    }
+
+    [Fact]
+    public void Leituras_ficam_em_faixas_plausiveis()
+    {
+        for (int i = 0; i < 500; i++)
+        {
+            var s = DemoData.Sample(Now, i);
+            Assert.InRange(s.Cpu, 0, 100);
+            Assert.InRange(s.RamPct, 0, 100);
+            Assert.InRange(s.TempC, 40, 80);
+            Assert.True(s.RamUsedGB <= s.RamTotalGB);
+        }
+    }
+
+    [Fact]
+    public void Chrome_fica_pesado_em_parte_do_tempo()
+    {
+        var chrome = Enumerable.Range(0, 160).Select(i => DemoData.Sample(Now, i).Groups.First(g => g.Name == "chrome").CpuPct).ToList();
+        Assert.Contains(chrome, c => c >= 25);
+        Assert.Contains(chrome, c => c < 25);
+    }
+
+    [Fact]
+    public void Semana_so_tem_horario_de_uso_e_nao_passa_de_agora()
+    {
+        var week = DemoData.Week(Now).ToList();
+        Assert.NotEmpty(week);
+        Assert.All(week, w =>
+        {
+            bool weekend = w.Snap.Time.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+            Assert.InRange(w.Snap.Time.Hour, weekend ? 10 : 8, weekend ? 13 : 18);
+            Assert.True(w.Snap.Time < Now);
+            Assert.InRange(w.Score, 40, 98);
+        });
+    }
+
+    [Fact]
+    public void Semana_tem_limpeza_no_meio_que_libera_espaco()
+    {
+        var free = DemoData.Week(Now).Select(w => w.Snap.DiskFreePct).ToList();
+        Assert.Contains(free.Zip(free.Skip(1)), p => p.Second - p.First > 2);
+    }
+
+    [Fact]
+    public void Diagnostico_da_demonstracao_mostra_o_disco_do_WSL()
+    {
+        var recent = Enumerable.Range(0, 36).Select(i => DemoData.Sample(Now.AddSeconds(i * 3), i)).ToList();
+        var findings = Diagnosis.Evaluate(recent, DemoData.Health());
+        Assert.Contains(findings, f => f.Title.StartsWith("Disco virtual do"));
+    }
+}
+
+public class OverlayTests
+{
+    [Theory]
+    [InlineData("off", 2, false)]
+    [InlineData("fullscreen", 2, true)]
+    [InlineData("fullscreen", 3, true)]
+    [InlineData("fullscreen", 4, false)] // apresentação: sem números no canto do slide
+    [InlineData("fullscreen", 5, false)]
+    [InlineData("always", 0, true)]
+    public void Quando_mostrar(string mode, int state, bool expected) =>
+        Assert.Equal(expected, Overlay.ShouldShow(mode, state));
+
+    [Fact]
+    public void Texto_curto_com_temperatura_e_disco_so_quando_importa()
+    {
+        var s = Make.Snap(cpu: 45.4, ram: 72);
+        Assert.Equal("CPU 45% · RAM 72%", Overlay.Text(s));
+        Assert.Equal("CPU 45% · RAM 72% · 64 °C · disco 80%", Overlay.Text(s with { TempC = 64, DiskBusy = 80 }));
+    }
+
+    [Theory]
+    [InlineData("top-left", 1932, 12)]
+    [InlineData("top-right", 3508, 12)]
+    [InlineData("bottom-left", 1932, 1388)]
+    [InlineData("bottom-right", 3508, 1388)]
+    public void Encosta_no_canto_do_monitor_certo(string corner, double x, double y)
+    {
+        var monitor = new Box(1920, 0, 1800, 1440); // segundo monitor
+        Assert.Equal((x, y), Overlay.Place(corner, monitor, 200, 40, 12));
+    }
+}

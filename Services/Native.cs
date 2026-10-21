@@ -94,10 +94,33 @@ internal static class Native
     private static extern int SHQueryUserNotificationState(out int state);
 
     /// <summary>M43: app em tela cheia (2), jogo Direct3D em tela cheia (3) ou modo de apresentação (4).</summary>
-    public static bool IsFullscreenOrPresenting()
+    public static bool IsFullscreenOrPresenting() => NotificationState() is 2 or 3 or 4;
+
+    /// <summary>QUERY_USER_NOTIFICATION_STATE do Windows (0 quando não deu para ler).</summary>
+    public static int NotificationState()
     {
-        try { return SHQueryUserNotificationState(out int state) == 0 && state is 2 or 3 or 4; }
-        catch { return false; }
+        try { return SHQueryUserNotificationState(out int state) == 0 ? state : 0; }
+        catch { return 0; }
+    }
+
+    // ---------- M03: monitor da janela em primeiro plano ----------
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT { public int Left, Top, Right, Bottom; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MONITORINFO { public uint cbSize; public RECT rcMonitor, rcWork; public uint dwFlags; }
+
+    [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+    [DllImport("user32.dll")] private static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
+
+    /// <summary>Área inteira (em pixels) do monitor onde está a janela em primeiro plano; num jogo em tela cheia, a tela do jogo.</summary>
+    public static Box? ForegroundMonitor()
+    {
+        IntPtr mon = MonitorFromWindow(GetForegroundWindow(), 2 /* MONITOR_DEFAULTTONEAREST */);
+        var info = new MONITORINFO { cbSize = (uint)Marshal.SizeOf<MONITORINFO>() };
+        if (mon == IntPtr.Zero || !GetMonitorInfo(mon, ref info)) return null;
+        var r = info.rcMonitor;
+        return new Box(r.Left, r.Top, r.Right - r.Left, r.Bottom - r.Top);
     }
 
     /// <summary>Há quanto tempo o usuário não mexe em mouse/teclado.</summary>

@@ -621,6 +621,25 @@
                         <CheckBox x:Name="CfgRestore" Content="Criar ponto de restauração antes de mudar o sistema (só no modo administrador)"/>
                         <CheckBox x:Name="CfgMini" Content="Mini-widget sempre visível (CPU, memória e disco num canto da tela)"/>
                         <CheckBox x:Name="CfgUpdates" Content="Procurar nova versão uma vez por dia"/>
+                        <!-- M03: overlay que não recebe clique nem foco, por cima de jogos e apps em tela cheia -->
+                        <Grid Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Text="Overlay de desempenho (CPU, RAM e temperatura)" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0"/>
+                            <ComboBox x:Name="CfgOverlay" Grid.Column="1" AutomationProperties.Name="Overlay de desempenho"
+                                      ToolTip="Jogos em tela cheia exclusiva podem cobrir o overlay; no modo janela sem bordas ele aparece.">
+                                <ComboBoxItem Content="Desligado" Tag="off"/>
+                                <ComboBoxItem Content="Em jogos e apps em tela cheia" Tag="fullscreen"/>
+                                <ComboBoxItem Content="Sempre" Tag="always"/>
+                            </ComboBox>
+                            <TextBlock Grid.Row="1" Text="Canto do overlay" VerticalAlignment="Center" Margin="0,8,12,0"/>
+                            <ComboBox x:Name="CfgOverlayCorner" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" AutomationProperties.Name="Canto do overlay">
+                                <ComboBoxItem Content="Superior esquerdo" Tag="top-left"/>
+                                <ComboBoxItem Content="Superior direito" Tag="top-right"/>
+                                <ComboBoxItem Content="Inferior esquerdo" Tag="bottom-left"/>
+                                <ComboBoxItem Content="Inferior direito" Tag="bottom-right"/>
+                            </ComboBox>
+                        </Grid>
                         <!-- M19: opt-in; o relatório fica no PC e só sai no pacote de suporte que a pessoa anexar -->
                         <CheckBox x:Name="CfgCrash" Content="Guardar relatórios de falha, sem dados pessoais, para o pacote do suporte"
                                   ToolTip="Nada é enviado pela internet. Os relatórios ficam na pasta de dados do app e vão no pacote para o suporte."/>

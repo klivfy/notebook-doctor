@@ -11,7 +11,12 @@ public static class AppPaths
     /// </summary>
     public static readonly bool Portable = new[] { "portatil.txt", "portable.txt" }.Any(f => File.Exists(Path.Combine(AppContext.BaseDirectory, f)));
 
-    public static readonly string Dir = Portable
+    /// <summary>B26: "--demo" abre com dados fictícios, numa pasta temporária própria, com a simulação sempre ligada.</summary>
+    public static readonly bool Demo = Environment.GetCommandLineArgs().Contains("--demo");
+
+    public static readonly string Dir = Demo
+        ? Path.Combine(Path.GetTempPath(), "NotebookDoctor-demo")
+        : Portable
         ? Path.Combine(AppContext.BaseDirectory, "dados")
         : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NotebookDoctor");
     public static string Settings => Path.Combine(Dir, "settings.json");
@@ -72,7 +77,12 @@ public sealed class AppSettings
     public bool CheckUpdates { get; set; } = true;
     public DateTime LastUpdateCheck { get; set; } = DateTime.MinValue;
     /// <summary>A38: mostra o que cada correção faria, sem alterar nada.</summary>
-    public bool SimulationMode { get; set; }
+    public bool SimulationMode
+    {
+        get => _simulation || AppPaths.Demo; // B26: na demonstração nem importar ou redefinir as preferências desliga a simulação
+        set => _simulation = value;
+    }
+    private bool _simulation;
     /// <summary>M01: Ctrl+Alt+N abre ou esconde o painel de qualquer lugar.</summary>
     public bool GlobalHotkey { get; set; } = true;
 
@@ -95,6 +105,9 @@ public sealed class AppSettings
     public double? WinWidth { get; set; }
     public double? WinHeight { get; set; }
     public bool WinMaximized { get; set; }
+    /// <summary>M03: overlay de desempenho ("off", "fullscreen" ou "always") e o canto da tela.</summary>
+    public string OverlayMode { get; set; } = Overlay.Off;
+    public string OverlayCorner { get; set; } = "top-left";
 
     public bool InQuietHours(DateTime now) =>
         QuietHours && AlertPolicy.TryParseClock(QuietStart, out var a) && AlertPolicy.TryParseClock(QuietEnd, out var b)
@@ -132,6 +145,7 @@ public sealed class AppSettings
 
     public void ApplyStartWithWindows()
     {
+        if (AppPaths.Demo) return; // a demonstração não mexe no registro
         using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
         if (key is null) return;
         if (StartWithWindows && Environment.ProcessPath is { } exe)

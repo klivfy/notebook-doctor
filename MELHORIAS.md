@@ -71,7 +71,7 @@ Critérios de impacto
 |---|---|---|
 | M01 | Atalho global de teclado para abrir o painel | ✅ (Ctrl+Alt+N) |
 | M02 | Mini-widget flutuante (CPU/RAM sempre visível) | ✅ |
-| M03 | Overlay de desempenho para jogos | ⬜ |
+| M03 | Overlay de desempenho para jogos | 🟡 CPU, RAM e temperatura num canto, só em tela cheia (fora do modo de apresentação) ou sempre; não recebe clique nem foco. Sem FPS; jogos em tela cheia exclusiva podem cobri-lo |
 | M04 | Gráficos maiores com zoom e dica ao passar o mouse | 🟡 dica com valor e horário; nos gráficos do Histórico, roda do mouse aproxima, arrastar move, clique duplo volta, e pelo teclado +, −, setas e Home |
 | M05 | Linha do tempo por processo no histórico | ✅ (dados por programa gravados a partir desta versão) |
 | M06 | Exportar histórico em CSV/JSON | ✅ (CSV no formato do Excel brasileiro) |
@@ -149,7 +149,7 @@ Critérios de impacto
 | B23 | Tela "Sobre" com versão, licenças e novidades | 🟡 versão, suporte, Novidades e Licenças (textos embutidos em Textos/) |
 | B24 | Links de termos e privacidade | 🟡 "Seus dados e privacidade" embutido no app; faltam os termos de uso e o endereço da política publicada |
 | B25 | Avaliação do app dentro dele | ⬜ |
-| B26 | Modo demonstração com dados fictícios | ⬜ |
+| B26 | Modo demonstração com dados fictícios | 🟡 `--demo`: Painel, Processos e Histórico (7 dias) fictícios, simulação sempre ligada, pasta temporária própria. Limpeza, Espaço, Inicialização e Ajustes ainda leem o PC real (só leitura) |
 | B27 | Variações de texto mais amigáveis | ⬜ |
 | B28 | Ícones nas abas | ✅ (barra lateral) |
 | B29 | Ordenação persistente nas tabelas | ⬜ |

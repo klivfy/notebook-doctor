@@ -36,6 +36,12 @@ public partial class MainWindow : Window
         Tabs.SelectedIndex = Math.Clamp(Host.Settings.LastTab, 0, Tabs.Items.Count - 1);
         SeedScorePulse();
         SimChip.Visibility = Host.Settings.SimulationMode ? Visibility.Visible : Visibility.Collapsed;
+        if (AppPaths.Demo)
+        {
+            // B26: deixa claro, na janela e na barra de tarefas, que os números não são deste computador
+            Title += " · demonstração";
+            Loaded += (_, _) => ShowSnack("Modo demonstração", "Painel, Processos e Histórico mostram dados fictícios. A simulação está ligada: nenhuma ação altera este computador.", seconds: 20);
+        }
         // O "Tamanho do texto" do Windows pode mudar com o app escondido na bandeja
         IsVisibleChanged += (_, _) => { if (IsVisible) TextScale.Apply(); };
         _snackTimer.Tick += (_, _) => HideSnack();
@@ -211,6 +217,12 @@ public partial class MainWindow : Window
 
     private void SetSimulation(bool on)
     {
+        if (!on && AppPaths.Demo)
+        {
+            SimMode.IsChecked = true;
+            ShowSnack("Modo demonstração", "Aqui a simulação fica sempre ligada: nenhuma ação altera este computador.");
+            return;
+        }
         Host.Settings.SimulationMode = on;
         Host.Settings.Save();
         SimMode.IsChecked = on;

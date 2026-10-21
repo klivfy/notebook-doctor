@@ -258,6 +258,8 @@ public partial class MainWindow
         CfgMini.IsChecked = s.MiniWidget;
         CfgUpdates.IsChecked = s.CheckUpdates;
         CfgCrash.IsChecked = s.CrashReports;
+        SelectByTag(CfgOverlay, s.OverlayMode);
+        SelectByTag(CfgOverlayCorner, s.OverlayCorner);
         CfgHotkey.IsChecked = s.GlobalHotkey;
         CfgExceptions.Text = string.Join(Environment.NewLine, s.AlertExceptions);
         CfgProtected.Text = string.Join(Environment.NewLine, s.ExtraProtected);
@@ -283,6 +285,8 @@ public partial class MainWindow
         s.RestorePointBeforeChanges = CfgRestore.IsChecked == true;
         s.CheckUpdates = CfgUpdates.IsChecked == true;
         s.CrashReports = CfgCrash.IsChecked == true;
+        s.OverlayMode = (CfgOverlay.SelectedItem as ComboBoxItem)?.Tag as string ?? Overlay.Off;
+        s.OverlayCorner = (CfgOverlayCorner.SelectedItem as ComboBoxItem)?.Tag as string ?? "top-left";
         s.GlobalHotkey = CfgHotkey.IsChecked == true;
         s.AlertExceptions = AppSettings.ParseNames(CfgExceptions.Text);
         // Os do Windows já são protegidos; a lista do usuário guarda só os extras
@@ -307,6 +311,9 @@ public partial class MainWindow
         CfgMsg.Text = (hotkeyOk ? "Salvo." : $"Salvo. O atalho {GlobalHotkey.Label} já é usado por outro programa, então ficou desligado.")
                       + (clockOk ? "" : " Horário silencioso inválido (use HH:mm, ex.: 22:00): ficou o anterior.");
     }
+
+    private static void SelectByTag(ComboBox box, string tag) =>
+        box.SelectedItem = box.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == tag) ?? box.Items[0];
 
     private static int ParseOr(string text, int fallback, int min, int max) =>
         int.TryParse(text, out var v) ? Math.Clamp(v, min, max) : fallback;
