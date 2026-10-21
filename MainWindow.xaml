@@ -614,6 +614,7 @@
                         <CheckBox x:Name="CfgMini" Content="Mini-widget sempre visível (CPU, memória e disco num canto da tela)"/>
                         <CheckBox x:Name="CfgUpdates" Content="Procurar nova versão uma vez por dia"/>
                         <CheckBox x:Name="CfgHotkey" Content="Atalho Ctrl+Alt+N abre o painel de qualquer lugar"/>
+                        <CheckBox x:Name="CfgAccent" Content="Usar a cor de destaque do Windows (ajustada para manter a leitura)"/>
                         <!-- M43/M44: sem notificações em tela cheia ou no horário escolhido (os avisos continuam no Histórico) -->
                         <CheckBox x:Name="CfgQuietFull" Content="Sem notificações com app em tela cheia, jogo ou apresentação"/>
                         <WrapPanel>
@@ -717,6 +718,21 @@
                         </WrapPanel>
                         <TextBox x:Name="IntegrityLog" Height="130" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontSize="{DynamicResource FsLabel}"
                                  AutomationProperties.Name="Saída da verificação de integridade"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- M07/B42: levar as preferências para outro PC ou voltar ao padrão -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Backup das preferências" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                   Text="Exporta tema, avisos, exceções, protegidos e demais escolhas para um arquivo, para usar em outro computador. Histórico e registro de ações não entram."/>
+                        <WrapPanel>
+                            <Button Content="Exportar…" Style="{StaticResource TonalButton}" Click="ExportSettings_Click" Margin="0,0,8,8"/>
+                            <Button Content="Importar…" Style="{StaticResource TonalButton}" Click="ImportSettings_Click" Margin="0,0,8,8"/>
+                            <Button Content="Redefinir para o padrão" Style="{StaticResource TextButton}" Click="ResetSettings_Click" Margin="0,0,8,8"/>
+                        </WrapPanel>
+                        <TextBlock x:Name="BackupMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
                     </StackPanel>
                 </Border>
 

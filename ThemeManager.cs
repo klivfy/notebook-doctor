@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using Microsoft.Win32;
+using NotebookDoctor.Services;
 
 namespace NotebookDoctor;
 
@@ -10,6 +11,8 @@ namespace NotebookDoctor;
 public static class ThemeManager
 {
     public static bool IsDark { get; private set; }
+    /// <summary>M09: aplicar a cor de destaque do Windows por cima da paleta do tema.</summary>
+    public static bool UseAccent { get; set; }
     public static event Action? Changed;
 
     private static ResourceDictionary? _current;
@@ -35,6 +38,7 @@ public static class ThemeManager
         var next = HighContrast ? HighContrastTheme()
                                 : new ResourceDictionary { Source = new Uri($"pack://application:,,,/Themes/{(dark ? "Dark" : "Light")}.xaml") };
         if (HighContrast) dark = SystemColors.WindowColor.R + SystemColors.WindowColor.G + SystemColors.WindowColor.B < 384;
+        else if (UseAccent && ReadAccent() is { } accent) ApplyAccent(next, accent, dark);
         if (_current is not null) dicts.Remove(_current);
         dicts.Insert(0, next); // antes dos estilos, para que o DynamicResource encontre as cores
         _current = next;
@@ -44,6 +48,38 @@ public static class ThemeManager
     }
 
     public static bool HighContrast { get; private set; }
+
+    /// <summary>Cor de destaque escolhida em Configurações › Personalização › Cores (formato 0xAABBGGRR).</summary>
+    private static Rgb? ReadAccent()
+    {
+        try
+        {
+            using var k = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\DWM");
+            return k?.GetValue("AccentColor") is int v ? Rgb.FromAbgr(unchecked((uint)v)) : null;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// Troca as cores de ação pela de destaque, clareando ou escurecendo até ter contraste 4,5:1 com o fundo,
+    /// para que botões e textos continuem legíveis com qualquer cor que o usuário escolha no Windows.
+    /// </summary>
+    private static void ApplyAccent(ResourceDictionary d, Rgb accent, bool dark)
+    {
+        static Rgb ToRgb(Color c) => new(c.R, c.G, c.B);
+        void Set(string key, Rgb c) => d[key] = new SolidColorBrush(Color.FromRgb(c.R, c.G, c.B));
+        if (d["Surface"] is not SolidColorBrush surfaceBrush) return;
+        var surface = ToRgb(surfaceBrush.Color);
+        var primary = ColorMath.Readable(accent, surface);
+        var container = ColorMath.Mix(accent, surface, dark ? 0.75 : 0.85);
+        var onContainer = ColorMath.Readable(accent, container);
+        Set("Primary", primary);
+        Set("OnPrimary", ColorMath.OnColor(primary));
+        Set("PrimaryContainer", container);
+        Set("OnPrimaryContainer", onContainer);
+        Set("SecondaryContainer", container);
+        Set("OnSecondaryContainer", onContainer);
+    }
 
     /// <summary>Tokens do app mapeados para as cores do esquema de Alto Contraste escolhido no Windows.</summary>
     private static ResourceDictionary HighContrastTheme()
@@ -73,7 +109,8 @@ public static class ThemeManager
         var hwnd = new WindowInteropHelper(w).Handle;
         if (hwnd == IntPtr.Zero) return;
         int dark = IsDark ? 1 : 0;
-        DwmSetWindowAttribute(hwnd, 20, ref dark, 4); // DWMWA_USE_IMMERSIVE_DARK_MODE
+        // DWMWA_USE_IMMERSIVE_DARK_MODE é 20 a partir do Windows 10 20H1; nas versões 1809–1909 era 19 (B44)
+        if (DwmSetWindowAttribute(hwnd, 20, ref dark, 4) != 0) DwmSetWindowAttribute(hwnd, 19, ref dark, 4);
         if (HighContrast)
         {
             // Alto Contraste: a barra de título volta às cores do sistema

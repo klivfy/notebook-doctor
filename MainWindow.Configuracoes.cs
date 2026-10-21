@@ -253,6 +253,7 @@ public partial class MainWindow
         CfgCpu.Text = s.CpuAlertPct.ToString();
         CfgRam.Text = s.RamAlertPct.ToString();
         CfgAlertMin.Text = s.AlertMinutes.ToString();
+        CfgAccent.IsChecked = s.UseAccentColor;
         CfgQuietFull.IsChecked = s.QuietFullscreen;
         CfgQuiet.IsChecked = s.QuietHours;
         CfgQuietStart.Text = s.QuietStart;
@@ -278,6 +279,7 @@ public partial class MainWindow
         s.CpuAlertPct = ParseOr(CfgCpu.Text, s.CpuAlertPct, 30, 100);
         s.RamAlertPct = ParseOr(CfgRam.Text, s.RamAlertPct, 30, 100);
         s.AlertMinutes = ParseOr(CfgAlertMin.Text, s.AlertMinutes, 0, 60);
+        s.UseAccentColor = CfgAccent.IsChecked == true;
         s.QuietFullscreen = CfgQuietFull.IsChecked == true;
         s.QuietHours = CfgQuiet.IsChecked == true;
         // Horário inválido mantém o anterior; o formulário recarregado mostra o que ficou valendo
@@ -295,4 +297,58 @@ public partial class MainWindow
 
     private static int ParseOr(string text, int fallback, int min, int max) =>
         int.TryParse(text, out var v) ? Math.Clamp(v, min, max) : fallback;
+
+    // ---------- M07/B42: exportar, importar e redefinir preferências ----------
+    private static string CurrentSettingsJson() => System.Text.Json.JsonSerializer.Serialize(App.Current.Settings);
+
+    private void ExportSettings_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Exportar preferências", Filter = "Preferências do Notebook Doctor (*.json)|*.json",
+            FileName = "notebook-doctor-preferencias.json", InitialDirectory = AppPaths.ExportDir(),
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        try
+        {
+            System.IO.File.WriteAllText(dlg.FileName, SettingsTransfer.Export(CurrentSettingsJson(), AppInfo.Version));
+            BackupMsg.Text = $"Preferências exportadas para {dlg.FileName}.";
+        }
+        catch (Exception ex) { BackupMsg.Text = "Não foi possível salvar: " + ex.Message; }
+    }
+
+    private void ImportSettings_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog { Title = "Importar preferências", Filter = "Preferências do Notebook Doctor (*.json)|*.json" };
+        if (dlg.ShowDialog(this) != true) return;
+        string merged;
+        try
+        {
+            merged = SettingsTransfer.Merge(CurrentSettingsJson(), System.IO.File.ReadAllText(dlg.FileName));
+            _ = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(merged) ?? throw new FormatException("Preferências vazias.");
+        }
+        catch (Exception ex) when (ex is FormatException or System.Text.Json.JsonException or System.IO.IOException)
+        {
+            BackupMsg.Text = "Não foi possível importar: " + ex.Message;
+            return;
+        }
+        if (!Dialogs.Confirm(this, "Importar preferências?", "As preferências deste computador serão substituídas pelas do arquivo. Histórico e registro de ações não mudam.", "Importar")) return;
+        ApplySettingsJson(merged, "Preferências importadas", dlg.FileName);
+    }
+
+    private void ResetSettings_Click(object sender, RoutedEventArgs e)
+    {
+        if (!Dialogs.Confirm(this, "Redefinir preferências?", "Tema, avisos, exceções, protegidos e demais escolhas voltam ao padrão. Histórico e registro de ações não mudam.\n\nSe quiser guardar as atuais, exporte antes.", "Redefinir", danger: true)) return;
+        ApplySettingsJson(SettingsTransfer.Reset(CurrentSettingsJson(), System.Text.Json.JsonSerializer.Serialize(new AppSettings())), "Preferências redefinidas", "padrão do app");
+    }
+
+    private void ApplySettingsJson(string json, string title, string detail)
+    {
+        try { System.IO.File.WriteAllText(AppPaths.Settings, json); }
+        catch (Exception ex) { BackupMsg.Text = "Não foi possível gravar as preferências: " + ex.Message; return; }
+        Host.ReloadSettingsFromDisk();
+        ActionLog.Add(title, detail);
+        BackupMsg.Text = $"{title}.";
+        ShowSnack(title, "Já estão valendo.");
+    }
 }

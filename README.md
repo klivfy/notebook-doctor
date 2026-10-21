@@ -34,6 +34,7 @@ As regras de diagnóstico, a nota de saúde, a detecção de vazamento de memór
 - Nada é apagado ou encerrado sem confirmação; mudanças de sistema têm "Desfazer" na seção Ações.
 - Modo simulação mostra o que cada correção faria sem alterar nada.
 - O app grava apenas em `%LOCALAPPDATA%\NotebookDoctor` e, para integração com o Windows, em chaves do `HKCU`.
+- Modo portátil: com um arquivo `portatil.txt` ao lado do executável, os dados ficam na pasta `dados` junto do app (o `HKCU` ainda é usado para iniciar com o Windows e para as notificações).
 
 ## Documentos
 

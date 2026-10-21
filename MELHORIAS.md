@@ -75,9 +75,9 @@ Critérios de impacto
 | M04 | Gráficos maiores com zoom e dica ao passar o mouse | 🟡 dica com valor e horário ao passar o mouse e marcador no ponto; zoom ainda não |
 | M05 | Linha do tempo por processo no histórico | ✅ (dados por programa gravados a partir desta versão) |
 | M06 | Exportar histórico em CSV/JSON | ✅ (CSV no formato do Excel brasileiro) |
-| M07 | Importar/exportar configurações | ⬜ |
+| M07 | Importar/exportar configurações | 🟡 Configurações › Backup das preferências: exportar e importar em JSON (sem dados da máquina, como posição do widget e datas); não testado no Windows |
 | M08 | Alto contraste | 🟡 (cores do sistema no Alto Contraste; não testado com o modo ligado) |
-| M09 | Cor de destaque do Windows (Material You) | ⬜ |
+| M09 | Cor de destaque do Windows (Material You) | 🟡 opção "Usar a cor de destaque do Windows": a cor é clareada ou escurecida até ter contraste 4,5:1 com o fundo; segue a troca de cor no Windows; não testado no Windows |
 | M10 | Tamanho de fonte ajustável | 🟡 (segue o "Tamanho do texto" do Windows) |
 | M11 | Suporte completo a leitores de tela (UI Automation nas abas) | ✅ (revisão de design + lote 6) |
 | M12 | Navegação completa por teclado e atalhos de aba | 🟡 Ctrl+1…8 e F5 feitos |
@@ -165,9 +165,9 @@ Critérios de impacto
 | B39 | Documentar argumentos de linha de comando (`--tab`, `--background`) | ⬜ |
 | B40 | Log de diagnóstico exportável | ⬜ |
 | B41 | Abrir a pasta de dados pelo app | ✅ (botão em Sobre) |
-| B42 | Redefinir configurações | ⬜ |
-| B43 | Modo portátil | ⬜ |
-| B44 | Compatibilidade com Windows 10 (barra de título) | ⬜ |
+| B42 | Redefinir configurações | 🟡 "Redefinir para o padrão" com confirmação; mantém datas e posição do widget; não testado no Windows |
+| B43 | Modo portátil | 🟡 com "portatil.txt" ao lado do executável, os dados ficam na pasta "dados" do app (o registro ainda é usado para iniciar com o Windows e para as notificações); não testado no Windows |
+| B44 | Compatibilidade com Windows 10 (barra de título) | 🟡 barra de título escura também no Windows 10 1809–1909 (atributo antigo do DWM); a cor da barra continua só no Windows 11; não testado no Windows 10 |
 | B45 | Lembrar o monitor usado | ⬜ |
 | B46 | Testar DPI 125/150/200% | ⬜ |
 | B47 | Selo de status na barra de tarefas | ⬜ |

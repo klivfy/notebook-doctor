@@ -5,7 +5,15 @@ namespace NotebookDoctor.Services;
 
 public static class AppPaths
 {
-    public static readonly string Dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NotebookDoctor");
+    /// <summary>
+    /// B43: com um arquivo "portatil.txt" (ou "portable.txt") ao lado do executável, os dados ficam na pasta "dados" junto do app,
+    /// para rodar de um pendrive. O registro do Windows ainda é usado para iniciar com o Windows e para as notificações.
+    /// </summary>
+    public static readonly bool Portable = new[] { "portatil.txt", "portable.txt" }.Any(f => File.Exists(Path.Combine(AppContext.BaseDirectory, f)));
+
+    public static readonly string Dir = Portable
+        ? Path.Combine(AppContext.BaseDirectory, "dados")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NotebookDoctor");
     public static string Settings => Path.Combine(Dir, "settings.json");
     public static string History => Path.Combine(Dir, "history.jsonl");
     public static string Reports => Path.Combine(Dir, "relatorios");
@@ -68,6 +76,8 @@ public sealed class AppSettings
     /// <summary>M01: Ctrl+Alt+N abre ou esconde o painel de qualquer lugar.</summary>
     public bool GlobalHotkey { get; set; } = true;
 
+    /// <summary>M09: usa a cor de destaque do Windows nos botões e seleções (ajustada para manter o contraste).</summary>
+    public bool UseAccentColor { get; set; }
     /// <summary>M44: horário sem notificações (os avisos continuam no histórico).</summary>
     public bool QuietHours { get; set; }
     public string QuietStart { get; set; } = "22:00";

@@ -62,11 +62,13 @@ public partial class App : Application
         DispatcherUnhandledException += (_, a) => { LogError(a.Exception); a.Handled = true; };
 
         Settings = AppSettings.Load();
+        ThemeManager.UseAccent = Settings.UseAccentColor;
         ThemeManager.Apply(Settings.ThemeMode);
         TextScale.Apply();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => Dispatcher.BeginInvoke(() =>
         {
-            if (Settings.ThemeMode == "system") ThemeManager.Apply("system");
+            // Tema e cor de destaque do Windows podem mudar com o app aberto
+            if (Settings.ThemeMode == "system" || Settings.UseAccentColor) ThemeManager.Apply(Settings.ThemeMode);
             TextScale.Apply(); // o Windows avisa por aqui quando o "Tamanho do texto" muda
         });
         // A02: ao ligar ou tirar da tomada, sugere o plano de energia adequado
@@ -266,9 +268,21 @@ public partial class App : Application
         MainWindow.Activate();
     }
 
+    /// <summary>M07/B42: depois de importar ou redefinir, relê o arquivo e aplica tudo como se tivesse sido salvo na tela.</summary>
+    public void ReloadSettingsFromDisk()
+    {
+        Settings = AppSettings.Load();
+        Settings.ApplyStartWithWindows();
+        ApplySettingsChanged();
+        SetMiniWidget(Settings.MiniWidget);
+        ApplyHotkey();
+        (MainWindow as NotebookDoctor.MainWindow)?.ReloadSettings();
+    }
+
     public void ApplySettingsChanged()
     {
         _tray.SyncStartWithWindows(Settings.StartWithWindows);
+        ThemeManager.UseAccent = Settings.UseAccentColor;
         ThemeManager.Apply(Settings.ThemeMode);
     }
 
