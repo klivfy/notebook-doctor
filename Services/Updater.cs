@@ -1,8 +1,6 @@
 using System.IO;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
 namespace NotebookDoctor.Services;
@@ -20,7 +18,8 @@ public static class Updater
 {
     public const string ManifestUrl = "https://klivfy.com/notebookdoctor/versao.json";
     private const string TrustedHost = "klivfy.com";
-    private const string Publisher = "Klivfy";
+    /// <summary>Razão social exata do certificado de assinatura. Certificados ICP-Brasil costumam trazer "RAZÃO SOCIAL:CNPJ" no CN.</summary>
+    internal const string PublisherName = "Klivfy Tecnologia e Consultoria em TI LTDA";
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 
@@ -30,17 +29,27 @@ public static class Updater
         {
             using var resp = await Http.GetAsync(ManifestUrl);
             if (!resp.IsSuccessStatusCode) return (UpdateCheck.NotPublished, null);
-            var info = JsonSerializer.Deserialize<UpdateInfo>(await resp.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (info is null || !Version.TryParse(info.Version, out var remote) || !IsTrustedUrl(info.Url) || info.Sha256.Length != 64)
-                return (UpdateCheck.NotPublished, null);
-            var local = Version.TryParse(AppInfo.Version, out var v) ? v : new Version(0, 0);
-            return remote > local ? (UpdateCheck.Available, info) : (UpdateCheck.UpToDate, info);
+            return ParseManifest(await resp.Content.ReadAsStringAsync(), AppInfo.Version);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException) { return (UpdateCheck.Offline, null); }
-        catch (JsonException) { return (UpdateCheck.NotPublished, null); }
     }
 
-    private static bool IsTrustedUrl(string url) =>
+    /// <summary>Interpreta o manifesto e compara com a versão local. Manifesto inválido ou com URL/hash suspeitos conta como não publicado.</summary>
+    internal static (UpdateCheck Result, UpdateInfo? Info) ParseManifest(string json, string localVersion)
+    {
+        UpdateInfo? info;
+        try { info = JsonSerializer.Deserialize<UpdateInfo>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); }
+        catch (JsonException) { return (UpdateCheck.NotPublished, null); }
+        if (info?.Version is null || info.Url is null || info.Sha256 is null
+            || !Version.TryParse(info.Version, out var remote) || !IsTrustedUrl(info.Url) || !IsSha256(info.Sha256))
+            return (UpdateCheck.NotPublished, null);
+        var local = Version.TryParse(localVersion, out var v) ? v : new Version(0, 0);
+        return remote > local ? (UpdateCheck.Available, info) : (UpdateCheck.UpToDate, info);
+    }
+
+    private static bool IsSha256(string s) => s.Length == 64 && s.All(Uri.IsHexDigit);
+
+    internal static bool IsTrustedUrl(string url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps &&
         (u.Host.Equals(TrustedHost, StringComparison.OrdinalIgnoreCase) || u.Host.EndsWith("." + TrustedHost, StringComparison.OrdinalIgnoreCase));
 
@@ -77,69 +86,22 @@ public static class Updater
 
     private static void TryDelete(string f) { try { File.Delete(f); } catch { } }
 
-    /// <summary>Assinatura Authenticode íntegra e confiável (WinVerifyTrust) e emitida para a Klivfy.</summary>
-    public static bool IsSignedByPublisher(string file)
+    /// <summary>Assinatura Authenticode íntegra, com revogação checada na cadeia inteira, e emitida para a Klivfy.</summary>
+    public static bool IsSignedByPublisher(string file) =>
+        Authenticode.Verify(file, checkRevocation: true) is { } signer && IsExpectedPublisher(signer.CommonName, signer.Organization);
+
+    /// <summary>
+    /// Compara o nome completo, não um trecho: "Klivfy Evil Ltda" ou "NotKlivfy" não passam.
+    /// Aceita o CN igual à razão social, o formato ICP-Brasil "RAZÃO SOCIAL:CNPJ" ou o campo O igual à razão social.
+    /// </summary>
+    internal static bool IsExpectedPublisher(string? commonName, string? organization)
     {
-        if (VerifyTrust(file) != 0) return false;
-        try
-        {
-#pragma warning disable SYSLIB0057 // leitura do certificado do signatário de um arquivo assinado
-            using var cert = new X509Certificate2(X509Certificate.CreateFromSignedFile(file));
-#pragma warning restore SYSLIB0057
-            return cert.GetNameInfo(X509NameType.SimpleName, false).Contains(Publisher, StringComparison.OrdinalIgnoreCase);
-        }
-        catch { return false; }
-    }
-
-    // ---------- WinVerifyTrust ----------
-    private static readonly Guid GenericVerifyV2 = new("00AAC56B-CD44-11d0-8CC2-00C04FC295EE");
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    private struct WinTrustFileInfo
-    {
-        public uint cbStruct;
-        [MarshalAs(UnmanagedType.LPWStr)] public string pcwszFilePath;
-        public IntPtr hFile;
-        public IntPtr pgKnownSubject;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct WinTrustData
-    {
-        public uint cbStruct;
-        public IntPtr pPolicyCallbackData, pSIPClientData;
-        public uint dwUIChoice, fdwRevocationChecks, dwUnionChoice;
-        public IntPtr pFile;
-        public uint dwStateAction;
-        public IntPtr hWVTStateData, pwszURLReference;
-        public uint dwProvFlags, dwUIContext;
-        public IntPtr pSignatureSettings;
-    }
-
-    [DllImport("wintrust.dll", CharSet = CharSet.Unicode)]
-    private static extern int WinVerifyTrust(IntPtr hwnd, [MarshalAs(UnmanagedType.LPStruct)] Guid action, ref WinTrustData data);
-
-    private static int VerifyTrust(string file)
-    {
-        var fi = new WinTrustFileInfo { cbStruct = (uint)Marshal.SizeOf<WinTrustFileInfo>(), pcwszFilePath = file };
-        IntPtr pFile = Marshal.AllocHGlobal(Marshal.SizeOf<WinTrustFileInfo>());
-        try
-        {
-            Marshal.StructureToPtr(fi, pFile, false);
-            var data = new WinTrustData
-            {
-                cbStruct = (uint)Marshal.SizeOf<WinTrustData>(),
-                dwUIChoice = 2,          // WTD_UI_NONE
-                fdwRevocationChecks = 0, // WTD_REVOKE_NONE
-                dwUnionChoice = 1,       // WTD_CHOICE_FILE
-                pFile = pFile,
-            };
-            return WinVerifyTrust(IntPtr.Zero, GenericVerifyV2, ref data);
-        }
-        finally
-        {
-            Marshal.DestroyStructure<WinTrustFileInfo>(pFile);
-            Marshal.FreeHGlobal(pFile);
-        }
+        static bool Same(string? a, string b) => a is not null && a.Trim().Equals(b, StringComparison.OrdinalIgnoreCase);
+        if (Same(organization, PublisherName)) return true;
+        if (commonName is null) return false;
+        int colon = commonName.IndexOf(':');
+        string name = colon >= 0 && commonName[(colon + 1)..].Trim().All(c => char.IsDigit(c) || c is '.' or '/' or '-')
+            ? commonName[..colon] : commonName;
+        return Same(name, PublisherName);
     }
 }

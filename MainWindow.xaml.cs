@@ -259,14 +259,20 @@ public partial class MainWindow : Window
     private void SpaceUninstall_Click(object sender, RoutedEventArgs e)
     {
         if (SpaceGrid.SelectedItem is not FolderUsage app || app.Tag.Length == 0) { SpaceMsg.Text = "Selecione um aplicativo."; return; }
-        if (Simulate("Abrir o desinstalador", $"Executaria o desinstalador registrado de {app.Name}: {app.Tag}")) return;
+        var cmd = UninstallCommand.Parse(app.Tag);
+        if (cmd is null) { SpaceMsg.Text = $"O desinstalador de {app.Name} não foi encontrado no disco. Use \"Aplicativos instalados\" do Windows."; return; }
+        if (Simulate("Abrir o desinstalador", $"Executaria o desinstalador registrado de {app.Name}: {cmd.Display}")) return;
+
+        // Desinstaladores sem assinatura são comuns (inclusive legítimos); o aviso só dá a informação para decidir.
+        string signer = Authenticode.Verify(cmd.Executable, checkRevocation: false) is { } s
+            ? $"Assinado por: {s.CommonName ?? s.Organization ?? "(sem nome)"}"
+            : "Atenção: este programa não tem assinatura digital válida.";
         if (!Dialogs.Confirm(this, "Desinstalar aplicativo?",
-                $"Abrir o desinstalador de:\n{app.Name}\n\nO próprio desinstalador do programa vai abrir e pedir confirmação. O Notebook Doctor não remove nada sozinho.",
+                $"Abrir o desinstalador de:\n{app.Name}\n\nComando exato:\n{cmd.Display}\n\n{signer}\n\nO próprio desinstalador vai abrir e pedir confirmação. O Notebook Doctor não remove nada sozinho.",
                 "Abrir desinstalador", danger: true)) return;
         try
         {
-            // O comando vem do registro do próprio instalador; o cmd interpreta as aspas como o Windows faria em "Aplicativos instalados"
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c \"{app.Tag}\"") { UseShellExecute = false, CreateNoWindow = true });
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(cmd.Executable, cmd.Arguments) { UseShellExecute = true });
             ActionLog.Add("Desinstalador aberto", app.Name);
             SpaceMsg.Text = "Desinstalador aberto. Clique em Analisar depois para atualizar a lista.";
         }

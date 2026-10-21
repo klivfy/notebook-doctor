@@ -14,10 +14,20 @@ dotnet run -c Release
 
 Requer Windows 10/11 e o SDK do .NET 8. Para gerar o executável: `dotnet publish -c Release -r win-x64 --self-contained false`.
 
+## Testes
+
+```powershell
+dotnet test NotebookDoctor.Tests/NotebookDoctor.Tests.csproj -c Release
+```
+
+O CI (`.github/workflows/ci.yml`) compila e roda os testes em `windows-latest` a cada push na `main` e em cada pull request.
+
 ## Segurança
 
 - Nada é apagado ou encerrado sem confirmação; mudanças de sistema têm "Desfazer" na seção Ações.
 - Modo simulação mostra o que cada correção faria sem alterar nada.
+- Atualizações só instalam com SHA-256 conferido e assinatura Authenticode válida (revogação checada) emitida para a razão social da Klivfy.
+- O desinstalador assistido mostra o comando exato e a assinatura antes de abrir, e executa sem passar pelo `cmd.exe`.
 - O app grava apenas em `%LOCALAPPDATA%\NotebookDoctor` e, para integração com o Windows, em chaves do `HKCU`.
 
 ## Documentos
