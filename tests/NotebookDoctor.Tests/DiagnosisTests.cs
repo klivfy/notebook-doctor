@@ -89,4 +89,50 @@ public class DiagnosisTests : IDisposable
         Assert.Equal("Possível vazamento de memória: app", leak.Title);
         Assert.Equal("kill", leak.FixId);
     }
+
+    [Theory]
+    [InlineData(90, 10, "tab:1")]
+    [InlineData(78, 10, "tab:1")]
+    [InlineData(40, 80, "tab:1")]
+    [InlineData(40, 45, "tab:1")]
+    public void RAM_e_CPU_altas_levam_a_Processos(double ram, double cpu, string fix) =>
+        Assert.All(Eval(Make.Snap(cpu: cpu, ram: ram)).Where(f => f.Level != "OK"), f => Assert.Equal(fix, f.FixId));
+
+    [Fact]
+    public void Todo_problema_ou_atencao_tem_correcao()
+    {
+        // Um pouco de tudo de uma vez: cada achado precisa oferecer um botão
+        var groups = new[] { new ProcGroup("chrome", 20, 30, 2500), new ProcGroup("vmmemWSL", 1, 1, 4096) };
+        var s = Make.Snap(cpu: 80, ram: 90, diskBusy: 90, freePct: 5, groups: groups, cpuPerf: 40, tempC: 92);
+        var h = new HealthInfo("SSD", "SSD", "Unhealthy", 90, 75, 50, 900, 120, 100, true, true, "Equilibrado", "abc", 15, 3L << 30,
+            ["Wi-Fi"], [new UnsignedApp("x", @"C:\Users\a\AppData\x.exe")],
+            new SecurityInfo(false, 10, [], ["Público"]));
+        var f = Diagnosis.Evaluate(Make.Minute(s), h, [new LeakSuspect("leaky", 100, 900, 30)], TimeSpan.FromDays(10));
+        var semBotao = f.Where(x => !x.HasFix && x.Title != "Disco quente").Select(x => x.Title).ToList();
+        Assert.Empty(semBotao);
+    }
+
+    [Fact]
+    public void Reinicio_pendente_oferece_reiniciar() =>
+        Assert.Equal("restart", Assert.Single(Eval(Make.Snap(), Make.Health() with { RebootPending = true })).FixId);
+
+    [Fact]
+    public void Throttling_com_plano_equilibrado_oferece_alto_desempenho()
+    {
+        var f = Assert.Single(Eval(Make.Snap(cpu: 80, cpuPerf: 40), Make.Health(highGuid: "abc")), x => x.Title.StartsWith("O processador"));
+        Assert.Equal("power-high", f.FixId);
+    }
+
+    [Fact]
+    public void Alto_desempenho_na_bateria_gera_aviso()
+    {
+        var f = Assert.Single(Eval(Make.Snap(), Make.Health(onAc: false, plan: "Alto desempenho")));
+        Assert.Equal("Plano Alto desempenho na bateria", f.Title);
+        Assert.Equal($"tab:{Diagnosis.TabSettings}", f.FixId);
+        Assert.True(f.HasWhy);
+    }
+
+    [Fact]
+    public void Sem_bateria_nao_avisa_sobre_plano_na_bateria() =>
+        Assert.Equal("Tudo certo", Assert.Single(Eval(Make.Snap(), Make.Health(onAc: false, plan: "Alto desempenho", battery: null))).Title);
 }

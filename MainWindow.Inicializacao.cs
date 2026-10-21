@@ -29,7 +29,7 @@ public partial class MainWindow
         {
             bool before = entry.Enabled;
             if (Simulate($"{(before ? "Desativar" : "Ativar")} {entry.Name} na inicialização", $"Mudaria o registro StartupApproved de {entry.Name}. O programa não seria apagado.")) return;
-            string restore = await RestorePoint.EnsureAsync(Host.Settings, "Programas de inicializacao");
+            string restore = await EnsureRestorePointAsync("Programas de inicializacao");
             StartupManager.SetEnabled(entry, !before);
             StartupGrid.Items.Refresh();
             StartupMsg.Text = $"{entry.Name}: {entry.State.ToLower()}. Vale a partir do próximo login (reversível aqui).";

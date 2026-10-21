@@ -80,21 +80,30 @@ public partial class MainWindow
     private async void IntegrityRepair_Click(object sender, RoutedEventArgs e) => await RunIntegrityAsync(repair: true);
     private void IntegrityCancel_Click(object sender, RoutedEventArgs e) => _integrityCts?.Cancel();
 
-    private async Task ActivatePlanAsync(string guid)
+    /// <summary>Troca o plano com ponto de restauração e registro em Ações. Retorna se trocou de fato.</summary>
+    private async Task<bool> ActivatePlanAsync(string guid)
     {
         var plans = await Task.Run(PowerPlans.List);
         var previous = plans.FirstOrDefault(p => p.Active);
         var target = plans.FirstOrDefault(p => p.Guid.Equals(guid, StringComparison.OrdinalIgnoreCase));
-        if (target is null || previous is null || previous.Guid == target.Guid) return;
-        if (Simulate("Trocar o plano de energia", $"Trocaria o plano \"{previous.Name}\" por \"{target.Name}\" (powercfg /setactive).")) return;
+        if (target is null || previous is null || previous.Guid == target.Guid) return false;
+        if (Simulate("Trocar o plano de energia", $"Trocaria o plano \"{previous.Name}\" por \"{target.Name}\" (powercfg /setactive).")) return false;
 
-        string restore = await RestorePoint.EnsureAsync(Host.Settings, "Plano de energia");
+        string restore = await EnsureRestorePointAsync("Plano de energia");
         bool ok = await Task.Run(() => PowerPlans.SetActive(target.Guid));
         PlanMsg.Text = ok ? $"Plano ativo: {target.Name}" : "Não foi possível trocar o plano.";
         if (ok) ActionLog.Add("Plano de energia alterado", $"{previous.Name} → {target.Name}. Ponto de restauração: {restore}", "power", previous.Guid);
         _ = Host.RefreshHealthAsync();
         LoadPlans();
+        return ok;
     }
+
+    /// <summary>A02: sugestão ao ligar ou tirar da tomada, com a troca a um clique.</summary>
+    public void ShowPowerSuggestion(PowerSuggestion s) =>
+        ShowSnack(s.Title, s.Reason, $"Usar {s.Plan.Name}", async () =>
+        {
+            if (await ActivatePlanAsync(s.Plan.Guid)) ShowSnack($"Plano ativo: {s.Plan.Name}", "Dá para desfazer na aba Ações.");
+        }, seconds: 20);
 
     // ---------- Teste de conexão (A46) ----------
     private async void NetTest_Click(object sender, RoutedEventArgs e)

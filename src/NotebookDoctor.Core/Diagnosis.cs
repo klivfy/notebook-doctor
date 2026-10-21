@@ -31,6 +31,8 @@ public sealed record Finding(string Level, string Title, string Detail, string A
             "Um driver com erro pode deixar o dispositivo lento, instável ou fazendo o sistema tentar de novo sem parar em segundo plano.",
         var t when t.StartsWith("Programa sem assinatura") =>
             "Programas legítimos costumam ser assinados pelo fabricante. Um executável sem assinatura, rodando de uma pasta pessoal, merece conferência.",
+        var t when t.StartsWith("Plano Alto desempenho na bateria") =>
+            "O Alto desempenho mantém o processador acelerado o tempo todo. Na bateria, isso esvazia a carga mais rápido e esquenta o notebook sem necessidade.",
         var t when t.StartsWith("Plano de energia") =>
             "No plano Equilibrado, o processador fica em frequência baixa a maior parte do tempo. Na tomada, isso só custa agilidade.",
         var t when t.StartsWith("Disco saturado") =>
@@ -59,7 +61,7 @@ public sealed record Finding(string Level, string Title, string Detail, string A
 
 public static class Diagnosis
 {
-    public const int TabClean = 2, TabSpace = 3, TabStartup = 4, TabSettings = 8;
+    public const int TabProcs = 1, TabClean = 2, TabSpace = 3, TabStartup = 4, TabSettings = 8;
 
     /// <param name="uptime">Tempo ligado; nulo usa o do Windows (os testes passam um valor fixo).</param>
     public static List<Finding> Evaluate(IReadOnlyList<Snapshot> recent, HealthInfo h, IReadOnlyList<LeakSuspect>? leaks = null, TimeSpan? uptime = null)
@@ -69,21 +71,23 @@ public static class Diagnosis
         var now = recent[^1];
         double cpuAvg = recent.TakeLast(12).Average(s => s.Cpu);
 
-        if (now.RamPct >= 85) f.Add(new("PROBLEMA", "Memória RAM quase cheia", $"{now.RamPct:0}% em uso ({now.RamUsedGB:0.0} de {now.RamTotalGB:0.0} GB)", "Feche abas e programas pesados (veja a lista abaixo)."));
-        else if (now.RamPct >= 75) f.Add(new("ATENCAO", "Memória RAM alta", $"{now.RamPct:0}% em uso", "Reduza abas do navegador e apps em segundo plano."));
+        if (now.RamPct >= 85) f.Add(new("PROBLEMA", "Memória RAM quase cheia", $"{now.RamPct:0}% em uso ({now.RamUsedGB:0.0} de {now.RamTotalGB:0.0} GB)", "Feche abas e programas pesados (veja a lista abaixo).", $"tab:{TabProcs}", "Ver programas"));
+        else if (now.RamPct >= 75) f.Add(new("ATENCAO", "Memória RAM alta", $"{now.RamPct:0}% em uso", "Reduza abas do navegador e apps em segundo plano.", $"tab:{TabProcs}", "Ver programas"));
 
-        if (cpuAvg >= 70) f.Add(new("PROBLEMA", "CPU sobrecarregada", $"{cpuAvg:0}% em média no último minuto", "Veja quais programas mais consomem CPU."));
-        else if (cpuAvg >= 40) f.Add(new("ATENCAO", "CPU com carga alta", $"{cpuAvg:0}% em média no último minuto", "Algo está consumindo CPU em segundo plano."));
+        if (cpuAvg >= 70) f.Add(new("PROBLEMA", "CPU sobrecarregada", $"{cpuAvg:0}% em média no último minuto", "Veja quais programas mais consomem CPU.", $"tab:{TabProcs}", "Ver programas"));
+        else if (cpuAvg >= 40) f.Add(new("ATENCAO", "CPU com carga alta", $"{cpuAvg:0}% em média no último minuto", "Algo está consumindo CPU em segundo plano.", $"tab:{TabProcs}", "Ver programas"));
 
         // A08: sob carga, a CPU deveria rodar perto da frequência máxima. Bem abaixo disso = limite térmico ou de energia
         var loaded = recent.TakeLast(12).Where(s => s.Cpu >= 60 && s.CpuPerf >= 0).ToList();
         if (loaded.Count >= 4 && loaded.Average(s => s.CpuPerf) < 65)
             f.Add(new("ATENCAO", "O processador está reduzindo a velocidade sob carga",
                       $"Rodando a {loaded.Average(s => s.CpuPerf):0}% da frequência máxima com a CPU em {loaded.Average(s => s.Cpu):0}%",
-                      "Costuma ser calor (limpe as saídas de ar, use em superfície firme) ou limite de energia (use a tomada e o plano Alto desempenho)."));
+                      "Costuma ser calor (limpe as saídas de ar, use em superfície firme) ou limite de energia (use a tomada e o plano Alto desempenho).",
+                      h.HighPlanGuid is not null && h.IsBalancedPlan ? "power-high" : $"tab:{TabSettings}",
+                      h.HighPlanGuid is not null && h.IsBalancedPlan ? "Ativar Alto desempenho" : "Ver energia", h.HighPlanGuid));
 
-        if (now.TempC >= 90) f.Add(new("PROBLEMA", "Temperatura muito alta", $"{now.TempC:0} °C", "Desligue pesados, limpe as saídas de ar e use o notebook em superfície firme."));
-        else if (now.TempC >= 80) f.Add(new("ATENCAO", "Temperatura alta", $"{now.TempC:0} °C", "Verifique a ventilação; calor faz o processador reduzir a velocidade."));
+        if (now.TempC >= 90) f.Add(new("PROBLEMA", "Temperatura muito alta", $"{now.TempC:0} °C", "Desligue pesados, limpe as saídas de ar e use o notebook em superfície firme.", $"tab:{TabProcs}", "Ver programas"));
+        else if (now.TempC >= 80) f.Add(new("ATENCAO", "Temperatura alta", $"{now.TempC:0} °C", "Verifique a ventilação; calor faz o processador reduzir a velocidade.", $"tab:{TabProcs}", "Ver programas"));
 
         // M41: a máquina virtual do WSL/Docker reserva RAM e quase nunca devolve sozinha
         long vmMB = now.Groups.Where(g => g.Name.StartsWith("vmmem", StringComparison.OrdinalIgnoreCase)).Sum(g => g.MemMB);
@@ -106,7 +110,8 @@ public static class Diagnosis
 
         if (h.DriverErrors.Count > 0)
             f.Add(new("ATENCAO", $"{Pt.N(h.DriverErrors.Count, "dispositivo", "dispositivos")} com driver em erro", string.Join(", ", h.DriverErrors.Take(3)) + (h.DriverErrors.Count > 3 ? "…" : ""),
-                      "Atualize ou reinstale o driver pelo Gerenciador de Dispositivos ou pelo site do fabricante."));
+                      "Atualize ou reinstale o driver pelo Gerenciador de Dispositivos ou pelo site do fabricante.",
+                      "open-devices", "Abrir Gerenciador de Dispositivos"));
 
         foreach (var u in h.Unsigned.Take(2))
             f.Add(new("ATENCAO", $"Programa sem assinatura digital: {u.Name}", u.Path,
@@ -119,24 +124,30 @@ public static class Diagnosis
                       h.HighPlanGuid is not null ? "power-high" : $"tab:{TabSettings}",
                       h.HighPlanGuid is not null ? "Ativar Alto desempenho" : "Criar plano", h.HighPlanGuid));
 
-        if (now.DiskBusy >= 80) f.Add(new("PROBLEMA", "Disco saturado", $"{now.DiskBusy:0}% ocupado", "Pode ser antivírus, indexação ou atualização em andamento."));
+        // A02: na bateria, o Alto desempenho só gasta carga e esquenta
+        if (!h.OnAc && h.HasBattery && Profile.Matches("high", h.ActivePlan))
+            f.Add(new("ATENCAO", "Plano Alto desempenho na bateria", $"Plano \"{h.ActivePlan}\" sem a tomada",
+                      "Na bateria, o Equilibrado dura bem mais e esquenta menos. Volte ao Alto desempenho quando ligar na tomada.",
+                      $"tab:{TabSettings}", "Ver energia"));
+
+        if (now.DiskBusy >= 80) f.Add(new("PROBLEMA", "Disco saturado", $"{now.DiskBusy:0}% ocupado", "Pode ser antivírus, indexação ou atualização em andamento. Veja quem mais movimenta dados.", $"tab:{TabProcs}", "Ver programas"));
         if (now.DiskFreePct < 10) f.Add(new("PROBLEMA", "Disco quase cheio", $"{now.DiskFreePct:0}% livre ({now.DiskFreeGB:0} GB)", "Libere espaço.", $"tab:{TabClean}", "Abrir Limpeza"));
         else if (now.DiskFreePct < 20) f.Add(new("ATENCAO", "Pouco espaço em disco", $"{now.DiskFreePct:0}% livre", "Mantenha pelo menos 20% livre em SSD.", $"tab:{TabClean}", "Abrir Limpeza"));
 
         if (h.HasDisk && !h.DiskHealthy)
-            f.Add(new("PROBLEMA", "O disco informa problema de saúde", $"{h.DiskName}: {h.DiskHealth}", "Faça backup dos seus arquivos agora e consulte o fabricante do disco."));
+            f.Add(new("PROBLEMA", "O disco informa problema de saúde", $"{h.DiskName}: {h.DiskHealth}", "Faça backup dos seus arquivos agora e consulte o fabricante do disco.", "open-backup", "Abrir backup"));
         if (h.DiskWearPct >= 80)
-            f.Add(new("ATENCAO", "SSD com desgaste alto", $"{h.DiskWearPct}% da vida útil consumida", "Planeje a troca do SSD e mantenha backups em dia."));
+            f.Add(new("ATENCAO", "SSD com desgaste alto", $"{h.DiskWearPct}% da vida útil consumida", "Planeje a troca do SSD e mantenha backups em dia.", "open-backup", "Abrir backup"));
         if (h.DiskTempC >= 70)
             f.Add(new("ATENCAO", "Disco quente", $"{h.DiskTempC} °C", "Verifique a ventilação do notebook."));
 
         if (h.BatteryHealthPct is < 60)
-            f.Add(new("ATENCAO", "Bateria muito desgastada", $"{h.BatteryHealthPct}% da capacidade original" + (h.BatteryCycles is { } c ? $" · {c:N0} ciclos" : ""), "Sem a tomada, o desempenho tende a cair. Considere trocar a bateria."));
+            f.Add(new("ATENCAO", "Bateria muito desgastada", $"{h.BatteryHealthPct}% da capacidade original" + (h.BatteryCycles is { } c ? $" · {c:N0} ciclos" : ""), "Sem a tomada, o desempenho tende a cair. Considere trocar a bateria.", "battery-report", "Relatório da bateria"));
         else if (h.BatteryHealthPct is < 75)
-            f.Add(new("ATENCAO", "Bateria com desgaste", $"{h.BatteryHealthPct}% da capacidade original", "A autonomia está reduzida; ainda não é urgente."));
+            f.Add(new("ATENCAO", "Bateria com desgaste", $"{h.BatteryHealthPct}% da capacidade original", "A autonomia está reduzida; ainda não é urgente.", "battery-report", "Relatório da bateria"));
 
         if (h.RebootPending)
-            f.Add(new("ATENCAO", "Reinício pendente", "O Windows aguarda reinício para concluir atualizações", "Salve seu trabalho e reinicie o computador."));
+            f.Add(new("ATENCAO", "Reinício pendente", "O Windows aguarda reinício para concluir atualizações", "Salve seu trabalho e reinicie o computador.", "restart", "Reiniciar…"));
         if (h.BootSeconds is > 90)
             f.Add(new("ATENCAO", "Inicialização lenta", $"Último boot levou {h.BootSeconds} s" + (h.BootAvgSeconds is { } a ? $" (média {a} s)" : ""), "Desative programas que iniciam com o Windows.", $"tab:{TabStartup}", "Abrir Inicialização"));
 
@@ -151,7 +162,7 @@ public static class Diagnosis
         if (h.TempBytes > 1L << 30) f.Add(new("ATENCAO", "Muito lixo em temporários", Pt.Bytes(h.TempBytes), "Limpeza segura de arquivos temporários antigos.", "clean", "Limpar agora"));
 
         double uptimeDays = (uptime ?? Uptime.Current).TotalDays;
-        if (uptimeDays >= 7) f.Add(new("ATENCAO", "Computador ligado há muito tempo", $"{uptimeDays:0.0} dias sem reiniciar", "Reinicie o Windows."));
+        if (uptimeDays >= 7) f.Add(new("ATENCAO", "Computador ligado há muito tempo", $"{uptimeDays:0.0} dias sem reiniciar", "Reinicie o Windows.", "restart", "Reiniciar…"));
 
         if (f.Count == 0) f.Add(new("OK", "Tudo certo", "Nenhum problema relevante agora.", ""));
         return f.OrderBy(x => x.Level == "PROBLEMA" ? 0 : x.Level == "ATENCAO" ? 1 : 2).ToList();

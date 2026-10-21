@@ -15,7 +15,7 @@ Critérios de impacto
 | # | Melhoria | Status |
 |---|---|---|
 | A01 | Botão "Otimizar agora" de um clique (limpa temporários antigos, TRIM se admin) | ✅ |
-| A02 | Seletor de plano de energia (Equilibrado / Alto desempenho) + criar plano Alto desempenho | 🟡 manual; falta recomendar sozinho (tomada × bateria) |
+| A02 | Seletor de plano de energia (Equilibrado / Alto desempenho) + criar plano Alto desempenho | 🟡 ao ligar ou tirar da tomada, sugere o plano adequado (aviso com "Usar" ou notificação) e o diagnóstico alerta Alto desempenho na bateria; não testado no Windows |
 | A03 | Limpeza de cache de navegadores (Chrome, Edge, Brave, Firefox), opt-in | ✅ |
 | A04 | "Reiniciar como administrador" para limpar `C:\Windows\Temp` e rodar TRIM | ✅ |
 | A05 | Exportar relatório completo em HTML (tema claro/escuro, sem scripts) | ✅ |
@@ -27,7 +27,7 @@ Critérios de impacto
 | A11 | Temperatura de CPU/GPU | 🟡 lê a zona térmica do Windows quando existe; este notebook não expõe sensor, então mostra nada (sensores reais exigiriam um driver de terceiros) |
 | A12 | Dizer qual recurso é o gargalo agora (CPU, RAM ou disco) em linguagem simples | ✅ |
 | A13 | Nota de saúde 0–100 do notebook, com evolução no histórico | ✅ nota + gráfico no Histórico |
-| A14 | Botão "Corrigir" em cada recomendação do diagnóstico | 🟡 botão Corrigir em encerrar, limpar, plano de energia e abrir aba; falta nos demais |
+| A14 | Botão "Corrigir" em cada recomendação do diagnóstico | 🟡 todos os achados têm botão, exceto "Disco quente" (só ventilação resolve): Processos, Gerenciador de Dispositivos, backup, relatório da bateria e reiniciar; não testado com clique |
 | A15 | Modo Foco: pausar apps de segundo plano escolhidos e restaurar depois | ✅ abaixa a prioridade dos pesados em segundo plano e ativa Alto desempenho se existir; nada é fechado (não testado com clique) |
 | A16 | Perfis (Trabalho, Reunião, Bateria, Desempenho) trocando plano de energia e alertas | 🟡 4 perfis (Trabalho, Reunião, Bateria, Desempenho) trocando plano, avisos e Modo Foco; não testado com clique |
 | A17 | Base de conhecimento "o que é este processo / é seguro encerrar?" | ✅ ~75 programas descritos em português, coluna "Fechar?" e texto no diálogo de encerrar |
@@ -49,7 +49,7 @@ Critérios de impacto
 | A33 | Efeitos visuais em "melhor desempenho" em um clique, reversível | ✅ |
 | A34 | Desativar apps em segundo plano do Windows, reversível | ✅ (apps da Store) |
 | A35 | Verificar o impacto da Inicialização Rápida | ✅ |
-| A36 | Criar ponto de restauração antes de correções que alteram o sistema | 🟡 só com administrador e Proteção do Sistema ativa (não testado aqui) |
+| A36 | Criar ponto de restauração antes de correções que alteram o sistema | 🟡 só com administrador e Proteção do Sistema ativa; se ela estiver desligada, avisa uma vez por sessão com botão para a configuração (não testado aqui) |
 | A37 | Registro de ações com botão "Desfazer" | ✅ aba Ações; desfaz plano de energia, inicialização e plano criado |
 | A38 | Modo simulação ("o que seria alterado") em toda correção | ✅ (modo simulação global + botão Simular em cada ajuste) |
 | A39 | Manutenção agendada em horário ocioso | 🟡 limpeza semanal agora espera 10 min sem uso do computador; falta agendar outras rotinas |

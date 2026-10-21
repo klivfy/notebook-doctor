@@ -21,6 +21,8 @@ public sealed record HealthInfo(
     public static readonly HealthInfo Empty = new("", "", "", null, null, null, null, null, null, false, false, "", null, 0, 0,
         Array.Empty<string>(), Array.Empty<UnsignedApp>());
     public bool HasDisk => DiskName.Length > 0;
+    /// <summary>Sem leitura de bateria (desktop ou relatório indisponível), as regras de bateria ficam de fora.</summary>
+    public bool HasBattery => BatteryHealthPct is not null;
     public bool DiskHealthy => DiskHealth is "" or "Healthy";
     public bool IsBalancedPlan => ActivePlan.Contains("quilibrado", StringComparison.OrdinalIgnoreCase) || ActivePlan.Contains("balanced", StringComparison.OrdinalIgnoreCase);
 }

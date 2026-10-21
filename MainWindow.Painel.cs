@@ -40,10 +40,37 @@ public partial class MainWindow
                 // Abre o Explorador já com o arquivo selecionado (argumento entre aspas: não executa o programa)
                 try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
                 break;
+            case "open-devices":
+                AppInfo.OpenShell("devmgmt.msc");
+                break;
+            case "open-backup":
+                AppInfo.OpenShell("ms-settings:backup");
+                break;
+            case "battery-report":
+                await OpenBatteryReportAsync();
+                break;
+            case "restart":
+                if (Simulate("Reiniciar o Windows", "Reiniciaria o computador em 10 segundos. Programas abertos seriam fechados.")) break;
+                if (Dialogs.Confirm(this, "Reiniciar agora?", "Salve seu trabalho antes: todos os programas abertos serão fechados.\n\nO Windows reinicia em 10 segundos.", "Reiniciar", danger: true))
+                {
+                    ActionLog.Add("Reinício pedido", "shutdown /r /t 10");
+                    int code = await SystemIntegrity.RunAsync("shutdown.exe", "/r /t 10", _ => { }, CancellationToken.None);
+                    if (code != 0) ShowSnack("O Windows não aceitou o reinício", $"O comando terminou com código {code}. Reinicie pelo menu Iniciar.");
+                }
+                break;
             case var tab when tab.StartsWith("tab:") && int.TryParse(tab[4..], out int idx):
                 Tabs.SelectedIndex = idx;
                 break;
         }
+    }
+
+    /// <summary>Relatório oficial do Windows (powercfg /batteryreport): capacidade, ciclos e histórico de uso.</summary>
+    private async Task OpenBatteryReportAsync()
+    {
+        string file = System.IO.Path.Combine(AppPaths.ExportDir(), $"bateria-{DateTime.Now:yyyy-MM-dd-HHmm}.html");
+        int code = await SystemIntegrity.RunAsync("powercfg.exe", $"/batteryreport /output \"{file}\"", _ => { }, CancellationToken.None);
+        if (code == 0 && System.IO.File.Exists(file)) AppInfo.OpenShell(file);
+        else ShowSnack("Relatório da bateria indisponível", "O Windows não gerou o relatório. Pode não haver bateria ou o serviço de energia não respondeu.");
     }
 
     // ---------- Modo Foco (A15) ----------

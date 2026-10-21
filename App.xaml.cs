@@ -68,6 +68,12 @@ public partial class App : Application
             if (Settings.ThemeMode == "system") ThemeManager.Apply("system");
             TextScale.Apply(); // o Windows avisa por aqui quando o "Tamanho do texto" muda
         });
+        // A02: ao ligar ou tirar da tomada, sugere o plano de energia adequado
+        _onAc = SystemParameters.PowerLineStatus == PowerLineStatus.Online;
+        Microsoft.Win32.SystemEvents.PowerModeChanged += (_, a) =>
+        {
+            if (a.Mode == Microsoft.Win32.PowerModes.StatusChange) Dispatcher.BeginInvoke(() => _ = OnPowerSourceChangedAsync());
+        };
         History = new HistoryStore();
         _monitor = new SystemMonitor();
 
@@ -200,6 +206,21 @@ public partial class App : Application
         }
     }
 
+    private bool _onAc;
+
+    private async Task OnPowerSourceChangedAsync()
+    {
+        bool onAc = SystemParameters.PowerLineStatus == PowerLineStatus.Online;
+        if (onAc == _onAc) return; // StatusChange também dispara quando só a carga da bateria muda
+        _onAc = onAc;
+        _ = RefreshHealthAsync();
+        if (!Settings.AlertsEnabled) return;
+        var plans = await Task.Run(PowerPlans.List);
+        if (PowerAdvice.Suggest(onAc, plans) is not { } s) return;
+        if (MainWindow is NotebookDoctor.MainWindow { IsVisible: true } win) win.ShowPowerSuggestion(s);
+        else Notify(s.Title, s.Reason, ("Ver energia", $"tab/{Diagnosis.TabSettings}"));
+    }
+
     /// <summary>
     /// Ações de link. Só navegação: qualquer página web pode abrir um link "notebookdoctor:",
     /// então nada aqui encerra programas, apaga arquivos ou muda configurações.
@@ -214,6 +235,7 @@ public partial class App : Application
             case "heavy": win.SelectTab(0); break;
             case "report": win.ExportReport(); break;
             case "update": win.SelectTab(8); win.OfferUpdate(); break;
+            case "protection": AppInfo.OpenShell("SystemPropertiesProtection.exe"); break; // só abre a tela do Windows
             case var t when t.StartsWith("tab/") && int.TryParse(t[4..], out int i): win.SelectTab(i); break;
         }
     }

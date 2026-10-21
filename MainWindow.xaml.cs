@@ -136,6 +136,25 @@ public partial class MainWindow : Window
 
     private void Window_SourceInitialized(object? sender, EventArgs e) => ThemeManager.ApplyTitleBar(this);
 
+    // ---------- A36: ponto de restauração antes de mudar o sistema ----------
+    private bool _protectionWarned;
+
+    /// <summary>
+    /// Tenta criar o ponto. Se a Proteção do Sistema estiver desligada, avisa uma vez por sessão por notificação
+    /// (o aviso flutuante seria coberto pela confirmação da própria mudança).
+    /// </summary>
+    private async Task<string> EnsureRestorePointAsync(string reason)
+    {
+        string result = await RestorePoint.EnsureAsync(Host.Settings, reason);
+        if (result == RestorePoint.ProtectionOff && !_protectionWarned)
+        {
+            _protectionWarned = true;
+            Host.Notify("Ponto de restauração não criado", "A Proteção do Sistema parece desligada. A mudança foi feita e pode ser desfeita na aba Ações.",
+                        ("Abrir Proteção do Sistema", "protection"));
+        }
+        return result;
+    }
+
     // ---------- A38: modo simulação ----------
     /// <summary>Com a simulação ligada, mostra o que seria feito e devolve true (quem chamou não faz nada).</summary>
     private bool Simulate(string action, string details)

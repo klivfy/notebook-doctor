@@ -36,7 +36,7 @@ public partial class MainWindow
         btn.IsEnabled = false;
         try
         {
-            string restore = t.NeedsAdmin ? await RestorePoint.EnsureAsync(Host.Settings, $"Ajuste: {t.Title}") : "não se aplica";
+            string restore = t.NeedsAdmin ? await EnsureRestorePointAsync($"Ajuste: {t.Title}") : "não se aplica";
             var (msg, prev) = await WindowsTweaks.ApplyAsync(t);
             ActionLog.Add($"{t.Title}: {t.ActionLabel}", $"{msg} Ponto de restauração: {restore}", "tweak", t.Id, prev);
             ShowSnack(msg, t.Id == "pagefile" ? "Reinicie o computador para valer." : "", "Ver em Ações", () => Tabs.SelectedIndex = TabActions);
