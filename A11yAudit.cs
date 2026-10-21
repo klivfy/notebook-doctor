@@ -82,12 +82,49 @@ internal static class A11yAudit
             var fgc = Over(fg.Color, opacity, bg);
             double ratio = Contrast(fgc, bg);
             bool large = tb.FontSize >= 24 || (tb.FontSize >= 18.66 && tb.FontWeight >= FontWeights.SemiBold);
-            if (ratio < (large ? 3.0 : 4.5)) add("CONTRASTE", $"{ratio:0.0}:1 em {Describe(tb)} ({Hex(fgc)} sobre {Hex(bg)})");
+            if (ratio < (large ? 3.0 : 4.5)) add("CONTRASTE", $"{ratio:0.0}:1 em {Describe(tb)} ({Hex(fgc)} sobre {Hex(bg)}) [fundo de {FindPainter(tb, root, bg)}]");
         }
 
         // 5. Rolagem horizontal (em tabelas largas é esperado; em página, não)
         if (e is ScrollViewer sv && sv.ScrollableWidth > 1 && sv.HorizontalScrollBarVisibility != ScrollBarVisibility.Disabled)
             add("ROLAGEM HORIZONTAL", $"{Describe(sv)} excede {sv.ScrollableWidth:0} px");
+    }
+
+    /// <summary>Quem desenhou o fundo: o elemento visível sob o centro do texto cuja cor opaca é a que a captura mostra. Só para diagnóstico.</summary>
+    private static string FindPainter(FrameworkElement text, FrameworkElement root, Color bg)
+    {
+        Point center;
+        try { center = text.TransformToVisual(root).Transform(new Point(text.ActualWidth / 2, text.ActualHeight / 2)); }
+        catch (InvalidOperationException) { return "?"; }
+        string found = "desconhecido";
+        void Visit(DependencyObject d)
+        {
+            if (d is UIElement { IsVisible: false }) return;
+            if (d is FrameworkElement fe && fe != text && fe.ActualWidth > 0 && fe.ActualHeight > 0)
+            {
+                Brush? br = fe switch { Border b => b.Background, Panel p => p.Background, Shape sh => sh.Fill, Button btn => btn.Background, _ => null };
+                if (br is SolidColorBrush sb && sb.Color.A == 255 && sb.Color.R == bg.R && sb.Color.G == bg.G && sb.Color.B == bg.B)
+                {
+                    try
+                    {
+                        var r = fe.TransformToVisual(root).TransformBounds(new Rect(0, 0, fe.ActualWidth, fe.ActualHeight));
+                        if (r.Contains(center)) found = $"{fe.GetType().Name}{(fe.Name.Length > 0 ? "#" + fe.Name : "")} em {Chain(fe)}";
+                    }
+                    catch (InvalidOperationException) { }
+                }
+            }
+            for (int i = 0, n = VisualTreeHelper.GetChildrenCount(d); i < n; i++) Visit(VisualTreeHelper.GetChild(d, i));
+        }
+        Visit(root);
+        return found;
+    }
+
+    private static string Chain(DependencyObject d)
+    {
+        var names = new List<string>();
+        for (var p = VisualTreeHelper.GetParent(d); p is not null && names.Count < 4; p = VisualTreeHelper.GetParent(p))
+            if (p is Control or Border { Name.Length: > 0 }) names.Add(p.GetType().Name);
+        return string.Join("<", names);
     }
 
     private static double EffectiveOpacity(DependencyObject d)
