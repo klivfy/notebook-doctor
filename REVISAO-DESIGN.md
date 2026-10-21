@@ -97,5 +97,23 @@ Material analisado: `MainWindow.xaml`, `Themes/Styles.xaml`, `Themes/Light.xaml`
 | 13 | Feito | O tema saiu da tela de boas-vindas (segue o Windows; troca em Configurações). |
 | 14 | Feito | O logo e o título saíram do cabeçalho, que agora mostra o nome da seção atual. |
 
-Ficaram de fora: a coluna de diagnóstico à direita em telas largas, o Mica e o modo Alto Contraste (notas de plataforma).
+Ficaram de fora: a coluna de diagnóstico à direita em telas largas e o Mica (notas de plataforma). O Alto Contraste existe (`ThemeManager.HighContrastTheme`) e foi exercitado no CI com paletas simuladas; veja a seção seguinte.
 Também corrigido durante o teste: o texto das seções herdava o preto do sistema pelo `TabItem` e sumia no tema escuro.
+
+## Verificação automatizada (Fase 1, 21/10/2026)
+
+O CI abre o app num Windows real (`NotebookDoctor.exe --screenshots=PASTA`, job `ui-screenshots`), percorre as 9 abas e publica o artefato `telas-do-app` com os PNGs e um relatório (`acessibilidade.txt`). Variantes: normal, texto a 200%, janela de 720 px, e Alto Contraste preto e branco. O monitor virtual do runner limita a janela a 1044 px de largura, não os 1160 px padrão.
+
+| Verificação | Resultado | Situação |
+| --- | --- | --- |
+| Nome acessível dos controles (o que o Narrador lê) | Nenhum controle sem nome; campos `Cfg*` nomeados por `LabeledBy` | Verificado por máquina. Narrador real **não testado** |
+| Alvo de clique mínimo de 24×24 px | Nenhum abaixo disso | Verificado |
+| Texto cortado pelo layout | De 31 achados distintos para 3 inofensivos (reticências no limite do pixel, ícone, texto de ajuda) | Corrigido em `c39f7ce` e `d08b06f` |
+| Painel a 200% | A coluna "Gargalo agora" chegava a largura 0 (texto quebrava letra por letra). Agora as ações descem para uma linha própria quando faltam pixels | Corrigido |
+| Rolagem horizontal em Processos | 0 px a 1044 px; **99 px** a 200% de texto e **181 px** a 720 px de largura | Aberto: tabela precisa de coluna fixa ou colunas flexíveis |
+| Alto Contraste | Mapeamento do tema roda sem erros com as paletas clássicas preta e branca (simuladas, não o modo real do Windows) | Falta olhar as capturas `hc-*` e testar com o modo real |
+| Contraste de texto | O cálculo automático por fundo de elementos não é confiável (modelos de controle ignoram `Background`); os valores medidos por fórmula acima seguem valendo | Pendente: medir por amostragem de pixels das capturas |
+
+Mudanças feitas nesta rodada: rótulos (`Label`) quebram linha; células de tabela cortam com reticências e mostram o texto inteiro na dica (`CellText`); combos de largura fixa viraram `MinWidth`; colunas numéricas da Limpeza ajustam ao conteúdo; título da seção quebra linha.
+
+Hipótese ainda não confirmada: no tema de Alto Contraste, `Error`, `Warning`, `Success` e a escala `Level*` apontam todos para a cor de destaque do sistema, então o estado só se distingue pelo texto. Conferir nas capturas `hc-preto-00-painel` e `hc-branco-00-painel`.

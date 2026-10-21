@@ -76,9 +76,9 @@ Critérios de impacto
 | M05 | Linha do tempo por processo no histórico | ✅ (dados por programa gravados a partir desta versão) |
 | M06 | Exportar histórico em CSV/JSON | ✅ (CSV no formato do Excel brasileiro) |
 | M07 | Importar/exportar configurações | ⬜ |
-| M08 | Alto contraste | 🟡 (cores do sistema no Alto Contraste; não testado com o modo ligado) |
+| M08 | Alto contraste | 🟡 (cores do sistema no Alto Contraste; mapeamento exercitado no CI com paletas simuladas, sem erros; falta conferir as capturas e o modo real) |
 | M09 | Cor de destaque do Windows (Material You) | ⬜ |
-| M10 | Tamanho de fonte ajustável | 🟡 (segue o "Tamanho do texto" do Windows) |
+| M10 | Tamanho de fonte ajustável | 🟡 (segue o "Tamanho do texto" do Windows; verificado a 200% no CI e cortes corrigidos; Processos ainda rola na horizontal) |
 | M11 | Suporte completo a leitores de tela (UI Automation nas abas) | ✅ (revisão de design + lote 6) |
 | M12 | Navegação completa por teclado e atalhos de aba | 🟡 Ctrl+1…8 e F5 feitos |
 | M13 | Multi-idioma (EN, ES) | ⬜ |
