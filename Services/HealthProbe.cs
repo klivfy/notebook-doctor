@@ -82,7 +82,8 @@ $o | ConvertTo-Json -Compress -Depth 3
         var tStart = Task.Run(() => StartupManager.List().Count(e => e.Enabled));
         var tUnsigned = Task.Run(FindUnsigned);
         var tVhd = Task.Run(FindVirtualDisks);
-        await Task.WhenAll(tPs, tBat, tPlan, tJunk, tStart, tUnsigned, tSec, tVhd);
+        var tOneDrive = Task.Run(OneDriveScan.Get);
+        await Task.WhenAll(tPs, tBat, tPlan, tJunk, tStart, tUnsigned, tSec, tVhd, tOneDrive);
 
         var (name, type, health, wear, temp, boots, drivers) = tPs.Result;
         var (batPct, cycles) = tBat.Result;
@@ -93,7 +94,7 @@ $o | ConvertTo-Json -Compress -Depth 3
 
         return new HealthInfo(name, type, health, wear, temp, batPct, cycles, bootLast, bootAvg,
             RebootPending(), System.Windows.SystemParameters.PowerLineStatus == System.Windows.PowerLineStatus.Online,
-            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result, tVhd.Result);
+            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result, tVhd.Result, tOneDrive.Result);
     }
 
     // Pastas de dados do usuário, onde malware costuma rodar. Pastas de desenvolvimento ficam de fora para evitar alarme falso.

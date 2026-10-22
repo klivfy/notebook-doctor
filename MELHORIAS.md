@@ -97,11 +97,11 @@ Critérios de impacto
 | M26 | Menu de contexto (abrir local, propriedades, pesquisar online) | 🟡 clique direito em Processos: detalhes, abrir local, pesquisar na internet, prioridade, modo eficiência, exceção de aviso e encerrar; não testado no Windows |
 | M27 | Abrir a pasta do item de inicialização | 🟡 botão "Abrir local" na aba Inicialização seleciona o arquivo no Explorador; não testado no Windows |
 | M28 | Mostrar editor/assinatura do item de inicialização | 🟡 coluna Editor: quem assinou o programa ou, sem assinatura, o fabricante declarado no arquivo; não testado no Windows |
-| M29 | Tarefas agendadas de terceiros, com opção de desativar | ⬜ |
+| M29 | Tarefas agendadas de terceiros, com opção de desativar | 🟡 aba Ajustes lista as tarefas ativas fora de \Microsoft\ (COM do Agendador), com quando rodam e recomendação; proteção, hardware e atualizadores ficam; "Desativar" com confirmação e desfazer em Ações |
 | M30 | Gerenciar serviços (listar e sugerir "manual") | 🟡 aba Ajustes lista serviços de terceiros que iniciam sozinhos, com recomendação; "Mudar para manual" exige administrador e tem Desfazer; serviços do Windows, segurança, drivers e rede nunca são alterados; não testado no Windows |
-| M31 | Listar extensões pesadas de navegador | ⬜ |
+| M31 | Listar extensões pesadas de navegador | 🟡 Chrome, Edge, Brave, Vivaldi e Firefox, lidos dos arquivos do perfil; peso estimado (sempre carregada, todos os sites) porque o navegador não informa memória por extensão; botão abre a página de extensões |
 | M32 | Detectar antivírus conflitantes | 🟡 diagnóstico avisa quando há dois antivírus com proteção em tempo real ligada (inclui o Defender), pelo productState da Central de Segurança; não testado no Windows |
-| M33 | Orientar OneDrive "arquivos sob demanda" | ⬜ |
+| M33 | Orientar OneDrive "arquivos sob demanda" | 🟡 achado quando o OneDrive tem 20 GB+ baixados, ou 3 GB+ com menos de 15% de disco livre; conta pelos atributos dos arquivos (nada é baixado), a cada 6 h, até 20 s |
 | M34 | Lixeira por unidade | 🟡 uma linha de Lixeira por unidade com itens, para esvaziar só a do disco cheio; não testado no Windows |
 | M35 | Limpar cache de miniaturas e ícones | 🟡 miniaturas (thumbcache) e cache de ícones na Limpeza, desmarcados; arquivos em uso são pulados; não testado no Windows |
 | M36 | Limpar logs de eventos grandes (opcional) | ⬜ |
@@ -110,7 +110,7 @@ Critérios de impacto
 | M39 | Caches de apps (Spotify, Teams, Discord, Slack) | 🟡 caches de Discord, Slack, Teams (clássico e novo) e VS Code, desmarcados; Spotify fica de fora porque o cache dele guarda as músicas offline; não testado no Windows |
 | M40 | Compactar disco virtual do WSL / detectar `vmmem` | 🟡 diagnóstico avisa disco virtual do WSL/Docker com 20 GB+ e explica como compactar (não compacta sozinho); não testado no Windows |
 | M41 | Avisar RAM alta do WSL/Docker e sugerir `.wslconfig` | 🟡 alerta quando vmmem passa de 2 GB, com dica de .wslconfig e botão "Encerrar WSL"; WSL não estava rodando no teste |
-| M42 | Reduzir a frequência de amostragem na bateria | ⬜ |
+| M42 | Reduzir a frequência de amostragem na bateria | 🟡 em segundo plano: 15 s na tomada, 30 s na bateria, 60 s com economia de bateria ou carga ≤ 20%; à vista continua 3 s. A nota usa no máximo os últimos 15 min |
 | M43 | Silenciar alertas em tela cheia/apresentação | 🟡 com app em tela cheia, jogo ou apresentação, o aviso vai só para o histórico (opção ligada por padrão); não testado no Windows |
 | M44 | Horário silencioso | 🟡 horário silencioso configurável (aceita faixa pela meia-noite, ex.: 22:00–07:00); avisos continuam no histórico; não testado no Windows |
 | M45 | Limites de alerta por métrica, com duração configurável | 🟡 minutos seguidos acima do limite configuráveis (padrão 3), valendo para CPU e agora também para RAM; não testado no Windows |
@@ -219,4 +219,4 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-M22 Agrupar processos por aplicativo · M29 Tarefas agendadas de terceiros · M31 Extensões pesadas de navegador · M33 OneDrive · M36/M37 Logs de eventos e pontos de restauração antigos · M42 Amostragem menor na bateria · B25 Avaliação do app (precisa do endereço de avaliação) · B05 Efeito ripple (só se combinar com o visual do Windows 11).
+M22 Agrupar processos por aplicativo · M36/M37 Logs de eventos e pontos de restauração antigos · B25 Avaliação do app (precisa do endereço de avaliação) · B05 Efeito ripple (só se combinar com o visual do Windows 11).

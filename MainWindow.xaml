@@ -601,6 +601,61 @@
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
+                        <!-- M29: tarefas agendadas de terceiros -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Tarefas agendadas de terceiros" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Programas que se agendam para rodar ao ligar, ao entrar ou em horários fixos. As tarefas do Windows não aparecem. Desativar não apaga a tarefa e pode ser desfeito na aba Ações."/>
+                                <DataGrid x:Name="TasksGrid" MaxHeight="320" AutomationProperties.Name="Tarefas agendadas de terceiros">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Tarefa" Binding="{Binding Name}" Width="200"/>
+                                        <DataGridTextColumn Header="Quando roda" Binding="{Binding When}" Width="120"/>
+                                        <DataGridTextColumn Header="Recomendação" Binding="{Binding Advice}" Width="130"/>
+                                        <DataGridTextColumn Header="Por quê" Binding="{Binding Reason}" Width="*">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Programa" Binding="{Binding Command}" Width="200"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Desativar tarefa" Click="TaskDisable_Click" Margin="0,0,8,6"/>
+                                    <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="TasksRefresh_Click" Margin="0,0,8,6"/>
+                                    <TextBlock x:Name="TasksMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
+                                               AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        <!-- M31: extensões de navegador -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Extensões de navegador" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Cada extensão gasta memória e pode deixar as páginas mais lentas. As mais pesadas ficam sempre carregadas e rodam em todos os sites. O navegador não informa a memória de cada uma; o peso é estimado pelo que a extensão pede. Para desativar ou remover, use a página de extensões do navegador."/>
+                                <DataGrid x:Name="ExtensionsGrid" MaxHeight="320" AutomationProperties.Name="Extensões de navegador">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Extensão" Binding="{Binding Name}" Width="220"/>
+                                        <DataGridTextColumn Header="Navegador" Binding="{Binding Browser}" Width="90"/>
+                                        <DataGridTextColumn Header="Perfil" Binding="{Binding Profile}" Width="110"/>
+                                        <DataGridTextColumn Header="Peso estimado" Binding="{Binding Weight}" Width="*">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Versão" Binding="{Binding Version}" Width="90"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Abrir extensões do navegador" Style="{StaticResource TonalButton}" Click="ExtensionsOpen_Click" Margin="0,0,8,6"
+                                            ToolTip="Abre a página de extensões do navegador da linha selecionada (ou do primeiro da lista)."/>
+                                    <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ExtensionsRefresh_Click" Margin="0,0,8,6"/>
+                                    <TextBlock x:Name="ExtensionsMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
+                                               AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
                         <ItemsControl x:Name="TweaksList" Focusable="False" AutomationProperties.Name="Ajustes do Windows">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>

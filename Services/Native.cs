@@ -4,6 +4,26 @@ namespace NotebookDoctor.Services;
 
 internal static class Native
 {
+    // ---------- M42: energia ----------
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SYSTEM_POWER_STATUS
+    {
+        public byte ACLineStatus, BatteryFlag, BatteryLifePercent, SystemStatusFlag;
+        public int BatteryLifeTime, BatteryFullLifeTime;
+    }
+
+    [DllImport("kernel32.dll")]
+    private static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS status);
+
+    /// <summary>Na bateria, economia de bateria ligada e carga (−1 = sem bateria ou desconhecida).</summary>
+    public static (bool OnBattery, bool Saver, int Percent) PowerStatus()
+    {
+        if (!GetSystemPowerStatus(out var s)) return (false, false, -1);
+        bool noBattery = (s.BatteryFlag & 128) != 0 || s.BatteryFlag == 255;
+        int pct = noBattery || s.BatteryLifePercent == 255 ? -1 : s.BatteryLifePercent;
+        return (s.ACLineStatus == 0, s.SystemStatusFlag == 1, pct);
+    }
+
     [DllImport("kernel32.dll")]
     public static extern bool GetSystemTimes(out long idle, out long kernel, out long user);
 

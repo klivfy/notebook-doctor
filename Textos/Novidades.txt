@@ -1,6 +1,8 @@
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.
+• Aviso quando o OneDrive guarda muitos arquivos no disco, com o caminho para "Liberar espaço".
+• Na bateria, o app consulta o computador com menos frequência quando está em segundo plano.
 • Sugestão de plano de energia ao ligar ou tirar o notebook da tomada.
 • Relatório em PDF e botão "Copiar resumo" para colar num chamado.
 
@@ -15,6 +17,8 @@ Limpeza e espaço
 Inicialização e ajustes
 • Coluna com o editor de cada programa e botão "Abrir local".
 • Serviços de outros fabricantes que podem ficar no modo manual, com "Desfazer".
+• Tarefas agendadas de outros fabricantes, com "Desativar" e "Desfazer".
+• Extensões instaladas nos navegadores, das mais pesadas para as mais leves.
 
 Histórico
 • Tendências da semana, previsão de disco cheio e mapa de horários de lentidão.

@@ -214,7 +214,7 @@ public partial class MainWindow : Window
         if (Host.Settings.PlaySounds) System.Media.SystemSounds.Asterisk.Play();
     }
 
-    private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid];
+    private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid, TasksGrid, ExtensionsGrid];
 
     public void SavePlacement()
     {

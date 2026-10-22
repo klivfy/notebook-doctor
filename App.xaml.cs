@@ -359,7 +359,7 @@ public partial class App : Application
                 var snap = AppPaths.Demo ? DemoData.Sample(DateTime.Now, _demoTick++) : await Task.Run(_monitor.Sample, ct);
                 Latest = snap;
                 _recent.Add(snap);
-                if (_recent.Count > 36) _recent.RemoveAt(0);
+                Sampling.TrimRecent(_recent, snap.Time); // M42: com amostras espaçadas, a nota não usa dados velhos
                 Score = Insights.Score(_recent, Health);
                 History.Record(snap, Score.Score);
                 _tray.Update(snap, Score.Score, Settings.TrayCpu);
@@ -377,8 +377,10 @@ public partial class App : Application
             catch (OperationCanceledException) { break; }
             catch (Exception ex) { LogError(ex); }
 
-            // Janela aberta: atualiza a cada 3 s. Em segundo plano: a cada 15 s para quase não gastar CPU.
-            try { await Task.Delay(WindowVisible || _overlay is { IsVisible: true } ? 3000 : 15000, ct); } catch (OperationCanceledException) { break; }
+            // M42: 3 s à vista; em segundo plano, 15 s na tomada e 30–60 s na bateria
+            var power = Native.PowerStatus();
+            var wait = Sampling.Interval(WindowVisible || _overlay is { IsVisible: true }, power.OnBattery, power.Saver, power.Percent);
+            try { await Task.Delay(wait, ct); } catch (OperationCanceledException) { break; }
         }
     }
 

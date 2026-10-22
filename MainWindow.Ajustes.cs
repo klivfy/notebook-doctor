@@ -14,6 +14,69 @@ public partial class MainWindow
         var s = Host.Latest;
         TweaksList.ItemsSource = await Task.Run(() => WindowsTweaks.Read(s?.RamTotalGB ?? 8, s?.DiskFreePct ?? 50));
         LoadServices();
+        LoadTasks();
+        LoadExtensions();
+    }
+
+    // ---------- M29: tarefas agendadas de terceiros ----------
+    public sealed record TaskRow(string Path, string Name, string When, string Advice, string Reason, string Command, bool CanChange);
+
+    private async void LoadTasks()
+    {
+        var rows = await Task.Run(() => TaskRules.Candidates(ScheduledTasks.List())
+            .Select(c => new TaskRow(c.Task.Path, c.Task.Name, TaskRules.When(c.Task),
+                c.Advice switch { TaskAdvice.CanDisable => "Pode desativar", TaskAdvice.Keep => "Deixe ativa", _ => "Avalie" },
+                c.Reason, c.Task.Command, c.Advice != TaskAdvice.Keep))
+            .ToList());
+        TasksGrid.ItemsSource = rows;
+        TasksMsg.Text = rows.Count == 0 ? "Nenhuma tarefa de terceiros ativa." : $"{Pt.N(rows.Count, "tarefa ativa", "tarefas ativas")} de terceiros.";
+    }
+
+    private void TasksRefresh_Click(object sender, RoutedEventArgs e) => LoadTasks();
+
+    private async void TaskDisable_Click(object sender, RoutedEventArgs e)
+    {
+        if (TasksGrid.SelectedItem is not TaskRow r) { TasksMsg.Text = "Selecione uma tarefa na lista."; return; }
+        if (!r.CanChange) { TasksMsg.Text = $"{r.Name} é de proteção, hardware ou atualização: o app não desativa essa."; return; }
+        if (Simulate($"Desativar a tarefa {r.Name}", $"Desativaria \"{r.Path}\" no Agendador de Tarefas. A tarefa não seria apagada.")) return;
+        if (!Dialogs.Confirm(this, "Desativar a tarefa?",
+                $"{r.Name}\n{r.Command}\n\nEla deixa de rodar ({r.When}), mas continua no Agendador de Tarefas. Dá para desfazer na aba Ações.", "Desativar")) return;
+        try
+        {
+            string restore = await EnsureRestorePointAsync($"Tarefa {r.Name}");
+            await Task.Run(() => ScheduledTasks.SetEnabled(r.Path, false));
+            ActionLog.Add($"Tarefa agendada desativada: {r.Name}", $"{r.Path}. Ponto de restauração: {restore}", "task", r.Path);
+            ShowSnack($"{r.Name} desativada", "Ela não roda mais até ser reativada.", "Ver em Ações", () => Tabs.SelectedIndex = TabActions);
+            LoadTasks();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Tarefas criadas para todos os usuários só mudam como administrador
+            if (!AppInfo.IsAdmin && Dialogs.ConfirmOnce(this, Host.Settings, "admin-restart", "Precisa de administrador",
+                    $"\"{r.Name}\" foi criada para todos os usuários e só muda com privilégios elevados. Reiniciar o Notebook Doctor como administrador agora?", "Reiniciar"))
+                Host.RestartAsAdmin();
+            else TasksMsg.Text = "O Windows não deixou mudar esta tarefa.";
+        }
+        catch (Exception ex) { ShowSnack("O Windows recusou a mudança", ex.Message); }
+    }
+
+    // ---------- M31: extensões de navegador ----------
+    private async void LoadExtensions()
+    {
+        var list = await Task.Run(BrowserExtensionScan.List);
+        ExtensionsGrid.ItemsSource = list;
+        int heavy = list.Count(x => x.AlwaysOn && x.AllSites);
+        ExtensionsMsg.Text = list.Count == 0 ? "Nenhuma extensão encontrada no Chrome, Edge, Brave, Vivaldi ou Firefox."
+            : $"{Pt.N(list.Count, "extensão", "extensões")}" + (heavy > 0 ? $", {Pt.N(heavy, "pesada", "pesadas")}." : ".");
+    }
+
+    private void ExtensionsRefresh_Click(object sender, RoutedEventArgs e) => LoadExtensions();
+
+    private void ExtensionsOpen_Click(object sender, RoutedEventArgs e)
+    {
+        var ext = ExtensionsGrid.SelectedItem as BrowserExtension ?? (ExtensionsGrid.ItemsSource as IEnumerable<BrowserExtension>)?.FirstOrDefault();
+        if (ext is null) { ExtensionsMsg.Text = "Nenhum navegador com extensões foi encontrado."; return; }
+        BrowserExtensionScan.OpenPage(ext.Browser);
     }
 
     // ---------- M30: serviços de terceiros que iniciam com o Windows ----------

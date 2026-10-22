@@ -106,6 +106,9 @@ public static class Diagnosis
                       "Com o WSL desligado (wsl --shutdown), compacte: no WSL 2.0+ use \"wsl --manage <distro> --set-sparse true\"; no Docker Desktop, \"Clean / Purge data\" em Troubleshoot.",
                       "open-folder", "Abrir local", vd.Path));
 
+        // M33: OneDrive com tudo baixado
+        if (OneDriveRule.Evaluate(h.OneDrive, now.DiskFreePct) is { } od) f.Add(od);
+
         var sec = h.Sec;
         if (sec.DefenderRealtime == false && sec.OtherAv.Count == 0)
             f.Add(new("PROBLEMA", "Proteção em tempo real do Windows desativada", "Nenhum outro antivírus foi encontrado", "Reative a proteção na Segurança do Windows.", "open-security", "Abrir Segurança"));

@@ -72,6 +72,13 @@ public static class ActionLog
                 catch (Exception ex) { return "Não foi possível desfazer: " + ex.Message; }
                 msg = "O serviço volta a iniciar com o Windows no próximo boot.";
                 break;
+            case "task":
+                // UndoArg1 = caminho da tarefa no Agendador
+                try { ScheduledTasks.SetEnabled(entry.UndoArg1, true); }
+                catch (UnauthorizedAccessException) { return "Essa tarefa é de todos os usuários: abra o app como administrador para desfazer."; }
+                catch (Exception ex) { return "Não foi possível desfazer: " + ex.Message; }
+                msg = "A tarefa voltou a ficar ativa.";
+                break;
             case "priority":
                 msg = ProcessActions.SetPriority(entry.UndoArg1, ProcessPriorityClass.Normal) > 0
                     ? "Prioridade normal restaurada." : "O programa não está mais aberto: nada a restaurar.";
