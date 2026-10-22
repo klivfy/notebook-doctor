@@ -24,15 +24,16 @@ public static class CleanOutcome
 {
     public const long CelebrateBytes = 1L << 30;
 
-    public static (string Title, string Text, bool Celebrate) Describe(long freed)
+    public static (string Title, string Text, bool Celebrate) Describe(long freed, DateTime? day = null)
     {
+        var d = day ?? DateTime.Today;
         if (freed >= CelebrateBytes)
         {
             long photos = freed / (3L << 20); // foto de celular ≈ 3 MB
-            return ($"Ótimo: {Units.Bytes(freed)} liberados!", $"Espaço para cerca de {photos:N0} fotos de celular. Arquivos em uso foram mantidos.", true);
+            return ($"Ótimo: {Units.Bytes(freed)} liberados!", $"Espaço para cerca de {photos:N0} fotos de celular. {Friendly.Pick(Friendly.Freed, d)}", true);
         }
         return freed > 0
-            ? ($"{Units.Bytes(freed)} liberados", "Arquivos em uso foram mantidos.", false)
-            : ("Nada para liberar", "Os arquivos marcados estavam em uso ou já tinham sido apagados.", false);
+            ? ($"{Units.Bytes(freed)} liberados", Friendly.Pick(Friendly.Freed, d), false)
+            : ("Nada para liberar", Friendly.Pick(Friendly.NothingFreed, d), false);
     }
 }

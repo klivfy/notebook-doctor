@@ -77,6 +77,7 @@ public partial class App : Application
         ThemeManager.UseAccent = Settings.UseAccentColor;
         ApplyTheme();
         TextScale.Apply();
+        ApplyDensity();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => Dispatcher.BeginInvoke(() =>
         {
             // Tema e cor de destaque do Windows podem mudar com o app aberto
@@ -331,6 +332,17 @@ public partial class App : Application
         Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
         ApplyTheme();
+        ApplyDensity();
+    }
+
+    /// <summary>B15: modo compacto. Os estilos leem estes recursos com DynamicResource, então a troca vale na hora.</summary>
+    private void ApplyDensity()
+    {
+        bool compact = Settings.Compact;
+        Resources["CardPad"] = new Thickness(Density.CardPadding(compact));
+        Resources["CardGap"] = new Thickness(Density.CardMargin(compact));
+        Resources["RowMin"] = Density.RowHeight(compact);
+        (MainWindow as NotebookDoctor.MainWindow)?.ApplyNavDensity();
     }
 
     private async Task RunLoopAsync(CancellationToken ct)

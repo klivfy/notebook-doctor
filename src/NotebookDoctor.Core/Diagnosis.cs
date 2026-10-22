@@ -182,7 +182,7 @@ public static class Diagnosis
         double uptimeDays = (uptime ?? Uptime.Current).TotalDays;
         if (uptimeDays >= 7) f.Add(new("ATENCAO", "Computador ligado há muito tempo", $"{uptimeDays:0.0} dias sem reiniciar", "Reinicie o Windows.", "restart", "Reiniciar…"));
 
-        if (f.Count == 0) f.Add(new("OK", "Tudo certo", "Nenhum problema relevante agora.", ""));
+        if (f.Count == 0) f.Add(new("OK", "Tudo certo", Friendly.Pick(Friendly.AllGood, DateTime.Today), "")); // B27
         return f.OrderBy(x => x.Level == "PROBLEMA" ? 0 : x.Level == "ATENCAO" ? 1 : 2).ToList();
     }
 }

@@ -138,22 +138,22 @@ Critérios de impacto
 | B12 | Etapas de progresso na limpeza | 🟡 "Limpando 2 de 5: Cache do Chrome…" |
 | B13 | Som discreto ao concluir | 🟡 opcional (desligado por padrão); som de aviso suave do Windows ao terminar limpeza ou otimização |
 | B14 | Mensagem de comemoração ao liberar mais de 1 GB | 🟡 com a conta em fotos de celular |
-| B15 | Modo compacto da janela | ⬜ |
+| B15 | Modo compacto da janela | 🟡 opção em Configurações: menu só com ícones, linhas de tabela de 32 px e cartões com menos respiro; troca na hora |
 | B16 | Escolha GB × GiB | 🟡 GB como o Windows (1024), GB como a caixa do disco (1000) ou GiB; vale para tamanhos em GB e para Pt.Bytes. Colunas "(MB)" das tabelas continuam com esse título |
 | B17 | Unidades °C/°F | 🟡 em todo texto (painel, diagnóstico, avisos, overlay, relatórios); as regras continuam em °C |
 | B18 | Copiar métricas para a área de transferência | 🟡 botão "Copiar resumo" no Painel: nota, uso atual, gargalo, problemas e programas mais pesados; não testado no Windows |
 | B19 | Captura de tela do painel | 🟡 "Salvar imagem do painel": PNG do painel inteiro (inclusive fora da tela), também copiado |
 | B20 | Exportar relatório em PDF | 🟡 botão "Exportar em PDF" no Painel, gerado pelo próprio app (sem biblioteca externa, texto em Helvetica); não testado no Windows |
-| B21 | Atalho no Menu Iniciar pelo instalador | ⬜ |
+| B21 | Atalho no Menu Iniciar pelo instalador | 🟡 ainda sem instalador: botão em Configurações cria, atualiza (app mudou de pasta) ou remove o atalho na pasta Programas do usuário, sem administrador |
 | B22 | Botão "Verificar atualização" | 🟡 "Procurar atualização" no Sobre; falta publicar o versao.json em klivfy.com |
 | B23 | Tela "Sobre" com versão, licenças e novidades | 🟡 versão, suporte, Novidades e Licenças (textos embutidos em Textos/) |
 | B24 | Links de termos e privacidade | 🟡 "Seus dados e privacidade" embutido no app; faltam os termos de uso e o endereço da política publicada |
 | B25 | Avaliação do app dentro dele | ⬜ |
 | B26 | Modo demonstração com dados fictícios | 🟡 `--demo`: Painel, Processos e Histórico (7 dias) fictícios, simulação sempre ligada, pasta temporária própria. Limpeza, Espaço, Inicialização e Ajustes ainda leem o PC real (só leitura) |
-| B27 | Variações de texto mais amigáveis | ⬜ |
+| B27 | Variações de texto mais amigáveis | 🟡 "Tudo certo" no diagnóstico e o resultado da limpeza variam a frase de apoio por dia; títulos fixos (relatórios e Narrador) |
 | B28 | Ícones nas abas | ✅ (barra lateral) |
 | B29 | Ordenação persistente nas tabelas | 🟡 todas as tabelas; volta ao abrir e a cada atualização de Processos |
-| B30 | Colunas personalizáveis | ⬜ |
+| B30 | Colunas personalizáveis | 🟡 clique direito no título de qualquer tabela mostra ou esconde colunas; a que identifica a linha é fixa; "Mostrar todas as colunas" em Configurações. Fica fora da exportação de preferências, como as larguras |
 | B31 | Lembrar larguras de coluna | 🟡 só as colunas que a pessoa ajustou, salvas ao fechar a janela |
 | B32 | Destaque de linha por severidade | 🟡 barra vermelha/laranja em Processos; impacto alto em semi-negrito na Inicialização; o Narrador lê "uso alto" |
 | B33 | Totais no rodapé das tabelas | 🟡 Processos, Espaço e Inicialização (respeitam a busca); a Limpeza já mostra os totais no título |
@@ -219,4 +219,4 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-M22 Agrupar processos por aplicativo · M26 Menu de contexto nas tabelas · M27 Abrir a pasta do item de inicialização · M28 Editor e assinatura do item de inicialização · M29 Tarefas agendadas de terceiros · M30 Serviços (sugerir "manual") · M31 Extensões pesadas de navegador · M32 Antivírus conflitantes · M35 Cache de miniaturas e ícones · M07 Importar/exportar configurações.
+M22 Agrupar processos por aplicativo · M29 Tarefas agendadas de terceiros · M31 Extensões pesadas de navegador · M33 OneDrive · M36/M37 Logs de eventos e pontos de restauração antigos · M42 Amostragem menor na bateria · B38 Senha para alterar configurações · B25 Avaliação do app (precisa do endereço de avaliação) · B05 Efeito ripple (só se combinar com o visual do Windows 11).

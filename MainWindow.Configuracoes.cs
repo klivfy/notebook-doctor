@@ -293,6 +293,8 @@ public partial class MainWindow
         CfgCrash.IsChecked = s.CrashReports;
         CfgStartMin.IsChecked = s.StartMinimized;
         CfgCloseExits.IsChecked = s.CloseExits;
+        CfgCompact.IsChecked = s.Compact;
+        RefreshStartMenu();
         SelectByTag(CfgSizeUnit, s.SizeUnit);
         SelectByTag(CfgTempUnit, s.TempUnit);
         SelectByTag(CfgOverlay, s.OverlayMode);
@@ -328,6 +330,7 @@ public partial class MainWindow
         if (themeClockOk) { s.ThemeLightAt = tl.ToString("HH:mm"); s.ThemeDarkAt = td.ToString("HH:mm"); }
         s.StartMinimized = CfgStartMin.IsChecked == true;
         s.CloseExits = CfgCloseExits.IsChecked == true;
+        s.Compact = CfgCompact.IsChecked == true;
         s.SizeUnit = (CfgSizeUnit.SelectedItem as ComboBoxItem)?.Tag as string ?? "windows";
         s.TempUnit = (CfgTempUnit.SelectedItem as ComboBoxItem)?.Tag as string ?? "c";
         s.OverlayMode = (CfgOverlay.SelectedItem as ComboBoxItem)?.Tag as string ?? Overlay.Off;
@@ -356,6 +359,42 @@ public partial class MainWindow
         CfgMsg.Text = (hotkeyOk ? "Salvo." : $"Salvo. O atalho {GlobalHotkey.Label} já é usado por outro programa, então ficou desligado.")
                       + (clockOk ? "" : " Horário silencioso inválido (use HH:mm, ex.: 22:00): ficou o anterior.")
                       + (themeClockOk ? "" : " Horário do tema inválido (use HH:mm, ex.: 07:00): ficou o anterior.");
+    }
+
+    // ---------- B21: atalho no Menu Iniciar ----------
+    private void RefreshStartMenu()
+    {
+        if (AppPaths.Demo)
+        {
+            // A demonstração não grava nada fora da pasta temporária dela
+            StartMenuBtn.IsEnabled = false;
+            StartMenuMsg.Text = "Indisponível no modo demonstração.";
+            return;
+        }
+        var state = StartMenu.Current();
+        StartMenuBtn.Content = StartMenuLink.ButtonText(state);
+        StartMenuMsg.Text = StartMenuLink.Describe(state);
+    }
+
+    private void StartMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (AppPaths.Demo) return;
+        bool remove = StartMenu.Current() == StartMenuState.Ok;
+        try
+        {
+            if (remove) StartMenu.Remove(); else StartMenu.Create();
+            RefreshStartMenu();
+            ShowSnack(remove ? "Atalho removido do Menu Iniciar" : "Notebook Doctor no Menu Iniciar",
+                      remove ? "O app continua no mesmo lugar; só o atalho saiu." : "Procure por \"Notebook Doctor\" no Iniciar.");
+        }
+        catch (Exception ex) { StartMenuMsg.Text = "Não foi possível mexer no atalho: " + ex.Message; }
+    }
+
+    // ---------- B30: colunas das tabelas ----------
+    private void ShowAllColumns_Click(object sender, RoutedEventArgs e)
+    {
+        GridMemory.ShowAll(Grids(), Host.Settings);
+        BackupMsg.Text = "Todas as colunas voltaram a aparecer.";
     }
 
     private static void SelectByTag(ComboBox box, string tag) =>

@@ -31,6 +31,7 @@ Barra de tarefas e bandeja
 Gráficos e tabelas
 • Zoom nos gráficos do Histórico: roda do mouse, arrastar e clique duplo para voltar.
 • As tabelas lembram a ordenação e a largura das colunas, e mostram totais no rodapé.
+• Clique direito no título de uma tabela para escolher as colunas visíveis.
 
 Jogos e apresentações
 • Overlay com CPU, RAM e temperatura por cima de jogos em tela cheia (opcional).
@@ -40,6 +41,8 @@ Configurações
 • Tamanhos em GB do Windows, GB da caixa do disco ou GiB, e temperatura em °C ou °F.
 • Tema claro de dia e escuro à noite, nos horários que você escolher.
 • Começar minimizado e opção de o X encerrar o app.
+• Modo compacto para telas pequenas: menu só com ícones e tabelas mais densas.
+• Atalho no Menu Iniciar, criado pelo próprio app.
 • A janela reabre no mesmo lugar e no mesmo monitor.
 • Exportar, importar e redefinir as preferências.
 • Cor de destaque do Windows, ajustada para manter a leitura.

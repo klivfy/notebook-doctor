@@ -679,12 +679,19 @@
                                 <ComboBoxItem Content="Fahrenheit (°F)" Tag="f"/>
                             </ComboBox>
                         </Grid>
+                        <!-- B21: ainda sem instalador, o próprio app cria o atalho, na pasta Programas do usuário -->
+                        <WrapPanel Margin="0,0,0,8">
+                            <Button x:Name="StartMenuBtn" Content="Adicionar ao Menu Iniciar" Style="{StaticResource TonalButton}" Click="StartMenu_Click" Margin="0,0,12,4"/>
+                            <TextBlock x:Name="StartMenuMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,4"
+                                       AutomationProperties.LiveSetting="Polite"/>
+                        </WrapPanel>
                         <CheckBox x:Name="CfgStart" Content="Iniciar com o Windows (fica na bandeja)"/>
                         <CheckBox x:Name="CfgTrayCpu" Content="Mostrar o uso da CPU (%) no ícone da bandeja"/>
                         <CheckBox x:Name="CfgSounds" Content="Som discreto ao terminar uma limpeza"/>
                         <CheckBox x:Name="CfgStartMin" Content="Ao abrir pelo atalho, começar minimizado na barra de tarefas"/>
                         <CheckBox x:Name="CfgCloseExits" Content="Fechar a janela encerra o app (em vez de continuar na bandeja)"
                                   ToolTip="Desligado, o X só esconde a janela: os avisos e o histórico continuam funcionando."/>
+                        <CheckBox x:Name="CfgCompact" Content="Modo compacto: menu só com ícones e tabelas mais densas, para telas pequenas"/>
                         <CheckBox x:Name="CfgAlerts" Content="Avisar quando CPU ou RAM ficarem altas"/>
                         <CheckBox x:Name="CfgToasts" Content="Usar notificações do Windows (com botões)"/>
                         <CheckBox x:Name="CfgWeekly" Content="Limpar temporários toda semana, com o PC parado"/>
@@ -833,6 +840,9 @@
                             <Button Content="Redefinir para o padrão" Style="{StaticResource TextButton}" Click="ResetSettings_Click" Margin="0,0,8,8"/>
                             <!-- B36 -->
                             <Button Content="Voltar a pedir todas as confirmações" Style="{StaticResource TextButton}" Click="ResetConfirms_Click" Margin="0,0,8,8"/>
+                            <!-- B30 -->
+                            <Button Content="Mostrar todas as colunas das tabelas" Style="{StaticResource TextButton}" Click="ShowAllColumns_Click" Margin="0,0,8,8"
+                                    ToolTip="Volta a mostrar as colunas escondidas pelo clique direito no título das tabelas."/>
                         </WrapPanel>
                         <TextBlock x:Name="BackupMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
                     </StackPanel>

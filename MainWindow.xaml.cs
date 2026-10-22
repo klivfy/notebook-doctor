@@ -24,7 +24,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         RestorePlacement();
-        foreach (var grid in Grids()) GridMemory.Attach(grid, Host.Settings);
+        foreach (var grid in Grids()) GridMemory.Attach(grid, Host.Settings, grid == CleanGrid ? 2 : 1); // Limpeza: a caixa de marcar e o local
         // B33: a lista muda (dados novos, busca, ordenação) e o rodapé acompanha
         foreach (var grid in new[] { ProcGrid, SpaceGrid, StartupGrid })
             ((System.Collections.Specialized.INotifyCollectionChanged)grid.Items).CollectionChanged += (_, _) => UpdateTotals(grid);
@@ -133,11 +133,14 @@ public partial class MainWindow : Window
     private void SnackAction_Click(object sender, RoutedEventArgs e) { var a = _snackAction; HideSnack(); a?.Invoke(); }
 
     // ---------- Barra lateral compacta em janelas estreitas ----------
-    private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e) => ApplyNavDensity();
+
+    /// <summary>Menu só com ícones na janela estreita ou no modo compacto (B15).</summary>
+    public void ApplyNavDensity()
     {
-        bool compact = ActualWidth < 960 * Math.Max(1, TextScale.Factor * 0.8);
-        Nav.Tag = compact ? "compact" : null;
-        NavPane.MinWidth = compact ? 0 : 200;
+        bool icons = Density.NavIconsOnly(ActualWidth, TextScale.Factor, Host.Settings.Compact);
+        Nav.Tag = icons ? "compact" : null;
+        NavPane.MinWidth = icons ? 0 : 200;
     }
 
     // ---------- Busca nas tabelas (M24) ----------

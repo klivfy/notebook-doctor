@@ -115,7 +115,9 @@ public sealed class AppSettings
     public bool StartMinimized { get; set; }
     /// <summary>B10: o X da janela encerra o app em vez de deixá-lo na bandeja.</summary>
     public bool CloseExits { get; set; }
-    /// <summary>B29/B31: ordenação e larguras de coluna de cada tabela.</summary>
+    /// <summary>B15: menu só com ícones, tabelas e cartões mais densos.</summary>
+    public bool Compact { get; set; }
+    /// <summary>B29/B30/B31: ordenação, colunas ocultas e larguras de coluna de cada tabela.</summary>
     public Dictionary<string, GridLayout> Grids { get; set; } = new();
     /// <summary>B01: número da CPU no ícone da bandeja.</summary>
     public bool TrayCpu { get; set; }
