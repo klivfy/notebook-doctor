@@ -77,6 +77,9 @@ public partial class MainWindow
         finally { IntegrityCheckBtn.IsEnabled = IntegrityRepairBtn.IsEnabled = true; IntegrityCancelBtn.IsEnabled = false; }
     }
 
+    // Leva 7.2 (C13)
+    private void Drivers_Click(object sender, RoutedEventArgs e) => new DriversWindow(this).ShowDialog();
+
     private async void IntegrityCheck_Click(object sender, RoutedEventArgs e) => await RunIntegrityAsync(repair: false);
     private async void IntegrityRepair_Click(object sender, RoutedEventArgs e) => await RunIntegrityAsync(repair: true);
     private void IntegrityCancel_Click(object sender, RoutedEventArgs e) => _integrityCts?.Cancel();

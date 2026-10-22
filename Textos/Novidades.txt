@@ -38,6 +38,11 @@ Programas (novo)
 • “Pular esta versão” e “Pausar este programa”; “Ver termos…” mostra a licença antes de aceitar.
 • Os termos são sempre aceitos por você, na tela. Alguns instaladores pedem permissão de administrador.
 
+Drivers (novo)
+• Configurações › Drivers › “Drivers pelo Windows Update…”: lista os drivers que o Windows Update oferece e recomenda só os que são mais novos que o instalado.
+• Antes de instalar, o app cria um ponto de restauração e guarda uma cópia do driver atual.
+• “Cópias dos drivers anteriores” e a aba Ações permitem voltar ao driver anterior.
+
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.

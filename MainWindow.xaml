@@ -1063,6 +1063,15 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Leva 7.2 (C13): drivers só pelo Windows Update -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Drivers" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                        <TextBlock Text="Procura drivers novos só pelo Windows Update e mostra o que é mais novo que o instalado. Antes de instalar, cria um ponto de restauração e guarda uma cópia do driver atual, para voltar quando precisar." Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                        <Button Content="Drivers pelo Windows Update…" Style="{StaticResource TonalButton}" HorizontalAlignment="Left" Click="Drivers_Click"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- M07/B42: levar as preferências para outro PC ou voltar ao padrão -->
                 <Border Style="{StaticResource Card}">
                     <StackPanel>

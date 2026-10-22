@@ -97,6 +97,17 @@ public static class ActionLog
                 // UndoArg1 = id da sessão de backup; o que precisar de administrador avisa na mensagem
                 msg = new BackupStore(AppPaths.Backups).Restore(entry.UndoArg1);
                 break;
+            case "driver":
+                // UndoArg1 = id da cópia do driver anterior (pasta em driver-backups)
+                if (!AppInfo.IsAdmin) return Loc.T("Voltar ao driver anterior exige administrador: abra o app como administrador e tente de novo.");
+                var backup = DriverUpdater.Find(AppPaths.Dir, entry.UndoArg1);
+                if (backup is null) return Loc.T("A cópia do driver anterior não existe mais.");
+                RestoreOutcome outcome;
+                try { outcome = Task.Run(() => DriverUpdater.RestoreAsync(backup, AppPaths.Dir)).GetAwaiter().GetResult(); }
+                catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or ArgumentException) { return Loc.T("Não foi possível voltar ao driver anterior: ") + ex.Message; }
+                msg = DriverTexts.Restore(outcome);
+                if (outcome != RestoreOutcome.Restored) return msg; // continua desfazível: a pessoa pode tentar de novo
+                break;
             case "plan-created":
                 msg = PowerPlans.Delete(entry.UndoArg1) ? "Plano criado foi removido." : "Não foi possível remover (talvez esteja ativo): troque de plano e tente de novo.";
                 break;
