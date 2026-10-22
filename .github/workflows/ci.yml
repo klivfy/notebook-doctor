@@ -28,6 +28,10 @@ jobs:
       - name: Testes
         run: dotnet test tests/NotebookDoctor.Tests -c Release --logger "trx;LogFileName=resultados.trx"
 
+      # Leva 8.4 (C20): garante que o app também publica para PCs Arm (Snapdragon). Não roda lá; só prova que compila e empacota.
+      - name: Publicar para Windows Arm64
+        run: dotnet publish NotebookDoctor.csproj -c Release -r win-arm64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableWindowsTargeting=true -o publish-arm64
+
       - name: Publicar resultados dos testes
         if: always()
         uses: actions/upload-artifact@v4

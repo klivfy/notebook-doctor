@@ -25,6 +25,8 @@ public partial class MainWindow
         finally { _sysLoading = false; SysRefreshBtn.IsEnabled = true; }
     }
 
+    private void SysTools_Click(object sender, RoutedEventArgs e) => new WindowsToolsWindow(this).ShowDialog();
+
     private async void SysRefresh_Click(object sender, RoutedEventArgs e) => await LoadSystemAsync();
 
     private void SysCopy_Click(object sender, RoutedEventArgs e)

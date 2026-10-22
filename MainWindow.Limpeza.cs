@@ -89,6 +89,9 @@ public partial class MainWindow
     // ---------- Fase 6: limpeza avançada ----------
     private void AdvancedClean_Click(object sender, RoutedEventArgs e) => new AdvancedCleanWindow(this).ShowDialog();
 
+    // Leva 8.4 (D01–D03)
+    private void Defrag_Click(object sender, RoutedEventArgs e) => new DefragWindow(this).ShowDialog();
+
     // Leva 8.3 (V01)
     private void Recovery_Click(object sender, RoutedEventArgs e) => new RecoveryWindow(this).ShowDialog();
 

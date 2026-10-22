@@ -347,6 +347,8 @@
                             <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="CleanSelectAll_Click" Margin="0,0,8,6"
                                     ToolTip="Marca todos os locais que podem ser limpos, menos a Lixeira (apagar dela é definitivo)"/>
                             <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="CleanSelectNone_Click" Margin="0,0,8,6"/>
+                            <Button Content="Desfragmentar…" Style="{StaticResource TextButton}" Click="Defrag_Click" Margin="0,0,8,6"
+                                    ToolTip="Analisa e desfragmenta HDs, refaz o TRIM de SSDs, mostra o mapa da unidade e junta os pedaços de um arquivo ou pasta."/>
                             <Button Content="Recuperar arquivos…" Style="{StaticResource TextButton}" Click="Recovery_Click" Margin="0,0,8,6"
                                     ToolTip="Procura arquivos apagados em um pen drive, cartão ou disco, pelo Windows File Recovery, e guarda o que achar em outra unidade."/>
                             <Button Content="Apagar de vez…" Style="{StaticResource TextButton}" Click="SecureErase_Click" Margin="0,0,8,6"
@@ -862,6 +864,8 @@
                                 ToolTip="Copia um resumo curto para colar numa conversa, e-mail ou chamado."/>
                         <Button Content="Exportar…" Style="{StaticResource TextButton}" Click="SysExport_Click" Margin="0,0,8,6"
                                 ToolTip="Salva o retrato completo em TXT, HTML ou PDF. Nada é enviado para a internet."/>
+                        <Button Content="Ferramentas do Windows…" Style="{StaticResource TextButton}" Click="SysTools_Click" Margin="0,0,8,6"
+                                ToolTip="Atalhos para o Gerenciador de Dispositivos, Serviços, Agendador de Tarefas e outras ferramentas que o Windows já traz."/>
                         <TextBlock x:Name="SysMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
                     </WrapPanel>
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False">

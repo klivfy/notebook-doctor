@@ -230,6 +230,6 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-Fases 5 e 6 completas (levas 5.1 a 6.3); Fases 5, 6 e 7 completas (levas 5.1 a 7.4); Fase 8, levas 8.1 (aba Sistema), 8.2 (apagar de vez) e 8.3 (recuperar arquivos) prontas. Próxima: leva 8.4 — ferramentas do Windows, desfragmentação de HD e build Arm64. O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
+Fases 5 e 6 completas (levas 5.1 a 6.3); Fases 5, 6 e 7 completas (levas 5.1 a 7.4); Fase 8, levas 8.1 (aba Sistema), 8.2 (apagar de vez), 8.3 (recuperar arquivos) e 8.4 (ferramentas do Windows, desfragmentação de HD e build Arm64) prontas; o plano obrigatório termina aqui. Resta a leva 8.5, opcional (motor próprio de recuperação NTFS). O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
 
 Também pendentes: M13 Multi-idioma, 2ª e 3ª levas (mensagens do código, diagnóstico, relatórios e textos do Sobre). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.
