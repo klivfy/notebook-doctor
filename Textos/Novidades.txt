@@ -48,6 +48,10 @@ Inicialização (novo)
 • “Modo soneca…”: põe um programa para dormir (inicialização, serviços, tarefas e processos de fundo) e acorda quando você o abre.
 • Antivírus, áudio, vídeo, touchpad, rede e acesso remoto nunca dormem.
 
+Limpeza (novo)
+• “Verificar registro…”: aponta só entradas do registro com prova de estarem quebradas (o arquivo que citam não existe mais) e apaga as que você marcar, com backup e desfazer.
+• Não mexe em CLSID, ActiveX, bibliotecas de tipos, MUICache nem no Menu Iniciar.
+
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.

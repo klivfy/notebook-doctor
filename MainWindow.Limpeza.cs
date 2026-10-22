@@ -89,5 +89,8 @@ public partial class MainWindow
     // ---------- Fase 6: limpeza avançada ----------
     private void AdvancedClean_Click(object sender, RoutedEventArgs e) => new AdvancedCleanWindow(this).ShowDialog();
 
+    // Leva 7.4 (C04)
+    private void RegistryCheck_Click(object sender, RoutedEventArgs e) => new RegistryCheckWindow(this).ShowDialog();
+
     private IEnumerable<CleanItem> CleanItems() => (CleanGrid.ItemsSource as IEnumerable<CleanItem>) ?? Enumerable.Empty<CleanItem>();
 }
