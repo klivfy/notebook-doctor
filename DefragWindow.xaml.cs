@@ -167,7 +167,7 @@ public partial class DefragWindow : Window
         if (Selected is not { } d) return;
         try
         {
-            using var volume = VolumeApi.OpenVolume(d.Letter[0], forMoving: false);
+            using var volume = VolumeApi.OpenVolume(d.Letter[0]);
             var data = VolumeApi.GetVolumeData(volume);
             var bitmap = VolumeApi.ReadBitmap(volume);
             if (bitmap is null) { Msg.Text = Loc.T("A unidade é grande demais para o mapa."); return; }
@@ -234,9 +234,7 @@ public partial class DefragWindow : Window
         {
             await Task.Run(() =>
             {
-                long clusterBytes = 4096;
-                try { using var v = VolumeApi.OpenVolume(path[0], false); clusterBytes = VolumeApi.GetVolumeData(v).BytesPerCluster; }
-                catch (Exception ex) when (ex is UnauthorizedAccessException or Win32Exception) { /* sem administrador: assume o cluster comum de 4 KB */ }
+                long clusterBytes = VolumeApi.ClusterBytes(path[0]) is > 0 and var c ? c : 4096;
                 var files = File.Exists(path) ? [path] : EnumerateFiles(path);
                 foreach (var f in files)
                 {
@@ -288,7 +286,7 @@ public partial class DefragWindow : Window
         {
             await Task.Run(() =>
             {
-                using var volume = VolumeApi.OpenVolume(letter[0], forMoving: true);
+                using var volume = VolumeApi.OpenVolume(letter[0]);
                 int clusterBytes = VolumeApi.GetVolumeData(volume).BytesPerCluster;
                 foreach (var row in list)
                 {

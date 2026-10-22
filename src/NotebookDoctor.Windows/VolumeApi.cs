@@ -18,17 +18,23 @@ public static class VolumeApi
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool DeviceIoControl(SafeFileHandle device, uint code, byte[]? input, int inputSize, byte[]? output, int outputSize, out int returned, IntPtr overlapped);
 
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool GetDiskFreeSpaceW(string root, out uint sectorsPerCluster, out uint bytesPerSector, out uint freeClusters, out uint totalClusters);
+
     private const uint GenericRead = 0x80000000, FileReadAttributes = 0x80, ShareAll = 7, OpenExisting = 3, BackupSemantics = 0x02000000;
     private const uint FsctlGetNtfsVolumeData = 0x00090064, FsctlGetVolumeBitmap = 0x0009006F, FsctlGetRetrievalPointers = 0x00090073, FsctlMoveFile = 0x00090074;
     private const int ErrorMoreData = 234, ErrorHandleEof = 38;
 
     public sealed record VolumeData(long TotalClusters, long FreeClusters, int BytesPerCluster);
 
+    /// <summary>
+    /// Abre o volume para leitura. É o acesso que as consultas (<c>FSCTL_GET_NTFS_VOLUME_DATA</c>, bitmap) e o <c>FSCTL_MOVE_FILE</c> pedem; com acesso
+    /// zero o Windows responde "Incorrect function" a essas consultas.
+    /// </summary>
     /// <exception cref="UnauthorizedAccessException">Abrir o volume exige administrador.</exception>
-    public static SafeFileHandle OpenVolume(char letter, bool forMoving)
+    public static SafeFileHandle OpenVolume(char letter)
     {
-        // Para mover clusters o Windows pede leitura do volume; só para consultar o bitmap, tenta sem pedir acesso aos dados
-        var h = CreateFileW($@"\\.\{char.ToUpperInvariant(letter)}:", forMoving ? GenericRead : 0, ShareAll, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero);
+        var h = CreateFileW($@"\\.\{char.ToUpperInvariant(letter)}:", GenericRead, ShareAll, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero);
         if (h.IsInvalid)
         {
             int err = Marshal.GetLastWin32Error();
@@ -36,6 +42,14 @@ public static class VolumeApi
             throw new Win32Exception(err);
         }
         return h;
+    }
+
+    /// <summary>Bytes por cluster da unidade, sem precisar de administrador. 0 se o Windows não responder.</summary>
+    public static int ClusterBytes(char letter)
+    {
+        if (!GetDiskFreeSpaceW($"{char.ToUpperInvariant(letter)}:\\", out uint spc, out uint bps, out _, out _)) return 0;
+        long bytes = (long)spc * bps;
+        return bytes is > 0 and <= int.MaxValue ? (int)bytes : 0;
     }
 
     public static SafeFileHandle OpenFile(string path)

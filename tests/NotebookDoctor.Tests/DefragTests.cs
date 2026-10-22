@@ -383,11 +383,19 @@ public class VolumeApiIntegrationTests : IDisposable
     }
 
     [WindowsFact]
+    public void Bytes_por_cluster_vem_sem_administrador()
+    {
+        int bytes = VolumeApi.ClusterBytes(RootOf(_dir)![0]);
+        Assert.InRange(bytes, 512, 2 * 1024 * 1024);
+        Assert.Equal(0, bytes % 512);
+    }
+
+    [WindowsFact]
     public void Abrir_o_volume_para_mover_sem_administrador_falha_com_aviso_claro()
     {
         if (IsAdmin()) return;
         string root = RootOf(_dir)!;
-        Assert.ThrowsAny<Exception>(() => VolumeApi.OpenVolume(root[0], forMoving: true));
+        Assert.ThrowsAny<Exception>(() => VolumeApi.OpenVolume(root[0]));
     }
 
     [WindowsFact]
@@ -396,7 +404,7 @@ public class VolumeApiIntegrationTests : IDisposable
         if (!IsAdmin()) return;
         string root = RootOf(_dir)!;
         if (!string.Equals(new DriveInfo(root).DriveFormat, "NTFS", StringComparison.OrdinalIgnoreCase)) return;
-        using var volume = VolumeApi.OpenVolume(root[0], forMoving: false);
+        using var volume = VolumeApi.OpenVolume(root[0]);
         var data = VolumeApi.GetVolumeData(volume);
         var bitmap = VolumeApi.ReadBitmap(volume);
         Assert.NotNull(bitmap);
@@ -416,7 +424,7 @@ public class VolumeApiIntegrationTests : IDisposable
         var data = new byte[3 * 1024 * 1024];
         new Random(42).NextBytes(data);
         File.WriteAllBytes(file, data);
-        using var volume = VolumeApi.OpenVolume(root[0], forMoving: true);
+        using var volume = VolumeApi.OpenVolume(root[0]);
         var bitmap = VolumeApi.ReadBitmap(volume)!;
         int cluster = VolumeApi.GetVolumeData(volume).BytesPerCluster;
         var result = FileDefragmenter.Defrag(volume, bitmap, cluster, file, CancellationToken.None);
