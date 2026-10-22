@@ -74,7 +74,7 @@ public class LocTests
     {
         var en = Loc.Load("en");
         var missing = new List<string>();
-        foreach (var file in new[] { "MainWindow.xaml", "MiniWidget.xaml", "AdvancedCleanWindow.xaml", "DuplicatesWindow.xaml", "UpdatesWindow.xaml", "DriversWindow.xaml" })
+        foreach (var file in new[] { "MainWindow.xaml", "MiniWidget.xaml", "AdvancedCleanWindow.xaml", "DuplicatesWindow.xaml", "UpdatesWindow.xaml", "DriversWindow.xaml", "ContextMenuWindow.xaml" })
         {
             string xaml = File.ReadAllText(Path.Combine(Root(), file));
             foreach (Match m in Regex.Matches(xaml, @"\b(Content|Text|Header|ToolTip|AutomationProperties\.Name|AutomationProperties\.HelpText|Title)=""([^""]*)"""))

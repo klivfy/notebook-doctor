@@ -97,6 +97,22 @@ public static class ActionLog
                 // UndoArg1 = id da sessão de backup; o que precisar de administrador avisa na mensagem
                 msg = new BackupStore(AppPaths.Backups).Restore(entry.UndoArg1);
                 break;
+            case "ctxmenu":
+                // UndoArg1 = id do backup do manipulador desativado (pasta context-backups)
+                var back = ContextMenuEditor.EnableBySession(entry.UndoArg1, AppPaths.Dir, out bool back1);
+                if (back is null) return Loc.T("Este item do menu de contexto já foi reativado.");
+                if (!back1) return Loc.T("Não consegui devolver a chave. Tente como administrador.") + " " + back;
+                msg = Loc.T("Item do menu de contexto de volta.");
+                break;
+            case "ctxverb":
+                // UndoArg1 = "Hive|Local|Nome"
+                var vp = entry.UndoArg1.Split('|');
+                if (vp.Length != 3 || !ContextMenuRules.Valid(vp[0], vp[1], vp[2])) return Loc.T("Esta ação não pode ser desfeita.");
+                try { ContextMenuEditor.SetVerbHidden(new ContextMenuItem(MenuItemKind.Verb, vp[0], vp[1], vp[2], vp[2], "", "", false, "", true), false); }
+                catch (UnauthorizedAccessException) { return Loc.T("Este item vale para todos os usuários: abra o app como administrador para desfazer."); }
+                catch (Exception ex) when (ex is InvalidOperationException or ArgumentException) { return Loc.T("Não foi possível desfazer: ") + ex.Message; }
+                msg = Loc.T("Item do menu de contexto de volta.");
+                break;
             case "driver":
                 // UndoArg1 = id da cópia do driver anterior (pasta em driver-backups)
                 if (!AppInfo.IsAdmin) return Loc.T("Voltar ao driver anterior exige administrador: abra o app como administrador e tente de novo.");

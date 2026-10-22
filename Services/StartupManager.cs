@@ -50,20 +50,7 @@ public static class StartupManager
         if (path is not null && !Path.IsPathRooted(path)) path = Path.Combine(Environment.SystemDirectory, path);
         if (path is null || !File.Exists(path)) { e.Publisher = "Arquivo não encontrado"; return; }
         e.FilePath = path;
-        if (!path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) { e.Publisher = "Atalho ou script (veja o local)"; return; }
-        try
-        {
-            string subject = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(path).Subject;
-            string? cn = subject.Split(',').Select(p => p.Trim()).FirstOrDefault(p => p.StartsWith("CN=", StringComparison.OrdinalIgnoreCase))?[3..];
-            e.Publisher = $"Assinado: {cn?.Trim('"') ?? subject}";
-        }
-        catch
-        {
-            // Sem assinatura Authenticode: mostra o fabricante que o próprio arquivo declara (não comprovado)
-            string? company = null;
-            try { company = System.Diagnostics.FileVersionInfo.GetVersionInfo(path).CompanyName?.Trim(); } catch { }
-            e.Publisher = string.IsNullOrEmpty(company) ? "Sem assinatura" : $"Sem assinatura ({company})";
-        }
+        e.Publisher = path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? FilePublisher.Describe(path) : "Atalho ou script (veja o local)";
     }
 
     private static void FillImpact(List<StartupEntry> entries)
