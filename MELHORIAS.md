@@ -81,7 +81,7 @@ Critérios de impacto
 | M10 | Tamanho de fonte ajustável | 🟡 (segue o "Tamanho do texto" do Windows) |
 | M11 | Suporte completo a leitores de tela (UI Automation nas abas) | ✅ (revisão de design + lote 6) |
 | M12 | Navegação completa por teclado e atalhos de aba | 🟡 Ctrl+1…8, F5, Ctrl+F (busca da aba), Enter (detalhe) e Delete (encerrar) em Processos, Shift+F10 abre o menu de contexto, Espaço marca a linha na Limpeza; ordem do Tab conferida contra o layout no XAML, falta testar no Windows |
-| M13 | Multi-idioma (EN, ES) | ⬜ |
+| M13 | Multi-idioma (EN, ES) | 🟡 1ª leva: estrutura (`Loc` no Core, dicionários `Idiomas/en.json` e `es.json`, chave = texto em português), seletor "Idioma" em Configurações (automático pelo Windows; vale ao reabrir), números e datas no formato do idioma, e todas as telas, menus, bandeja e diálogos fixos traduzidos. Falta: mensagens montadas no código (diagnóstico, avisos, resultados), relatórios e os textos do Sobre |
 | M14 | Assistente de primeira execução | ✅ tela de boas-vindas na primeira execução com tema, iniciar com o Windows, avisos e limpeza semanal |
 | M15 | Explicações "por que isso importa?" em cada alerta | ✅ (diagnóstico e Ajustes) |
 | M16 | Central de ajuda embutida | 🟡 botão Suporte → klivfy.com/suporte |
@@ -219,4 +219,4 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-Depois do merge: M13 Multi-idioma (PR próprio). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.
+M13 Multi-idioma, 2ª e 3ª levas (mensagens do código, diagnóstico, relatórios e textos do Sobre). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.

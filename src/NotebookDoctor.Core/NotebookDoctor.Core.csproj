@@ -9,4 +9,9 @@
     <AssemblyName>NotebookDoctor.Core</AssemblyName>
   </PropertyGroup>
 
+  <!-- M13: traduções (chave = texto em português), embutidas para funcionar sem arquivos soltos -->
+  <ItemGroup>
+    <EmbeddedResource Include="Idiomas\*.json" LogicalName="Idiomas.%(Filename).json" />
+  </ItemGroup>
+
 </Project>

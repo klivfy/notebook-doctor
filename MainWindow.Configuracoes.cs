@@ -280,6 +280,7 @@ public partial class MainWindow
     {
         var s = Host.Settings;
         SelectByTag(CfgTheme, s.ThemeMode);
+        SelectByTag(CfgLanguage, s.Language);
         CfgThemeLight.Text = s.ThemeLightAt;
         CfgThemeDark.Text = s.ThemeDarkAt;
         CfgTrayCpu.IsChecked = s.TrayCpu;
@@ -321,6 +322,8 @@ public partial class MainWindow
         if (!Host.EnsureUnlocked("salvar as preferências")) { LoadSettingsIntoForm(); CfgMsg.Text = "Não salvo: as preferências voltaram ao que estava."; return; } // B38
         var s = Host.Settings;
         s.ThemeMode = (CfgTheme.SelectedItem as ComboBoxItem)?.Tag as string ?? "system";
+        string oldLanguage = s.Language;
+        s.Language = (CfgLanguage.SelectedItem as ComboBoxItem)?.Tag as string ?? Loc.Auto;
         s.StartWithWindows = CfgStart.IsChecked == true;
         s.AlertsEnabled = CfgAlerts.IsChecked == true;
         s.NativeNotifications = CfgToasts.IsChecked == true;
@@ -360,6 +363,9 @@ public partial class MainWindow
         Host.SetMiniWidget(CfgMini.IsChecked == true);
         bool hotkeyOk = Host.ApplyHotkey();
         LoadSettingsIntoForm();
+        // M13: o idioma só troca reabrindo (as telas são traduzidas ao carregar)
+        if (s.Language != oldLanguage)
+            ShowSnack(Loc.T("Idioma alterado"), Loc.T("Reabra o Notebook Doctor para usar o novo idioma."), Loc.T("Reabrir agora"), Host.Restart, seconds: 20);
         CfgMsg.Text = (hotkeyOk ? "Salvo." : $"Salvo. O atalho {GlobalHotkey.Label} já é usado por outro programa, então ficou desligado.")
                       + (clockOk ? "" : " Horário silencioso inválido (use HH:mm, ex.: 22:00): ficou o anterior.")
                       + (themeClockOk ? "" : " Horário do tema inválido (use HH:mm, ex.: 07:00): ficou o anterior.");

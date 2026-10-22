@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:NotebookDoctor"
         Title="Notebook Doctor" Icon="app.ico" Width="1160" Height="740" MinWidth="720" MinHeight="560"
         Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
-        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" Language="pt-BR"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         WindowStartupLocation="CenterScreen" SourceInitialized="Window_SourceInitialized" SizeChanged="Window_SizeChanged">
     <Window.Resources>
@@ -741,6 +741,17 @@
                                 <ComboBoxItem Content="Claro" Tag="light"/>
                                 <ComboBoxItem Content="Escuro" Tag="dark"/>
                                 <ComboBoxItem Content="Claro de dia, escuro à noite" Tag="schedule"/>
+                            </ComboBox>
+                        </Grid>
+                        <!-- M13: idioma (vale ao reabrir) -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Idioma" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CfgLanguage" Grid.Column="1" AutomationProperties.Name="Idioma" ToolTip="Vale ao reabrir o app.">
+                                <ComboBoxItem Content="Automático (idioma do Windows)" Tag="auto"/>
+                                <ComboBoxItem Content="Português (Brasil)" Tag="pt"/>
+                                <ComboBoxItem Content="English" Tag="en"/>
+                                <ComboBoxItem Content="Español" Tag="es"/>
                             </ComboBox>
                         </Grid>
                         <!-- B37: horários do tema automático -->

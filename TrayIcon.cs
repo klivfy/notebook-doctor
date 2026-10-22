@@ -23,24 +23,24 @@ public sealed class TrayIcon : IDisposable
     public TrayIcon(bool startWithWindows)
     {
         // B03: uso atual no topo do menu; clicar abre o painel
-        _usageItem = new WinForms.ToolStripMenuItem("Medindo…");
+        _usageItem = new WinForms.ToolStripMenuItem(Loc.T("Medindo…"));
         _healthItem = new WinForms.ToolStripMenuItem("");
         _usageItem.Click += (_, _) => OpenRequested?.Invoke();
         _healthItem.Click += (_, _) => OpenRequested?.Invoke();
         _menu.Items.Add(_usageItem);
         _menu.Items.Add(_healthItem);
         _menu.Items.Add(new WinForms.ToolStripSeparator());
-        _menu.Items.Add("Abrir painel", null, (_, _) => OpenRequested?.Invoke());
-        _menu.Items.Add("Limpar temporários agora", null, (_, _) => CleanRequested?.Invoke());
-        _miniItem = new WinForms.ToolStripMenuItem("Mini-widget sempre visível") { CheckOnClick = true };
+        _menu.Items.Add(Loc.T("Abrir painel"), null, (_, _) => OpenRequested?.Invoke());
+        _menu.Items.Add(Loc.T("Limpar temporários agora"), null, (_, _) => CleanRequested?.Invoke());
+        _miniItem = new WinForms.ToolStripMenuItem(Loc.T("Mini-widget sempre visível")) { CheckOnClick = true };
         _miniItem.Click += (_, _) => MiniToggled?.Invoke(_miniItem.Checked);
         _menu.Items.Add(_miniItem);
-        _startItem = new WinForms.ToolStripMenuItem("Iniciar com o Windows") { Checked = startWithWindows, CheckOnClick = true };
+        _startItem = new WinForms.ToolStripMenuItem(Loc.T("Iniciar com o Windows")) { Checked = startWithWindows, CheckOnClick = true };
         _startItem.CheckedChanged += (_, _) => StartWithWindowsToggled?.Invoke(_startItem.Checked);
         _menu.Items.Add(_startItem);
-        _menu.Items.Add("Suporte (klivfy.com)", null, (_, _) => SupportRequested?.Invoke());
+        _menu.Items.Add(Loc.T("Suporte (klivfy.com)"), null, (_, _) => SupportRequested?.Invoke());
         _menu.Items.Add(new WinForms.ToolStripSeparator());
-        _menu.Items.Add("Sair", null, (_, _) => ExitRequested?.Invoke());
+        _menu.Items.Add(Loc.T("Sair"), null, (_, _) => ExitRequested?.Invoke());
         _icon.ContextMenuStrip = _menu;
         _icon.BalloonTipClicked += (_, _) => BalloonClicked?.Invoke();
         _icon.MouseClick += (_, e) => { if (e.Button == WinForms.MouseButtons.Left) OpenRequested?.Invoke(); };

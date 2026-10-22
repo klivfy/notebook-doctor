@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Localizer.ApplyTree(this); // M13: antes de o GridMemory ler os títulos das colunas
         RestorePlacement();
         foreach (var grid in Grids()) GridMemory.Attach(grid, Host.Settings, grid == CleanGrid ? 2 : 1); // Limpeza: a caixa de marcar e o local
         // B33: a lista muda (dados novos, busca, ordenação) e o rodapé acompanha

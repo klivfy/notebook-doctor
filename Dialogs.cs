@@ -122,7 +122,7 @@ public static class Dialogs
         dlg.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
         dlg.SetResourceReference(Control.FontFamilyProperty, "FontBody");
         dlg.SetResourceReference(Control.FontSizeProperty, "FsBody");
-        dlg.Language = System.Windows.Markup.XmlLanguage.GetLanguage("pt-BR");
+        dlg.Language = System.Windows.Markup.XmlLanguage.GetLanguage(Services.Loc.Culture.IetfLanguageTag);
         dlg.SourceInitialized += (_, _) => ThemeManager.ApplyTitleBar(dlg);
     }
 

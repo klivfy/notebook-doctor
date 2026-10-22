@@ -130,6 +130,8 @@ public sealed class AppSettings
     public bool PlaySounds { get; set; }
     /// <summary>B36: confirmações não destrutivas que a pessoa pediu para não repetir.</summary>
     public List<string> SkipConfirm { get; set; } = new();
+    /// <summary>M13: "auto" (idioma do Windows), "pt", "en" ou "es". Vale ao reabrir o app.</summary>
+    public string Language { get; set; } = Loc.Auto;
     /// <summary>M22: na aba Processos, junta processos do mesmo aplicativo (Steam + steamwebhelper).</summary>
     public bool GroupByApp { get; set; } = true;
     /// <summary>B38: hash da senha das configurações (PasswordHash); null = sem senha.</summary>

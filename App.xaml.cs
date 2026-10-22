@@ -72,6 +72,7 @@ public partial class App : Application
         TaskScheduler.UnobservedTaskException += (_, a) => { LogError(a.Exception); CrashLog.Save(a.Exception, "tarefa em segundo plano"); a.SetObserved(); };
 
         Settings = AppPaths.Demo ? StartDemo() : AppSettings.Load();
+        ApplyLanguage();
         CrashLog.Enabled = Settings.CrashReports;
         Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
@@ -531,6 +532,32 @@ public partial class App : Application
     public void RestartAsAdmin()
     {
         if (AppInfo.RestartElevated()) Quit();
+    }
+
+    // ---------- M13: idioma ----------
+    /// <summary>Idioma, formato de números e datas e tradução das telas. Roda uma vez, antes de abrir qualquer janela.</summary>
+    private void ApplyLanguage()
+    {
+        Loc.Use(Loc.Resolve(Settings.Language, System.Globalization.CultureInfo.InstalledUICulture.Name));
+        var culture = Loc.Culture;
+        System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
+        System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.CurrentUICulture = culture;
+        FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
+            new FrameworkPropertyMetadata(System.Windows.Markup.XmlLanguage.GetLanguage(culture.IetfLanguageTag)));
+        Localizer.Install();
+    }
+
+    /// <summary>Reabre o app (troca de idioma). A instância nova espera esta fechar.</summary>
+    public void Restart()
+    {
+        if (Environment.ProcessPath is not { } exe) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe,
+                $"--wait-parent={Environment.ProcessId}" + (AppPaths.Demo ? " --demo" : "")) { UseShellExecute = false });
+            Quit();
+        }
+        catch { /* sem permissão para iniciar: a pessoa reabre pelo atalho */ }
     }
 
     // ---------- B26: modo demonstração ----------
