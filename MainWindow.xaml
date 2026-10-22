@@ -507,6 +507,8 @@
                                     ToolTip="Anota tudo o que um instalador cria no disco e no registro, para desinstalar exatamente isso depois (administrador)."/>
                             <Button Content="Instalações monitoradas…" Style="{StaticResource TextButton}" Click="ProgTraces_Click" Margin="0,0,8,6"
                                     ToolTip="Ver, exportar, importar e desinstalar pelas anotações das instalações."/>
+                            <Button Content="Atualizar programas…" Style="{StaticResource TextButton}" Click="ProgUpdates_Click" Margin="0,0,8,6"
+                                    ToolTip="Procura versões novas pelo WinGet e atualiza os que você marcar. Dá para pular uma versão ou pausar um programa."/>
                             <Button Content="Backups…" Style="{StaticResource TextButton}" Click="ProgBackups_Click" Margin="0,0,8,6"
                                     ToolTip="Restaurar ou apagar o que a remoção de sobras guardou (30 dias)."/>
                             <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ProgRefresh_Click" Margin="0,0,8,6"/>

@@ -1,0 +1,55 @@
+<Window x:Class="NotebookDoctor.UpdatesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Atualizar programas" Width="1020" Height="720" MinWidth="780" MinHeight="540"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
+        AutomationProperties.Name="Atualizar programas">
+    <Grid Margin="22">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <TextBlock Text="Atualizar programas" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
+                   Text="Usa o WinGet (Instalador de Aplicativo) e o catálogo público dele. Só aparecem programas que o catálogo reconhece. Apps da Microsoft Store se atualizam pela Store. Atualizar não pode ser desfeito."/>
+        <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Programas com versão nova" PreviewKeyDown="Grid_KeyDown">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Incluir" Width="Auto" MinWidth="88">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox Style="{StaticResource GridCheck}" IsEnabled="{Binding CanSelect}"
+                                      IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      AutomationProperties.Name="{Binding Name}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Programa" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Identificador" Binding="{Binding Id}" Width="1.2*"/>
+                <DataGridTextColumn Header="Instalada" Binding="{Binding Installed}" Width="120"/>
+                <DataGridTextColumn Header="Disponível" Binding="{Binding Available}" Width="120"/>
+                <DataGridTextColumn Header="Situação" Binding="{Binding StateText}" Width="190"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBox x:Name="Log" Grid.Row="3" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="70" Margin="0,8,0,0"
+                 Visibility="Collapsed" AutomationProperties.Name="Andamento da atualização"/>
+        <TextBlock x:Name="Info" Grid.Row="4" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+        <DockPanel Grid.Row="5" Margin="0,10,0,0">
+            <Button DockPanel.Dock="Right" Content="Fechar" IsCancel="True" IsDefault="True" Click="Close_Click"/>
+            <WrapPanel>
+                <Button x:Name="ScanBtn" Content="Procurar atualizações" Style="{StaticResource TonalButton}" Click="Scan_Click" Margin="0,0,8,6"/>
+                <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="All_Click" Margin="0,0,8,6"/>
+                <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="None_Click" Margin="0,0,8,6"/>
+                <Button x:Name="RunBtn" Content="Atualizar os marcados…" Click="Run_Click" Margin="12,0,8,6"/>
+                <Button x:Name="StopBtn" Content="Parar depois deste" Style="{StaticResource TextButton}" Click="Stop_Click" Margin="0,0,8,6" Visibility="Collapsed"
+                        ToolTip="O programa que está sendo atualizado termina; os próximos da fila não começam."/>
+                <Button Content="Ver termos…" Style="{StaticResource TextButton}" Click="Terms_Click" Margin="0,0,8,6"
+                        ToolTip="Mostra a licença e os termos do programa selecionado, como o WinGet informa."/>
+                <Button Content="Pular esta versão" Style="{StaticResource TextButton}" Click="Skip_Click" Margin="0,0,8,6"
+                        ToolTip="Não oferece esta versão de novo. Uma versão mais nova volta a aparecer."/>
+                <Button x:Name="PauseBtn" Content="Pausar este programa" Style="{StaticResource TextButton}" Click="Pause_Click" Margin="0,0,8,6"
+                        ToolTip="Para de oferecer atualizações deste programa até você retomar."/>
+                <CheckBox x:Name="ShowHidden" Content="Mostrar pulados e pausados" Click="ShowHidden_Click" VerticalAlignment="Center" Margin="8,0,8,6"/>
+                <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,6" AutomationProperties.LiveSetting="Polite"/>
+            </WrapPanel>
+        </DockPanel>
+    </Grid>
+</Window>

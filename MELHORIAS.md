@@ -46,6 +46,7 @@ Critérios de impacto
 | C02 | Limpeza avançada (Fase 6, leva 6.1; também R15, R18, R19) | 🟡 botão "Limpeza avançada…" na aba Limpeza: motor de regras no formato winapp2.ini (importar arquivo), regras próprias de rastros do Windows e do Office, arquivos inúteis e Limpeza de Disco do Windows (`cleanmgr /sagerun`); proteções no Core, repetidas na hora de apagar; registro com backup e desfazer; testes de integração na CI do Windows; não testado com programas reais |
 | C03 | Limpeza de navegadores (Fase 6, leva 6.2; também R17, C15, C16, C17) | 🟡 seção Navegadores na Limpeza avançada: histórico, cookies com lista de sites a manter, abas da sessão e histórico de formulários, Chromium (Chrome, Edge, Brave, Vivaldi, Opera) e Firefox, por perfil, só com o navegador fechado; SQLite pelo `winsqlite3.dll`; senhas, favoritos e extensões nunca; limpar ao fechar; limpeza automática ao abrir, diária, semanal ou mensal; aviso de temporários acima do limite; testado com bancos SQLite de verdade na CI do Windows; não testado com navegadores reais |
 | C08 | Duplicados e espaço por tipo (Fase 6, leva 6.3; também C09) | 🟡 aba Espaço: modo “Por tipo de arquivo” e janela “Revisar duplicados…” com miniaturas, “manter a mais antiga/nova”, Lixeira ou apagar de vez; uma cópia de cada grupo sempre fica e o conteúdo é conferido de novo no disco antes de apagar; testado com arquivos de verdade na CI do Windows; não testado com uma biblioteca grande de fotos |
+| C14 | Atualizador de programas pelo WinGet (Fase 7, leva 7.1) | 🟡 aba Programas › “Atualizar programas…”: lista o que tem versão nova no catálogo do WinGet, atualiza os marcados em fila, “Pular esta versão” e “Pausar este programa”, “Ver termos…”; os termos são sempre aceitos pela pessoa na tela; cada resultado vai para Ações (sem desfazer). Usa a linha de comando do `winget`, ainda não testada num Windows real com atualizações de verdade |
 | A30 | Limpar cache do Windows Update e Delivery Optimization (admin) | 🟡 cache do Windows Update e Otimização de Entrega na Limpeza (desmarcados; exigem administrador) |
 | A31 | Opção de desativar hibernação para liberar `hiberfil.sys` (admin) | ✅ (seção Ajustes) |
 | A32 | Recomendar tamanho do arquivo de paginação | ✅ (recomenda e volta ao "gerenciado pelo Windows") |
@@ -222,6 +223,6 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-Fases 5 e 6 completas (levas 5.1 a 6.3). Próxima: Fase 7, leva 7.1 — atualizador de programas pelo WinGet (pular versão, pausar por app). O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
+Fases 5 e 6 completas (levas 5.1 a 6.3); Fase 7, leva 7.1 pronta (atualizador de programas pelo WinGet). Próxima: leva 7.2 — drivers pelo Windows Update, com backup e volta do driver. O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
 
 Também pendentes: M13 Multi-idioma, 2ª e 3ª levas (mensagens do código, diagnóstico, relatórios e textos do Sobre). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.

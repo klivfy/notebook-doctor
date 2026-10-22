@@ -124,7 +124,7 @@ O site oficial recusa leitura automática, então a lista vem da PCWorld (lança
 | C11 | Drive Wiper / apagamento seguro | Apaga o espaço livre ou a unidade inteira | ⬜ | A/M | Espaço livre (R20). Unidade inteira **só externa e fora do sistema**, com `format X: /P:1` e confirmação digitando a letra | M |
 | C12 | Performance Optimizer ("modo soneca") | Põe para dormir programas em segundo plano até a pessoa abrir | 🟡 modo eficiência e prioridade (Processos); serviços e tarefas separados | M | "Modo soneca" por aplicativo: desliga a inicialização, serviços (manual), tarefas e fecha os processos de fundo; acorda ao abrir o app (seção 5.9) | G |
 | C13 | Driver Updater | Procura e instala drivers novos | 🟡 aviso de driver de vídeo antigo (A23) | M | **Só pelo Windows Update** (API do Windows Update Agent, `Type='Driver'`), com backup dos drivers e ponto de restauração. Não usaremos base de terceiros nem baixaremos de sites de fabricantes | M |
-| C14 | Software Updater (com pular versão e pausar por app) | Atualiza programas desatualizados | ⬜ | A | **WinGet** (gerenciador de pacotes do Windows), pela API COM oficial (`Microsoft.WindowsPackageManager.ComInterop`), com reserva na linha de comando | G |
+| C14 | Software Updater (com pular versão e pausar por app) | Atualiza programas desatualizados | ✅ leva 7.1 | A | **WinGet** (gerenciador de pacotes do Windows), pela API COM oficial (`Microsoft.WindowsPackageManager.ComInterop`), com reserva na linha de comando | G |
 | C15 | Limpeza agendada | Limpa em horários definidos | ✅ leva 6.2: ao abrir, todo dia, toda semana ou todo mês, com o PC parado | A | Diária, semanal, mensal ou ao iniciar, com a escolha do que limpar | P |
 | C16 | Monitoramento em tempo real ("Smart Cleaning") | Avisa quando o lixo passa de um limite; limpa o navegador ao fechar | ✅ leva 6.2 | A | Limite configurável (ex.: 1 GB); limpeza ao detectar que o navegador fechou | M |
 | C17 | Remoção de rastreadores (privacidade) | Apaga cookies de rastreamento | ✅ leva 6.2 (cookies com lista de sites a manter) | M | Apagar cookies com uma lista de sites a manter. **Sem lista de rastreadores de terceiros:** as mais usadas têm licença não comercial ou GPL; isso fica para revisão | P |
@@ -557,9 +557,11 @@ Princípios herdados das fases anteriores, que valem para tudo:
 
 ### 6.1 Fases e levas
 
-**Andamento:** P1 ✅ (merge do PR #1) · P2 ✅ (job `windows` na CI, com teste de integração do desinstalador) · levas 5.1 a 5.4b ✅ (Fase 5 completa) · leva 6.1 ✅ (6.1a motor e executor, 6.1b tela "Limpeza avançada…") · leva 6.2 ✅ (6.2a Core, SQLite e executor; 6.2b seção Navegadores, agendamento, aviso de lixo e limpar ao fechar) · leva 6.3 ✅ (Fase 6 completa).
+**Andamento:** P1 ✅ (merge do PR #1) · P2 ✅ (job `windows` na CI, com teste de integração do desinstalador) · levas 5.1 a 5.4b ✅ (Fase 5 completa) · leva 6.1 ✅ (6.1a motor e executor, 6.1b tela "Limpeza avançada…") · leva 6.2 ✅ (6.2a Core, SQLite e executor; 6.2b seção Navegadores, agendamento, aviso de lixo e limpar ao fechar) · leva 6.3 ✅ (Fase 6 completa) · leva 7.1 ✅.
 
 Na 6.3, a prévia dos duplicados mostra miniaturas para JPG, PNG, BMP, GIF, TIFF e ICO; os outros tipos (HEIC, WebP, vídeos) mostram o ícone do tipo. Cópias dentro do Windows, Program Files e ProgramData não entram nos grupos. Dois caminhos que são o mesmo arquivo (link físico) aparecem como cópias: apagar um deles não libera espaço.
+
+Na 7.1, o atualizador usa **só a linha de comando do `winget`** (a reserva da D2), não a API COM: a API COM exige o pacote `ComInterop` e não dá para validá-la fora de um Windows real. A saída é lida sem depender do idioma (linha de traços, colunas separadas por 2 ou mais espaços), e o executor fica atrás de um ponto único (`WingetRunner`), para trocar pela API COM depois sem mexer na tela nem nas regras. Só entram programas do catálogo público (`--source winget`, ids `Editor.Programa`); programas fora do catálogo e a Store ficam de fora. Os termos são da pessoa: a fonte do WinGet é aceita numa pergunta única (guardada neste PC) e o aceite dos pacotes só vai para o `winget` depois do clique em “Aceito os termos e atualizo”. Não há atualização automática em segundo plano.
 
 Na 6.2, o aviso de lixo acumulado traz "Abrir Limpeza" em vez de "Limpar agora": os links de notificação só navegam (qualquer página consegue abrir um link do app), então a pessoa decide dentro do app. Se o navegador mantém processos em segundo plano (Chrome com "continuar executando"), "limpar ao fechar" só roda quando todos terminam.
 
@@ -594,7 +596,7 @@ Cada leva segue o ritual das anteriores: implementar, compilar, testar no Core, 
 
 | Leva | Entregas | Itens | Testes automatizados | Teste no Windows | Aceite |
 |---|---|---|---|---|---|
-| **7.1** | Atualizador de programas (WinGet), pular versão, pausar por app | C14 | Core: regras de pular/pausar, ordenação, comparação de versões | Atualizar 3 apps (um com administrador) | Termos sempre aceitos pela pessoa; reserva na linha de comando funciona |
+| **7.1** ✅ | Atualizador de programas (WinGet), pular versão, pausar por app | C14 | Core: regras de pular/pausar, ordenação, comparação de versões | Atualizar 3 apps (um com administrador) | Termos sempre aceitos pela pessoa; reserva na linha de comando funciona |
 | **7.2** | Drivers pelo Windows Update, backup e volta do driver | C13 | Core: comparação de versão e data, escolha do que recomendar | VM com driver antigo; backup e volta | Ponto de restauração e backup antes de toda instalação |
 | **7.3** | Menu de contexto e modo soneca (com "acordar ao abrir") | C06, C12 | Core: agrupamento por app, lista "nunca adormecer", decisões de acordar | Desativar 2 itens do menu; adormecer Steam ou Teams e abrir | Tudo volta com "Acordar" ou desfazer |
 | **7.4** | Verificador de registro restrito | C04 | Core: cada categoria com casos positivos e negativos | Rodar numa VM com entradas quebradas criadas de propósito | Só aponta o que tem prova; desfazer restaura |
