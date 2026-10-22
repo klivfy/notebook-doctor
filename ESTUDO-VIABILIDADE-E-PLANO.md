@@ -118,8 +118,8 @@ O site oficial recusa leitura automática, então a lista vem da PCWorld (lança
 | C05 | Software Uninstaller (motor novo no v7) | Remove vários de uma vez, apaga sobras automaticamente, remove "temporariamente" e restaura depois | 🟡 (A29) | A/M | R01–R03. "Restaurar app removido" a partir do backup, sem garantia para apps com serviços ou drivers | (R01) + M |
 | C06 | Startup (inicialização, tarefas, menu de contexto, serviços) | Gerencia o que roda sozinho | 🟡 inicialização ✅, tarefas ✅ (M29), serviços ✅ (M30); **menu de contexto ⬜** | A | Gerenciador do menu de contexto do Explorador (seção 5.9) | M |
 | C07 | Browser Plugins | Lista e gerencia extensões | 🟡 (M31) | M | Igual à R10 | — |
-| C08 | Duplicate Finder (antes "Disk Analyzer", renomeado na 7.01) | Duplicados com miniaturas; manter o mais antigo ou o mais novo; Lixeira ou apagar | 🟡 Espaço › Arquivos duplicados | A | Miniaturas, regras de qual manter e envio para a Lixeira | M |
-| C09 | Análise do disco por tipo (versões 6.x) | Espaço por categoria (imagens, vídeos, documentos…) | 🟡 pastas e maiores arquivos | A | Novo modo "Por tipo de arquivo" no Espaço | P |
+| C08 | Duplicate Finder (antes "Disk Analyzer", renomeado na 7.01) | Duplicados com miniaturas; manter o mais antigo ou o mais novo; Lixeira ou apagar | ✅ leva 6.3 | A | Miniaturas, regras de qual manter e envio para a Lixeira | M |
+| C09 | Análise do disco por tipo (versões 6.x) | Espaço por categoria (imagens, vídeos, documentos…) | ✅ leva 6.3 | A | Novo modo "Por tipo de arquivo" no Espaço | P |
 | C10 | System Restore | Lista e apaga pontos de restauração | ✅ M37 (apaga os antigos) | A | Apagar um ponto escolhido | P |
 | C11 | Drive Wiper / apagamento seguro | Apaga o espaço livre ou a unidade inteira | ⬜ | A/M | Espaço livre (R20). Unidade inteira **só externa e fora do sistema**, com `format X: /P:1` e confirmação digitando a letra | M |
 | C12 | Performance Optimizer ("modo soneca") | Põe para dormir programas em segundo plano até a pessoa abrir | 🟡 modo eficiência e prioridade (Processos); serviços e tarefas separados | M | "Modo soneca" por aplicativo: desliga a inicialização, serviços (manual), tarefas e fecha os processos de fundo; acorda ao abrir o app (seção 5.9) | G |
@@ -557,7 +557,9 @@ Princípios herdados das fases anteriores, que valem para tudo:
 
 ### 6.1 Fases e levas
 
-**Andamento:** P1 ✅ (merge do PR #1) · P2 ✅ (job `windows` na CI, com teste de integração do desinstalador) · levas 5.1 a 5.4b ✅ (Fase 5 completa) · leva 6.1 ✅ (6.1a motor e executor, 6.1b tela "Limpeza avançada…") · leva 6.2 ✅ (6.2a Core, SQLite e executor; 6.2b seção Navegadores, agendamento, aviso de lixo e limpar ao fechar).
+**Andamento:** P1 ✅ (merge do PR #1) · P2 ✅ (job `windows` na CI, com teste de integração do desinstalador) · levas 5.1 a 5.4b ✅ (Fase 5 completa) · leva 6.1 ✅ (6.1a motor e executor, 6.1b tela "Limpeza avançada…") · leva 6.2 ✅ (6.2a Core, SQLite e executor; 6.2b seção Navegadores, agendamento, aviso de lixo e limpar ao fechar) · leva 6.3 ✅ (Fase 6 completa).
+
+Na 6.3, a prévia dos duplicados mostra miniaturas para JPG, PNG, BMP, GIF, TIFF e ICO; os outros tipos (HEIC, WebP, vídeos) mostram o ícone do tipo. Cópias dentro do Windows, Program Files e ProgramData não entram nos grupos. Dois caminhos que são o mesmo arquivo (link físico) aparecem como cópias: apagar um deles não libera espaço.
 
 Na 6.2, o aviso de lixo acumulado traz "Abrir Limpeza" em vez de "Limpar agora": os links de notificação só navegam (qualquer página consegue abrir um link do app), então a pessoa decide dentro do app. Se o navegador mantém processos em segundo plano (Chrome com "continuar executando"), "limpar ao fechar" só roda quando todos terminam.
 
@@ -586,7 +588,7 @@ Cada leva segue o ritual das anteriores: implementar, compilar, testar no Core, 
 |---|---|---|---|---|---|
 | **6.1** ✅ | Motor de regras (formato winapp2), regras próprias (Windows, Office, Explorador), Limpeza de Disco do Windows (`cleanmgr /sagerun`), arquivos inúteis | C02, R15, R18, R19 | Core: parser do formato com todos os campos, curingas, variáveis de ambiente, lista negra; regras em pastas falsas | Rodar com 10 apps comuns; `Windows.old` numa VM atualizada | Nenhuma regra apaga fora dos caminhos declarados |
 | **6.2** ✅ | Dados dos navegadores (SQLite), lista de sites a manter, limpar ao fechar, monitoramento com limite, agendamento flexível | R17, C03, C15, C16, C17 | Core: montagem dos SQL, lista a manter, regras de agendamento; SQLite real em teste de integração (CI Windows) | Chrome, Edge e Firefox com 2 perfis; manter o login de 2 sites | Os sites mantidos continuam logados; favoritos do Firefox intactos |
-| **6.3** | Espaço: por tipo de arquivo; duplicados com miniaturas, "manter mais antigo/novo" e Lixeira | C08, C09 | Core: escolha de qual manter, agrupamento por categoria | Pasta de fotos com cópias | Nunca apaga a última cópia de um grupo |
+| **6.3** ✅ | Espaço: por tipo de arquivo; duplicados com miniaturas, "manter mais antigo/novo" e Lixeira | C08, C09 | Core: escolha de qual manter, agrupamento por categoria | Pasta de fotos com cópias | Nunca apaga a última cópia de um grupo |
 
 #### Fase 7 — Manutenção e desempenho
 

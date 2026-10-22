@@ -366,13 +366,22 @@
                                 <ComboBoxItem Content="Pastas por tamanho" Tag="folders"/>
                                 <ComboBoxItem Content="Maiores arquivos" Tag="large"/>
                                 <ComboBoxItem Content="Arquivos duplicados" Tag="dupes"/>
+                                <ComboBoxItem Content="Por tipo de arquivo" Tag="types"/>
                             </ComboBox>
                             <ComboBox x:Name="SpaceRoot" Width="270" Margin="0,0,12,6" SelectedIndex="0" AutomationProperties.Name="Onde analisar">
                                 <ComboBoxItem Content="Minha pasta de usuário" Tag="user"/>
                                 <ComboBoxItem Content="Dados de aplicativos (AppData)" Tag="appdata"/>
                                 <ComboBoxItem Content="Disco inteiro (C:\) — demora" Tag="drive"/>
                             </ComboBox>
+                            <ComboBox x:Name="SpaceMin" Width="170" Margin="0,0,12,6" SelectedIndex="2" Visibility="Collapsed" AutomationProperties.Name="Tamanho mínimo dos duplicados">
+                                <ComboBoxItem Content="100 KB ou mais" Tag="102400"/>
+                                <ComboBoxItem Content="1 MB ou mais" Tag="1048576"/>
+                                <ComboBoxItem Content="10 MB ou mais" Tag="10485760"/>
+                                <ComboBoxItem Content="100 MB ou mais" Tag="104857600"/>
+                            </ComboBox>
                             <Button x:Name="SpaceScanBtn" Content="Analisar" Click="SpaceScan_Click" Margin="0,0,8,6"/>
+                            <Button x:Name="SpaceDupesBtn" Content="Revisar duplicados…" Style="{StaticResource TonalButton}" Click="SpaceDupes_Click" IsEnabled="False" Visibility="Collapsed" Margin="0,0,8,6"
+                                    ToolTip="Mostra os grupos de arquivos idênticos com miniaturas, para escolher qual cópia fica. Nunca apaga a última cópia."/>
                             <Button x:Name="SpaceCancelBtn" Content="Cancelar" Style="{StaticResource TextButton}" Click="SpaceCancel_Click" IsEnabled="False" Margin="0,0,8,6"/>
                             <TextBox x:Name="SpaceSearch" Width="170" Tag="Filtrar…" VerticalAlignment="Center" TextChanged="SpaceSearch_Changed" Margin="0,0,0,6"
                                      AutomationProperties.Name="Filtrar resultados"/>
@@ -407,7 +416,7 @@
                                     ToolTip="Tamanho, data e desinstalação de cada programa ficam na aba Programas."/>
                             <TextBlock x:Name="SpaceMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"
-                                       Text="Só leitura: nada é apagado aqui. Abra a pasta e decida o que remover."/>
+                                       Text="Só leitura. Nos duplicados, “Revisar duplicados…” apaga só o que você marcar e confirmar."/>
                         </WrapPanel>
                     </Grid>
                 </Border>

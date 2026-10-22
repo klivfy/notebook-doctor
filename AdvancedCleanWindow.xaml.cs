@@ -18,6 +18,7 @@ public abstract class CheckRow : INotifyPropertyChanged
         set { if (_selected == value) return; _selected = value; PropertyChanged?.Invoke(this, new(nameof(Selected))); }
     }
     public event PropertyChangedEventHandler? PropertyChanged;
+    protected void Raise(string name) => PropertyChanged?.Invoke(this, new(name));
 }
 
 public sealed class RuleRow : CheckRow

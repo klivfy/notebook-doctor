@@ -27,6 +27,12 @@ Navegadores (novo)
 • Limpeza automática ao abrir o app, todo dia, toda semana ou todo mês (Configurações), com a opção de incluir os navegadores.
 • Aviso quando os temporários passam de um limite (500 MB a 5 GB).
 
+Espaço (novo)
+• “Por tipo de arquivo”: quanto ocupam imagens, vídeos, músicas, documentos, compactados e programas, com as extensões que mais pesam.
+• Duplicados: escolha o tamanho mínimo e abra “Revisar duplicados…” para ver os grupos com miniaturas.
+• “Manter a mais antiga” ou “a mais nova” em um clique; envie as outras para a Lixeira ou apague de vez.
+• Uma cópia de cada grupo sempre fica, e o app confere o conteúdo de novo antes de apagar.
+
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.

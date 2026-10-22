@@ -1,0 +1,67 @@
+<Window x:Class="NotebookDoctor.DuplicatesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Arquivos duplicados" Width="1020" Height="700" MinWidth="780" MinHeight="520"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
+        AutomationProperties.Name="Arquivos duplicados">
+    <Grid Margin="22">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <TextBlock Text="Arquivos duplicados" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
+                   Text="Cada grupo tem arquivos idênticos (mesmo conteúdo, conferido byte a byte). Marque as cópias que podem sair: uma cópia de cada grupo sempre fica, e o app confere de novo no disco antes de apagar."/>
+        <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Cópias de arquivos idênticos" PreviewKeyDown="Grid_KeyDown" MouseDoubleClick="Reveal_Click">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Apagar" Width="Auto" MinWidth="88">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox Style="{StaticResource GridCheck}"
+                                      IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      AutomationProperties.Name="{Binding Path}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Prévia" Width="64">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Thumb}" Width="40" Height="40" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="Prévia"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Arquivo" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Pasta" Binding="{Binding Folder}" Width="1.5*"/>
+                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="100"/>
+                <DataGridTextColumn Header="Modificado" Binding="{Binding ModifiedText}" Width="130"/>
+                <DataGridTextColumn Header="Grupo" Binding="{Binding GroupText}" Width="90">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Odd}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource Primary}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock x:Name="Info" Grid.Row="3" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+        <DockPanel Grid.Row="4" Margin="0,10,0,0">
+            <Button DockPanel.Dock="Right" Content="Fechar" IsCancel="True" IsDefault="True" Click="Close_Click"/>
+            <WrapPanel>
+                <Button Content="Manter a mais antiga" Style="{StaticResource TonalButton}" Click="KeepOldest_Click" Margin="0,0,8,6"
+                        ToolTip="Em cada grupo, marca todas as cópias, menos a de data de modificação mais antiga (costuma ser o original)."/>
+                <Button Content="Manter a mais nova" Style="{StaticResource TonalButton}" Click="KeepNewest_Click" Margin="0,0,8,6"/>
+                <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="None_Click" Margin="0,0,8,6"/>
+                <Button x:Name="RecycleBtn" Content="Enviar para a Lixeira" Click="Recycle_Click" Margin="12,0,8,6"/>
+                <Button Content="Apagar de vez" Style="{StaticResource TextButton}" Click="Permanent_Click" Margin="0,0,8,6"
+                        ToolTip="Não vai para a Lixeira: não dá para desfazer."/>
+                <Button Content="Mostrar na pasta" Style="{StaticResource TextButton}" Click="Reveal_Click" Margin="0,0,8,6"/>
+                <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,6" AutomationProperties.LiveSetting="Polite"/>
+            </WrapPanel>
+        </DockPanel>
+    </Grid>
+</Window>
