@@ -481,7 +481,11 @@
                                     ToolTip="Tudo o que o programa registrou: pasta, comando de desinstalação, chave do registro (ou Enter na lista)."/>
                             <Button Content="Exportar lista…" Style="{StaticResource TextButton}" Click="ProgExport_Click" Margin="0,0,8,6"
                                     ToolTip="Salva a lista à vista (com a busca e o filtro) em CSV, para planilha, ou em HTML."/>
+                            <Button Content="Backups…" Style="{StaticResource TextButton}" Click="ProgBackups_Click" Margin="0,0,8,6"
+                                    ToolTip="Restaurar ou apagar o que a remoção de sobras guardou (30 dias)."/>
                             <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ProgRefresh_Click" Margin="0,0,8,6"/>
+                            <Button x:Name="ProgDoneBtn" Content="O desinstalador terminou" Style="{StaticResource TonalButton}" Click="ProgDone_Click" Margin="0,0,8,6"
+                                    Visibility="Collapsed" ToolTip="Use se a janela do desinstalador já fechou e o app continua esperando."/>
                             <TextBlock x:Name="ProgMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>
                         </WrapPanel>

@@ -9,7 +9,7 @@ public sealed class ActionEntry
     public DateTime Time { get; set; } = DateTime.Now;
     public string Title { get; set; } = "";
     public string Detail { get; set; } = "";
-    /// <summary>Como desfazer: "power" (volta ao plano anterior), "startup" (reativa/desativa item), "plan-created" (apaga o plano criado). Vazio = não desfazível.</summary>
+    /// <summary>Como desfazer: "power" (volta ao plano anterior), "startup" (reativa/desativa item), "plan-created" (apaga o plano criado), "leftovers" (restaura o backup das sobras). Vazio = não desfazível.</summary>
     public string UndoKind { get; set; } = "";
     public string UndoArg1 { get; set; } = "";
     public string UndoArg2 { get; set; } = "";
@@ -92,6 +92,10 @@ public static class ActionLog
                 try { msg = WindowsTweaks.Undo(entry.UndoArg1, entry.UndoArg2); }
                 catch (UnauthorizedAccessException) { return "Esse ajuste é do sistema: abra o app como administrador para desfazer."; }
                 catch (Exception ex) { return "Não foi possível desfazer: " + ex.Message; }
+                break;
+            case "leftovers":
+                // UndoArg1 = id da sessão de backup; o que precisar de administrador avisa na mensagem
+                msg = new BackupStore(AppPaths.Backups).Restore(entry.UndoArg1);
                 break;
             case "plan-created":
                 msg = PowerPlans.Delete(entry.UndoArg1) ? "Plano criado foi removido." : "Não foi possível remover (talvez esteja ativo): troque de plano e tente de novo.";

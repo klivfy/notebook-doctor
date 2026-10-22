@@ -104,6 +104,160 @@ public static class Dialogs
         dlg.ShowDialog();
     }
 
+    /// <summary>
+    /// Fase 5: revisão das sobras antes de apagar. O nível escolhido decide o que aparece (Seguro, Moderado ou
+    /// Avançado); só o que está à vista e marcado é devolvido. Sem administrador, o que exige administrador fica de fora.
+    /// Devolve null quando a pessoa pula.
+    /// </summary>
+    public static List<Services.Leftover>? ReviewLeftovers(Window owner, string program, IReadOnlyList<Services.Leftover> items, bool isAdmin)
+    {
+        if (!isAdmin) foreach (var l in items.Where(l => l.NeedsAdmin)) l.Selected = false;
+        string title = Services.Loc.F("Sobras de {0}", program);
+        var dlg = NewWindow(owner, title, 980);
+        dlg.SizeToContent = SizeToContent.Manual;
+        dlg.Height = 620;
+        dlg.ResizeMode = ResizeMode.CanResize;
+
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 4));
+        var sub = new TextBlock
+        {
+            Text = Services.Loc.T("Revise antes de apagar. Tudo vai para um backup por 30 dias e pode ser desfeito na aba Ações."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+
+        var level = new ComboBox { Width = 460, Margin = new Thickness(0, 0, 0, 8), HorizontalAlignment = HorizontalAlignment.Left };
+        level.Items.Add(Services.Loc.T("Seguro: só o que aponta para a pasta do programa"));
+        level.Items.Add(Services.Loc.T("Moderado: também pastas e chaves com o nome dele"));
+        level.Items.Add(Services.Loc.T("Avançado: também nomes parecidos (confira um por um)"));
+        level.SelectedIndex = 1;
+        System.Windows.Automation.AutomationProperties.SetName(level, Services.Loc.T("Nível da busca"));
+
+        var adminNote = new TextBlock
+        {
+            Text = Services.Loc.T("Itens com \"Exige administrador\" só saem com o app aberto como administrador (Ajustes › Reabrir como administrador)."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
+            Visibility = !isAdmin && items.Any(l => l.NeedsAdmin) ? Visibility.Visible : Visibility.Collapsed,
+        };
+        adminNote.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+
+        var grid = new DataGrid { AutoGenerateColumns = false, CanUserAddRows = false, SelectionMode = DataGridSelectionMode.Single };
+        System.Windows.Automation.AutomationProperties.SetName(grid, title);
+        // Marcar com um clique só (a coluna de caixa padrão do DataGrid pede dois)
+        var check = new FrameworkElementFactory(typeof(CheckBox));
+        check.SetBinding(System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty,
+            new System.Windows.Data.Binding(nameof(Services.Leftover.Selected)) { Mode = System.Windows.Data.BindingMode.TwoWay, UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged });
+        check.SetBinding(System.Windows.Automation.AutomationProperties.NameProperty, new System.Windows.Data.Binding(nameof(Services.Leftover.Display)));
+        check.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+        grid.Columns.Add(new DataGridTemplateColumn { Header = Services.Loc.T("Apagar"), CellTemplate = new DataTemplate { VisualTree = check }, Width = 70 });
+        DataGridTextColumn Text(string header, string path, DataGridLength width) =>
+            new() { Header = header, Binding = new System.Windows.Data.Binding(path), Width = width, IsReadOnly = true };
+        grid.Columns.Add(Text(Services.Loc.T("Nível"), nameof(Services.Leftover.LevelText), 90));
+        grid.Columns.Add(Text(Services.Loc.T("Tipo"), nameof(Services.Leftover.KindText), 130));
+        grid.Columns.Add(Text(Services.Loc.T("Local"), nameof(Services.Leftover.Display), new DataGridLength(1, DataGridLengthUnitType.Star)));
+        grid.Columns.Add(Text(Services.Loc.T("Motivo"), nameof(Services.Leftover.Reason), 230));
+        grid.Columns.Add(Text(Services.Loc.T("Tamanho"), nameof(Services.Leftover.SizeText), 90));
+        grid.Columns.Add(Text(Services.Loc.T("Atenção"), nameof(Services.Leftover.Notes), 170));
+
+        List<Services.Leftover> Visible() => Services.LeftoverScanner.UpTo(items, (Services.LeftoverLevel)level.SelectedIndex).ToList();
+        void Refresh() { grid.ItemsSource = Visible(); }
+        level.SelectionChanged += (_, _) => Refresh();
+        Refresh();
+
+        List<Services.Leftover>? result = null;
+        var buttons = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
+        Button Btn(string text, string style)
+        {
+            var b = new Button { Content = text, Margin = new Thickness(8, 0, 0, 0) };
+            b.SetResourceReference(FrameworkElement.StyleProperty, style);
+            return b;
+        }
+        var all = Btn(Services.Loc.T("Marcar todos"), "TextButton");
+        var none = Btn(Services.Loc.T("Desmarcar todos"), "TextButton");
+        all.Margin = new Thickness(0);
+        void Mark(bool on)
+        {
+            foreach (var l in Visible()) l.Selected = on && (isAdmin || !l.NeedsAdmin);
+            grid.Items.Refresh();
+        }
+        all.Click += (_, _) => Mark(true);
+        none.Click += (_, _) => Mark(false);
+        var skip = Btn(Services.Loc.T("Pular"), "TextButton");
+        skip.IsCancel = true;
+        skip.Click += (_, _) => dlg.Close();
+        var delete = Btn(Services.Loc.T("Apagar selecionados"), "DangerButton");
+        delete.Click += (_, _) =>
+        {
+            result = Visible().Where(l => l.Selected && (isAdmin || !l.NeedsAdmin)).ToList();
+            dlg.Close();
+        };
+        DockPanel.SetDock(all, Dock.Left); DockPanel.SetDock(none, Dock.Left);
+        DockPanel.SetDock(delete, Dock.Right); DockPanel.SetDock(skip, Dock.Right);
+        buttons.Children.Add(all); buttons.Children.Add(none); buttons.Children.Add(delete); buttons.Children.Add(skip);
+
+        var root = new DockPanel { Margin = new Thickness(24) };
+        foreach (var top in new FrameworkElement[] { heading, sub, level, adminNote }) { DockPanel.SetDock(top, Dock.Top); root.Children.Add(top); }
+        DockPanel.SetDock(buttons, Dock.Bottom);
+        root.Children.Add(buttons);
+        root.Children.Add(grid);
+        dlg.Content = root;
+        dlg.ShowDialog();
+        return result;
+    }
+
+    /// <summary>Fase 5: backups da remoção de sobras, com restaurar e apagar.</summary>
+    public static void ShowBackups(Window owner, Services.BackupStore store)
+    {
+        string title = Services.Loc.T("Backups das sobras removidas");
+        var dlg = NewWindow(owner, title, 720);
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 4));
+        var sub = new TextBlock
+        {
+            Text = Services.Loc.T("Cada remoção de sobras guarda o que apagou por 30 dias (até 2 GB no total). Restaurar devolve tudo ao lugar."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var list = new ListBox { Height = 260, Margin = new Thickness(0, 0, 0, 8) };
+        System.Windows.Automation.AutomationProperties.SetName(list, title);
+        var msg = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetLiveSetting(msg, System.Windows.Automation.AutomationLiveSetting.Polite);
+
+        void Load()
+        {
+            var sessions = store.List();
+            list.ItemsSource = sessions.Select(m => new ListBoxItem { Content = Services.BackupRules.Describe(m), Tag = m.Id }).ToList();
+            if (sessions.Count == 0) msg.Text = Services.Loc.T("Nenhum backup guardado.");
+        }
+        string? Selected() => (list.SelectedItem as ListBoxItem)?.Tag as string;
+
+        var restore = new Button { Content = Services.Loc.T("Restaurar"), Margin = new Thickness(0, 0, 8, 0) };
+        restore.Click += (_, _) =>
+        {
+            if (Selected() is not { } id) { msg.Text = Services.Loc.T("Selecione um backup na lista."); return; }
+            if (!Confirm(dlg, Services.Loc.T("Restaurar backup?"), Services.Loc.T("Os arquivos, chaves e tarefas guardados voltam para onde estavam."), Services.Loc.T("Restaurar"))) return;
+            msg.Text = store.Restore(id);
+            Services.ActionLog.Add("Backup de sobras restaurado", id);
+            Load();
+        };
+        var delete = new Button { Content = Services.Loc.T("Apagar backup"), Margin = new Thickness(0, 0, 8, 0) };
+        delete.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        delete.Click += (_, _) =>
+        {
+            if (Selected() is not { } id) { msg.Text = Services.Loc.T("Selecione um backup na lista."); return; }
+            if (!Confirm(dlg, Services.Loc.T("Apagar backup?"), Services.Loc.T("Depois disso, essa remoção de sobras não pode mais ser desfeita."), Services.Loc.T("Apagar"), danger: true)) return;
+            try { store.Delete(id); msg.Text = Services.Loc.T("Backup apagado."); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { msg.Text = ex.Message; }
+            Load();
+        };
+        var close = new Button { Content = Services.Loc.T("Fechar"), IsCancel = true };
+        close.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        close.Click += (_, _) => dlg.Close();
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { restore, delete, close } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, sub, list, msg, buttons } };
+        Load();
+        dlg.ShowDialog();
+    }
+
     private static Window NewWindow(Window owner, string title, double width)
     {
         var dlg = new Window

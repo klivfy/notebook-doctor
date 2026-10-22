@@ -127,6 +127,7 @@ public partial class App : Application
 
         // A jump list e o registro das notificações são do app instalado, não da demonstração
         if (!AppPaths.Demo) { _ = Task.Run(Toasts.EnsureRegistered); SetJumpList(); }
+        _ = Task.Run(() => { try { new BackupStore(AppPaths.Backups).Prune(DateTime.Now); } catch (Exception ex) { LogError(ex); } }); // Fase 5: backups vencidos
         _overlayTimer.Tick += (_, _) => UpdateOverlay();
         _overlayTimer.Start();
         _ = ListenForOtherInstancesAsync(_cts.Token);

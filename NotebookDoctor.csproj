@@ -26,6 +26,7 @@
     <None Remove="src/**;tests/**" />
     <Page Remove="src/**;tests/**" />
     <ProjectReference Include="src/NotebookDoctor.Core/NotebookDoctor.Core.csproj" />
+    <ProjectReference Include="src/NotebookDoctor.Windows/NotebookDoctor.Windows.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -193,6 +193,11 @@ public class ProgramDetailsTests
 
         var msiOnly = new InstalledProgram { DisplayIcon = @"C:\Windows\Installer\{GUID}\icon.ico", UninstallString = "MsiExec.exe /X{GUID}" };
         Assert.Null(ProgramRules.FolderOf(msiOnly, Dir, _ => false));
+
+        // Ícone numa pasta que vários programas do editor usam: não é a pasta deste programa
+        dirs.Add(@"C:\Program Files\Common Files\Acme");
+        var shared = new InstalledProgram { DisplayIcon = @"C:\Program Files\Common Files\Acme\icons.dll,3" };
+        Assert.Null(ProgramRules.FolderOf(shared, Dir, _ => false));
     }
 
     [Theory]

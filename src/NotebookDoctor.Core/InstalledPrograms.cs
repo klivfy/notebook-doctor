@@ -268,7 +268,7 @@ public static partial class ProgramRules
 
     /// <summary>
     /// Pasta do programa: a InstallLocation; sem ela, a pasta do ícone ou do desinstalador, desde que não seja do
-    /// Windows nem um cache de instaladores (C:\Windows\Installer, Package Cache), que são compartilhados.
+    /// Windows, um cache de instaladores (C:\Windows\Installer, Package Cache) nem Common Files, que são compartilhados.
     /// </summary>
     public static string? FolderOf(InstalledProgram p, Func<string, bool> dirExists, Func<string, bool> fileExists)
     {
@@ -287,7 +287,8 @@ public static partial class ProgramRules
 
     private static bool IsSharedPlace(string path) =>
         path.Contains(@"\Windows\", StringComparison.OrdinalIgnoreCase) || path.Contains(@"\Package Cache\", StringComparison.OrdinalIgnoreCase)
-        || path.Contains(@"\Installer\", StringComparison.OrdinalIgnoreCase) || !path.Contains('\\');
+        || path.Contains(@"\Installer\", StringComparison.OrdinalIgnoreCase) || path.Contains(@"\Common Files\", StringComparison.OrdinalIgnoreCase)
+        || !path.Contains('\\');
 
     /// <summary>
     /// Só mede pastas do próprio programa. A raiz do disco, Program Files, ProgramData, a pasta do usuário ou algo

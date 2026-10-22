@@ -46,7 +46,8 @@ public static class StartMenu
         if (File.Exists(LinkPath)) File.Delete(LinkPath);
     }
 
-    private static string ReadTarget(string path)
+    /// <summary>Destino do atalho, mesmo quando o arquivo de destino já não existe.</summary>
+    internal static string ReadTarget(string path)
     {
         var link = (IShellLinkW)new ShellLink();
         try

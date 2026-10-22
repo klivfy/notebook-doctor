@@ -22,6 +22,8 @@ public static class AppPaths
     public static string Settings => Path.Combine(Dir, "settings.json");
     public static string History => Path.Combine(Dir, "history.jsonl");
     public static string Reports => Path.Combine(Dir, "relatorios");
+    /// <summary>Fase 5: backups da remoção de sobras (30 dias ou 2 GB).</summary>
+    public static string Backups => Path.Combine(Dir, "backups");
     static AppPaths() => Directory.CreateDirectory(Dir);
 
     /// <summary>

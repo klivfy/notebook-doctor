@@ -45,7 +45,7 @@ public partial class MainWindow
     private readonly Dictionary<string, long> _progMeasured = new(); // tamanhos medidos na pasta nesta sessão, por Id
     private List<ProgramRow> _progRows = new();
     private CancellationTokenSource? _progCts;
-    private bool _progLoaded;
+    private bool _progLoaded, _progBusy, _progDone;
 
     private InstalledProgram? SelectedProgram => (ProgGrid.SelectedItem as ProgramRow)?.Program;
 
@@ -168,35 +168,111 @@ public partial class MainWindow
         if (cmd is null) { ProgMsg.Text = Loc.F("{0} não informa como desinstalar.", p.Name); return; }
         if (Simulate(Loc.F("Desinstalar {0}", p.Name), Loc.F("Abriria o desinstalador do programa: {0} {1}", cmd.File, cmd.Arguments))) return;
         if (!Host.EnsureUnlocked(Loc.T("desinstalar programas"))) return; // B38
-        if (!Dialogs.Confirm(this, Loc.T("Desinstalar programa?"),
-                Loc.F("Abrir o desinstalador de:\n{0}\n\nO desinstalador do próprio programa vai abrir e pedir confirmação. Quando ele terminar, a lista se atualiza.", p.Name),
-                Loc.T("Abrir desinstalador"), danger: true)) return;
+        if (_progBusy) { ProgMsg.Text = Loc.T("Espere a desinstalação atual terminar."); return; }
+        string message = Loc.F("Abrir o desinstalador de:\n{0}\n\nO desinstalador do próprio programa vai abrir e pedir confirmação. Quando ele terminar, o app procura o que sobrou (pastas, registro, atalhos) e mostra antes de apagar.", p.Name);
+        // As sobras de um programa de todos os usuários ficam em Arquivos de Programas e HKLM: sem administrador, não dá para apagar
+        if (p.MachineWide == true && !AppInfo.IsAdmin)
+            message += "\n\n" + Loc.T("Dica: abra o app como administrador antes (Ajustes › Reabrir como administrador) para apagar também as sobras em Arquivos de Programas e no registro do sistema.");
+        if (!Dialogs.Confirm(this, Loc.T("Desinstalar programa?"), message, Loc.T("Abrir desinstalador"), danger: true)) return;
 
-        ProgMsg.Text = Loc.T("Preparando…");
-        string restore = await EnsureRestorePointAsync("Desinstalar " + p.Name);
-        System.Diagnostics.Process? proc;
+        _progBusy = true;
         try
         {
-            // ShellExecute: o desinstalador que exige administrador mostra o aviso do Windows (UAC)
-            proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(cmd.File, cmd.Arguments) { UseShellExecute = true });
-        }
-        catch (Win32Exception ex) when (ex.NativeErrorCode == 1223) { ProgMsg.Text = Loc.T("Cancelado no aviso de permissão do Windows."); return; }
-        catch (Exception ex) { ProgMsg.Text = Loc.F("Não foi possível abrir o desinstalador: {0}", ex.Message); return; }
-        ActionLog.Add("Desinstalador aberto", $"{p.Name} · ponto de restauração: {restore}");
-        ProgMsg.Text = Loc.F("Desinstalador de {0} aberto. Siga as etapas na janela dele.", p.Name);
-        if (proc is null) return;
-        using (proc)
-        {
-            try { await proc.WaitForExitAsync(); } catch (Exception) { return; }
-        }
+            // O retrato vem antes: depois, a chave do registro some e não diz mais onde o programa estava
+            var fingerprint = ProgramFingerprint.Of(p, Directory.Exists, File.Exists);
+            ProgMsg.Text = Loc.T("Preparando…");
+            string restore = await EnsureRestorePointAsync("Desinstalar " + p.Name);
+            UninstallRun run;
+            _progDone = false;
+            ProgDoneBtn.Visibility = Visibility.Visible;
+            ProgMsg.Text = Loc.F("Desinstalador de {0} aberto. Siga as etapas na janela dele; o app espera ele terminar.", p.Name);
+            try { run = await UninstallRunner.RunAsync(cmd, () => _progDone, CancellationToken.None); }
+            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223) { ProgMsg.Text = Loc.T("Cancelado no aviso de permissão do Windows."); return; }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException)
+            {
+                ProgMsg.Text = Loc.F("Não foi possível abrir o desinstalador: {0}", ex.Message);
+                return;
+            }
+            finally { ProgDoneBtn.Visibility = Visibility.Collapsed; }
+            ActionLog.Add("Desinstalador executado", $"{p.Name} · ponto de restauração: {restore}");
 
-        _progKeys = await Task.Run(ProgramInventory.ReadUninstallKeys);
-        ShowPrograms();
-        bool gone = !_progKeys.Any(k => k.RegistryPath == p.Id);
-        if (gone) ActionLog.Add("Programa desinstalado", p.Name);
-        ProgMsg.Text = gone ? Loc.F("{0} foi desinstalado.", p.Name)
-            : Loc.F("{0} ainda aparece na lista. O desinstalador pode continuar em outra janela; clique em Atualizar quando ele terminar.", p.Name);
+            if (run.State == WaitState.TimedOut)
+            {
+                ProgMsg.Text = Loc.F("O desinstalador de {0} continua aberto depois de 2 horas. Quando ele terminar, clique em Atualizar.", p.Name);
+                return;
+            }
+            _progKeys = await Task.Run(ProgramInventory.ReadUninstallKeys);
+            ShowPrograms();
+            if (_progKeys.Any(k => k.RegistryPath == p.Id))
+            {
+                // Ainda instalado (cancelado ou incompleto): nada é apagado, a pasta ainda é do programa
+                string why = p.Kind == ProgramKind.Msi && run.ExitCode is int code ? MsiExit.Result(code) switch
+                {
+                    UninstallResult.Canceled => Loc.T("A desinstalação foi cancelada."),
+                    UninstallResult.Busy => Loc.T("Outra instalação está em andamento; tente de novo quando ela terminar."),
+                    UninstallResult.RebootNeeded => Loc.T("O Windows pede para reiniciar para concluir."),
+                    _ => "",
+                } : "";
+                ProgMsg.Text = $"{Loc.F("{0} ainda aparece instalado, então nada foi apagado.", p.Name)} {why}".Trim();
+                return;
+            }
+            ActionLog.Add("Programa desinstalado", p.Name);
+            await ScanLeftoversAsync(fingerprint);
+        }
+        finally { _progBusy = false; }
     }
+
+    private void ProgDone_Click(object sender, RoutedEventArgs e) => _progDone = true;
+
+    /// <summary>Procura as sobras do programa que acabou de sair e mostra a revisão. Store e atualizações não deixam sobras para o app tratar.</summary>
+    private async Task ScanLeftoversAsync(ProgramFingerprint fp)
+    {
+        if (fp.Kind is not (ProgramKind.Program or ProgramKind.Msi)) return;
+        ProgMsg.Text = Loc.F("{0} foi desinstalado. Procurando sobras no disco e no registro…", fp.Name);
+        var places = WindowsPlaces.Current(AppPaths.Dir);
+        var others = AllPrograms(includeSystem: true);
+        List<Leftover> found;
+        try
+        {
+            found = await Task.Run(() =>
+            {
+                var ctx = new LeftoverContext(places, others, ScheduledTasks.List(), ShortcutScan.List(places));
+                return LeftoverScanner.Scan(fp, ctx, new WindowsLeftoverSystem());
+            });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Runtime.InteropServices.COMException)
+        {
+            ProgMsg.Text = Loc.F("{0} foi desinstalado, mas a busca por sobras falhou: {1}", fp.Name, ex.Message);
+            return;
+        }
+        if (found.Count == 0) { ProgMsg.Text = Loc.F("{0} foi desinstalado e não deixou sobras.", fp.Name); return; }
+        var chosen = Dialogs.ReviewLeftovers(this, fp.Name, found, AppInfo.IsAdmin);
+        if (chosen is not { Count: > 0 }) { ProgMsg.Text = Loc.F("{0} foi desinstalado. As sobras ficaram onde estavam.", fp.Name); return; }
+        await RemoveLeftoversAsync(fp.Name, chosen);
+    }
+
+    /// <summary>Apaga com backup e registra em Ações, com desfazer.</summary>
+    private async Task RemoveLeftoversAsync(string program, List<Leftover> items)
+    {
+        if (Simulate(Loc.F("Apagar sobras de {0}", program), Loc.F("Apagaria {0}, guardando tudo num backup.", Pt.N(items.Count, Loc.T("item"), Loc.T("itens"))))) return;
+        ProgMsg.Text = Loc.T("Guardando o backup e apagando…");
+        var store = new BackupStore(AppPaths.Backups);
+        var (id, results) = await Task.Run(() =>
+        {
+            using var session = store.Begin(program);
+            return (session.Id, LeftoverRemover.Remove(items, session, AppInfo.IsAdmin));
+        });
+        int ok = results.Count(r => r.Ok), pending = results.Count(r => r.PendingReboot);
+        var failed = results.Where(r => !r.Ok).ToList();
+        ActionLog.Add("Sobras removidas", $"{program}: {ok} de {results.Count}", "leftovers", id);
+        string msg = Loc.F("{0} de {1} sobras apagadas, com backup.", ok, results.Count)
+            + (pending > 0 ? " " + Loc.F("{0} saem no próximo reinício.", pending) : "")
+            + (failed.Count > 0 ? " " + Loc.F("{0} não saíram: {1}", failed.Count, failed[0].Error) : "");
+        ProgMsg.Text = msg;
+        ShowSnack(Loc.T("Sobras removidas"), msg, Loc.T("Ver em Ações"), () => Tabs.SelectedIndex = TabActions);
+    }
+
+    private void ProgBackups_Click(object sender, RoutedEventArgs e) => Dialogs.ShowBackups(this, new BackupStore(AppPaths.Backups));
 
     private async Task RemoveStoreAppAsync(InstalledProgram p)
     {

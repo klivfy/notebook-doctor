@@ -19,6 +19,7 @@
     <Using Include="Xunit" />
     <Using Include="NotebookDoctor.Services" />
     <ProjectReference Include="../../src/NotebookDoctor.Core/NotebookDoctor.Core.csproj" />
+    <ProjectReference Include="../../src/NotebookDoctor.Windows/NotebookDoctor.Windows.csproj" />
   </ItemGroup>
 
 </Project>
