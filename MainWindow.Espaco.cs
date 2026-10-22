@@ -4,7 +4,7 @@ using NotebookDoctor.Services;
 
 namespace NotebookDoctor;
 
-/// <summary>Aba Espaço: maiores pastas e arquivos, duplicados e desinstalador assistido.</summary>
+/// <summary>Aba Espaço: maiores pastas e arquivos e duplicados. Os aplicativos instalados ficam na aba Programas.</summary>
 public partial class MainWindow
 {
     // ---------- Espaço em disco (A27) ----------
@@ -52,13 +52,6 @@ public partial class MainWindow
                 SpaceMsg.Text = groups == 0 ? "Nenhum arquivo duplicado de 10 MB ou mais." : $"{Pt.N(groups, "grupo", "grupos")} de arquivos idênticos; as cópias extras ocupam {Cleaner.FormatBytes(extra)}. Confira antes de apagar qualquer uma.";
                 return;
             }
-            if (mode == "apps")
-            {
-                var apps = await Task.Run(DiskUsage.InstalledApps, ct);
-                Show(apps);
-                SpaceMsg.Text = $"{apps.Count} aplicativos. Tamanho informado pelo próprio instalador (\"n/d\" quando ele não informa).";
-                return;
-            }
             await DiskUsage.ScanAsync(root,
                 item => Dispatcher.BeginInvoke(() =>
                 {
@@ -80,9 +73,6 @@ public partial class MainWindow
     private void SpaceMode_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded || e.Source != SpaceMode) return;
-        bool apps = (SpaceMode.SelectedItem as ComboBoxItem)?.Tag as string == "apps";
-        SpaceRoot.IsEnabled = !apps;
-        SpaceUninstallBtn.Visibility = apps ? Visibility.Visible : Visibility.Collapsed;
         SpaceGrid.ItemsSource = null;
         SpaceMsg.Text = "Clique em Analisar.";
     }
@@ -98,23 +88,8 @@ public partial class MainWindow
         else SpaceMsg.Text = "Este item não informa uma pasta.";
     }
 
-    // ---------- Desinstalador assistido (A29) ----------
-    private void SpaceUninstall_Click(object sender, RoutedEventArgs e)
-    {
-        if (SpaceGrid.SelectedItem is not FolderUsage app || app.Tag.Length == 0) { SpaceMsg.Text = "Selecione um aplicativo."; return; }
-        if (Simulate("Abrir o desinstalador", $"Executaria o desinstalador registrado de {app.Name}: {app.Tag}")) return;
-        if (!Dialogs.Confirm(this, "Desinstalar aplicativo?",
-                $"Abrir o desinstalador de:\n{app.Name}\n\nO próprio desinstalador do programa vai abrir e pedir confirmação. O Notebook Doctor não remove nada sozinho.",
-                "Abrir desinstalador", danger: true)) return;
-        try
-        {
-            // O comando vem do registro do próprio instalador; o cmd interpreta as aspas como o Windows faria em "Aplicativos instalados"
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c \"{app.Tag}\"") { UseShellExecute = false, CreateNoWindow = true });
-            ActionLog.Add("Desinstalador aberto", app.Name);
-            SpaceMsg.Text = "Desinstalador aberto. Clique em Analisar depois para atualizar a lista.";
-        }
-        catch (Exception ex) { SpaceMsg.Text = "Não foi possível abrir o desinstalador: " + ex.Message; }
-    }
+    // A29 passou para a aba Programas (Fase 5)
+    private void SpacePrograms_Click(object sender, RoutedEventArgs e) => Tabs.SelectedIndex = TabPrograms;
 
     private void ApplySpaceFilter() => ApplyFilter(SpaceGrid, SpaceSearch.Text, o => o is FolderUsage f ? f.Name + " " + f.Path : "");
     private void SpaceSearch_Changed(object sender, TextChangedEventArgs e) => ApplySpaceFilter();

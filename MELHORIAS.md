@@ -42,7 +42,7 @@ Critérios de impacto
 | A26 | Verificar Defender e Firewall, com correção | 🟡 Defender (tempo real, definições), firewall e antivírus de terceiros; tudo ok neste PC, então nenhum alerta apareceu |
 | A27 | Mapa de espaço em disco por pasta (descobrir o que ocupa mais) | ✅ nova aba Espaço, só leitura; testada em AppData (29,3 GB, 63 pastas) |
 | A28 | Localizar arquivos grandes e duplicados, com revisão antes de apagar | 🟡 aba Espaço: maiores arquivos e duplicados (só leitura); maiores arquivos visto rodando (lento na pasta do usuário inteira); duplicados não exercitado |
-| A29 | Desinstalador assistido (apps grandes ou sem uso) | 🟡 lista de aplicativos com tamanho (27 vistos) e botão que abre o desinstalador oficial; desinstalação não testada |
+| A29 | Desinstalador assistido (apps grandes ou sem uso) | 🟡 virou a aba Programas (Fase 5, leva 5.1): programas, apps da Store e atualizações, com tamanho, data e desinstalador oficial; varredura de sobras nas próximas levas; não testado no Windows |
 | A30 | Limpar cache do Windows Update e Delivery Optimization (admin) | 🟡 cache do Windows Update e Otimização de Entrega na Limpeza (desmarcados; exigem administrador) |
 | A31 | Opção de desativar hibernação para liberar `hiberfil.sys` (admin) | ✅ (seção Ajustes) |
 | A32 | Recomendar tamanho do arquivo de paginação | ✅ (recomenda e volta ao "gerenciado pelo Windows") |
@@ -219,4 +219,6 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-M13 Multi-idioma, 2ª e 3ª levas (mensagens do código, diagnóstico, relatórios e textos do Sobre). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.
+Fase 5 (desinstalador completo), leva 5.2a: retrato do programa antes de desinstalar, espera do desinstalador até o fim e armazém de backups. O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
+
+Também pendentes: M13 Multi-idioma, 2ª e 3ª levas (mensagens do código, diagnóstico, relatórios e textos do Sobre). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.

@@ -29,20 +29,46 @@ public static class ProcessIcons
         return null;
     }
 
-    private static ImageSource? Load(string name)
+    /// <summary>
+    /// Fase 5: ícone de um arquivo pelo índice, como no DisplayIcon do registro ("app.exe,0" ou "app.dll,-101").
+    /// Mesmo cache e mesma busca em segundo plano dos processos.
+    /// </summary>
+    public static ImageSource? ForFile(string path, int index, Action? ready = null)
     {
-        string? path = ExePath(name);
-        if (path is null) return null;
+        string key = $"file|{path}|{index}"; // nomes de processo nunca têm "|"
+        if (Cache.TryGetValue(key, out var img)) return img;
+        if (Pending.TryAdd(key, 0))
+            Task.Run(() =>
+            {
+                Cache[key] = LoadFile(path, index);
+                Pending.TryRemove(key, out _);
+                ready?.Invoke();
+            });
+        return null;
+    }
+
+    private static ImageSource? Load(string name) => ExePath(name) is { } path ? LoadFile(path, 0) : null;
+
+    private static ImageSource? LoadFile(string path, int index)
+    {
+        if (!System.IO.File.Exists(path)) return null;
+        var large = new IntPtr[1];
         try
         {
+            // -1 pediria a quantidade de ícones, não um ícone
+            if (index != -1 && ExtractIconEx(path, index, large, null, 1) > 0 && large[0] != IntPtr.Zero) return ToImage(large[0]);
             using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
-            if (icon is null) return null;
-            var src = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(icon.Handle, System.Windows.Int32Rect.Empty,
-                BitmapSizeOptions.FromWidthAndHeight(32, 32));
-            src.Freeze(); // permite usar na thread de interface
-            return src;
+            return icon is null ? null : ToImage(icon.Handle);
         }
         catch { return null; }
+        finally { if (large[0] != IntPtr.Zero) DestroyIcon(large[0]); }
+    }
+
+    private static ImageSource ToImage(IntPtr hIcon)
+    {
+        var src = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(hIcon, System.Windows.Int32Rect.Empty, BitmapSizeOptions.FromWidthAndHeight(32, 32));
+        src.Freeze(); // permite usar na thread de interface
+        return src;
     }
 
     /// <summary>Caminho do executável do primeiro processo com esse nome que o Windows deixa consultar.</summary>
@@ -67,4 +93,10 @@ public static class ProcessIcons
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern bool QueryFullProcessImageName(IntPtr process, int flags, StringBuilder name, ref int size);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint ExtractIconEx(string file, int index, IntPtr[]? large, IntPtr[]? small, uint count);
+
+    [DllImport("user32.dll")]
+    private static extern bool DestroyIcon(IntPtr icon);
 }

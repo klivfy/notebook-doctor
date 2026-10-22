@@ -23,6 +23,7 @@
                 <ListBoxItem Tag="&#xE8FD;" Content="Processos"/>
                 <ListBoxItem Tag="&#xE74D;" Content="Limpeza"/>
                 <ListBoxItem Tag="&#xEDA2;" Content="Espaço"/>
+                <ListBoxItem Tag="&#xE71D;" Content="Programas"/>
                 <ListBoxItem Tag="&#xE7E8;" Content="Inicialização"/>
                 <ListBoxItem Tag="&#xE81C;" Content="Histórico"/>
                 <ListBoxItem Tag="&#xE7A7;" Content="Ações"/>
@@ -362,7 +363,6 @@
                                 <ComboBoxItem Content="Pastas por tamanho" Tag="folders"/>
                                 <ComboBoxItem Content="Maiores arquivos" Tag="large"/>
                                 <ComboBoxItem Content="Arquivos duplicados" Tag="dupes"/>
-                                <ComboBoxItem Content="Aplicativos instalados" Tag="apps"/>
                             </ComboBox>
                             <ComboBox x:Name="SpaceRoot" Width="270" Margin="0,0,12,6" SelectedIndex="0" AutomationProperties.Name="Onde analisar">
                                 <ComboBoxItem Content="Minha pasta de usuário" Tag="user"/>
@@ -400,10 +400,90 @@
                         </DockPanel>
                         <WrapPanel Grid.Row="3" Margin="0,14,0,0">
                             <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="SpaceOpen_Click" Margin="0,0,8,6"/>
-                            <Button x:Name="SpaceUninstallBtn" Content="Desinstalar…" Visibility="Collapsed" Click="SpaceUninstall_Click" Margin="0,0,8,6"/>
+                            <Button Content="Ver programas instalados" Style="{StaticResource TextButton}" Click="SpacePrograms_Click" Margin="0,0,8,6"
+                                    ToolTip="Tamanho, data e desinstalação de cada programa ficam na aba Programas."/>
                             <TextBlock x:Name="SpaceMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"
                                        Text="Só leitura: nada é apagado aqui. Abra a pasta e decida o que remover."/>
+                        </WrapPanel>
+                    </Grid>
+                </Border>
+            </TabItem>
+
+            <!-- PROGRAMAS (Fase 5): programas instalados, apps da Microsoft Store e atualizações do Windows -->
+            <TabItem Header="Programas">
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Text="Programas instalados" Style="{StaticResource TitleMedium}"/>
+                        <WrapPanel Grid.Row="1" Margin="0,0,0,6">
+                            <ComboBox x:Name="ProgFilter" Width="230" Margin="0,0,12,6" SelectedIndex="0" SelectionChanged="ProgFilter_Changed" AutomationProperties.Name="O que mostrar">
+                                <ComboBoxItem Content="Programas" Tag="programs"/>
+                                <ComboBoxItem Content="Apps da Microsoft Store" Tag="store"/>
+                                <ComboBoxItem Content="Atualizações do Windows" Tag="updates"/>
+                                <ComboBoxItem Content="Tudo" Tag="all"/>
+                            </ComboBox>
+                            <CheckBox x:Name="ProgSystemBox" Content="Mostrar componentes do sistema" Click="ProgSystem_Click" VerticalAlignment="Center" Margin="0,0,12,6"
+                                      ToolTip="Inclui o que o Windows esconde da lista de aplicativos: partes de outros programas, atualizações de programas e apps do sistema."/>
+                            <TextBox x:Name="ProgSearch" Width="220" Tag="Buscar programa…" VerticalAlignment="Center" TextChanged="ProgSearch_Changed" Margin="0,0,0,6"
+                                     AutomationProperties.Name="Buscar programa"/>
+                        </WrapPanel>
+                        <!-- B33: totais do que está à vista (respeita a busca) -->
+                        <DockPanel Grid.Row="2">
+                            <TextBlock x:Name="ProgTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,6,0,0" TextTrimming="CharacterEllipsis"/>
+                            <DataGrid x:Name="ProgGrid" MouseDoubleClick="ProgGrid_DoubleClick" PreviewKeyDown="ProgGrid_KeyDown" AutomationProperties.Name="Programas instalados">
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="_Desinstalar…" Click="ProgUninstall_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="Abrir _pasta" Click="ProgOpenFolder_Click"/>
+                                        <MenuItem Header="Abrir no _Editor do Registro" Click="ProgRegistry_Click"/>
+                                        <MenuItem Header="Pe_squisar na internet" Click="ProgSearchOnline_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="P_ropriedades" Click="ProgProperties_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
+                                <DataGrid.Columns>
+                                    <!-- Ícone, nome e, numa segunda linha, o editor -->
+                                    <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="220" SortMemberPath="Name">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,6" ToolTip="{Binding Subtitle}">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <Grid Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource OnSurfaceVariant}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <Image Source="{Binding Icon}" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"
+                                                               Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
+                                                    </Grid>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Versão" Binding="{Binding Version}" Width="120"/>
+                                    <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" SortMemberPath="Bytes" Width="100"/>
+                                    <DataGridTextColumn Header="Instalado em" Binding="{Binding InstallDateText}" SortMemberPath="InstallDate" Width="110"/>
+                                    <DataGridTextColumn Header="Tipo" Binding="{Binding KindText}" Width="150"/>
+                                    <DataGridTextColumn Header="Instalado para" Binding="{Binding ScopeText}" Width="140"/>
+                                    <DataGridTextColumn Header="Arquitetura" Binding="{Binding BitsText}" Width="100"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                        <WrapPanel Grid.Row="3" Margin="0,14,0,0">
+                            <Button Content="Desinstalar…" Click="ProgUninstall_Click" Margin="0,0,8,6"
+                                    ToolTip="Abre o desinstalador do próprio programa (Delete na lista)."/>
+                            <Button Content="Abrir pasta" Style="{StaticResource TonalButton}" Click="ProgOpenFolder_Click" Margin="0,0,8,6"/>
+                            <Button Content="Propriedades" Style="{StaticResource TextButton}" Click="ProgProperties_Click" Margin="0,0,8,6"
+                                    ToolTip="Tudo o que o programa registrou: pasta, comando de desinstalação, chave do registro (ou Enter na lista)."/>
+                            <Button Content="Exportar lista…" Style="{StaticResource TextButton}" Click="ProgExport_Click" Margin="0,0,8,6"
+                                    ToolTip="Salva a lista à vista (com a busca e o filtro) em CSV, para planilha, ou em HTML."/>
+                            <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ProgRefresh_Click" Margin="0,0,8,6"/>
+                            <TextBlock x:Name="ProgMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
+                                       AutomationProperties.LiveSetting="Polite"/>
                         </WrapPanel>
                     </Grid>
                 </Border>

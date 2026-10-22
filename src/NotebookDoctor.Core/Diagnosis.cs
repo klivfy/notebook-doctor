@@ -73,7 +73,7 @@ public sealed record Finding(string Level, string Title, string Detail, string A
 
 public static class Diagnosis
 {
-    public const int TabProcs = 1, TabClean = 2, TabSpace = 3, TabStartup = 4, TabSettings = 8;
+    public const int TabProcs = AppTabs.Processes, TabClean = AppTabs.Clean, TabSpace = AppTabs.Space, TabStartup = AppTabs.Startup, TabSettings = AppTabs.Settings;
 
     /// <param name="uptime">Tempo ligado; nulo usa o do Windows (os testes passam um valor fixo).</param>
     public static List<Finding> Evaluate(IReadOnlyList<Snapshot> recent, HealthInfo h, IReadOnlyList<LeakSuspect>? leaks = null, TimeSpan? uptime = null)

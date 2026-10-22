@@ -13,6 +13,14 @@ public static class TableTotals
     public static string Space(IReadOnlyCollection<long> visibleBytes, int total) =>
         Of(visibleBytes.Count, total, "item", "itens") + $" · {Units.Bytes(visibleBytes.Sum())}";
 
+    /// <summary>Fase 5: soma só os tamanhos conhecidos e diz quantos ficaram sem tamanho.</summary>
+    public static string Programs(IReadOnlyCollection<long?> visibleBytes, int total)
+    {
+        int unknown = visibleBytes.Count(b => b is null);
+        return Of(visibleBytes.Count, total, "item", "itens") + $" · {Units.Bytes(visibleBytes.Sum(b => b ?? 0))}"
+               + (unknown > 0 ? $" ({unknown:N0} sem tamanho)" : "");
+    }
+
     public static string Startup(int enabledVisible, int visible, int total) =>
         Of(visible, total, "programa", "programas") + $" · {enabledVisible:N0} {(enabledVisible == 1 ? "ativado" : "ativados")}";
 }

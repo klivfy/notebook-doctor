@@ -557,13 +557,15 @@ Princípios herdados das fases anteriores, que valem para tudo:
 
 ### 6.1 Fases e levas
 
+**Andamento:** P1 ✅ (merge do PR #1) · P2 em parte (a CI agora também compila e testa no Windows; os testes de integração entram na 5.2b) · leva 5.1 ✅.
+
 Cada leva segue o ritual das anteriores: implementar, compilar, testar no Core, atualizar o PR e o `MELHORIAS.md`, gerar o pacote de teste e listar o roteiro de testes no Windows.
 
 #### Fase 5 — Programas (desinstalador completo)
 
 | Leva | Entregas | Itens | Testes automatizados | Teste no Windows (você) | Aceite |
 |---|---|---|---|---|---|
-| **5.1** | Aba Programas: lista Win32/Store/atualizações, colunas, busca, totais, menu, ícones, exportar CSV/HTML; Espaço › Aplicativos aponta para ela | R23 (export), R24 (listar), C09 (por tipo, se couber) | Core: parser de `UninstallString`, normalização de nome e editor, regras de visibilidade (`SystemComponent`, `ParentKeyName`) | Comparar a lista com "Aplicativos instalados" do Windows; exportar | Mesma contagem do Windows (±componentes de sistema) |
+| **5.1** ✅ | Aba Programas: lista Win32/Store/atualizações, colunas, busca, totais, menu, ícones, exportar CSV/HTML; Espaço › Aplicativos aponta para ela | R23 (export), R24 (listar) | Core: parser de `UninstallString`, código MSI, regras de visibilidade (`SystemComponent`, `ParentKeyName`), Store, exportação. A normalização de nome e editor foi para a 5.2a, onde é usada; C09 foi para a 6.3 | Comparar a lista com "Aplicativos instalados" do Windows; exportar | Mesma contagem do Windows (±componentes de sistema) |
 | **5.2a** | Retrato prévio, executor (MSI/EXE, espera da árvore de processos, UAC), ponto de restauração, armazém de backups | R01 (parte 1), R11 | Core: detecção do tipo de instalador, códigos de saída MSI, decisão de fim da árvore (com relógio simulado) | Desinstalar 5 programas de tipos diferentes (MSI, Inno, NSIS, Squirrel, por usuário) | O app sempre sabe quando terminou |
 | **5.2b** | Motor de sobras (3 níveis, proteções), tela de revisão, remoção com backup, desfazer, tela "Backups", histórico | R01 (parte 2), R12 | Core: classificação por nível, todas as proteções (com casos negativos), compartilhamento entre programas. **CI Windows:** programa falso (P2) | Corpus da seção 6.2 | 0 falso positivo em Seguro/Moderado; ≥ 90% das sobras no Moderado |
 | **5.3** | Fila silenciosa, remoção forçada, MSI forçada, apps da Store (remover, todos os usuários, redefinir), Caçador, "Desinstalar" em Processos e Inicialização | R02, R03, R04, R09, R13, C05 | Core: fila (ordem, falha no meio, cancelar); escolha do modo silencioso | Fila de 3 programas; remover um app da Store para todos; Caçador numa janela | Falha de um item não interrompe os outros e aparece no relatório |

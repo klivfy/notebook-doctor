@@ -23,7 +23,8 @@ public partial class MainWindow : Window
 {
     private static App Host => App.Current;
 
-    private const int TabProcs = 1, TabClean = 2, TabSpace = 3, TabStartup = 4, TabHistory = 5, TabActions = 6, TabTweaks = 7, TabSettings = 8;
+    private const int TabProcs = AppTabs.Processes, TabClean = AppTabs.Clean, TabSpace = AppTabs.Space, TabPrograms = AppTabs.Programs,
+        TabStartup = AppTabs.Startup, TabHistory = AppTabs.History, TabActions = AppTabs.Actions, TabTweaks = AppTabs.Tweaks, TabSettings = AppTabs.Settings;
 
     public MainWindow()
     {
@@ -32,7 +33,7 @@ public partial class MainWindow : Window
         RestorePlacement();
         foreach (var grid in Grids()) GridMemory.Attach(grid, Host.Settings, grid == CleanGrid ? 2 : 1); // Limpeza: a caixa de marcar e o local
         // B33: a lista muda (dados novos, busca, ordenação) e o rodapé acompanha
-        foreach (var grid in new[] { ProcGrid, SpaceGrid, StartupGrid })
+        foreach (var grid in new[] { ProcGrid, SpaceGrid, ProgGrid, StartupGrid })
             ((System.Collections.Specialized.INotifyCollectionChanged)grid.Items).CollectionChanged += (_, _) => UpdateTotals(grid);
         FooterText.Text = AppInfo.Copyright;
         AboutText.Text = $"Notebook Doctor {AppInfo.Version}\nSuporte: klivfy.com/suporte"
@@ -58,21 +59,22 @@ public partial class MainWindow : Window
         IsVisibleChanged += (_, _) => { if (IsVisible) TextScale.Apply(); };
         _snackTimer.Tick += (_, _) => HideSnack();
 
-        // Atalhos: Ctrl+1…8 trocam de aba; F5 atualiza a aba atual
+        // Atalhos: Ctrl+1…9 trocam de aba e Ctrl+0 abre Configurações; F5 atualiza a aba atual
         PreviewKeyDown += (_, e) =>
         {
-            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is >= Key.D1 and <= Key.D9) { Tabs.SelectedIndex = e.Key - Key.D1; e.Handled = true; }
+            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is >= Key.D0 and <= Key.D9) { Tabs.SelectedIndex = e.Key == Key.D0 ? TabSettings : e.Key - Key.D1; e.Handled = true; }
             else if (e.Key == Key.F5) { RefreshCurrentTab(); e.Handled = true; }
             else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.F && SearchBoxOfCurrentTab() is { } box) { box.Focus(); box.SelectAll(); e.Handled = true; }
             else if (e.Key == Key.Escape && Snack.IsVisible) { HideSnack(); e.Handled = true; }
         };
     }
 
-    /// <summary>M12: Ctrl+F vai para a busca da aba atual (Processos, Espaço e Inicialização têm uma).</summary>
+    /// <summary>M12: Ctrl+F vai para a busca da aba atual (Processos, Espaço, Programas e Inicialização têm uma).</summary>
     private TextBox? SearchBoxOfCurrentTab() => Tabs.SelectedIndex switch
     {
         TabProcs => ProcSearch,
         TabSpace => SpaceSearch,
+        TabPrograms => ProgSearch,
         TabStartup => StartupSearch,
         _ => null,
     };
@@ -83,6 +85,7 @@ public partial class MainWindow : Window
         {
             case 0: _ = Host.RefreshHealthAsync(); break;
             case TabClean: Scan_Click(this, new RoutedEventArgs()); break;
+            case TabPrograms: _ = LoadProgramsAsync(); break;
             case TabStartup: RefreshStartup(); break;
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
@@ -207,6 +210,9 @@ public partial class MainWindow : Window
             ProcTotal.Text = total == 0 ? "" : TableTotals.Processes(ProcGrid.Items.OfType<ProcRow>().Select(r => (r.Count, r.CpuPct, r.MemMB)).ToList(), total);
         else if (grid == SpaceGrid)
             SpaceTotal.Text = total == 0 ? "" : TableTotals.Space(SpaceGrid.Items.OfType<FolderUsage>().Select(f => f.Bytes).ToList(), total);
+        else if (grid == ProgGrid)
+            ProgTotal.Text = total == 0 ? "" : TableTotals.Programs(ProgGrid.Items.OfType<ProgramRow>()
+                .Select(r => r.Program.SizeSource == SizeSource.None ? (long?)null : r.Bytes).ToList(), total);
         else if (grid == StartupGrid)
         {
             var visible = StartupGrid.Items.OfType<StartupEntry>().ToList();
@@ -220,7 +226,7 @@ public partial class MainWindow : Window
         if (Host.Settings.PlaySounds) System.Media.SystemSounds.Asterisk.Play();
     }
 
-    private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid, TasksGrid, ExtensionsGrid, EventLogsGrid];
+    private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, ProgGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid, TasksGrid, ExtensionsGrid, EventLogsGrid];
 
     public void SavePlacement()
     {
@@ -289,6 +295,7 @@ public partial class MainWindow : Window
         {
             case TabProcs when Host.Latest is { } s: RefreshProcesses(s); break;
             case TabClean when CleanGrid.ItemsSource is null: Scan_Click(this, new RoutedEventArgs()); break; // a análise só lê, então roda ao abrir
+            case TabPrograms when !_progLoaded: _ = LoadProgramsAsync(); break;
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
             case TabTweaks: LoadTweaks(); break;

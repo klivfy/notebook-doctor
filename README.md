@@ -20,7 +20,7 @@ O app tem uma instância só: abrir de novo com argumentos repassa o pedido para
 
 | Argumento | O que faz |
 |---|---|
-| `--tab=N` | Abre na aba N: 0 Painel, 1 Processos, 2 Limpeza, 3 Espaço, 4 Inicialização, 5 Histórico, 6 Ações, 7 Ajustes, 8 Configurações. É o que a jump list usa. |
+| `--tab=nome` | Abre na aba: `painel`, `processos`, `limpeza`, `espaco`, `programas`, `inicializacao`, `historico`, `acoes`, `ajustes` ou `configuracoes`. O número da aba também funciona (0 = Painel, 9 = Configurações), mas muda quando entra uma aba nova; a jump list usa o nome. |
 | `--background` | Inicia só na bandeja, sem abrir a janela (usado ao iniciar com o Windows). |
 | `--demo` | Modo demonstração: Painel, Processos e Histórico com dados fictícios, simulação sempre ligada e dados numa pasta temporária. Abre mesmo com o app de verdade rodando. Para apresentações e capturas de tela. |
 | `notebookdoctor:open` | Abre o painel. Também aceita `tab/N`, `heavy`, `report` (exporta o relatório) e `update`. São os links das notificações; funcionam com `start notebookdoctor:tab/2`. |

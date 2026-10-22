@@ -1,3 +1,10 @@
+Programas (novo)
+• Nova aba com os programas instalados, os apps da Microsoft Store e as atualizações do Windows.
+• Tamanho, data de instalação, tipo, para quem foi instalado e arquitetura de cada um; ícones, busca e totais.
+• Desinstalar abre o desinstalador do próprio programa (com ponto de restauração, como administrador) e a lista se atualiza quando ele termina.
+• Abrir a pasta, ver a chave no Editor do Registro, pesquisar na internet e ver todas as propriedades.
+• Exportar a lista em CSV (planilha) ou HTML.
+
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.

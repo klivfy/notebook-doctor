@@ -120,9 +120,9 @@ public partial class App : Application
             win.Show();
         }
         else ShowWindow();
-        // Atalho: --tab=N abre direto na aba N (0 = Painel). Útil para testes e atalhos do Windows.
+        // Atalho: --tab=programas (ou o número, 0 = Painel) abre direto na aba. Útil para testes e atalhos do Windows.
         var tabArg = e.Args.FirstOrDefault(a => a.StartsWith("--tab="));
-        if (tabArg is not null && int.TryParse(tabArg[6..], out int tab)) win.SelectTab(tab);
+        if (tabArg is not null && AppTabs.Parse(tabArg[6..]) is int tab) win.SelectTab(tab);
         if (uri is not null) HandleUri(uri);
 
         // A jump list e o registro das notificações são do app instalado, não da demonstração
@@ -252,8 +252,11 @@ public partial class App : Application
         var plans = await Task.Run(PowerPlans.List);
         if (PowerAdvice.Suggest(onAc, plans) is not { } s) return;
         if (MainWindow is NotebookDoctor.MainWindow { IsVisible: true } win) win.ShowPowerSuggestion(s);
-        else if (!IsQuietNow()) Notify(s.Title, s.Reason, ("Ver energia", $"tab/{Diagnosis.TabSettings}"));
+        else if (!IsQuietNow()) Notify(s.Title, s.Reason, ("Ver energia", Tab(AppTabs.Settings)));
     }
+
+    /// <summary>Ação de botão de notificação que abre uma aba, pelo nome (continua certa se a ordem das abas mudar).</summary>
+    private static string Tab(int index) => "tab/" + AppTabs.Name(index);
 
     /// <summary>
     /// Ações de link. Só navegação: qualquer página web pode abrir um link "notebookdoctor:",
@@ -266,11 +269,11 @@ public partial class App : Application
         var win = (MainWindow)MainWindow!;
         switch (action)
         {
-            case "heavy": win.SelectTab(0); break;
+            case "heavy": win.SelectTab(AppTabs.Panel); break;
             case "report": win.ExportReport(); break;
-            case "update": win.SelectTab(8); win.OfferUpdate(); break;
+            case "update": win.SelectTab(AppTabs.Settings); win.OfferUpdate(); break;
             case "protection": AppInfo.OpenShell("SystemPropertiesProtection.exe"); break; // só abre a tela do Windows
-            case var t when t.StartsWith("tab/") && int.TryParse(t[4..], out int i): win.SelectTab(i); break;
+            case var t when t.StartsWith("tab/") && AppTabs.Parse(t[4..]) is int i: win.SelectTab(i); break;
         }
     }
 
@@ -319,7 +322,7 @@ public partial class App : Application
         string what = CrashLog.LatestHeadline();
         Notify("O Notebook Doctor teve um erro", (what.Length > 0 ? what + ". " : "") +
                "O relatório ficou guardado sem dados pessoais e vai no pacote para o suporte, se você quiser enviar.",
-               ("Ver em Configurações", $"tab/{Diagnosis.TabSettings}"));
+               ("Ver em Configurações", Tab(AppTabs.Settings)));
     }
 
     private string _appliedTheme = "";
@@ -460,7 +463,7 @@ public partial class App : Application
         var top = week.SelectMany(w => w.Top).GroupBy(n => n).OrderByDescending(g => g.Count()).Take(3).Select(g => g.Key);
         string text = (scores.Count > 0 ? $"Nota média {scores.Average():0}. " : "") +
                       $"CPU média {week.Average(w => w.Cpu):0}%, RAM média {week.Average(w => w.Ram):0}%. Mais pesados: {string.Join(", ", top)}.";
-        Notify("Resumo da semana", text, ("Ver relatório", "report"), ("Abrir histórico", "tab/5"));
+        Notify("Resumo da semana", text, ("Ver relatório", "report"), ("Abrir histórico", Tab(AppTabs.History)));
     }
 
     public void IgnoreHeavy(string name)
@@ -477,7 +480,7 @@ public partial class App : Application
         if (s.DiskFreePct < 10 && (DateTime.Now - _lastDiskAlert).TotalHours >= 6)
         {
             _lastDiskAlert = DateTime.Now;
-            Alert("Pouco espaço no disco", $"Só {s.DiskFreePct:0}% livre ({Units.Gb(s.DiskFreeGB, "0")}).", ("Abrir Limpeza", "tab/2"), ("Ver o que ocupa", "tab/3"));
+            Alert("Pouco espaço no disco", $"Só {s.DiskFreePct:0}% livre ({Units.Gb(s.DiskFreeGB, "0")}).", ("Abrir Limpeza", Tab(AppTabs.Clean)), ("Ver o que ocupa", Tab(AppTabs.Space)));
         }
         string? msg = null;
         int minutes = Settings.AlertMinutes;
@@ -496,7 +499,7 @@ public partial class App : Application
         if (msg is not null && (DateTime.Now - _lastAlert).TotalMinutes >= 30)
         {
             _lastAlert = DateTime.Now;
-            Alert(msg.StartsWith("CPU") ? "CPU alta" : "Memória alta", msg, ("Abrir painel", "open"), ("Ver processos", "tab/1"));
+            Alert(msg.StartsWith("CPU") ? "CPU alta" : "Memória alta", msg, ("Abrir painel", "open"), ("Ver processos", Tab(AppTabs.Processes)));
         }
     }
 
@@ -524,7 +527,7 @@ public partial class App : Application
         long freed = await Task.Run(() => Cleaner.QuickClean(days));
         ActionLog.Add("Limpeza de temporários", $"{Cleaner.FormatBytes(freed)} liberados (arquivos com mais de {days} dias)");
         _ = RefreshHealthAsync();
-        if (notify) Notify("Limpeza concluída", $"{Cleaner.FormatBytes(freed)} liberados de temporários antigos.", ("Ver ações", "tab/6"));
+        if (notify) Notify("Limpeza concluída", $"{Cleaner.FormatBytes(freed)} liberados de temporários antigos.", ("Ver ações", Tab(AppTabs.Actions)));
         return freed;
     }
 
@@ -598,16 +601,16 @@ public partial class App : Application
         if (Environment.ProcessPath is not { } exe) return;
         System.Windows.Shell.JumpTask Item(string title, int tab, string description) => new()
         {
-            Title = title, Description = description, Arguments = $"--tab={tab}",
+            Title = title, Description = description, Arguments = $"--tab={AppTabs.Name(tab)}",
             ApplicationPath = exe, IconResourcePath = exe, IconResourceIndex = 0,
         };
         try
         {
             var list = new System.Windows.Shell.JumpList(new System.Windows.Shell.JumpItem[]
             {
-                Item("Limpeza", 2, "Ver o que pode ser limpo"),
-                Item("Processos", 1, "Ver os programas em execução"),
-                Item("Histórico", 5, "Ver o uso dos últimos dias"),
+                Item("Limpeza", AppTabs.Clean, "Ver o que pode ser limpo"),
+                Item("Processos", AppTabs.Processes, "Ver os programas em execução"),
+                Item("Histórico", AppTabs.History, "Ver o uso dos últimos dias"),
             }, showFrequent: false, showRecent: false);
             System.Windows.Shell.JumpList.SetJumpList(this, list);
             list.Apply();
