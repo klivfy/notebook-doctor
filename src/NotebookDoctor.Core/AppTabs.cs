@@ -9,9 +9,9 @@ namespace NotebookDoctor.Services;
 /// </summary>
 public static class AppTabs
 {
-    public const int Panel = 0, Processes = 1, Clean = 2, Space = 3, Programs = 4, Startup = 5, History = 6, Actions = 7, Tweaks = 8, Settings = 9;
+    public const int Panel = 0, Processes = 1, Clean = 2, Space = 3, Programs = 4, Startup = 5, History = 6, Actions = 7, Tweaks = 8, System = 9, Settings = 10;
 
-    public static readonly string[] Names = ["painel", "processos", "limpeza", "espaco", "programas", "inicializacao", "historico", "acoes", "ajustes", "configuracoes"];
+    public static readonly string[] Names = ["painel", "processos", "limpeza", "espaco", "programas", "inicializacao", "historico", "acoes", "ajustes", "sistema", "configuracoes"];
 
     public static string Name(int index) => Names[index];
 

@@ -28,6 +28,7 @@
                 <ListBoxItem Tag="&#xE81C;" Content="Histórico"/>
                 <ListBoxItem Tag="&#xE7A7;" Content="Ações"/>
                 <ListBoxItem Tag="&#xE9E9;" Content="Ajustes"/>
+                <ListBoxItem Tag="&#xE946;" Content="Sistema"/>
                 <ListBoxItem Tag="&#xE713;" Content="Configurações" DockPanel.Dock="Bottom"/>
             </ListBox>
         </Border>
@@ -844,6 +845,46 @@
                         </ItemsControl>
                     </StackPanel>
                 </ScrollViewer>
+            </TabItem>
+
+            <!-- SISTEMA (Fase 8, leva 8.1): o retrato do computador -->
+            <TabItem Header="Sistema">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <WrapPanel Margin="0,0,0,10">
+                        <Button x:Name="SysRefreshBtn" Content="Atualizar" Style="{StaticResource TonalButton}" Click="SysRefresh_Click" Margin="0,0,8,6"
+                                ToolTip="Lê tudo de novo (pode levar alguns segundos)."/>
+                        <Button Content="Copiar resumo" Style="{StaticResource TextButton}" Click="SysCopy_Click" Margin="0,0,8,6"
+                                ToolTip="Copia um resumo curto para colar numa conversa, e-mail ou chamado."/>
+                        <Button Content="Exportar…" Style="{StaticResource TextButton}" Click="SysExport_Click" Margin="0,0,8,6"
+                                ToolTip="Salva o retrato completo em TXT, HTML ou PDF. Nada é enviado para a internet."/>
+                        <TextBlock x:Name="SysMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                    </WrapPanel>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False">
+                        <ItemsControl x:Name="SysList" Focusable="False" AutomationProperties.Name="Informações do sistema">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource Card}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2" Margin="0,0,0,8"/>
+                                            <ItemsControl ItemsSource="{Binding Lines}" Focusable="False">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,3">
+                                                            <Grid.ColumnDefinitions><ColumnDefinition Width="230"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Label}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,12,0"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
             </TabItem>
 
             <!-- CONFIGURAÇÕES -->

@@ -11,11 +11,13 @@ public class AppTabsTests
     [InlineData(" ESPAÇO ", AppTabs.Space)]
     [InlineData("historico", AppTabs.History)]
     [InlineData("0", AppTabs.Panel)]
-    [InlineData("9", AppTabs.Settings)]
+    [InlineData("9", AppTabs.System)]
+    [InlineData("10", AppTabs.Settings)]
+    [InlineData("sistema", AppTabs.System)]
     public void Nome_ou_numero_viram_a_aba(string text, int expected) => Assert.Equal(expected, AppTabs.Parse(text));
 
     [Theory]
-    [InlineData("10")]
+    [InlineData("11")]
     [InlineData("-1")]
     [InlineData("downloads")]
     [InlineData("")]

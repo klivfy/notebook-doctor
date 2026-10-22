@@ -24,7 +24,7 @@ public partial class MainWindow : Window
     private static App Host => App.Current;
 
     private const int TabProcs = AppTabs.Processes, TabClean = AppTabs.Clean, TabSpace = AppTabs.Space, TabPrograms = AppTabs.Programs,
-        TabStartup = AppTabs.Startup, TabHistory = AppTabs.History, TabActions = AppTabs.Actions, TabTweaks = AppTabs.Tweaks, TabSettings = AppTabs.Settings;
+        TabStartup = AppTabs.Startup, TabHistory = AppTabs.History, TabActions = AppTabs.Actions, TabTweaks = AppTabs.Tweaks, TabSystem = AppTabs.System, TabSettings = AppTabs.Settings;
 
     public MainWindow()
     {
@@ -299,6 +299,7 @@ public partial class MainWindow : Window
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
             case TabTweaks: LoadTweaks(); break;
+            case TabSystem when _sysSections is null: _ = LoadSystemAsync(); break;
             case TabSettings: CfgMsg.Text = ""; LoadPlans(); RefreshLockCard(); break;
         }
         Host.Settings.LastTab = Tabs.SelectedIndex;
