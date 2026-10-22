@@ -57,6 +57,12 @@ Sistema (novo)
 • Temperaturas que o Windows deixa ler: zona térmica, discos e placa NVIDIA.
 • “Exportar…” em TXT, HTML ou PDF e “Copiar resumo”. Nada é enviado para a internet.
 
+Apagar de vez (novo)
+• Limpeza › “Apagar de vez…”: apaga arquivos e pastas sem chance de recuperar (sem Lixeira, sem desfazer).
+• Limpa o espaço livre de uma unidade, para que o que já foi excluído não possa ser recuperado.
+• Apaga um pen drive, cartão ou HD externo inteiro, digitando a letra e o nome da unidade para confirmar.
+• Em SSD, pen drive e cartão de memória não há garantia, e o app avisa.
+
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.

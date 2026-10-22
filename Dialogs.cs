@@ -503,6 +503,46 @@ public static class Dialogs
         return result;
     }
 
+    /// <summary>
+    /// Leva 8.2 (C11): confirmação de apagar uma unidade inteira. Só segue se a pessoa digitar a letra da unidade e, quando ela tem nome,
+    /// o nome. Clicar não basta.
+    /// </summary>
+    public static bool ConfirmDriveWipe(Window owner, Services.DriveFacts drive, string message)
+    {
+        string title = Services.Loc.T("Apagar a unidade inteira");
+        var dlg = NewWindow(owner, title, 560);
+        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var body = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 14) };
+        var (letter, label) = Services.DriveWipeRules.Confirmation(drive);
+        var letterLabel = new TextBlock { Text = Services.Loc.F("Digite a letra da unidade ({0}:) para confirmar", letter), Margin = new Thickness(0, 0, 0, 4) };
+        var typedLetter = new TextBox { Margin = new Thickness(0, 0, 0, 12), MaxLength = 3 };
+        System.Windows.Automation.AutomationProperties.SetName(typedLetter, letterLabel.Text);
+        var panel = new StackPanel { Margin = new Thickness(24), Children = { heading, body, letterLabel, typedLetter } };
+        TextBox? typedLabel = null;
+        if (label is not null)
+        {
+            var nameLabel = new TextBlock { Text = Services.Loc.F("Digite o nome da unidade ({0}) para confirmar", label), Margin = new Thickness(0, 0, 0, 4) };
+            typedLabel = new TextBox { Margin = new Thickness(0, 0, 0, 12) };
+            System.Windows.Automation.AutomationProperties.SetName(typedLabel, nameLabel.Text);
+            panel.Children.Add(nameLabel);
+            panel.Children.Add(typedLabel);
+        }
+        bool result = false;
+        var cancel = new Button { Content = Services.Loc.T("Cancelar"), IsCancel = true, IsDefault = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        var ok = new Button { Content = Services.Loc.T("Apagar tudo"), IsEnabled = false };
+        ok.SetResourceReference(FrameworkElement.StyleProperty, "DangerButton");
+        void Check() => ok.IsEnabled = Services.DriveWipeRules.Confirmed(drive, typedLetter.Text, typedLabel?.Text ?? "");
+        typedLetter.TextChanged += (_, _) => Check();
+        if (typedLabel is not null) typedLabel.TextChanged += (_, _) => Check();
+        ok.Click += (_, _) => { result = true; dlg.Close(); };
+        panel.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 8, 0, 0), Children = { cancel, ok } });
+        dlg.Content = panel;
+        dlg.Loaded += (_, _) => typedLetter.Focus();
+        dlg.ShowDialog();
+        return result;
+    }
+
     /// <summary>B23/B24: texto longo (novidades, licenças, privacidade) com rolagem.</summary>
     public static void ShowText(Window owner, string title, string text)
     {

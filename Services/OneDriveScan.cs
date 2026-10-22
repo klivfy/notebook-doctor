@@ -57,7 +57,7 @@ public static class OneDriveScan
     }
 
     /// <summary>Pastas do OneDrive deste usuário: contas configuradas no registro e, de reserva, as variáveis de ambiente.</summary>
-    private static IEnumerable<string> Folders()
+    public static IEnumerable<string> Folders()
     {
         var list = new List<string>();
         try
