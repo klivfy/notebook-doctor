@@ -63,6 +63,10 @@ Apagar de vez (novo)
 • Apaga um pen drive, cartão ou HD externo inteiro, digitando a letra e o nome da unidade para confirmar.
 • Em SSD, pen drive e cartão de memória não há garantia, e o app avisa.
 
+Recuperar arquivos (novo)
+• Limpeza › “Recuperar arquivos…”: procura arquivos apagados em pen drive, cartão ou disco pelo Windows File Recovery (gratuito, da Microsoft) e guarda o que achar em outra unidade.
+• Escolha o que procurar (documentos, fotos, vídeos…) e o modo; o app avisa o que reduz as chances, como o SSD.
+
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.
