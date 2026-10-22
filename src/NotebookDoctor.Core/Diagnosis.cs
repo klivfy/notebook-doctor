@@ -21,6 +21,14 @@ public sealed record Finding(string Level, string Title, string Detail, string A
             "Para não superaquecer ou gastar bateria, o processador baixa a própria velocidade. Ele fica bem mais lento sem que nada pareça errado.",
         var t when t.StartsWith("Temperatura") || t.StartsWith("Disco quente") =>
             "O calor obriga o hardware a desacelerar e, com o tempo, encurta a vida da bateria, do SSD e da placa. Saídas de ar bloqueadas são a causa mais comum.",
+        var t when t.StartsWith("Windows Update desativado") || t.StartsWith("Atualização do Windows") || t.StartsWith("Windows sem atualizar") =>
+            "Atualizações trazem correções de segurança e de desempenho. Uma atualização que falha costuma tentar de novo em segundo plano, gastando disco e rede sem terminar.",
+        var t when t.StartsWith("Vídeo sem o driver") || t.StartsWith("Driver de vídeo") =>
+            "Sem o driver certo, quem desenha a tela é o processador, não a placa de vídeo. Janelas, vídeos e o navegador ficam mais lentos e a bateria dura menos.",
+        var t when t.StartsWith("Otimização automática") || t.StartsWith("Manutenção automática") =>
+            "Com o PC parado, o Windows faz TRIM no SSD, atualiza componentes e verifica o sistema. Desligado, o SSD vai ficando mais lento ao gravar e as pendências se acumulam.",
+        var t when t.StartsWith("OneDrive") =>
+            "Arquivos que o OneDrive mantém baixados ocupam o disco do mesmo jeito que na nuvem. Com o disco cheio, o SSD fica mais lento e o Windows não consegue se atualizar.",
         var t when t.StartsWith("Disco virtual do") =>
             "O disco virtual do Linux cresce quando você baixa ou cria arquivos dentro dele, mas não encolhe sozinho quando eles são apagados. O espaço continua ocupado no disco do Windows.",
         var t when t.StartsWith("WSL") =>
@@ -108,6 +116,11 @@ public static class Diagnosis
 
         // M33: OneDrive com tudo baixado
         if (OneDriveRule.Evaluate(h.OneDrive, now.DiskFreePct) is { } od) f.Add(od);
+
+        // A22, A23 e A39: atualizações travadas, driver de vídeo e manutenção do Windows desligada
+        f.AddRange(UpdateRules.Evaluate(h.Updates, now.Time));
+        f.AddRange(DriverRules.Evaluate(h.Gpus, now.Time));
+        f.AddRange(MaintenanceRules.Evaluate(h.Maintenance, h.DiskType));
 
         var sec = h.Sec;
         if (sec.DefenderRealtime == false && sec.OtherAv.Count == 0)

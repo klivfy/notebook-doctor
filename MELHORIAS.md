@@ -35,8 +35,8 @@ Critérios de impacto
 | A19 | Modo eficiência para apps em segundo plano | ✅ (botão em Processos; desfaz em Ações) |
 | A20 | Gerenciador de inicialização com estimativa de impacto no boot | 🟡 impacto estimado (CPU acumulada e RAM do programa), não a medição do Windows |
 | A21 | Medir o tempo de boot (log Diagnostics-Performance) e mostrar tendência | 🟡 pronto, mas o log do Windows não trouxe dados neste PC (mostra "–") |
-| A22 | Verificar atualizações do Windows pendentes/travadas e reinício pendente | 🟡 reinício pendente detectado; falta checar updates travados |
-| A23 | Detectar drivers com erro ou desatualizados | 🟡 lista dispositivos com driver em erro; nenhum neste PC |
+| A22 | Verificar atualizações do Windows pendentes/travadas e reinício pendente | 🟡 reinício pendente; serviço Windows Update desativado; mesma atualização (KB) falhando 2+ vezes desde o último sucesso; 40+ dias sem instalar nada (menos com pausa ativa). Histórico lido pela API do Windows Update; não testado no Windows |
+| A23 | Detectar drivers com erro ou desatualizados | 🟡 dispositivos com driver em erro; vídeo com o driver genérico do Windows; driver de vídeo com mais de 2 anos (adaptadores virtuais ficam de fora). Os outros drivers não são datados: data antiga em rede ou chipset não indica problema |
 | A24 | Verificação de integridade (SFC/DISM) guiada, com progresso | 🟡 pronto (SFC/DISM, verificar e reparar, com log ao vivo); exige administrador e não foi executado aqui |
 | A25 | Alertar processos sem assinatura digital rodando de AppData/Temp | 🟡 detecta falta de assinatura em programas de AppData/Temp/Downloads; nenhum achado neste PC |
 | A26 | Verificar Defender e Firewall, com correção | 🟡 Defender (tempo real, definições), firewall e antivírus de terceiros; tudo ok neste PC, então nenhum alerta apareceu |
@@ -52,7 +52,7 @@ Critérios de impacto
 | A36 | Criar ponto de restauração antes de correções que alteram o sistema | 🟡 só com administrador e Proteção do Sistema ativa; se ela estiver desligada, avisa uma vez por sessão com botão para a configuração (não testado aqui) |
 | A37 | Registro de ações com botão "Desfazer" | ✅ aba Ações; desfaz plano de energia, inicialização e plano criado |
 | A38 | Modo simulação ("o que seria alterado") em toda correção | ✅ (modo simulação global + botão Simular em cada ajuste) |
-| A39 | Manutenção agendada em horário ocioso | 🟡 limpeza semanal agora espera 10 min sem uso do computador; falta agendar outras rotinas |
+| A39 | Manutenção agendada em horário ocioso | 🟡 limpeza semanal só com 10 min sem uso, fora do Modo Foco e na tomada; avisa quando a otimização semanal das unidades (TRIM) ou a manutenção automática do Windows estão desligadas, em vez de duplicar o que o Windows já faz |
 | A40 | Notificações nativas do Windows (toast) com botão "Resolver" | ✅ notificações nativas do Windows com botões ("Abrir painel", "Abrir Limpeza", "Ver relatório"), sem pacotes extras; o balão da bandeja fica como reserva. Os botões só navegam no app |
 | A41 | Alerta de processo novo consumindo muito por tempo prolongado, com "Encerrar" | ✅ alerta após 3 min com 25%+ da CPU, botões Encerrar e Ignorar 1 h (não disparou no teste) |
 | A42 | Alerta de superaquecimento | 🟡 alerta com sensor (90 °C+ por 2 min) ou, sem sensor, quando a CPU fica abaixo de 60% da velocidade sob carga; não disparou no teste |
@@ -219,4 +219,4 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-Fase 1 no Windows: A22 Updates travados · A23 Drivers desatualizados · A39 Integridade e TRIM agendados. Depois do merge: M13 Multi-idioma (PR próprio). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.
+Depois do merge: M13 Multi-idioma (PR próprio). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.

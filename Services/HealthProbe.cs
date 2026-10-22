@@ -24,6 +24,12 @@ if($d){ $r=$d | Get-StorageReliabilityCounter; $o.disk=[ordered]@{name="$($d.Fri
 $b=@(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Diagnostics-Performance/Operational';Id=100} -MaxEvents 5 | ForEach-Object { $x=[xml]$_.ToXml(); ($x.Event.EventData.Data | Where-Object Name -eq 'BootTime').'#text' })
 $o.boot=$b
 $o.drivers=@(Get-PnpDevice -PresentOnly | Where-Object { $_.Status -eq 'Error' } | Select-Object -First 8 | ForEach-Object { "$($_.FriendlyName)" })
+try { $h=(New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher(); $c=$h.GetTotalHistoryCount(); if($c -gt 0){ $o.wu=@($h.QueryHistory(0,[Math]::Min($c,80)) | Where-Object { $_.Operation -eq 1 } | ForEach-Object { [ordered]@{t="$($_.Title)";d=$_.Date.ToLocalTime().ToString('yyyy-MM-ddTHH:mm:ss');r=[int]$_.ResultCode} }) } } catch {}
+$o.wuoff=("$((Get-Service wuauserv).StartType)" -eq 'Disabled')
+$o.wupause="$((Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings').PauseUpdatesExpiryTime)"
+$o.gpu=@(Get-CimInstance Win32_VideoController | ForEach-Object { [ordered]@{n="$($_.Name)";v="$($_.DriverVersion)";d=$(if($_.DriverDate){$_.DriverDate.ToString('yyyy-MM-dd')}else{''})} })
+$t=Get-ScheduledTask -TaskPath '\Microsoft\Windows\Defrag\' -TaskName 'ScheduledDefrag'; if($t){ $o.defrag=("$($t.State)" -ne 'Disabled') }
+$o.maintoff=((Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance').MaintenanceDisabled -eq 1)
 $o | ConvertTo-Json -Compress -Depth 4
 """;
 
@@ -94,7 +100,8 @@ $o | ConvertTo-Json -Compress -Depth 3
 
         return new HealthInfo(name, type, health, wear, temp, batPct, cycles, bootLast, bootAvg,
             RebootPending(), System.Windows.SystemParameters.PowerLineStatus == System.Windows.PowerLineStatus.Online,
-            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result, tVhd.Result, tOneDrive.Result);
+            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result, tVhd.Result, tOneDrive.Result,
+            _updates, _gpus, _maintenance);
     }
 
     // Pastas de dados do usuário, onde malware costuma rodar. Pastas de desenvolvimento ficam de fora para evitar alarme falso.
@@ -203,10 +210,27 @@ $o | ConvertTo-Json -Compress -Depth 3
         finally { try { File.Delete(file); } catch { } }
     }
 
+    // A22, A23 e A39: lidos pelo mesmo script do disco, numa só chamada ao PowerShell
+    private static UpdateStatus? _updates;
+    private static List<GpuDriver> _gpus = new();
+    private static WindowsMaintenance? _maintenance;
+
+    private static void ReadUpkeep(JsonElement root)
+    {
+        _updates = new UpdateStatus(
+            root.TryGetProperty("wu", out var wu) ? UpdateRules.ParseHistory(wu) : new List<UpdateEntry>(),
+            root.TryGetProperty("wuoff", out var off) && off.ValueKind == JsonValueKind.True,
+            root.TryGetProperty("wupause", out var pause) && pause.ValueKind == JsonValueKind.String ? UpdateRules.ParsePause(pause.GetString()) : null);
+        _gpus = root.TryGetProperty("gpu", out var gpu) ? DriverRules.Parse(gpu) : new();
+        bool? defrag = root.TryGetProperty("defrag", out var df) && df.ValueKind is JsonValueKind.True or JsonValueKind.False ? df.GetBoolean() : null;
+        _maintenance = new WindowsMaintenance(defrag, root.TryGetProperty("maintoff", out var mo) && mo.ValueKind == JsonValueKind.True);
+    }
+
     private static (string name, string type, string health, int? wear, int? temp, List<int> boots, List<string> drivers) RunPowerShell()
     {
         var boots = new List<int>();
         var drivers = new List<string>();
+        _updates = null; _gpus = new(); _maintenance = null;
         try
         {
             string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(Script));
@@ -217,6 +241,7 @@ $o | ConvertTo-Json -Compress -Depth 3
             if (!p.WaitForExit(60000)) { try { p.Kill(); } catch { } return ("", "", "", null, null, boots, drivers); }
             using var doc = JsonDocument.Parse(output.Result.Trim());
             var root = doc.RootElement;
+            ReadUpkeep(root);
 
             if (root.TryGetProperty("boot", out var b))
             {

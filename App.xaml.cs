@@ -502,8 +502,8 @@ public partial class App : Application
     private async Task CheckWeeklyAsync()
     {
         if (AppPaths.Demo || !Settings.WeeklyCleanup || (DateTime.Now - Settings.LastWeeklyRun).TotalDays < 7) return;
-        // Manutenção em horário ocioso: só roda quando ninguém mexe no computador há 10 minutos (e não durante o Modo Foco)
-        if (Native.IdleTime() < TimeSpan.FromMinutes(10) || Focus.Active) return;
+        // A39: manutenção em horário ocioso: 10 minutos sem uso, fora do Modo Foco e na tomada
+        if (!MaintenanceRules.CanRunIdleTask(Native.IdleTime(), Focus.Active, Native.PowerStatus().OnBattery)) return;
         Settings.LastWeeklyRun = DateTime.Now;
         Settings.Save();
         await QuickCleanAsync(notify: true);

@@ -2,6 +2,9 @@ Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.
 • Aviso quando o OneDrive guarda muitos arquivos no disco, com o caminho para "Liberar espaço".
+• Avisos de Windows Update desativado, atualização falhando ou muito tempo sem atualizar.
+• Aviso de driver de vídeo genérico ou com mais de 2 anos, e de manutenção automática do Windows desligada.
+• A limpeza semanal só roda com o computador parado e na tomada.
 • Na bateria, o app consulta o computador com menos frequência quando está em segundo plano.
 • Sugestão de plano de energia ao ligar ou tirar o notebook da tomada.
 • Relatório em PDF e botão "Copiar resumo" para colar num chamado.

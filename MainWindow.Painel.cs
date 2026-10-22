@@ -46,6 +46,19 @@ public partial class MainWindow
             case "open-devices":
                 AppInfo.OpenShell("devmgmt.msc");
                 break;
+            // A22, A23 e A39
+            case "open-update":
+                AppInfo.OpenShell("ms-settings:windowsupdate");
+                break;
+            case "open-optional-updates":
+                AppInfo.OpenShell("ms-settings:windowsupdate-optionalupdates");
+                break;
+            case "open-defrag":
+                AppInfo.OpenShell("dfrgui.exe");
+                break;
+            case "open-maintenance":
+                try { System.Diagnostics.Process.Start("control.exe", "/name Microsoft.ActionCenter"); } catch { }
+                break;
             case "open-backup":
                 AppInfo.OpenShell("ms-settings:backup");
                 break;

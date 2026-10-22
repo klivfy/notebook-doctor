@@ -21,7 +21,8 @@ public sealed record HealthInfo(
     bool RebootPending, bool OnAc, string ActivePlan, string? HighPlanGuid,
     int StartupEnabled, long TempBytes,
     IReadOnlyList<string> DriverErrors, IReadOnlyList<UnsignedApp> Unsigned, SecurityInfo? Security = null,
-    IReadOnlyList<VirtualDisk>? VirtualDisks = null, OneDriveInfo? OneDrive = null)
+    IReadOnlyList<VirtualDisk>? VirtualDisks = null, OneDriveInfo? OneDrive = null,
+    UpdateStatus? Updates = null, IReadOnlyList<GpuDriver>? Gpus = null, WindowsMaintenance? Maintenance = null)
 {
     public SecurityInfo Sec => Security ?? SecurityInfo.Empty;
     public static readonly HealthInfo Empty = new("", "", "", null, null, null, null, null, null, false, false, "", null, 0, 0,
