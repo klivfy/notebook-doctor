@@ -219,6 +219,6 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-Fase 5 (desinstalador completo), leva 5.3: fila silenciosa, remoção forçada (procurar sobras de um programa já removido), MSI forçada, apps da Store para todos os usuários e "Caçador". O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
+Fase 5 (desinstalador completo), levas 5.4a e 5.4b: monitor de instalação (fotografia do registro e diário USN) e desinstalação pelo trace. O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
 
 Também pendentes: M13 Multi-idioma, 2ª e 3ª levas (mensagens do código, diagnóstico, relatórios e textos do Sobre). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.

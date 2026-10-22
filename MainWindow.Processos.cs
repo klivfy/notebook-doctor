@@ -155,6 +155,14 @@ public partial class MainWindow
         try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
     }
 
+    /// <summary>Leva 5.3: abre a aba Programas no programa instalado dono do processo.</summary>
+    private async void ProcShowProgram_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = "Selecione um programa na lista."; return; }
+        if (ProcessIcons.ExePath(r.Names[0]) is not { } exe) { ProcMsg.Text = "O Windows não deixou ver o arquivo desse processo."; return; }
+        await RevealProgramForAsync(exe);
+    }
+
     private void ProcSearchOnline_Click(object sender, RoutedEventArgs e)
     {
         if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = "Selecione um programa na lista."; return; }

@@ -68,11 +68,44 @@ $kb=@(Get-HotFix | ForEach-Object { [ordered]@{ id=$_.HotFixID; d=$_.Description
     public static string? RemoveStoreApp(string packageFullName)
     {
         string name = packageFullName.Replace("'", "''");
-        string output = PowerShell($$"""
+        return Ok(PowerShell($$"""
 [Console]::OutputEncoding=[Text.Encoding]::UTF8
 try { Remove-AppxPackage -Package '{{name}}' -ErrorAction Stop; 'ok' } catch { $_.Exception.Message }
-""", 180_000).Trim();
-        return output == "ok" ? null : output.Length > 0 ? output : Loc.T("O PowerShell não respondeu.");
+""", 180_000));
+    }
+
+    /// <summary>
+    /// Leva 5.3: remove o app de todas as contas e do pacote que o Windows instala em contas novas (provisionado).
+    /// Exige administrador. Devolve o erro do Windows, ou null quando deu certo.
+    /// </summary>
+    public static string? RemoveStoreAppAllUsers(string packageFullName)
+    {
+        string full = packageFullName.Replace("'", "''");
+        string name = full.Split('_')[0];
+        return Ok(PowerShell($$"""
+[Console]::OutputEncoding=[Text.Encoding]::UTF8
+try {
+  Remove-AppxPackage -Package '{{full}}' -AllUsers -ErrorAction Stop
+  Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq '{{name}}' } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null
+  'ok'
+} catch { $_.Exception.Message }
+""", 300_000));
+    }
+
+    /// <summary>Leva 5.3: volta o app ao estado de recém-instalado (configurações e dados locais apagados).</summary>
+    public static string? ResetStoreApp(string packageFullName)
+    {
+        string full = packageFullName.Replace("'", "''");
+        return Ok(PowerShell($$"""
+[Console]::OutputEncoding=[Text.Encoding]::UTF8
+try { Get-AppxPackage | Where-Object { $_.PackageFullName -eq '{{full}}' } | Reset-AppxPackage -ErrorAction Stop; 'ok' } catch { $_.Exception.Message }
+""", 180_000));
+    }
+
+    private static string? Ok(string output)
+    {
+        string o = output.Trim();
+        return o == "ok" ? null : o.Length > 0 ? o : Loc.T("O PowerShell não respondeu.");
     }
 
     /// <summary>Pastas que não pertencem a um programa só: medir uma delas somaria o que não é dele.</summary>

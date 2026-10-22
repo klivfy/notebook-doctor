@@ -76,19 +76,23 @@ public static class ProcessIcons
     {
         foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
             using (p)
-            {
-                // PROCESS_QUERY_LIMITED_INFORMATION funciona até em processos de outros usuários sem administrador
-                IntPtr h = Native.OpenProcess(0x1000, false, p.Id);
-                if (h == IntPtr.Zero) continue;
-                try
-                {
-                    var sb = new StringBuilder(1024);
-                    int size = sb.Capacity;
-                    if (QueryFullProcessImageName(h, 0, sb, ref size)) return sb.ToString();
-                }
-                finally { Native.CloseHandle(h); }
-            }
+                if (PathOfPid(p.Id) is { } path) return path;
         return null;
+    }
+
+    /// <summary>Caminho do executável do processo; null quando o Windows não deixa consultar.</summary>
+    public static string? PathOfPid(int pid)
+    {
+        // PROCESS_QUERY_LIMITED_INFORMATION funciona até em processos de outros usuários sem administrador
+        IntPtr h = Native.OpenProcess(0x1000, false, pid);
+        if (h == IntPtr.Zero) return null;
+        try
+        {
+            var sb = new StringBuilder(1024);
+            int size = sb.Capacity;
+            return QueryFullProcessImageName(h, 0, sb, ref size) ? sb.ToString() : null;
+        }
+        finally { Native.CloseHandle(h); }
     }
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]

@@ -131,6 +131,67 @@ public class UninstallerTests
     }
 }
 
+public class UninstallQueueTests
+{
+    private const string Guid = "{23170F69-40C1-2702-2408-000001000000}";
+
+    [Fact]
+    public void Msi_vai_com_qn()
+    {
+        var p = new InstalledProgram { Kind = ProgramKind.Msi, ProductCode = Guid, UninstallString = "MsiExec.exe /I" + Guid };
+        Assert.Equal((new UninstallCommand("msiexec.exe", $"/x {Guid} /qn /norestart"), true), UninstallQueue.Plan(p, _ => false, ""));
+    }
+
+    [Fact]
+    public void QuietUninstallString_tem_preferencia()
+    {
+        var p = new InstalledProgram { UninstallString = @"""C:\App\unins000.exe""", QuietUninstallString = @"""C:\App\unins000.exe"" /SILENT" };
+        Assert.Equal((new UninstallCommand(@"C:\App\unins000.exe", "/SILENT"), true), UninstallQueue.Plan(p, _ => false, ""));
+    }
+
+    [Theory]
+    [InlineData(@"""C:\App\unins000.exe""", "", @"C:\App\unins000.exe", "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART", true)]
+    [InlineData(@"""C:\App\uninst.exe""", "Nullsoft", @"C:\App\uninst.exe", "/S", true)]
+    [InlineData(@"""C:\App\uninst.exe"" /S", "Nullsoft", @"C:\App\uninst.exe", "/S", true)] // não repete o /S
+    [InlineData(@"""C:\Users\ana\AppData\Local\Discord\Update.exe"" --uninstall", "", @"C:\Users\ana\AppData\Local\Discord\Update.exe", "--uninstall -s", true)]
+    [InlineData(@"""C:\App\uninstall.exe""", "", @"C:\App\uninstall.exe", "", false)] // desconhecido: abre normal
+    public void Argumentos_silenciosos_por_tipo(string uninstall, string version, string file, string args, bool silent)
+    {
+        var p = new InstalledProgram { UninstallString = uninstall };
+        Assert.Equal((new UninstallCommand(file, args), silent), UninstallQueue.Plan(p, _ => false, version));
+    }
+
+    [Fact]
+    public void Sem_comando_nao_entra_na_fila() => Assert.Null(UninstallQueue.Plan(new InstalledProgram(), _ => false, ""));
+
+    [Fact]
+    public void Dono_do_executavel_e_a_pasta_mais_funda()
+    {
+        var places = LeftoverScannerTests.Places;
+        var suite = new InstalledProgram { Id = "suite", Name = "Acme Suite", InstallLocation = @"C:\Program Files\Acme" };
+        var editor = new InstalledProgram { Id = "editor", Name = "Acme Editor", InstallLocation = @"C:\Program Files\Acme\Editor" };
+        var bad = new InstalledProgram { Id = "bad", Name = "Instalador ruim", InstallLocation = @"C:\Program Files" };
+        var kb = new InstalledProgram { Id = "kb", Name = "KB1", Kind = ProgramKind.Update };
+        var all = new[] { suite, editor, bad, kb };
+        var dirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Program Files\Acme", @"C:\Program Files\Acme\Editor", @"C:\Program Files" };
+        Assert.Same(editor, UninstallQueue.OwnerOf(@"C:\Program Files\Acme\Editor\editor.exe", all, places, dirs.Contains, _ => false));
+        Assert.Same(suite, UninstallQueue.OwnerOf(@"C:\Program Files\Acme\tool.exe", all, places, dirs.Contains, _ => false));
+        Assert.Null(UninstallQueue.OwnerOf(@"C:\Program Files\Outro\o.exe", all, places, dirs.Contains, _ => false)); // "C:\Program Files" não identifica
+        Assert.Null(UninstallQueue.OwnerOf(@"C:\Windows\notepad.exe", all, places, dirs.Contains, _ => false));
+    }
+
+    [Fact]
+    public void Busca_manual_usa_o_nome_e_a_pasta_escolhida()
+    {
+        var fp = ProgramFingerprint.Manual("  Foo Editor 2.1 ", @"C:\Program Files\Acme\Foo Editor\");
+        Assert.Equal("Foo Editor", fp.Product);
+        Assert.Equal([@"C:\Program Files\Acme\Foo Editor"], fp.Dirs);
+        Assert.Empty(fp.Publishers);
+        Assert.Equal("", fp.RegistryPath);
+        Assert.Empty(ProgramFingerprint.Manual("Foo", null).Dirs);
+    }
+}
+
 public class PathsTests
 {
     [Theory]

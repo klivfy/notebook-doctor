@@ -156,4 +156,21 @@ internal static class Native
         GetWindowThreadProcessId(GetForegroundWindow(), out uint pid);
         return (int)pid;
     }
+
+    // Fase 5 (Caçador): a janela que está sob o cursor
+    [StructLayout(LayoutKind.Sequential)] private struct POINT { public int X, Y; }
+    [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT point);
+    [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(POINT point);
+    [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr hwnd, uint flags);
+
+    /// <summary>Processo dono da janela principal sob o cursor; 0 quando não há janela ali.</summary>
+    public static int ProcessUnderCursor()
+    {
+        if (!GetCursorPos(out var point)) return 0;
+        IntPtr hwnd = WindowFromPoint(point);
+        if (hwnd == IntPtr.Zero) return 0;
+        IntPtr root = GetAncestor(hwnd, 2); // GA_ROOT: a janela principal, não o botão ou o campo dentro dela
+        GetWindowThreadProcessId(root == IntPtr.Zero ? hwnd : root, out uint pid);
+        return (int)pid;
+    }
 }

@@ -39,6 +39,17 @@ public partial class MainWindow
         catch (Exception ex) { StartupMsg.Text = "Falhou: " + ex.Message; }
     }
 
+    /// <summary>Leva 5.3: abre a aba Programas no programa instalado dono do item.</summary>
+    private async void StartupShowProgram_Click(object sender, RoutedEventArgs e)
+    {
+        if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = "Selecione um item na lista."; return; }
+        if (entry.FilePath is not { } path) { StartupMsg.Text = $"{entry.Name}: o arquivo do comando não foi encontrado."; return; }
+        if (path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
+            try { path = StartMenu.ReadTarget(path); }
+            catch (System.Runtime.InteropServices.COMException) { }
+        await RevealProgramForAsync(path);
+    }
+
     // ---------- M27: abrir a pasta do item ----------
     private void StartupOpen_Click(object sender, RoutedEventArgs e)
     {

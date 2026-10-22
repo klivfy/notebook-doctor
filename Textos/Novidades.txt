@@ -4,6 +4,10 @@ Programas (novo)
 • Desinstalar abre o desinstalador do próprio programa (com ponto de restauração, como administrador) e espera ele terminar de verdade.
 • Abrir a pasta, ver a chave no Editor do Registro, pesquisar na internet e ver todas as propriedades.
 • Exportar a lista em CSV (planilha) ou HTML.
+• Selecione vários programas para desinstalar em fila, sem janelas quando o desinstalador permite.
+• Remoção forçada e "Procurar sobras" para programas com desinstalador quebrado ou já removidos.
+• Apps da Store: remover de todas as contas e redefinir.
+• "Mirar": arraste até a janela de um programa (ou solte um atalho na lista) para saber de qual programa instalado ela é. Também em Processos e Inicialização.
 • Depois de desinstalar, o app procura o que sobrou (pastas, registro, inicialização, serviços, tarefas e atalhos) em três níveis: Seguro, Moderado e Avançado.
 • Você revisa antes de apagar. Tudo vai para um backup de 30 dias e pode ser desfeito em Ações ou em "Backups…".
 

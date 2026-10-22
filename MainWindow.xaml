@@ -240,6 +240,7 @@
                                         <MenuItem Header="_Detalhes" Click="ProcDetails_Click"/>
                                         <MenuItem Header="Abrir _local do arquivo" Click="ProcOpenLocation_Click"/>
                                         <MenuItem Header="_Pesquisar na internet o que é" Click="ProcSearchOnline_Click"/>
+                                        <MenuItem Header="Ver o programa _instalado" Click="ProcShowProgram_Click"/>
                                         <Separator/>
                                         <MenuItem Header="_Baixar prioridade" Click="LowerPriority_Click"/>
                                         <MenuItem Header="_Restaurar prioridade" Click="RestorePriority_Click"/>
@@ -431,10 +432,15 @@
                         <!-- B33: totais do que está à vista (respeita a busca) -->
                         <DockPanel Grid.Row="2">
                             <TextBlock x:Name="ProgTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,6,0,0" TextTrimming="CharacterEllipsis"/>
-                            <DataGrid x:Name="ProgGrid" MouseDoubleClick="ProgGrid_DoubleClick" PreviewKeyDown="ProgGrid_KeyDown" AutomationProperties.Name="Programas instalados">
+                            <DataGrid x:Name="ProgGrid" SelectionMode="Extended" MouseDoubleClick="ProgGrid_DoubleClick" PreviewKeyDown="ProgGrid_KeyDown"
+                                      AllowDrop="True" Drop="ProgGrid_Drop" AutomationProperties.Name="Programas instalados"
+                                      AutomationProperties.HelpText="Selecione vários com Ctrl ou Shift para desinstalar em fila. Solte um atalho aqui para achar o programa dele.">
                                 <DataGrid.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="_Desinstalar…" Click="ProgUninstall_Click"/>
+                                        <MenuItem Header="Remoção _forçada…" Click="ProgForced_Click"/>
+                                        <MenuItem Header="Remover de _todas as contas (app da Store)…" Click="ProgStoreAllUsers_Click"/>
+                                        <MenuItem Header="Re_definir app da Store…" Click="ProgStoreReset_Click"/>
                                         <Separator/>
                                         <MenuItem Header="Abrir _pasta" Click="ProgOpenFolder_Click"/>
                                         <MenuItem Header="Abrir no _Editor do Registro" Click="ProgRegistry_Click"/>
@@ -481,6 +487,11 @@
                                     ToolTip="Tudo o que o programa registrou: pasta, comando de desinstalação, chave do registro (ou Enter na lista)."/>
                             <Button Content="Exportar lista…" Style="{StaticResource TextButton}" Click="ProgExport_Click" Margin="0,0,8,6"
                                     ToolTip="Salva a lista à vista (com a busca e o filtro) em CSV, para planilha, ou em HTML."/>
+                            <Button Content="Procurar sobras…" Style="{StaticResource TextButton}" Click="ProgFindLeftovers_Click" Margin="0,0,8,6"
+                                    ToolTip="De um programa que já saiu da lista, mas deixou pastas e registro."/>
+                            <Button Content="Mirar" Style="{StaticResource TextButton}" Margin="0,0,8,6" Click="ProgHunt_Click"
+                                    PreviewMouseLeftButtonDown="ProgHunt_Down" PreviewMouseLeftButtonUp="ProgHunt_Up"
+                                    ToolTip="Segure, arraste até a janela de um programa e solte: o app mostra de qual programa instalado ela é."/>
                             <Button Content="Backups…" Style="{StaticResource TextButton}" Click="ProgBackups_Click" Margin="0,0,8,6"
                                     ToolTip="Restaurar ou apagar o que a remoção de sobras guardou (30 dias)."/>
                             <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ProgRefresh_Click" Margin="0,0,8,6"/>
@@ -533,6 +544,8 @@
                             <Button Content="Ativar / Desativar selecionado" Click="ToggleStartup_Click" Margin="0,0,8,6"/>
                             <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="StartupOpen_Click" Margin="0,0,8,6"
                                     ToolTip="Abre a pasta do programa com o arquivo selecionado"/>
+                            <Button Content="Ver o programa" Style="{StaticResource TextButton}" Click="StartupShowProgram_Click" Margin="0,0,8,6"
+                                    ToolTip="Abre a aba Programas no programa instalado que é dono deste item, para desinstalar ou ver detalhes."/>
                             <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="RefreshStartup_Click" Margin="0,0,8,6"/>
                             <TextBlock x:Name="StartupMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>

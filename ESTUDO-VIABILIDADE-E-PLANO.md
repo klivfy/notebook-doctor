@@ -557,7 +557,7 @@ Princípios herdados das fases anteriores, que valem para tudo:
 
 ### 6.1 Fases e levas
 
-**Andamento:** P1 ✅ (merge do PR #1) · P2 ✅ (job `windows` na CI, com teste de integração do desinstalador) · levas 5.1, 5.2a e 5.2b ✅.
+**Andamento:** P1 ✅ (merge do PR #1) · P2 ✅ (job `windows` na CI, com teste de integração do desinstalador) · levas 5.1, 5.2a, 5.2b e 5.3 ✅.
 
 Na 5.2, a parte que lê e apaga no registro e no disco foi para um projeto novo, `src/NotebookDoctor.Windows` (net8.0, só Windows, sem WPF). As regras ficaram no Core. Assim, o teste de integração roda de verdade na CI do Windows: cria um programa falso, acha as sobras, apaga com backup e restaura.
 
@@ -570,7 +570,7 @@ Cada leva segue o ritual das anteriores: implementar, compilar, testar no Core, 
 | **5.1** ✅ | Aba Programas: lista Win32/Store/atualizações, colunas, busca, totais, menu, ícones, exportar CSV/HTML; Espaço › Aplicativos aponta para ela | R23 (export), R24 (listar) | Core: parser de `UninstallString`, código MSI, regras de visibilidade (`SystemComponent`, `ParentKeyName`), Store, exportação. A normalização de nome e editor foi para a 5.2a, onde é usada; C09 foi para a 6.3 | Comparar a lista com "Aplicativos instalados" do Windows; exportar | Mesma contagem do Windows (±componentes de sistema) |
 | **5.2a** ✅ | Retrato prévio, executor (MSI/EXE, espera da árvore de processos, UAC), ponto de restauração, armazém de backups | R01 (parte 1), R11 | Core: detecção do tipo de instalador, códigos de saída MSI, decisão de fim da árvore (com relógio simulado) | Desinstalar 5 programas de tipos diferentes (MSI, Inno, NSIS, Squirrel, por usuário) | O app sempre sabe quando terminou |
 | **5.2b** ✅ | Motor de sobras (3 níveis, proteções), tela de revisão, remoção com backup, desfazer, tela "Backups", histórico | R01 (parte 2), R12 | Core: classificação por nível, todas as proteções (com casos negativos), compartilhamento entre programas. **CI Windows:** programa falso (P2) | Corpus da seção 6.2 | 0 falso positivo em Seguro/Moderado; ≥ 90% das sobras no Moderado |
-| **5.3** | Fila silenciosa, remoção forçada, MSI forçada, apps da Store (remover, todos os usuários, redefinir), Caçador, "Desinstalar" em Processos e Inicialização | R02, R03, R04, R09, R13, C05 | Core: fila (ordem, falha no meio, cancelar); escolha do modo silencioso | Fila de 3 programas; remover um app da Store para todos; Caçador numa janela | Falha de um item não interrompe os outros e aparece no relatório |
+| **5.3** ✅ | Fila silenciosa, remoção forçada, MSI forçada, apps da Store (remover, todos os usuários, redefinir), Caçador, "Desinstalar" em Processos e Inicialização | R02, R03, R04, R09, R13, C05 | Core: fila (ordem, falha no meio, cancelar); escolha do modo silencioso | Fila de 3 programas; remover um app da Store para todos; Caçador numa janela | Falha de um item não interrompe os outros e aparece no relatório |
 | **5.4a** | Monitor de instalação: fotografia do registro, diário USN, diferença, filtro de ruído, trace salvo | R05 | Core: diferença de fotografias (criado, alterado, apagado), filtro de ruído, leitura de registros USN a partir de bytes de exemplo | Instalar 3 programas monitorando; conferir o trace | Trace sem ruído das pastas filtradas |
 | **5.4b** | Gerenciar traces: desinstalar por trace, parcial, exportar e importar, TXT/HTML | R06, R07 | Core: serialização do trace, desinstalação parcial | Desinstalar pelo trace e comparar com a fotografia anterior à instalação | O sistema volta ao estado anterior, menos os itens alterados |
 

@@ -210,6 +210,44 @@ public sealed record ProgramFingerprint(string Id, string Name, string Product, 
         return new ProgramFingerprint(p.Id, p.Name, ProgramNames.Product(p.Name), ProgramNames.PublisherAliases(p.Publisher), p.Version,
                                       dirs, p.ProductCode, p.RegistryPath, p.Kind);
     }
+
+    /// <summary>"Procurar sobras" de um programa que já saiu da lista: só o nome que a pessoa digitou e, se ela escolheu, a pasta.</summary>
+    public static ProgramFingerprint Manual(string name, string? folder)
+    {
+        string dir = Paths.Clean(folder);
+        return new ProgramFingerprint("manual:" + name.Trim(), name.Trim(), ProgramNames.Product(name), [], "", dir.Length > 3 ? [dir] : [], null, "", ProgramKind.Program);
+    }
+}
+
+/// <summary>Leva 5.3: fila de desinstalação e "de quem é este programa?".</summary>
+public static class UninstallQueue
+{
+    /// <summary>
+    /// Comando para a fila silenciosa: MSI com /qn; o QuietUninstallString que o programa registrou; ou os argumentos
+    /// silenciosos do tipo de instalador. Sem nenhum desses, o desinstalador abre normal (Silent = false).
+    /// </summary>
+    public static (UninstallCommand Command, bool Silent)? Plan(InstalledProgram p, Func<string, bool> fileExists, string versionText)
+    {
+        if (p.Kind == ProgramKind.Msi && p.ProductCode is { } code) return (new UninstallCommand("msiexec.exe", $"/x {code} /qn /norestart"), true);
+        if (ProgramRules.ParseCommand(p.QuietUninstallString, fileExists) is { } quiet) return (quiet, true);
+        if (ProgramRules.CommandFor(p, fileExists) is not { } cmd) return null;
+        var engine = InstallerDetection.Detect(cmd.File, cmd.Arguments, versionText);
+        if (InstallerDetection.SilentArguments(engine) is not { } silent) return (cmd, false);
+        var missing = silent.Split(' ').Where(a => !cmd.Arguments.Split(' ').Contains(a, StringComparer.OrdinalIgnoreCase));
+        return (cmd with { Arguments = string.Join(' ', new[] { cmd.Arguments }.Concat(missing)).Trim() }, true);
+    }
+
+    /// <summary>
+    /// Programa dono de um executável (janela mirada, atalho solto na lista, processo): o que tem a pasta mais funda
+    /// que contém o arquivo. Pastas protegidas (Program Files, a do usuário…) nunca identificam um programa.
+    /// </summary>
+    public static InstalledProgram? OwnerOf(string file, IEnumerable<InstalledProgram> programs, KnownPlaces places, Func<string, bool> dirExists, Func<string, bool> fileExists) =>
+        programs.Where(p => p.Kind != ProgramKind.Update)
+                .Select(p => (p, dir: ProgramRules.FolderOf(p, dirExists, fileExists)))
+                .Where(x => x.dir is not null && !LeftoverRules.IsProtectedPath(x.dir, places) && Paths.IsUnder(file, x.dir))
+                .OrderByDescending(x => x.dir!.Length)
+                .Select(x => x.p)
+                .FirstOrDefault();
 }
 
 /// <summary>Caminhos do Windows comparados como o Windows compara: sem diferenciar maiúsculas e sem a barra final.</summary>

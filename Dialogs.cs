@@ -205,6 +205,92 @@ public static class Dialogs
         return result;
     }
 
+    /// <summary>Leva 5.3: escolhas da fila de desinstalação.</summary>
+    public sealed record QueueChoice(bool Silent, bool AutoLeftovers);
+
+    /// <summary>Leva 5.3: confirma a fila, com modo silencioso (padrão) e "apagar as sobras sem perguntar" (desligado).</summary>
+    public static QueueChoice? ConfirmQueue(Window owner, IReadOnlyList<string> programs, IReadOnlyList<string> skipped)
+    {
+        string title = Services.Loc.F("Desinstalar {0}?", Services.Pt.N(programs.Count, Services.Loc.T("programa"), Services.Loc.T("programas")));
+        var dlg = NewWindow(owner, title, 520);
+        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var list = new ListBox { ItemsSource = programs, MaxHeight = 200, Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetName(list, title);
+        var body = new TextBlock
+        {
+            Text = Services.Loc.T("Um de cada vez, com um ponto de restauração antes. Se um falhar, os outros continuam.")
+                   + (skipped.Count > 0 ? "\n\n" + Services.Loc.F("Ficam de fora (o Windows não deixa remover por aqui): {0}", string.Join(", ", skipped)) : ""),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var silent = new CheckBox
+        {
+            Content = Services.Loc.T("Sem janelas, quando o desinstalador permitir"), IsChecked = true, Margin = new Thickness(0, 0, 0, 8),
+            ToolTip = Services.Loc.T("Pacotes MSI, Inno Setup, NSIS e outros conhecidos desinstalam sem perguntar nada. Os outros abrem a janela de sempre."),
+        };
+        var auto = new CheckBox
+        {
+            Content = Services.Loc.T("Apagar as sobras sem perguntar (nível Moderado, com backup)"), IsChecked = false, Margin = new Thickness(0, 0, 0, 20),
+            ToolTip = Services.Loc.T("Desmarcado, o app mostra as sobras de cada programa para você revisar no fim da fila."),
+        };
+        QueueChoice? result = null;
+        var cancel = new Button { Content = Services.Loc.T("Cancelar"), IsCancel = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        var ok = new Button { Content = Services.Loc.T("Desinstalar") };
+        ok.SetResourceReference(FrameworkElement.StyleProperty, "DangerButton");
+        ok.Click += (_, _) => { result = new QueueChoice(silent.IsChecked == true, auto.IsChecked == true); dlg.Close(); };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, ok } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, list, body, silent, auto, buttons } };
+        dlg.ShowDialog();
+        return result;
+    }
+
+    /// <summary>Leva 5.3: nome e, se a pessoa souber, a pasta de um programa que já saiu da lista, para procurar as sobras.</summary>
+    public static (string Name, string? Folder)? AskLeftoverTarget(Window owner)
+    {
+        string title = Services.Loc.T("Procurar sobras de um programa já removido");
+        var dlg = NewWindow(owner, title, 520);
+        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var body = new TextBlock
+        {
+            Text = Services.Loc.T("Para programas que não aparecem mais na lista, mas deixaram pastas e registro. Com a pasta, a busca também acha o que aponta para ela."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 16),
+        };
+        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var nameLabel = new TextBlock { Text = Services.Loc.T("Nome do programa"), Margin = new Thickness(0, 0, 0, 4) };
+        var name = new TextBox { Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetName(name, nameLabel.Text);
+        var folderLabel = new TextBlock { Text = Services.Loc.T("Pasta onde ele estava (opcional)"), Margin = new Thickness(0, 0, 0, 4) };
+        var folder = new TextBox { Margin = new Thickness(0, 0, 8, 0) };
+        System.Windows.Automation.AutomationProperties.SetName(folder, folderLabel.Text);
+        var browse = new Button { Content = Services.Loc.T("Escolher…") };
+        browse.SetResourceReference(FrameworkElement.StyleProperty, "TonalButton");
+        browse.Click += (_, _) =>
+        {
+            var pick = new Microsoft.Win32.OpenFolderDialog { Title = folderLabel.Text };
+            if (pick.ShowDialog(dlg) == true) folder.Text = pick.FolderName;
+        };
+        var folderRow = new DockPanel { Margin = new Thickness(0, 0, 0, 20) };
+        DockPanel.SetDock(browse, Dock.Right);
+        folderRow.Children.Add(browse);
+        folderRow.Children.Add(folder);
+        (string, string?)? result = null;
+        var cancel = new Button { Content = Services.Loc.T("Cancelar"), IsCancel = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        var ok = new Button { Content = Services.Loc.T("Procurar"), IsDefault = true };
+        ok.Click += (_, _) =>
+        {
+            if (name.Text.Trim().Length == 0) { name.Focus(); return; }
+            result = (name.Text.Trim(), folder.Text.Trim().Length > 0 ? folder.Text.Trim() : null);
+            dlg.Close();
+        };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, ok } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, body, nameLabel, name, folderLabel, folderRow, buttons } };
+        dlg.Loaded += (_, _) => name.Focus();
+        dlg.ShowDialog();
+        return result;
+    }
+
     /// <summary>Fase 5: backups da remoção de sobras, com restaurar e apagar.</summary>
     public static void ShowBackups(Window owner, Services.BackupStore store)
     {
