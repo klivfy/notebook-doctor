@@ -151,7 +151,7 @@ public static class LeftoverRemover
             : new RemovalResult(l, true, pending, "");
     }
 
-    private static bool Recycle(string path)
+    internal static bool Recycle(string path)
     {
         var op = new ShFileOp
         {

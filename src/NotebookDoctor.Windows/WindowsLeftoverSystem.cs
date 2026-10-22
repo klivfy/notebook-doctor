@@ -49,9 +49,9 @@ public static class RegistryPaths
 }
 
 /// <summary>A varredura de sobras no Windows de verdade: registro e arquivos. Só lê.</summary>
-public sealed class WindowsLeftoverSystem : ILeftoverSystem
+public class WindowsLeftoverSystem : ILeftoverSystem
 {
-    private static readonly EnumerationOptions Children = new() { IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
+    protected static readonly EnumerationOptions Children = new() { IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
     private static readonly EnumerationOptions Recursive = new() { IgnoreInaccessible = true, RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint };
 
     private static bool Expected(Exception ex) => ex is SecurityException or UnauthorizedAccessException or IOException or ArgumentException;
@@ -63,7 +63,7 @@ public sealed class WindowsLeftoverSystem : ILeftoverSystem
     }
 
     /// <summary>Enumera até onde der: uma pasta apagada ou bloqueada no meio do caminho encerra a lista em vez de lançar erro.</summary>
-    private static IEnumerable<string> Guarded(Func<IEnumerable<string>> source)
+    protected static IEnumerable<string> Guarded(Func<IEnumerable<string>> source)
     {
         IEnumerator<string> e;
         try { e = source().GetEnumerator(); }
