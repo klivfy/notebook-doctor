@@ -120,7 +120,7 @@ public class RegistryCheckTests
     public void Run_apaga_o_valor_e_nunca_a_chave_e_so_com_caminho_completo()
     {
         var sys = new FakeRegSystem().Key(RunUser,
-            ("Velho", @"""C:\Velho\upd.exe"" --boot"), ("Vivo", @"C:\Vivo\vivo.exe /bg"), ("Solto", "notepad.exe"), ("Variavel", @"%APPDATA%\x\y.exe"),
+            ("Velho", @"""C:\Velho\upd.exe"" --boot"), ("Vivo", @"C:\Vivo\vivo.exe /bg"), ("Solto", "notepad.exe"), ("Variavel", @"%ND_VARIAVEL_INEXISTENTE_7X4%\x\y.exe"),
             ("Script", @"C:\Velho\ligar.vbs"), ("Remoto", @"\\servidor\pasta\x.exe")).File(@"C:\Vivo\vivo.exe");
         var issue = Assert.Single(Scan(sys));
         Assert.Equal(RegIssueKind.Run, issue.Kind);
