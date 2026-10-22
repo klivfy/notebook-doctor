@@ -43,6 +43,22 @@ public class NtfsIntegrationTests : IDisposable
         return output + (p.ExitCode != 0 ? $"\n[exit {p.ExitCode}]" : "");
     }
 
+    // Um arquivo apagado antes de o Windows gravar os dados dele nunca chega ao disco: força a gravação antes de apagar
+    private static void WriteDurable(string path, byte[] data)
+    {
+        using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough);
+        fs.Write(data, 0, data.Length);
+        fs.Flush(true);
+    }
+
+    private static string Describe(byte[] expected, byte[] actual)
+    {
+        int diff = 0, first = -1;
+        for (int i = 0; i < Math.Min(expected.Length, actual.Length); i++)
+            if (expected[i] != actual[i]) { diff++; if (first < 0) first = i; }
+        return $"tamanho {actual.Length}/{expected.Length}, {diff} bytes diferentes, primeiro em {first}, zeros no começo: {actual.Take(64).All(b => b == 0)}";
+    }
+
     private static char FreeLetter() => "ZYXWV".FirstOrDefault(c => !Directory.Exists(c + @":\"));
 
     [WindowsFact]
@@ -90,10 +106,10 @@ public class NtfsIntegrationTests : IDisposable
         const string noteText = "anotação pequena, guardada dentro da MFT";
         Directory.CreateDirectory(Path.Combine(root, @"Fotos\Antigas"));
         Directory.CreateDirectory(Path.Combine(root, "Doc"));
-        File.WriteAllBytes(Path.Combine(root, @"Fotos\Antigas\foto.jpg"), photo);
-        File.WriteAllBytes(Path.Combine(root, @"Doc\relatorio.dat"), report);
-        File.WriteAllText(Path.Combine(root, "nota.txt"), noteText);
-        File.WriteAllText(Path.Combine(root, "vivo.txt"), "este fica");
+        WriteDurable(Path.Combine(root, @"Fotos\Antigas\foto.jpg"), photo);
+        WriteDurable(Path.Combine(root, @"Doc\relatorio.dat"), report);
+        WriteDurable(Path.Combine(root, "nota.txt"), System.Text.Encoding.UTF8.GetBytes(noteText));
+        WriteDurable(Path.Combine(root, "vivo.txt"), System.Text.Encoding.UTF8.GetBytes("este fica"));
 
         File.Delete(Path.Combine(root, @"Fotos\Antigas\foto.jpg"));
         Directory.Delete(Path.Combine(root, @"Fotos\Antigas"));
@@ -126,8 +142,12 @@ public class NtfsIntegrationTests : IDisposable
         string outRoot = Path.Combine(_dir, "recuperados");
         var results = NtfsRecoveryJob.Run(raw, scan, [foto, Find("relatorio.dat"), Find("nota.txt")], outRoot, null, CancellationToken.None);
         Assert.All(results, r => Assert.True(r.Complete, r.Name + ": " + r.Note));
-        Assert.Equal(SHA256.HashData(photo), SHA256.HashData(File.ReadAllBytes(Path.Combine(outRoot, @"Fotos\Antigas\foto.jpg"))));
-        Assert.Equal(SHA256.HashData(report), SHA256.HashData(File.ReadAllBytes(Path.Combine(outRoot, @"Doc\relatorio.dat"))));
+        var gotPhoto = File.ReadAllBytes(Path.Combine(outRoot, @"Fotos\Antigas\foto.jpg"));
+        var gotReport = File.ReadAllBytes(Path.Combine(outRoot, @"Doc\relatorio.dat"));
+        Assert.True(SHA256.HashData(photo).SequenceEqual(SHA256.HashData(gotPhoto)), "foto: " + Describe(photo, gotPhoto));
+        var reportFile = Find("relatorio.dat");
+        Assert.True(SHA256.HashData(report).SequenceEqual(SHA256.HashData(gotReport)),
+            $"relatório: {Describe(report, gotReport)}; chance {NtfsChance.Assess(reportFile, bitmap).Chance}; trechos {string.Join(" ", reportFile.Extents.Select(e => $"{e.Vcn}:{e.Lcn}+{e.Clusters}"))}");
         Assert.Equal(noteText, File.ReadAllText(Path.Combine(outRoot, "nota.txt")));
         Assert.Equal("este fica", File.ReadAllText(Path.Combine(root, "vivo.txt"))); // a origem não foi tocada
     }
