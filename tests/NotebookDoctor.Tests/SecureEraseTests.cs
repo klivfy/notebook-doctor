@@ -326,6 +326,13 @@ public class SecureEraserIntegrationTests : IDisposable
     }
 
     [WindowsFact]
+    public void Arquivo_comum_tem_um_nome_so()
+    {
+        string a = Make("um-nome.txt", 10);
+        Assert.Equal(1, SecureEraser.LinkCount(a));                               // um número absurdo aqui faria o apagador pular tudo
+    }
+
+    [WindowsFact]
     public void Link_fisico_nao_e_sobrescrito()
     {
         string a = Make("orig.txt", 100);

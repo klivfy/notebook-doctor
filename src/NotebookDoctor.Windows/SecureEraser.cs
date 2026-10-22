@@ -61,7 +61,7 @@ public static class SecureEraser
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool FindClose(IntPtr find);
 
-    /// <summary>Nomes dos fluxos de dados além do principal (":nome:$DATA"). Vazio em sistema de arquivos sem fluxos.</summary>
+    /// <summary>Nomes dos fluxos de dados além do principal, sem os dois pontos ("segredo" para ":segredo:$DATA"). Vazio em sistema de arquivos sem fluxos.</summary>
     public static List<string> AlternateStreams(string path)
     {
         var list = new List<string>();
@@ -72,7 +72,7 @@ public static class SecureEraser
             do
             {
                 // "::$DATA" é o conteúdo normal do arquivo
-                if (data.StreamName is { Length: > 7 } n && n.EndsWith(":$DATA", StringComparison.Ordinal) && n != "::$DATA") list.Add(n[..^6]);
+                if (data.StreamName is { Length: > 7 } n && n.EndsWith(":$DATA", StringComparison.Ordinal) && n != "::$DATA") list.Add(n[1..^6]);
             } while (FindNextStreamW(find, out data));
         }
         finally { FindClose(find); }
@@ -81,7 +81,8 @@ public static class SecureEraser
 
     // ---------- número de nomes do arquivo ----------
 
-    [StructLayout(LayoutKind.Sequential)]
+    // BY_HANDLE_FILE_INFORMATION é empacotada de 4 em 4 bytes: sem Pack = 4, os FILETIME (long) ganham 4 bytes de enchimento e o resto desliza
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
     private struct ByHandleInfo
     {
         public uint Attributes;
@@ -108,7 +109,7 @@ public static class SecureEraser
         OverwriteStream(path, ct, onBytes);
         foreach (var stream in AlternateStreams(path))
         {
-            try { OverwriteStream(path + ":" + stream.TrimStart(':'), ct, null); }
+            try { OverwriteStream(path + ":" + stream, ct, null); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) { /* o fluxo some junto com o arquivo */ }
         }
     }
