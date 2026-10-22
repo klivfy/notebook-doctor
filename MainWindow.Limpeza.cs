@@ -86,5 +86,8 @@ public partial class MainWindow
         e.Handled = true;
     }
 
+    // ---------- Fase 6: limpeza avançada ----------
+    private void AdvancedClean_Click(object sender, RoutedEventArgs e) => new AdvancedCleanWindow(this).ShowDialog();
+
     private IEnumerable<CleanItem> CleanItems() => (CleanGrid.ItemsSource as IEnumerable<CleanItem>) ?? Enumerable.Empty<CleanItem>();
 }

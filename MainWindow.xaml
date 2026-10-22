@@ -346,6 +346,8 @@
                             <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="CleanSelectAll_Click" Margin="0,0,8,6"
                                     ToolTip="Marca todos os locais que podem ser limpos, menos a Lixeira (apagar dela é definitivo)"/>
                             <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="CleanSelectNone_Click" Margin="0,0,8,6"/>
+                            <Button Content="Limpeza avançada…" Style="{StaticResource TonalButton}" Click="AdvancedClean_Click" Margin="0,0,8,6"
+                                    ToolTip="Rastros do Windows e do Office, regras de programas, arquivos inúteis e a Limpeza de Disco do Windows."/>
                             <TextBlock x:Name="CleanMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>
                         </WrapPanel>

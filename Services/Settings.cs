@@ -64,6 +64,8 @@ public sealed class AppSettings
     public bool AlertsEnabled { get; set; } = true;
     public bool WeeklyCleanup { get; set; }
     public int TempDays { get; set; } = 7;
+    /// <summary>Leva 6.1: pastas que a busca de arquivos inúteis nunca olha.</summary>
+    public List<string> JunkExcluded { get; set; } = new();
     public int CpuAlertPct { get; set; } = 80;
     public int RamAlertPct { get; set; } = 90;
     public DateTime LastWeeklyRun { get; set; } = DateTime.MinValue;

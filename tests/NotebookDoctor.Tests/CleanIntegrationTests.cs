@@ -58,7 +58,7 @@ public class CleanIntegrationTests
             var engine = new CleanEngine(sys, new CleanContext(places, EnvExpander.FromPlaces(places).With("TestRoot", root), Environment.OSVersion.Version));
             var entry = engine.Plan(rule)!;
             Assert.Equal(2, entry.FileCount); // a.bin e sub\b.bin; keep.dat é poupado e a junção não é seguida
-            Assert.Equal(3, entry.RegCount);  // Recent inteira e o LastFile1
+            Assert.Equal(2, entry.RegCount);  // a chave Recent inteira e só o valor LastFile1
             entry.Selected = true;
 
             RuleCleanResult result;
@@ -76,6 +76,7 @@ public class CleanIntegrationTests
             Assert.True(File.Exists(Path.Combine(outside, "d.bin"))); // o destino da junção continua inteiro
             Assert.Equal(2, result.Files);
             Assert.Equal(6, result.Bytes);
+            Assert.Equal(2, result.Keys);
             using (var k = RegistryPaths.Open($@"{key}\Opts"))
             {
                 Assert.Null(k!.GetValue("LastFile1"));

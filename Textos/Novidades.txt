@@ -12,6 +12,13 @@ Programas (novo)
 • Depois de desinstalar, o app procura o que sobrou (pastas, registro, inicialização, serviços, tarefas e atalhos) em três níveis: Seguro, Moderado e Avançado.
 • Você revisa antes de apagar. Tudo vai para um backup de 30 dias e pode ser desfeito em Ações ou em "Backups…".
 
+Limpeza avançada (novo)
+• Botão "Limpeza avançada…" na aba Limpeza, com três seções.
+• Rastros e programas: documentos recentes, Executar, caixas Abrir e Salvar, Office, cache de DNS, área de transferência, despejos de memória, logs do Windows. Você pode importar regras no formato winapp2.ini; elas aparecem desmarcadas e só as de programas que existem no PC.
+• Arquivos inúteis: .tmp, .chk, despejos antigos, travas ~$ do Office e pastas FOUND. .bak, .old e FOUND começam desmarcados e vão para a Lixeira.
+• Limpeza de Disco do Windows: Windows.old, atualizações antigas, pacotes de driver e relatórios de erro, pela própria ferramenta do Windows (administrador).
+• Você vê o que sai antes de apagar. Senhas, cookies, preenchimento automático, favoritos e dados de jogos nunca entram. O registro vai para um backup que dá para desfazer em Ações.
+
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.

@@ -1,0 +1,147 @@
+<Window x:Class="NotebookDoctor.AdvancedCleanWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Limpeza avançada" Width="1000" Height="720" MinWidth="780" MinHeight="540"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
+        AutomationProperties.Name="Limpeza avançada">
+    <Grid Margin="22">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <TextBlock Text="Limpeza avançada" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
+                   Text="Rastros do Windows e do Office, regras de programas, arquivos inúteis e a Limpeza de Disco do Windows. Você vê o que sai antes de apagar; o registro vai para um backup que dá para desfazer em Ações."/>
+
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Button x:Name="TabTraces" Content="Rastros e programas" Click="Section_Click" Tag="0" Margin="0,0,8,0"/>
+                <Button x:Name="TabJunk" Content="Arquivos inúteis" Click="Section_Click" Tag="1" Margin="0,0,8,0"/>
+                <Button x:Name="TabDisk" Content="Limpeza de Disco do Windows" Click="Section_Click" Tag="2"/>
+            </StackPanel>
+
+            <TabControl x:Name="Sections" Grid.Row="1">
+                <!-- RASTROS E PROGRAMAS -->
+                <TabItem Header="Rastros e programas">
+                    <DockPanel>
+                        <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                            <Button Content="Analisar" Style="{StaticResource TonalButton}" Click="RulesScan_Click" Margin="0,0,8,6"/>
+                            <Button x:Name="RulesCleanBtn" Content="Limpar marcados" Click="RulesClean_Click" Margin="0,0,8,6"/>
+                            <Button Content="Ver o que sai" Style="{StaticResource TonalButton}" Click="RulesDetails_Click" Margin="0,0,8,6"
+                                    ToolTip="Lista os arquivos e as chaves do registro da linha selecionada, sem apagar nada (clique duplo faz o mesmo)."/>
+                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="RulesAll_Click" Margin="0,0,8,6"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="RulesNone_Click" Margin="0,0,8,6"/>
+                            <Button Content="Importar regras…" Style="{StaticResource TextButton}" Click="RulesImport_Click" Margin="0,0,8,6"
+                                    ToolTip="Carrega um arquivo no formato winapp2.ini (regras da comunidade). Só aparecem as regras de programas que existem neste computador, todas desmarcadas."/>
+                            <Button x:Name="RulesRemoveBtn" Content="Remover regras importadas" Style="{StaticResource TextButton}" Click="RulesRemoveImported_Click" Margin="0,0,8,6"/>
+                        </WrapPanel>
+                        <TextBlock x:Name="RulesInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,6,0,0"
+                                   AutomationProperties.LiveSetting="Polite"/>
+                        <DataGrid x:Name="RulesGrid" MouseDoubleClick="RulesDetails_Click" PreviewKeyDown="RulesGrid_KeyDown"
+                                  AutomationProperties.Name="Rastros e programas que podem ser limpos">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Limpar" Width="Auto" MinWidth="88">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Style="{StaticResource GridCheck}" IsEnabled="{Binding CanClean}"
+                                                      IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      AutomationProperties.Name="{Binding Name}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="O que" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="Tipo" Binding="{Binding CategoryText}" Width="130"/>
+                                <DataGridTextColumn Header="Itens" Binding="{Binding ItemsText}" Width="150"/>
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="110"/>
+                                <DataGridTextColumn Header="Aviso" Binding="{Binding Note}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+
+                <!-- ARQUIVOS INÚTEIS -->
+                <TabItem Header="Arquivos inúteis">
+                    <DockPanel>
+                        <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                            <Button Content="Procurar" Style="{StaticResource TonalButton}" Click="JunkScan_Click" Margin="0,0,8,6"/>
+                            <Button x:Name="JunkCleanBtn" Content="Apagar marcados" Click="JunkClean_Click" Margin="0,0,8,6"/>
+                            <Button Content="Mostrar na pasta" Style="{StaticResource TonalButton}" Click="JunkReveal_Click" Margin="0,0,8,6"/>
+                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="JunkAll_Click" Margin="0,0,8,6"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="JunkNone_Click" Margin="0,0,8,6"/>
+                        </WrapPanel>
+                        <TextBlock x:Name="JunkInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,6,0,0"
+                                   AutomationProperties.LiveSetting="Polite"/>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <WrapPanel>
+                                <ComboBox x:Name="JunkWhere" Width="300" Margin="0,0,12,6" SelectedIndex="0" AutomationProperties.Name="Onde procurar">
+                                    <ComboBoxItem Content="Minha pasta de usuário" Tag="user"/>
+                                    <ComboBoxItem Content="Todas as unidades fixas — demora" Tag="drives"/>
+                                </ComboBox>
+                                <Button Content="Ignorar uma pasta…" Style="{StaticResource TextButton}" Click="JunkAddExcluded_Click" Margin="0,0,8,6"/>
+                                <Button x:Name="JunkClearExcludedBtn" Content="Limpar pastas ignoradas" Style="{StaticResource TextButton}" Click="JunkClearExcluded_Click" Margin="0,0,8,6"/>
+                            </WrapPanel>
+                            <TextBlock x:Name="JunkExcluded" Style="{StaticResource Label}" TextWrapping="Wrap"/>
+                            <TextBlock Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                       Text="Procura .tmp, .chk, despejos de memória antigos, travas ~$ do Office e pastas FOUND. Arquivos .bak, .old e pastas FOUND começam desmarcados porque podem ser seus; eles vão para a Lixeira. Windows, Program Files e seus documentos não entram."/>
+                        </StackPanel>
+                        <DataGrid x:Name="JunkGrid" PreviewKeyDown="JunkGrid_KeyDown" AutomationProperties.Name="Arquivos inúteis encontrados">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Apagar" Width="Auto" MinWidth="88">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Style="{StaticResource GridCheck}"
+                                                      IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      AutomationProperties.Name="{Binding Path}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Arquivo" Binding="{Binding Path}" Width="*"/>
+                                <DataGridTextColumn Header="Tipo" Binding="{Binding KindText}" Width="200"/>
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="100"/>
+                                <DataGridTextColumn Header="Modificado" Binding="{Binding ModifiedText}" Width="130"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+
+                <!-- LIMPEZA DE DISCO DO WINDOWS -->
+                <TabItem Header="Limpeza de Disco do Windows">
+                    <DockPanel>
+                        <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                            <Button x:Name="DiskRunBtn" Content="Executar a Limpeza de Disco" Click="DiskRun_Click" Margin="0,0,8,6"/>
+                            <Button Content="Marcar os seguros" Style="{StaticResource TextButton}" Click="DiskSafe_Click" Margin="0,0,8,6"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="DiskNone_Click" Margin="0,0,8,6"/>
+                            <Button Content="Atualizar lista" Style="{StaticResource TextButton}" Click="DiskReload_Click" Margin="0,0,8,6"/>
+                        </WrapPanel>
+                        <TextBlock x:Name="DiskInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,6,0,0"
+                                   AutomationProperties.LiveSetting="Polite"/>
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Usa a própria Limpeza de Disco do Windows, que sabe apagar com segurança o que é do sistema (atualizações antigas, Windows.old, pacotes de driver, relatórios de erro). Exige administrador. A Lixeira e a pasta Downloads não entram aqui."/>
+                        <DataGrid x:Name="DiskGrid" PreviewKeyDown="DiskGrid_KeyDown" AutomationProperties.Name="Módulos da Limpeza de Disco do Windows">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Limpar" Width="Auto" MinWidth="88">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Style="{StaticResource GridCheck}"
+                                                      IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      AutomationProperties.Name="{Binding Label}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="O que" Binding="{Binding Label}" Width="*"/>
+                                <DataGridTextColumn Header="Cuidado" Binding="{Binding RiskText}" Width="110"/>
+                                <DataGridTextColumn Header="Aviso" Binding="{Binding Warning}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+            </TabControl>
+        </Grid>
+
+        <DockPanel Grid.Row="3" Margin="0,12,0,0">
+            <Button DockPanel.Dock="Right" Content="Fechar" IsCancel="True" IsDefault="True" Click="Close_Click"/>
+            <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0"
+                       AutomationProperties.LiveSetting="Polite"/>
+        </DockPanel>
+    </Grid>
+</Window>

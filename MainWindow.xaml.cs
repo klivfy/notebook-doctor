@@ -261,7 +261,7 @@ public partial class MainWindow : Window
 
     // ---------- A38: modo simulação ----------
     /// <summary>Com a simulação ligada, mostra o que seria feito e devolve true (quem chamou não faz nada).</summary>
-    private bool Simulate(string action, string details)
+    internal bool Simulate(string action, string details)
     {
         if (!Host.Settings.SimulationMode) return false;
         ShowSnack($"Simulação: {action}", details + " Nada foi alterado.", "Desligar simulação", () => SetSimulation(false), seconds: 15);
