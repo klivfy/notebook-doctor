@@ -311,18 +311,21 @@ public partial class MainWindow
     private void ProgDone_Click(object sender, RoutedEventArgs e) => _progDone = true;
 
     /// <summary>Procura as sobras (Store e atualizações não deixam sobras para o app tratar). Devolve a lista ou o erro.</summary>
-    private async Task<(List<Leftover>? Found, string? Error)> FindLeftoversAsync(ProgramFingerprint fp)
+    private async Task<(List<Leftover>? Found, string? Error)> FindLeftoversAsync(ProgramFingerprint fp, InstallTrace? trace = null)
     {
         if (fp.Kind is not (ProgramKind.Program or ProgramKind.Msi)) return ([], null);
         ProgMsg.Text = Loc.F("Procurando sobras de {0} no disco e no registro…", fp.Name);
         var places = WindowsPlaces.Current(AppPaths.Dir);
-        var others = AllPrograms(includeSystem: true);
+        var others = AllPrograms(includeSystem: true).Where(o => o.Id != fp.Id).ToList();
+        trace ??= TraceStore.ForKey(fp.RegistryPath); // leva 5.4b: o que a instalação monitorada criou entra junto
         try
         {
             return (await Task.Run(() =>
             {
+                var sys = new WindowsLeftoverSystem();
                 var ctx = new LeftoverContext(places, others, ScheduledTasks.List(), ShortcutScan.List(places));
-                return LeftoverScanner.Scan(fp, ctx, new WindowsLeftoverSystem());
+                var scan = LeftoverScanner.Scan(fp, ctx, sys);
+                return trace is null ? scan : TraceRules.Merge(TraceRules.ToLeftovers(trace, places, others, sys), scan);
             }), null);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Runtime.InteropServices.COMException)
@@ -332,9 +335,9 @@ public partial class MainWindow
     }
 
     /// <summary>Procura, mostra a revisão e apaga o que a pessoa marcou.</summary>
-    private async Task FindReviewRemoveAsync(ProgramFingerprint fp, bool afterUninstall)
+    private async Task FindReviewRemoveAsync(ProgramFingerprint fp, bool afterUninstall, InstallTrace? trace = null)
     {
-        var (found, error) = await FindLeftoversAsync(fp);
+        var (found, error) = await FindLeftoversAsync(fp, trace);
         if (error is not null) { ProgMsg.Text = error; return; }
         if (found is not { Count: > 0 })
         {
@@ -374,6 +377,108 @@ public partial class MainWindow
     }
 
     private void ProgBackups_Click(object sender, RoutedEventArgs e) => Dialogs.ShowBackups(this, new BackupStore(AppPaths.Backups));
+
+    // ---------- Leva 5.4: instalação monitorada ----------
+    private async void ProgMonitor_Click(object sender, RoutedEventArgs e)
+    {
+        if (!AppInfo.IsAdmin)
+        {
+            ProgMsg.Text = Loc.T("O monitor de instalação lê o diário do disco e o registro do sistema: abra o app como administrador (Ajustes › Reabrir como administrador).");
+            return;
+        }
+        if (_progBusy) { ProgMsg.Text = Loc.T("Espere a desinstalação atual terminar."); return; }
+        var pick = new Microsoft.Win32.OpenFileDialog { Title = Loc.T("Escolha o instalador"), Filter = $"{Loc.T("Instaladores")}|*.exe;*.msi" };
+        if (pick.ShowDialog(this) != true) return;
+        string installer = pick.FileName, file = Path.GetFileName(installer);
+        if (Simulate(Loc.T("Instalar monitorando"), Loc.F("Fotografaria o registro, abriria {0} e anotaria o que ele mudou.", file))) return;
+        if (!Dialogs.Confirm(this, Loc.T("Instalar monitorando?"),
+                Loc.F("O app fotografa o registro, abre {0} e anota tudo o que a instalação criar. Depois, dá para desinstalar removendo exatamente isso.\n\nFeche os outros programas antes: o que eles mudarem durante a instalação também entra na anotação (você revisa antes de apagar qualquer coisa).\n\nA fotografia leva de alguns segundos a um minuto, antes e depois.", file),
+                Loc.T("Começar"))) return;
+
+        _progBusy = true;
+        try
+        {
+            ProgMsg.Text = Loc.T("Fotografando o registro…");
+            void Progress(int n) => Dispatcher.BeginInvoke(() => ProgMsg.Text = Loc.F("Fotografando o registro… {0:N0} chaves", n));
+            var (before, usn) = await Task.Run(() => (RegistrySnapshotter.Take(TraceRules.Roots, Progress), UsnWatcher.Start()));
+            var started = DateTime.Now;
+            var cmd = installer.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)
+                ? new UninstallCommand("msiexec.exe", $"/i \"{installer}\"")
+                : new UninstallCommand(installer, "");
+            _progDone = false;
+            ProgDoneBtn.Visibility = Visibility.Visible;
+            ProgMsg.Text = Loc.F("Instalador {0} aberto. Siga as etapas; o app espera ele terminar.", file);
+            try { await UninstallRunner.RunAsync(cmd, () => _progDone, CancellationToken.None); } // a espera serve para instaladores também
+            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223) { ProgMsg.Text = Loc.T("Cancelado no aviso de permissão do Windows."); return; }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException)
+            {
+                ProgMsg.Text = Loc.F("Não foi possível abrir o instalador: {0}", ex.Message);
+                return;
+            }
+            finally { ProgDoneBtn.Visibility = Visibility.Collapsed; }
+
+            ProgMsg.Text = Loc.T("Fotografando de novo e comparando…");
+            var places = WindowsPlaces.Current(AppPaths.Dir);
+            var trace = await Task.Run(() =>
+            {
+                var after = RegistrySnapshotter.Take(TraceRules.Roots, Progress);
+                var changes = TraceRules.Diff(before, after, RegistrySnapshotter.ValueNames);
+                return TraceRules.Build(installer, started, DateTime.Now, changes, usn.Changes(), places, AppPaths.Dir, RegistrySnapshotter.DisplayName);
+            });
+            TraceStore.Save(trace);
+            ActionLog.Add("Instalação monitorada", $"{trace.Name}: {trace.Count} itens");
+            _progKeys = await Task.Run(ProgramInventory.ReadUninstallKeys);
+            if (trace.UninstallKey.Length > 0) _progReveal = trace.UninstallKey;
+            ShowPrograms();
+            ProgMsg.Text = Loc.F("{0}: anotados {1} pastas, {2} arquivos soltos, {3} chaves e {4} valores do registro. Veja em \"Instalações monitoradas…\".",
+                                 trace.Name, trace.CreatedFolders.Count, trace.CreatedFiles.Count, trace.CreatedKeys.Count, trace.CreatedValues.Count)
+                           + (usn.Volumes == 0 ? " " + Loc.T("O diário do disco não estava disponível: só o registro foi anotado.") : "");
+        }
+        finally { _progBusy = false; }
+    }
+
+    private async void ProgTraces_Click(object sender, RoutedEventArgs e)
+    {
+        if (Dialogs.ShowTraces(this) is { } trace) await UninstallByTraceAsync(trace);
+    }
+
+    /// <summary>
+    /// Leva 5.4b: com o programa ainda instalado, roda o desinstalador dele primeiro; depois junta o que a instalação
+    /// criou (e ainda existe) com a busca de sobras comum, na mesma revisão.
+    /// </summary>
+    private async Task UninstallByTraceAsync(InstallTrace trace)
+    {
+        if (!Host.EnsureUnlocked(Loc.T("desinstalar programas"))) return; // B38
+        if (_progBusy) { ProgMsg.Text = Loc.T("Espere a desinstalação atual terminar."); return; }
+        if (_progKeys.Count == 0) _progKeys = await Task.Run(ProgramInventory.ReadUninstallKeys);
+        var program = trace.UninstallKey.Length == 0 ? null : AllPrograms(includeSystem: true).FirstOrDefault(p => Paths.Same(p.Id, trace.UninstallKey));
+        var cmd = program is null ? null : ProgramRules.CommandFor(program, File.Exists);
+        if (Simulate(Loc.F("Desinstalar {0}", trace.Name), Loc.F("Rodaria o desinstalador (se ainda existir) e mostraria o que a instalação criou: {0}.", Pt.N(trace.Count, Loc.T("item"), Loc.T("itens"))))) return;
+        string message = cmd is not null
+            ? Loc.F("Desinstalar {0}?\n\nO desinstalador dele abre primeiro. Depois, o app mostra o que a instalação monitorada criou e ainda está no computador, junto com a busca de sobras, para você revisar.", trace.Name)
+            : Loc.F("{0} não está mais na lista de programas. Procurar e apagar o que a instalação monitorada criou e ainda está no computador?\n\nVocê revisa tudo antes, e tudo vai para um backup.", trace.Name);
+        if (!Dialogs.Confirm(this, Loc.T("Desinstalar pela instalação monitorada?"), message, Loc.T("Continuar"), danger: true)) return;
+
+        _progBusy = true;
+        try
+        {
+            ProgramFingerprint fp;
+            if (program is not null && cmd is not null)
+            {
+                fp = ProgramFingerprint.Of(program, Directory.Exists, File.Exists);
+                string restore = await EnsureRestorePointAsync("Desinstalar " + program.Name);
+                ActionLog.Add("Desinstalação iniciada", $"{program.Name} · ponto de restauração: {restore}");
+                var (gone, result) = await UninstallOneAsync(program, cmd);
+                ProgMsg.Text = result;
+                if (!gone) return;
+            }
+            else fp = ProgramFingerprint.Manual(trace.Name, trace.CreatedFolders.FirstOrDefault()) with { RegistryPath = trace.UninstallKey };
+            await FindReviewRemoveAsync(fp, afterUninstall: cmd is not null, trace);
+            _progKeys = await Task.Run(ProgramInventory.ReadUninstallKeys);
+            ShowPrograms();
+        }
+        finally { _progBusy = false; }
+    }
 
     // ---------- Leva 5.3: remoção forçada e sobras de programa já removido ----------
     private async void ProgForced_Click(object sender, RoutedEventArgs e)

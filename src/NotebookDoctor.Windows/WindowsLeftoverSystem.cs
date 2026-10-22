@@ -116,6 +116,8 @@ public sealed class WindowsLeftoverSystem : ILeftoverSystem
 
     public bool DirectoryExists(string dir) => Directory.Exists(dir);
 
+    public bool FileExists(string path) => File.Exists(path);
+
     public IEnumerable<string> Files(string dir) =>
         Directory.Exists(dir) ? Guarded(() => Directory.EnumerateFiles(dir, "*", Recursive)) : [];
 

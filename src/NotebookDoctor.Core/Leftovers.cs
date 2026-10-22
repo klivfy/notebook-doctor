@@ -79,6 +79,7 @@ public interface ILeftoverSystem
     /// <summary>Subpastas diretas (caminhos completos), sem seguir links.</summary>
     IEnumerable<string> Directories(string dir);
     bool DirectoryExists(string dir);
+    bool FileExists(string path);
     /// <summary>Arquivos da pasta e das subpastas (caminhos completos).</summary>
     IEnumerable<string> Files(string dir);
     /// <summary>Tamanho do arquivo ou da pasta inteira.</summary>

@@ -492,6 +492,10 @@
                             <Button Content="Mirar" Style="{StaticResource TextButton}" Margin="0,0,8,6" Click="ProgHunt_Click"
                                     PreviewMouseLeftButtonDown="ProgHunt_Down" PreviewMouseLeftButtonUp="ProgHunt_Up"
                                     ToolTip="Segure, arraste até a janela de um programa e solte: o app mostra de qual programa instalado ela é."/>
+                            <Button Content="Instalar monitorando…" Style="{StaticResource TextButton}" Click="ProgMonitor_Click" Margin="0,0,8,6"
+                                    ToolTip="Anota tudo o que um instalador cria no disco e no registro, para desinstalar exatamente isso depois (administrador)."/>
+                            <Button Content="Instalações monitoradas…" Style="{StaticResource TextButton}" Click="ProgTraces_Click" Margin="0,0,8,6"
+                                    ToolTip="Ver, exportar, importar e desinstalar pelas anotações das instalações."/>
                             <Button Content="Backups…" Style="{StaticResource TextButton}" Click="ProgBackups_Click" Margin="0,0,8,6"
                                     ToolTip="Restaurar ou apagar o que a remoção de sobras guardou (30 dias)."/>
                             <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ProgRefresh_Click" Margin="0,0,8,6"/>

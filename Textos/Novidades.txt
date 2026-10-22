@@ -8,6 +8,7 @@ Programas (novo)
 • Remoção forçada e "Procurar sobras" para programas com desinstalador quebrado ou já removidos.
 • Apps da Store: remover de todas as contas e redefinir.
 • "Mirar": arraste até a janela de um programa (ou solte um atalho na lista) para saber de qual programa instalado ela é. Também em Processos e Inicialização.
+• "Instalar monitorando…": o app anota tudo o que um instalador cria no disco e no registro; depois, a desinstalação remove exatamente isso. As anotações podem ser exportadas e levadas para outro PC.
 • Depois de desinstalar, o app procura o que sobrou (pastas, registro, inicialização, serviços, tarefas e atalhos) em três níveis: Seguro, Moderado e Avançado.
 • Você revisa antes de apagar. Tudo vai para um backup de 30 dias e pode ser desfeito em Ações ou em "Backups…".
 

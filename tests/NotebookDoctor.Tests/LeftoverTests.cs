@@ -245,6 +245,7 @@ internal sealed class FakeSystem : ILeftoverSystem
     public IEnumerable<string> ValueNames(string key) => _keys.TryGetValue(key, out var v) ? v.Keys.Where(n => n.Length > 0).ToList() : [];
     public IEnumerable<string> Directories(string dir) => _dirs.Where(d => Paths.Same(Paths.Parent(d), dir)).ToList();
     public bool DirectoryExists(string dir) => _dirs.Contains(Paths.Clean(dir));
+    public bool FileExists(string path) => _files.ContainsKey(path);
     public IEnumerable<string> Files(string dir) => _files.Keys.Where(f => Paths.IsUnder(f, dir)).ToList();
     public long Size(string path) => _files.TryGetValue(path, out long s) ? s : _files.Where(f => Paths.IsUnder(f.Key, path)).Sum(f => f.Value);
 }

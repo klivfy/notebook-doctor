@@ -291,6 +291,96 @@ public static class Dialogs
         return result;
     }
 
+    /// <summary>
+    /// Leva 5.4: instalações monitoradas, com detalhes, exportar, importar e apagar. Devolve a que a pessoa pediu para
+    /// desinstalar (quem chamou cuida disso), ou null.
+    /// </summary>
+    public static Services.InstallTrace? ShowTraces(Window owner)
+    {
+        string title = Services.Loc.T("Instalações monitoradas");
+        var dlg = NewWindow(owner, title, 760);
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 4));
+        var sub = new TextBlock
+        {
+            Text = Services.Loc.T("O que cada instalação criou no disco e no registro. \"Desinstalar\" usa essa anotação e a busca de sobras; você revisa antes de apagar."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var list = new ListBox { Height = 260, Margin = new Thickness(0, 0, 0, 8) };
+        System.Windows.Automation.AutomationProperties.SetName(list, title);
+        var msg = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetLiveSetting(msg, System.Windows.Automation.AutomationLiveSetting.Polite);
+        Services.InstallTrace? result = null;
+
+        void Load()
+        {
+            var traces = Services.TraceStore.List();
+            list.ItemsSource = traces.Select(t => new ListBoxItem
+            {
+                Tag = t,
+                Content = $"{t.Name} · {t.Started.ToString("g", Services.Loc.Culture)} · {Services.Pt.N(t.Count, Services.Loc.T("item"), Services.Loc.T("itens"))}"
+                          + (t.Imported ? $" · {Services.Loc.T("importada")}" : ""),
+            }).ToList();
+            if (traces.Count == 0) msg.Text = Services.Loc.T("Nenhuma instalação monitorada ainda. Use \"Instalar monitorando…\" na aba Programas.");
+        }
+        Services.InstallTrace? Selected()
+        {
+            if ((list.SelectedItem as ListBoxItem)?.Tag is Services.InstallTrace t) return t;
+            msg.Text = Services.Loc.T("Selecione uma instalação na lista.");
+            return null;
+        }
+        Button Btn(string text, string? style = "TextButton")
+        {
+            var b = new Button { Content = text, Margin = new Thickness(0, 0, 8, 0) };
+            if (style is not null) b.SetResourceReference(FrameworkElement.StyleProperty, style);
+            return b;
+        }
+
+        var uninstall = Btn(Services.Loc.T("Desinstalar…"), null);
+        uninstall.Click += (_, _) => { if (Selected() is { } t) { result = t; dlg.Close(); } };
+        var details = Btn(Services.Loc.T("Ver detalhes"), "TonalButton");
+        details.Click += (_, _) => { if (Selected() is { } t) ShowText(dlg, t.Name, Services.TraceRules.Report(t)); };
+        var export = Btn(Services.Loc.T("Exportar…"));
+        export.Click += (_, _) =>
+        {
+            if (Selected() is not { } t) return;
+            var save = new Microsoft.Win32.SaveFileDialog
+            {
+                FileName = t.Name,
+                Filter = $"{Services.Loc.T("Para importar em outro PC (JSON)")}|*.json|{Services.Loc.T("Texto")}|*.txt|{Services.Loc.T("Página (HTML)")}|*.html",
+            };
+            if (save.ShowDialog(dlg) != true) return;
+            try { Services.TraceStore.Export(t, save.FileName); msg.Text = Services.Loc.F("Salvo: {0}", save.FileName); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { msg.Text = ex.Message; }
+        };
+        var import = Btn(Services.Loc.T("Importar…"));
+        import.Click += (_, _) =>
+        {
+            var open = new Microsoft.Win32.OpenFileDialog { Filter = $"{Services.Loc.T("Instalação monitorada (JSON)")}|*.json" };
+            if (open.ShowDialog(dlg) != true) return;
+            msg.Text = Services.TraceStore.Import(open.FileName) is { } t
+                ? Services.Loc.F("{0} importada. Os itens dela entram como Moderado: confira na revisão.", t.Name)
+                : Services.Loc.T("O arquivo não é uma instalação monitorada.");
+            Load();
+        };
+        var delete = Btn(Services.Loc.T("Apagar"));
+        delete.Click += (_, _) =>
+        {
+            if (Selected() is not { } t) return;
+            if (!Confirm(dlg, Services.Loc.T("Apagar a anotação?"), Services.Loc.T("O programa continua instalado; só a anotação da instalação sai."), Services.Loc.T("Apagar"))) return;
+            Services.TraceStore.Delete(t.Id);
+            Load();
+        };
+        var close = Btn(Services.Loc.T("Fechar"));
+        close.IsCancel = true;
+        close.Click += (_, _) => dlg.Close();
+        var buttons = new WrapPanel { Children = { uninstall, details, export, import, delete, close } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, sub, list, msg, buttons } };
+        Load();
+        dlg.ShowDialog();
+        return result;
+    }
+
     /// <summary>Fase 5: backups da remoção de sobras, com restaurar e apagar.</summary>
     public static void ShowBackups(Window owner, Services.BackupStore store)
     {
