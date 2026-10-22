@@ -86,6 +86,10 @@ public sealed class AppSettings
     public List<string> UpdatePaused { get; set; } = new();
     /// <summary>Leva 7.1: a pessoa leu e aceitou os termos da fonte do WinGet (nunca é aceito pelo app em nome dela).</summary>
     public bool WingetSourceTerms { get; set; }
+    /// <summary>Leva 7.3: aplicativos que o modo soneca nunca adormece (chave = nome sem símbolos, minúsculo).</summary>
+    public List<string> SnoozeNever { get; set; } = new();
+    /// <summary>Leva 7.3: ao pôr um aplicativo para dormir, o padrão é acordá-lo quando a pessoa abrir.</summary>
+    public bool SnoozeWakeOnOpen { get; set; } = true;
     public int CpuAlertPct { get; set; } = 80;
     public int RamAlertPct { get; set; } = 90;
     public DateTime LastWeeklyRun { get; set; } = DateTime.MinValue;

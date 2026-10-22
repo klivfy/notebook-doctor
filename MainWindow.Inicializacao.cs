@@ -20,6 +20,9 @@ public partial class MainWindow
         StartupMsg.Text = $"{_startup.Count(x => x.Enabled)} ativos de {_startup.Count}";
     }
 
+    // Leva 7.3 (C12)
+    private void Snooze_Click(object sender, RoutedEventArgs e) { new SnoozeWindow(this).ShowDialog(); RefreshStartup(); }
+
     // Leva 7.3 (C06)
     private void ContextMenu_Click(object sender, RoutedEventArgs e) => new ContextMenuWindow(this).ShowDialog();
 

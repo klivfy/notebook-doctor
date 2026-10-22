@@ -113,6 +113,19 @@ public static class ActionLog
                 catch (Exception ex) when (ex is InvalidOperationException or ArgumentException) { return Loc.T("Não foi possível desfazer: ") + ex.Message; }
                 msg = Loc.T("Item do menu de contexto de volta.");
                 break;
+            case "snooze":
+                // UndoArg1 = chave do aplicativo em soneca
+                var snoozed = global::NotebookDoctor.App.Current.Snooze.Load().FirstOrDefault(a => a.Key == entry.UndoArg1);
+                if (snoozed is null) return Loc.T("Este aplicativo já foi acordado.");
+                var woke = SnoozeEngine.Wake(snoozed, new WindowsSnoozeSystem());
+                if (SnoozeEngine.FullyAwake(snoozed)) global::NotebookDoctor.App.Current.Snooze.Remove(snoozed.Key);
+                else
+                {
+                    global::NotebookDoctor.App.Current.Snooze.Save(snoozed);
+                    return Loc.T("Algumas peças exigem administrador: abra o app como administrador e desfaça de novo.");
+                }
+                msg = Loc.F("{0} acordou: inicialização, serviços e tarefas de volta.", snoozed.Name);
+                break;
             case "driver":
                 // UndoArg1 = id da cópia do driver anterior (pasta em driver-backups)
                 if (!AppInfo.IsAdmin) return Loc.T("Voltar ao driver anterior exige administrador: abra o app como administrador e tente de novo.");

@@ -49,6 +49,9 @@ public static class AppGroups
         return d;
     }
 
+    /// <summary>Nome do processo principal da família (o primeiro da lista), ou null se o aplicativo não é uma família conhecida.</summary>
+    public static string? MainOf(string app) => Families.FirstOrDefault(f => f.App.Equals(app, StringComparison.OrdinalIgnoreCase)).Names?[0];
+
     /// <summary>Aplicativo a que o processo pertence, ou null quando ele fica sozinho.</summary>
     public static string? AppOf(string processName) => ByName.TryGetValue(processName, out var a) ? a.App : null;
 

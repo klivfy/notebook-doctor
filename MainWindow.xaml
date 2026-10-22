@@ -565,6 +565,8 @@
                                     ToolTip="Abre a aba Programas no programa instalado que é dono deste item, para desinstalar ou ver detalhes."/>
                             <Button Content="Menu de contexto…" Style="{StaticResource TextButton}" Click="ContextMenu_Click" Margin="0,0,8,6"
                                     ToolTip="Itens que aparecem ao clicar com o botão direito em arquivos e pastas: desative os que você não usa."/>
+                            <Button Content="Modo soneca…" Style="{StaticResource TextButton}" Click="Snooze_Click" Margin="0,0,8,6"
+                                    ToolTip="Põe para dormir programas que rodam sozinhos (inicialização, serviços, tarefas e processos de fundo) e acorda quando você os abre."/>
                             <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="RefreshStartup_Click" Margin="0,0,8,6"/>
                             <TextBlock x:Name="StartupMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>

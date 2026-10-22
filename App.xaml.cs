@@ -150,6 +150,7 @@ public partial class App : Application
         };
         _ = RunLoopAsync(_cts.Token);
         _ = CheckUpdatesLaterAsync(_cts.Token);
+        _ = SnoozeWatchAsync(_cts.Token);
     }
 
     // ---------- M02: mini-widget ----------
@@ -538,6 +539,63 @@ public partial class App : Application
         Settings.Save();
         // Link só navega: a pessoa abre a Limpeza e decide
         Alert("Lixo acumulado", $"Há cerca de {Cleaner.FormatBytes(bytes)} de temporários para limpar.", ("Abrir Limpeza", Tab(AppTabs.Clean)));
+    }
+
+    // ---------- Leva 7.3 (C12): modo soneca, acordar ao abrir ----------
+    public SnoozeStore Snooze { get; } = new(System.IO.Path.Combine(AppPaths.Dir, "snooze.json"));
+    private readonly ISnoozeSystem _snoozeSystem = new WindowsSnoozeSystem();
+    private Dictionary<string, int> _snoozeAbsent = new();
+
+    /// <summary>
+    /// Enquanto há aplicativo em soneca com "acordar ao abrir", olha de poucos em poucos segundos os nomes dos processos
+    /// abertos: quando o programa principal abre, devolve as peças dele; quando fecha, volta a dormir.
+    /// </summary>
+    private async Task SnoozeWatchAsync(CancellationToken ct)
+    {
+        if (AppPaths.Demo) return;
+        while (!ct.IsCancellationRequested)
+        {
+            TimeSpan wait = TimeSpan.FromSeconds(30);
+            try
+            {
+                var apps = Snooze.Load();
+                if (apps.Any(a => a.WakeOnOpen && a.MainExes.Count > 0))
+                {
+                    var running = await Task.Run(SnoozeScanner.RunningNames, ct);
+                    _snoozeAbsent = SnoozeRules.CountAbsent(apps, running, _snoozeAbsent);
+                    foreach (var (app, action) in SnoozeRules.Decide(apps, running, _snoozeAbsent))
+                        await Task.Run(() => ApplySnoozeDecision(app.Key, action), ct);
+                    wait = Native.PowerStatus().OnBattery ? TimeSpan.FromSeconds(10) : SnoozeRules.WatchEvery;
+                }
+            }
+            catch (OperationCanceledException) { break; }
+            catch (Exception ex) { LogError(ex); }
+            try { await Task.Delay(wait, ct); } catch (OperationCanceledException) { break; }
+        }
+    }
+
+    private void ApplySnoozeDecision(string key, WatchAction action)
+    {
+        string? log = null;
+        Snooze.Update(list =>
+        {
+            var rec = list.FirstOrDefault(a => a.Key == key);
+            if (rec is null) return false;
+            if (action == WatchAction.Wake)
+            {
+                SnoozeEngine.Wake(rec, _snoozeSystem);
+                rec.Awake = true;
+                log = Loc.F("Soneca: {0} acordou porque você abriu", rec.Name);
+            }
+            else
+            {
+                SnoozeEngine.Apply(rec, _snoozeSystem); // idempotente; deixa Awake = false
+                _snoozeAbsent.Remove(key);
+                log = Loc.F("Soneca: {0} voltou a dormir", rec.Name);
+            }
+            return true;
+        });
+        if (log is not null) ActionLog.Add(log, "");
     }
 
     /// <summary>C16: quando um navegador fecha, limpa os dados escolhidos (sem janela).</summary>

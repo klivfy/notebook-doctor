@@ -43,6 +43,11 @@ Drivers (novo)
 • Antes de instalar, o app cria um ponto de restauração e guarda uma cópia do driver atual.
 • “Cópias dos drivers anteriores” e a aba Ações permitem voltar ao driver anterior.
 
+Inicialização (novo)
+• “Menu de contexto…”: veja o que aparece ao clicar com o botão direito em arquivos e pastas e desative o que não usa; reativar devolve.
+• “Modo soneca…”: põe um programa para dormir (inicialização, serviços, tarefas e processos de fundo) e acorda quando você o abre.
+• Antivírus, áudio, vídeo, touchpad, rede e acesso remoto nunca dormem.
+
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.
