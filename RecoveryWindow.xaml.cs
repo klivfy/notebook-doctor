@@ -191,6 +191,12 @@ public partial class RecoveryWindow : Window
         System.Media.SystemSounds.Asterisk.Play();
     }
 
+    private void Engine_Click(object sender, RoutedEventArgs e)
+    {
+        if (_busy) { Msg.Text = Loc.T("Espere terminar ou clique em Cancelar."); return; }
+        new NtfsRecoveryWindow(_main).ShowDialog();
+    }
+
     private void Open_Click(object sender, RoutedEventArgs e)
     {
         if (_outputFolder is { } f && Directory.Exists(f)) AppInfo.OpenShell(f);
