@@ -465,6 +465,44 @@ public static class Dialogs
         return t;
     }
 
+    /// <summary>Leva 6.2: escolher, entre os sites que têm cookies, os que devem continuar conectados. Devolve a lista nova, ou null se cancelou.</summary>
+    public static List<string>? PickSites(Window owner, IReadOnlyList<(string Site, int Count)> sites, IEnumerable<string> kept)
+    {
+        string title = Services.Loc.T("Sites a manter conectados");
+        var dlg = NewWindow(owner, title, 520);
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 4));
+        var sub = new TextBlock
+        {
+            Text = Services.Loc.T("Marque os sites que devem continuar conectados depois da limpeza. Os mais usados vêm primeiro."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10),
+        };
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var keptSet = new HashSet<string>(kept, StringComparer.OrdinalIgnoreCase);
+        var list = new ListBox { Height = 300, SelectionMode = SelectionMode.Multiple, Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetName(list, title);
+        // Os já mantidos entram na lista mesmo sem cookies agora, para a escolha anterior não se perder
+        var all = sites.Select(s => (s.Site, s.Count)).Concat(keptSet.Where(k => sites.All(s => !s.Site.Equals(k, StringComparison.OrdinalIgnoreCase))).Select(k => (k, 0))).ToList();
+        foreach (var (site, count) in all)
+        {
+            var item = new ListBoxItem { Tag = site, Content = count > 0 ? $"{site} · {Services.Pt.N(count, Services.Loc.T("cookie"), Services.Loc.T("cookies"))}" : site };
+            list.Items.Add(item);
+            if (keptSet.Contains(site)) list.SelectedItems.Add(item);
+        }
+        List<string>? result = null;
+        var ok = new Button { Content = Services.Loc.T("Salvar"), IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
+        ok.Click += (_, _) => { result = list.SelectedItems.OfType<ListBoxItem>().Select(i => (string)i.Tag).ToList(); dlg.Close(); };
+        var cancel = new Button { Content = Services.Loc.T("Cancelar"), IsCancel = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        cancel.Click += (_, _) => dlg.Close();
+        dlg.Content = new StackPanel
+        {
+            Margin = new Thickness(24),
+            Children = { heading, sub, list, new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { ok, cancel } } },
+        };
+        dlg.ShowDialog();
+        return result;
+    }
+
     /// <summary>B23/B24: texto longo (novidades, licenças, privacidade) com rolagem.</summary>
     public static void ShowText(Window owner, string title, string text)
     {

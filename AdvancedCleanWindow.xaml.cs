@@ -80,6 +80,21 @@ public sealed class JunkRow : CheckRow
     public string ModifiedText => Item.Modified.ToString("d", Loc.Culture);
 }
 
+public sealed class BrowserRow : CheckRow
+{
+    public BrowserProfile Profile { get; }
+    public bool Running { get; }
+    public long Bytes { get; }
+    public BrowserRow(BrowserProfile profile, bool running, long bytes)
+    {
+        Profile = profile; Running = running; Bytes = bytes;
+        Selected = !running;
+    }
+    public string Display => $"{Profile.Browser.Name} · {Profile.Name}";
+    public string StatusText => Running ? Loc.T("Aberto") : Loc.T("Fechado");
+    public string SizeText => Bytes > 0 ? Loc.F("até {0}", Units.Bytes(Bytes)) : "";
+}
+
 public sealed class DiskRow : CheckRow
 {
     public DiskModule Module { get; }
@@ -101,6 +116,7 @@ public partial class AdvancedCleanWindow : Window
     private readonly ObservableCollection<RuleRow> _rules = [];
     private readonly ObservableCollection<JunkRow> _junk = [];
     private readonly ObservableCollection<DiskRow> _disk = [];
+    private readonly ObservableCollection<BrowserRow> _browsers = [];
     private readonly CancellationTokenSource _cts = new();
     private readonly KnownPlaces _places = WindowsPlaces.Current(AppPaths.Dir);
     private bool _busy;
@@ -115,12 +131,14 @@ public partial class AdvancedCleanWindow : Window
         RulesGrid.ItemsSource = _rules;
         JunkGrid.ItemsSource = _junk;
         DiskGrid.ItemsSource = _disk;
+        BrowsersGrid.ItemsSource = _browsers;
         SourceInitialized += (_, _) => ThemeManager.ApplyTitleBar(this);
         Closed += (_, _) => _cts.Cancel();
         Loaded += (_, _) =>
         {
             ShowSection(0);
             ShowExcluded();
+            InitBrowsers();
             RulesInfo.Text = Loc.T("Clique em Analisar para ver o que pode ser limpo.");
             JunkInfo.Text = Loc.T("Clique em Procurar para achar arquivos inúteis.");
             _ = LoadDiskAsync();
@@ -138,6 +156,8 @@ public partial class AdvancedCleanWindow : Window
         Mark(TabTraces, i == 0);
         Mark(TabJunk, i == 1);
         Mark(TabDisk, i == 2);
+        Mark(TabBrowsers, i == 3);
+        if (i == 3 && _browsers.Count == 0 && !_busy) _ = ScanBrowsersAsync();
     }
 
     /// <summary>Uma operação por vez: os botões não disparam outra análise ou limpeza no meio de uma.</summary>
@@ -510,5 +530,182 @@ public partial class AdvancedCleanWindow : Window
         ActionLog.Add(Loc.T("Limpeza de Disco do Windows"), string.Join(", ", chosen.Select(r => r.Label)));
         End(ok ? Loc.T("Limpeza de Disco do Windows concluída.") : Loc.T("A Limpeza de Disco do Windows terminou com erro: confira no próprio Windows."));
         PlayDone();
+    }
+
+    // ---------- Navegadores ----------
+    private CheckBox[] KindBoxes => [KindHistory, KindCookies, KindSessions, KindForms];
+
+    private void InitBrowsers()
+    {
+        var saved = Host.Settings.BrowserKinds;
+        foreach (var box in KindBoxes)
+        {
+            var kind = Enum.Parse<BrowserDataKind>((string)box.Tag);
+            box.IsChecked = saved.Contains(kind.ToString());
+            box.ToolTip = BrowserCatalog.Description(kind);
+        }
+        BrowserOnClose.IsChecked = Host.Settings.BrowserCleanOnClose;
+        RefreshKeepList();
+    }
+
+    private List<BrowserDataKind> SelectedKinds() =>
+        KindBoxes.Where(b => b.IsChecked == true).Select(b => Enum.Parse<BrowserDataKind>((string)b.Tag)).ToList();
+
+    private void Kind_Click(object sender, RoutedEventArgs e)
+    {
+        Host.Settings.BrowserKinds = SelectedKinds().Select(k => k.ToString()).ToList();
+        Host.Settings.Save();
+        if (SelectedKinds().Count == 0 && BrowserOnClose.IsChecked == true) BrowserOnClose.IsChecked = Host.Settings.BrowserCleanOnClose = false;
+        Host.Settings.Save();
+        _ = ScanBrowsersAsync();
+    }
+
+    private void OnClose_Click(object sender, RoutedEventArgs e)
+    {
+        if (BrowserOnClose.IsChecked == true)
+        {
+            if (SelectedKinds().Count == 0)
+            {
+                BrowserOnClose.IsChecked = false;
+                Msg.Text = Loc.T("Marque antes o que apagar.");
+                return;
+            }
+            string what = string.Join(", ", SelectedKinds().Select(BrowserCatalog.DisplayName));
+            if (!Dialogs.Confirm(this, Loc.T("Limpar ao fechar o navegador"), Loc.F("Toda vez que um navegador fechar, o app vai apagar: {0}.\n\nOs sites da lista “a manter” continuam conectados.", what), Loc.T("Ligar")))
+            {
+                BrowserOnClose.IsChecked = false;
+                return;
+            }
+        }
+        Host.Settings.BrowserCleanOnClose = BrowserOnClose.IsChecked == true;
+        Host.Settings.Save();
+    }
+
+    private void RefreshKeepList() => KeepList.ItemsSource = Host.Settings.BrowserKeepSites.OrderBy(s => s, StringComparer.OrdinalIgnoreCase).ToList();
+
+    private void KeepInput_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        KeepAdd_Click(sender, e);
+        e.Handled = true;
+    }
+
+    private void KeepAdd_Click(object sender, RoutedEventArgs e)
+    {
+        if (SiteName.Normalize(KeepInput.Text) is not { } site)
+        {
+            Msg.Text = Loc.T("Escreva só o nome do site, como em exemplo.com.br.");
+            return;
+        }
+        if (!Host.Settings.BrowserKeepSites.Contains(site, StringComparer.OrdinalIgnoreCase)) Host.Settings.BrowserKeepSites.Add(site);
+        Host.Settings.Save();
+        KeepInput.Clear();
+        Msg.Text = "";
+        RefreshKeepList();
+    }
+
+    private void KeepRemove_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var site in KeepList.SelectedItems.OfType<string>().ToList()) Host.Settings.BrowserKeepSites.Remove(site);
+        Host.Settings.Save();
+        RefreshKeepList();
+    }
+
+    private async void KeepPick_Click(object sender, RoutedEventArgs e)
+    {
+        if (!Begin(Loc.T("Lendo os cookies…"))) return;
+        CookieSiteScan scan;
+        try
+        {
+            var places = _places;
+            scan = await Task.Run(() => BrowserCleaner.ReadCookieSites(BrowserProfiles.Discover(places, new WindowsCleanSystem())));
+        }
+        finally { End(); }
+        if (scan.Sites.Count == 0)
+        {
+            Msg.Text = scan.LockedProfiles > 0
+                ? Loc.T("Os cookies estão travados porque o navegador está aberto. Feche-o e tente de novo.")
+                : Loc.T("Nenhum cookie encontrado.");
+            return;
+        }
+        var chosen = Dialogs.PickSites(this, scan.Sites, Host.Settings.BrowserKeepSites);
+        if (chosen is null) return;
+        Host.Settings.BrowserKeepSites = chosen;
+        Host.Settings.Save();
+        RefreshKeepList();
+        Msg.Text = scan.LockedProfiles > 0 ? Loc.T("Alguns navegadores estão abertos e ficaram de fora da lista.") : "";
+    }
+
+    private async void BrowsersScan_Click(object sender, RoutedEventArgs e) => await ScanBrowsersAsync();
+
+    private async Task ScanBrowsersAsync()
+    {
+        if (!Begin(Loc.T("Procurando navegadores…"))) return;
+        try
+        {
+            var places = _places;
+            var kinds = SelectedKinds();
+            var keep = Host.Settings.BrowserKeepSites.ToList();
+            var rows = await Task.Run(() =>
+            {
+                var running = BrowserCleaner.RunningIds();
+                return BrowserProfiles.Discover(places, new WindowsCleanSystem())
+                    .Select(p => new BrowserRow(p, running.Contains(p.Browser.Id), BrowserCleaner.Estimate(p, kinds, keep))).ToList();
+            });
+            _browsers.Clear();
+            foreach (var r in rows) _browsers.Add(r);
+            int open = rows.Count(r => r.Running);
+            BrowsersInfo.Text = rows.Count == 0
+                ? Loc.T("Nenhum navegador encontrado.")
+                : Loc.F("{0} encontrados. {1} abertos: feche-os para limpar.", Pt.N(rows.Count, Loc.T("perfil"), Loc.T("perfis")), open);
+        }
+        finally { End(); }
+    }
+
+    private void BrowsersAll_Click(object sender, RoutedEventArgs e) { foreach (var r in _browsers) r.Selected = true; }
+    private void BrowsersNone_Click(object sender, RoutedEventArgs e) { foreach (var r in _browsers) r.Selected = false; }
+
+    private async void BrowsersClose_Click(object sender, RoutedEventArgs e)
+    {
+        var ids = _browsers.Where(r => r.Selected && r.Running).Select(r => r.Profile.Browser.Id).Distinct().ToList();
+        if (ids.Count == 0) { Msg.Text = Loc.T("Nenhum navegador aberto marcado."); return; }
+        int asked = BrowserCleaner.RequestClose(ids);
+        Msg.Text = asked > 0 ? Loc.T("Pedi para fechar. Se o navegador perguntar algo, responda; depois clique em Analisar.") : Loc.T("Não achei janelas para fechar: feche o navegador você mesmo e clique em Analisar.");
+        await Task.Delay(3000);
+        await ScanBrowsersAsync();
+    }
+
+    private async void BrowsersClean_Click(object sender, RoutedEventArgs e)
+    {
+        BrowsersGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        var kinds = SelectedKinds();
+        if (kinds.Count == 0) { Msg.Text = Loc.T("Marque o que apagar."); return; }
+        var chosen = _browsers.Where(r => r.Selected).ToList();
+        if (chosen.Count == 0) { Msg.Text = Loc.T("Nada selecionado."); return; }
+        if (chosen.Any(r => r.Running)) { Msg.Text = Loc.T("Há navegador aberto entre os marcados. Feche-o antes."); return; }
+        var keep = Host.Settings.BrowserKeepSites.ToList();
+        if (_main.Simulate(Loc.T("Limpar navegadores"), Loc.F("Apagaria {0} de: {1}.", string.Join(", ", kinds.Select(BrowserCatalog.DisplayName)), string.Join("; ", chosen.Select(r => r.Display))))) return;
+        string what = string.Join("\n", kinds.Select(k => "• " + BrowserCatalog.DisplayName(k)));
+        string where = string.Join("\n", chosen.Select(r => "• " + r.Display));
+        string keepText = kinds.Contains(BrowserDataKind.Cookies)
+            ? "\n\n" + (keep.Count > 0 ? Loc.F("Continuam conectados: {0}.", string.Join(", ", keep)) : Loc.T("Você será desconectado de todos os sites."))
+            : "";
+        if (!Dialogs.Confirm(this, Loc.T("Confirmar limpeza"), Loc.F("Apagar os dados abaixo?\n\n{0}\n\nEm:\n{1}{2}", what, where, keepText), Loc.T("Apagar"), danger: true)) return;
+        if (!Begin(Loc.T("Limpando…"))) return;
+        BrowserCleanResult result;
+        try
+        {
+            var profiles = chosen.Select(r => r.Profile).ToList();
+            result = await Task.Run(() => BrowserCleaner.Clean(profiles, kinds, keep, _cts.Token));
+        }
+        catch (OperationCanceledException) { End(); return; }
+        string summary = Loc.F("{0} liberados · {1}, {2}.", Units.Bytes(result.Bytes), Pt.N(result.Files, Loc.T("arquivo"), Loc.T("arquivos")),
+            Pt.N(result.Databases, Loc.T("banco de dados"), Loc.T("bancos de dados")));
+        if (result.Errors.Count > 0) summary += " " + Loc.F("{0} com erro: {1}", result.Errors.Count, result.Errors[0]);
+        ActionLog.Add(Loc.T("Limpeza de navegadores"), summary + " " + string.Join(", ", chosen.Select(r => r.Display)));
+        End();
+        PlayDone();
+        await ScanBrowsersAsync();
+        Msg.Text = summary;
     }
 }

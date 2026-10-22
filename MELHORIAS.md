@@ -44,6 +44,7 @@ Critérios de impacto
 | A28 | Localizar arquivos grandes e duplicados, com revisão antes de apagar | 🟡 aba Espaço: maiores arquivos e duplicados (só leitura); maiores arquivos visto rodando (lento na pasta do usuário inteira); duplicados não exercitado |
 | A29 | Desinstalador assistido (apps grandes ou sem uso) | 🟡 virou a aba Programas (Fase 5): programas, apps da Store e atualizações; desinstalador oficial com espera até o fim e varredura de sobras em 3 níveis, com revisão, backup e desfazer; teste de integração na CI do Windows; não testado com programas reais |
 | C02 | Limpeza avançada (Fase 6, leva 6.1; também R15, R18, R19) | 🟡 botão "Limpeza avançada…" na aba Limpeza: motor de regras no formato winapp2.ini (importar arquivo), regras próprias de rastros do Windows e do Office, arquivos inúteis e Limpeza de Disco do Windows (`cleanmgr /sagerun`); proteções no Core, repetidas na hora de apagar; registro com backup e desfazer; testes de integração na CI do Windows; não testado com programas reais |
+| C03 | Limpeza de navegadores (Fase 6, leva 6.2; também R17, C15, C16, C17) | 🟡 seção Navegadores na Limpeza avançada: histórico, cookies com lista de sites a manter, abas da sessão e histórico de formulários, Chromium (Chrome, Edge, Brave, Vivaldi, Opera) e Firefox, por perfil, só com o navegador fechado; SQLite pelo `winsqlite3.dll`; senhas, favoritos e extensões nunca; limpar ao fechar; limpeza automática ao abrir, diária, semanal ou mensal; aviso de temporários acima do limite; testado com bancos SQLite de verdade na CI do Windows; não testado com navegadores reais |
 | A30 | Limpar cache do Windows Update e Delivery Optimization (admin) | 🟡 cache do Windows Update e Otimização de Entrega na Limpeza (desmarcados; exigem administrador) |
 | A31 | Opção de desativar hibernação para liberar `hiberfil.sys` (admin) | ✅ (seção Ajustes) |
 | A32 | Recomendar tamanho do arquivo de paginação | ✅ (recomenda e volta ao "gerenciado pelo Windows") |
@@ -220,6 +221,6 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-Fases 5 e 6.1 completas. Próxima: Fase 6, leva 6.2 — dados dos navegadores (SQLite), lista de sites a manter, limpar ao fechar, monitoramento com limite e agendamento flexível. O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
+Fases 5, 6.1 e 6.2 completas. Próxima: Fase 6, leva 6.3 — Espaço: por tipo de arquivo; duplicados com miniaturas, “manter mais antigo/novo” e Lixeira. O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
 
 Também pendentes: M13 Multi-idioma, 2ª e 3ª levas (mensagens do código, diagnóstico, relatórios e textos do Sobre). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.

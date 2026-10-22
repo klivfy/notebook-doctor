@@ -19,6 +19,14 @@ Limpeza avançada (novo)
 • Limpeza de Disco do Windows: Windows.old, atualizações antigas, pacotes de driver e relatórios de erro, pela própria ferramenta do Windows (administrador).
 • Você vê o que sai antes de apagar. Senhas, cookies, preenchimento automático, favoritos e dados de jogos nunca entram. O registro vai para um backup que dá para desfazer em Ações.
 
+Navegadores (novo)
+• Em Limpeza › Limpeza avançada › Navegadores: apague histórico, cookies, abas da última sessão e histórico de formulários do Chrome, Edge, Brave, Vivaldi, Opera e Firefox, por perfil.
+• Lista de sites a manter conectados: os cookies deles ficam. Favoritos, senhas e extensões nunca são tocados.
+• O navegador precisa estar fechado; o app pode pedir para fechar, mas nunca encerra à força.
+• Limpar sozinho quando o navegador fechar.
+• Limpeza automática ao abrir o app, todo dia, toda semana ou todo mês (Configurações), com a opção de incluir os navegadores.
+• Aviso quando os temporários passam de um limite (500 MB a 5 GB).
+
 Painel e diagnóstico
 • "Corrigir" em todos os problemas encontrados, com explicação de cada um.
 • Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.

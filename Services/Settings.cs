@@ -64,6 +64,20 @@ public sealed class AppSettings
     public bool AlertsEnabled { get; set; } = true;
     public bool WeeklyCleanup { get; set; }
     public int TempDays { get; set; } = 7;
+    /// <summary>Leva 6.2: frequência da limpeza automática ("start", "daily", "weekly", "monthly"); só vale com <see cref="WeeklyCleanup"/> ligado.</summary>
+    public string ScheduleKind { get; set; } = "weekly";
+    /// <summary>A limpeza automática também limpa os navegadores (os tipos escolhidos em <see cref="BrowserKinds"/>).</summary>
+    public bool ScheduleBrowser { get; set; }
+    /// <summary>Tipos de dado de navegador que a limpeza apaga (nomes de BrowserDataKind). Vazio = nenhum.</summary>
+    public List<string> BrowserKinds { get; set; } = new();
+    /// <summary>Sites cujos cookies a limpeza mantém.</summary>
+    public List<string> BrowserKeepSites { get; set; } = new();
+    /// <summary>Limpa os dados escolhidos quando o navegador fecha.</summary>
+    public bool BrowserCleanOnClose { get; set; }
+    /// <summary>Avisa quando os temporários passam do limite (uma vez por dia).</summary>
+    public bool JunkMonitor { get; set; }
+    public int JunkMonitorLimitMb { get; set; } = 1024;
+    public DateTime LastJunkNotice { get; set; } = DateTime.MinValue;
     /// <summary>Leva 6.1: pastas que a busca de arquivos inúteis nunca olha.</summary>
     public List<string> JunkExcluded { get; set; } = new();
     public int CpuAlertPct { get; set; } = 80;

@@ -895,7 +895,30 @@
                         <CheckBox x:Name="CfgCompact" Content="Modo compacto: menu só com ícones e tabelas mais densas, para telas pequenas"/>
                         <CheckBox x:Name="CfgAlerts" Content="Avisar quando CPU ou RAM ficarem altas"/>
                         <CheckBox x:Name="CfgToasts" Content="Usar notificações do Windows (com botões)"/>
-                        <CheckBox x:Name="CfgWeekly" Content="Limpar temporários toda semana, com o PC parado"/>
+                        <CheckBox x:Name="CfgWeekly" Content="Limpeza automática de temporários, com o PC parado"/>
+                        <Grid Margin="28,0,0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Frequência" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ComboBox x:Name="CfgSchedule" Grid.Column="1" Width="200" AutomationProperties.Name="Frequência da limpeza automática">
+                                <ComboBoxItem Content="Ao abrir o app" Tag="start"/>
+                                <ComboBoxItem Content="Todo dia" Tag="daily"/>
+                                <ComboBoxItem Content="Toda semana" Tag="weekly"/>
+                                <ComboBoxItem Content="Todo mês" Tag="monthly"/>
+                            </ComboBox>
+                        </Grid>
+                        <CheckBox x:Name="CfgScheduleBrowser" Content="Incluir os dados dos navegadores escolhidos em Limpeza › Limpeza avançada" Margin="28,0,0,4"
+                                  ToolTip="Só os tipos marcados na seção Navegadores, e só com o navegador fechado. Os sites da lista “a manter” ficam conectados."/>
+                        <CheckBox x:Name="CfgJunkMonitor" Content="Avisar quando os temporários passarem do limite"/>
+                        <Grid Margin="28,0,0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Limite" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ComboBox x:Name="CfgJunkLimit" Grid.Column="1" Width="200" AutomationProperties.Name="Limite de temporários para avisar">
+                                <ComboBoxItem Content="500 MB" Tag="500"/>
+                                <ComboBoxItem Content="1 GB" Tag="1024"/>
+                                <ComboBoxItem Content="2 GB" Tag="2048"/>
+                                <ComboBoxItem Content="5 GB" Tag="5120"/>
+                            </ComboBox>
+                        </Grid>
                         <CheckBox x:Name="CfgRestore" Content="Criar ponto de restauração antes de mudar o sistema (só no modo administrador)"/>
                         <CheckBox x:Name="CfgMini" Content="Mini-widget sempre visível (CPU, memória e disco num canto da tela)"/>
                         <CheckBox x:Name="CfgUpdates" Content="Procurar nova versão uma vez por dia"/>

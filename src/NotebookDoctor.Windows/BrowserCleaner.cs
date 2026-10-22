@@ -87,10 +87,12 @@ public static class BrowserCleaner
         return total;
     }
 
-    public static BrowserCleanResult Clean(IEnumerable<BrowserProfile> profiles, IEnumerable<BrowserDataKind> kinds, IReadOnlyList<string> keepSites, CancellationToken ct = default)
+    /// <param name="running">Navegadores abertos agora; nulo = consulta o sistema (os testes informam, para não depender do que está aberto na máquina).</param>
+    public static BrowserCleanResult Clean(IEnumerable<BrowserProfile> profiles, IEnumerable<BrowserDataKind> kinds, IReadOnlyList<string> keepSites,
+        CancellationToken ct = default, IReadOnlySet<string>? running = null)
     {
         var kindList = kinds.ToList();
-        var running = RunningIds();
+        running ??= RunningIds();
         long bytes = 0;
         int files = 0, dbs = 0;
         var errors = new List<string>();

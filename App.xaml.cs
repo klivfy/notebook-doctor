@@ -34,6 +34,9 @@ public partial class App : Application
     public FocusMode Focus { get; } = new();
     public event Action? HealthUpdated, HeavyAlertChanged;
     private DateTime _lastProbe = DateTime.MinValue;
+    private readonly BrowserWatch _browserWatch = new();
+    private bool _browserCleaning, _scheduleRan;
+    private DateTime _lastJunkCheck = DateTime.MinValue;
     private bool _probing;
     private readonly Dictionary<string, DateTime> _heavySince = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, DateTime> _heavyIgnored = new(StringComparer.OrdinalIgnoreCase);
@@ -376,6 +379,8 @@ public partial class App : Application
                 Memory.Feed(snap);
                 if ((DateTime.Now - _lastProbe).TotalMinutes >= 30) _ = RefreshHealthAsync();
                 await CheckWeeklyAsync();
+                await CheckJunkMonitorAsync();
+                await CheckBrowserCloseAsync();
                 SnapshotReady?.Invoke(snap);
                 if (_overlay is { IsVisible: true }) _overlay.Update(snap);
             }
@@ -504,14 +509,79 @@ public partial class App : Application
         }
     }
 
+    /// <summary>Limpeza automática (C17): ao abrir, todo dia, toda semana ou todo mês, sempre com o PC parado.</summary>
     private async Task CheckWeeklyAsync()
     {
-        if (AppPaths.Demo || !Settings.WeeklyCleanup || (DateTime.Now - Settings.LastWeeklyRun).TotalDays < 7) return;
+        if (AppPaths.Demo || !Settings.WeeklyCleanup) return;
+        if (!ScheduleRules.Due(ScheduleRules.Parse(Settings.ScheduleKind), Settings.LastWeeklyRun, DateTime.Now, _scheduleRan)) return;
         // A39: manutenção em horário ocioso: 10 minutos sem uso, fora do Modo Foco e na tomada
         if (!MaintenanceRules.CanRunIdleTask(Native.IdleTime(), Focus.Active, Native.PowerStatus().OnBattery)) return;
+        _scheduleRan = true;
         Settings.LastWeeklyRun = DateTime.Now;
         Settings.Save();
         await QuickCleanAsync(notify: true);
+        if (Settings.ScheduleBrowser) await CleanBrowsersAsync(null, quiet: false);
+    }
+
+    /// <summary>C15: a cada hora, com o PC parado, olha o lixo e avisa uma vez por dia quando passa do limite.</summary>
+    private async Task CheckJunkMonitorAsync()
+    {
+        var now = DateTime.Now;
+        if (AppPaths.Demo || !Settings.JunkMonitor || !JunkMonitorRules.CheckDue(_lastJunkCheck, now)) return;
+        if (!MaintenanceRules.CanRunIdleTask(Native.IdleTime(), Focus.Active, Native.PowerStatus().OnBattery)) return;
+        _lastJunkCheck = now;
+        int days = Settings.TempDays;
+        long bytes = await Task.Run(() => Cleaner.SafeJunkBytes(days));
+        long limit = Settings.JunkMonitorLimitMb * 1024L * 1024L;
+        if (!JunkMonitorRules.ShouldNotify(bytes, limit, Settings.LastJunkNotice, now)) return;
+        Settings.LastJunkNotice = now;
+        Settings.Save();
+        // Link só navega: a pessoa abre a Limpeza e decide
+        Alert("Lixo acumulado", $"Há cerca de {Cleaner.FormatBytes(bytes)} de temporários para limpar.", ("Abrir Limpeza", Tab(AppTabs.Clean)));
+    }
+
+    /// <summary>C16: quando um navegador fecha, limpa os dados escolhidos (sem janela).</summary>
+    private async Task CheckBrowserCloseAsync()
+    {
+        if (AppPaths.Demo || !Settings.BrowserCleanOnClose || _browserCleaning || Settings.BrowserKinds.Count == 0) return;
+        var running = await Task.Run(BrowserCleaner.RunningIds);
+        var closed = _browserWatch.Step(running, DateTime.Now, TimeSpan.FromSeconds(10));
+        if (closed.Count == 0) return;
+        _browserCleaning = true;
+        try { await CleanBrowsersAsync(closed, quiet: true); }
+        finally { _browserCleaning = false; }
+    }
+
+    /// <summary>
+    /// Limpa os dados de navegador escolhidos nas configurações. <paramref name="browserIds"/> nulo = todos os que estiverem fechados.
+    /// Navegador aberto é pulado, nunca fechado à força.
+    /// </summary>
+    public async Task<BrowserCleanResult?> CleanBrowsersAsync(IEnumerable<string>? browserIds, bool quiet)
+    {
+        var kinds = Settings.BrowserKinds.Select(k => Enum.TryParse<BrowserDataKind>(k, out var kind) ? kind : (BrowserDataKind?)null).OfType<BrowserDataKind>().ToList();
+        if (kinds.Count == 0) return null;
+        var ids = browserIds?.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var keep = Settings.BrowserKeepSites.ToList();
+        var places = WindowsPlaces.Current(AppPaths.Dir);
+        var result = await Task.Run(() =>
+        {
+            var running = BrowserCleaner.RunningIds();
+            var profiles = BrowserProfiles.Discover(places, new WindowsCleanSystem())
+                .Where(p => (ids is null || ids.Contains(p.Browser.Id)) && !running.Contains(p.Browser.Id)).ToList();
+            if (profiles.Count == 0) return null;
+            if (Settings.SimulationMode)
+                return new BrowserCleanResult(profiles.Sum(p => BrowserCleaner.Estimate(p, kinds, keep)), 0, 0, []);
+            return BrowserCleaner.Clean(profiles, kinds, keep);
+        });
+        if (result is null) return null;
+        string detail = Loc.F("{0} liberados em dados de navegadores.", Cleaner.FormatBytes(result.Bytes));
+        if (Settings.SimulationMode) Notify("Simulação de limpeza", $"Seriam liberados até {Cleaner.FormatBytes(result.Bytes)} de dados de navegadores. Nada foi apagado.");
+        else
+        {
+            ActionLog.Add("Limpeza de navegadores", detail);
+            if (!quiet || result.Bytes > 0) Notify("Navegadores limpos", detail, ("Ver ações", Tab(AppTabs.Actions)));
+        }
+        return result;
     }
 
     /// <summary>Limpeza rápida de temporários. A Lixeira só é esvaziada pela aba Limpeza, com confirmação.</summary>

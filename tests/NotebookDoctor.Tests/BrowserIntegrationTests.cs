@@ -8,6 +8,7 @@ namespace NotebookDoctor.Tests;
 [SupportedOSPlatform("windows")]
 public class BrowserIntegrationTests : IDisposable
 {
+    private static readonly HashSet<string> NoneRunning = [];
     private readonly string _root = Path.Combine(Path.GetTempPath(), "NDBrowser" + Guid.NewGuid().ToString("N")[..8]);
 
     public void Dispose()
@@ -55,7 +56,7 @@ public class BrowserIntegrationTests : IDisposable
         string bookmarks = Make(@"Chrome\Default\Bookmarks", "{}");
         string logins = Make(@"Chrome\Default\Login Data", "senhas");
 
-        var result = BrowserCleaner.Clean([profile], Enum.GetValues<BrowserDataKind>(), ["google.com"]);
+        var result = BrowserCleaner.Clean([profile], Enum.GetValues<BrowserDataKind>(), ["google.com"], running: NoneRunning);
 
         Assert.Empty(result.Errors);
         Assert.Equal(["a", "b"], Rows(cookies, "SELECT name FROM cookies ORDER BY name").Select(r => r[0])); // ".notgoogle.com" não é do google.com
@@ -91,7 +92,7 @@ public class BrowserIntegrationTests : IDisposable
         string logins = Make(@"Fox\logins.json", "{}");
         string key4 = Make(@"Fox\key4.db", "chaves");
 
-        var result = BrowserCleaner.Clean([profile], Enum.GetValues<BrowserDataKind>(), ["github.com"]);
+        var result = BrowserCleaner.Clean([profile], Enum.GetValues<BrowserDataKind>(), ["github.com"], running: NoneRunning);
 
         Assert.Empty(result.Errors);
         Assert.Empty(Rows(places, "SELECT * FROM moz_historyvisits"));
@@ -111,12 +112,23 @@ public class BrowserIntegrationTests : IDisposable
         string web = Db(@"C2\Default\Web Data", "CREATE TABLE outra (x TEXT)", "INSERT INTO outra VALUES ('fica')"); // sem a tabela autofill
         string cookies = Db(@"C2\Default\Network\Cookies", "CREATE TABLE cookies (host_key TEXT)", "INSERT INTO cookies VALUES ('.a.com')");
 
-        var result = BrowserCleaner.Clean([profile], [BrowserDataKind.FormHistory, BrowserDataKind.Cookies], []);
+        var result = BrowserCleaner.Clean([profile], [BrowserDataKind.FormHistory, BrowserDataKind.Cookies], [], running: NoneRunning);
 
         Assert.Single(result.Errors);
         Assert.Single(Rows(web, "SELECT * FROM outra"));
         Assert.Empty(Rows(cookies, "SELECT * FROM cookies"));
         Assert.Equal(1, result.Databases);
+    }
+
+    [WindowsFact]
+    public void Navegador_aberto_nao_e_tocado()
+    {
+        var profile = new BrowserProfile(BrowserCatalog.Chrome, "Padrão", Path.Combine(_root, "C5", "Default"));
+        string history = Make(@"C5\Default\History", "historico");
+        var result = BrowserCleaner.Clean([profile], [BrowserDataKind.History], [], running: new HashSet<string> { "chrome" });
+        Assert.True(File.Exists(history));
+        Assert.Single(result.Errors);
+        Assert.Equal(0, result.Files);
     }
 
     [WindowsFact]

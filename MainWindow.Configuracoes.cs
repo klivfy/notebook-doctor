@@ -289,6 +289,10 @@ public partial class MainWindow
         CfgAlerts.IsChecked = s.AlertsEnabled;
         CfgToasts.IsChecked = s.NativeNotifications;
         CfgWeekly.IsChecked = s.WeeklyCleanup;
+        SelectByTag(CfgSchedule, ScheduleRules.Key(ScheduleRules.Parse(s.ScheduleKind)));
+        CfgScheduleBrowser.IsChecked = s.ScheduleBrowser;
+        CfgJunkMonitor.IsChecked = s.JunkMonitor;
+        SelectByTag(CfgJunkLimit, s.JunkMonitorLimitMb.ToString());
         CfgRestore.IsChecked = s.RestorePointBeforeChanges;
         CfgMini.IsChecked = s.MiniWidget;
         CfgUpdates.IsChecked = s.CheckUpdates;
@@ -328,6 +332,10 @@ public partial class MainWindow
         s.AlertsEnabled = CfgAlerts.IsChecked == true;
         s.NativeNotifications = CfgToasts.IsChecked == true;
         s.WeeklyCleanup = CfgWeekly.IsChecked == true;
+        s.ScheduleKind = (CfgSchedule.SelectedItem as ComboBoxItem)?.Tag as string ?? "weekly";
+        s.ScheduleBrowser = CfgScheduleBrowser.IsChecked == true;
+        s.JunkMonitor = CfgJunkMonitor.IsChecked == true;
+        s.JunkMonitorLimitMb = int.TryParse((CfgJunkLimit.SelectedItem as ComboBoxItem)?.Tag as string, out int mb) ? mb : 1024;
         s.RestorePointBeforeChanges = CfgRestore.IsChecked == true;
         s.CheckUpdates = CfgUpdates.IsChecked == true;
         s.CrashReports = CfgCrash.IsChecked == true;

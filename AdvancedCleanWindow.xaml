@@ -17,7 +17,8 @@
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <Button x:Name="TabTraces" Content="Rastros e programas" Click="Section_Click" Tag="0" Margin="0,0,8,0"/>
                 <Button x:Name="TabJunk" Content="Arquivos inúteis" Click="Section_Click" Tag="1" Margin="0,0,8,0"/>
-                <Button x:Name="TabDisk" Content="Limpeza de Disco do Windows" Click="Section_Click" Tag="2"/>
+                <Button x:Name="TabDisk" Content="Limpeza de Disco do Windows" Click="Section_Click" Tag="2" Margin="0,0,8,0"/>
+                <Button x:Name="TabBrowsers" Content="Navegadores" Click="Section_Click" Tag="3"/>
             </StackPanel>
 
             <TabControl x:Name="Sections" Grid.Row="1">
@@ -131,6 +132,64 @@
                                 <DataGridTextColumn Header="O que" Binding="{Binding Label}" Width="*"/>
                                 <DataGridTextColumn Header="Cuidado" Binding="{Binding RiskText}" Width="110"/>
                                 <DataGridTextColumn Header="Aviso" Binding="{Binding Warning}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+                <!-- NAVEGADORES -->
+                <TabItem Header="Navegadores">
+                    <DockPanel>
+                        <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                            <Button Content="Analisar" Style="{StaticResource TonalButton}" Click="BrowsersScan_Click" Margin="0,0,8,6"/>
+                            <Button x:Name="BrowsersCleanBtn" Content="Limpar marcados" Click="BrowsersClean_Click" Margin="0,0,8,6"/>
+                            <Button Content="Fechar os marcados" Style="{StaticResource TonalButton}" Click="BrowsersClose_Click" Margin="0,0,8,6"
+                                    ToolTip="Pede para fechar as janelas dos navegadores marcados. Nada é encerrado à força: se houver algo sem salvar, o navegador pergunta."/>
+                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="BrowsersAll_Click" Margin="0,0,8,6"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="BrowsersNone_Click" Margin="0,0,8,6"/>
+                        </WrapPanel>
+                        <TextBlock x:Name="BrowsersInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,6,0,0"
+                                   AutomationProperties.LiveSetting="Polite"/>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <TextBlock Text="O que apagar" Style="{StaticResource TitleMedium}" Margin="0,0,0,4"/>
+                            <WrapPanel>
+                                <CheckBox x:Name="KindHistory" Content="Histórico de navegação" Tag="History" Click="Kind_Click" Margin="0,0,16,4"/>
+                                <CheckBox x:Name="KindCookies" Content="Cookies" Tag="Cookies" Click="Kind_Click" Margin="0,0,16,4"/>
+                                <CheckBox x:Name="KindSessions" Content="Abas da última sessão" Tag="Sessions" Click="Kind_Click" Margin="0,0,16,4"/>
+                                <CheckBox x:Name="KindForms" Content="Histórico de formulários" Tag="FormHistory" Click="Kind_Click" Margin="0,0,16,4"/>
+                            </WrapPanel>
+                            <CheckBox x:Name="BrowserOnClose" Content="Limpar sozinho quando o navegador fechar" Click="OnClose_Click" Margin="0,0,0,8"
+                                      ToolTip="O app percebe quando o navegador fecha e apaga os tipos marcados acima. Se o navegador mantém processos em segundo plano, só roda quando todos terminam."/>
+                            <TextBlock Text="Sites a manter conectados" Style="{StaticResource TitleMedium}" Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <ListBox x:Name="KeepList" Height="84" SelectionMode="Extended" AutomationProperties.Name="Sites cujos cookies são mantidos"/>
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0" Width="260">
+                                    <DockPanel Margin="0,0,0,6">
+                                        <Button DockPanel.Dock="Right" Content="Adicionar" Style="{StaticResource TonalButton}" Click="KeepAdd_Click" Margin="6,0,0,0"/>
+                                        <TextBox x:Name="KeepInput" Tag="site.com" AutomationProperties.Name="Site a manter conectado" KeyDown="KeepInput_KeyDown"/>
+                                    </DockPanel>
+                                    <Button Content="Remover o selecionado" Style="{StaticResource TextButton}" Click="KeepRemove_Click" Margin="0,0,0,2" HorizontalAlignment="Left"/>
+                                    <Button Content="Escolher entre os sites com cookies…" Style="{StaticResource TextButton}" Click="KeepPick_Click" HorizontalAlignment="Left"
+                                            ToolTip="Lê os cookies dos navegadores fechados e deixa você marcar os sites que devem continuar conectados."/>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,6,0,0"
+                                       Text="Senhas salvas, favoritos, extensões e configurações nunca são tocados. O navegador precisa estar fechado. Com a sincronização ligada, o histórico pode voltar da nuvem."/>
+                        </StackPanel>
+                        <DataGrid x:Name="BrowsersGrid" AutomationProperties.Name="Navegadores e perfis encontrados">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Limpar" Width="Auto" MinWidth="88">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Style="{StaticResource GridCheck}"
+                                                      IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      AutomationProperties.Name="{Binding Display}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Navegador e perfil" Binding="{Binding Display}" Width="*"/>
+                                <DataGridTextColumn Header="Situação" Binding="{Binding StatusText}" Width="120"/>
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="130"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>

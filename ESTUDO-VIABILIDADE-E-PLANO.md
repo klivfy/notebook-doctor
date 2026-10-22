@@ -94,7 +94,7 @@ Legenda:
 | R14 | Autorun Manager | Liga e desliga programas da inicialização | ✅ aba Inicialização (com Editor, M27/M28) | — | — | — |
 | R15 | Junk Files Cleaner | Procura arquivos inúteis por extensão (.tmp, .chk, ~$…) | ✅ leva 6.1 | A | Busca com lista para revisão. `.bak` e `.old` desmarcados, porque podem ser da pessoa | M |
 | R16 | Windows Tools | Atalhos para as ferramentas do Windows | ⬜ | A | Painel com ~20 atalhos (seção 5.13) | P |
-| R17 | Browsers Cleaner | Histórico, cookies, sessão, formulários dos navegadores | 🟡 só o cache (A03) | A | SQLite do próprio Windows (`winsqlite3.dll`), com o navegador fechado (seção 5.6) | G |
+| R17 | Browsers Cleaner | Histórico, cookies, sessão, formulários dos navegadores | ✅ leva 6.2 (o cache continua na Limpeza) | A | SQLite do próprio Windows (`winsqlite3.dll`), com o navegador fechado (seção 5.6) | G |
 | R18 | MS Office Cleaner | Listas de arquivos recentes (MRU) do Office | ✅ leva 6.1 | A | Chaves `File MRU` e `Place MRU` por versão e app, com backup .reg | P |
 | R19 | Windows Cleaner | Rastros do Windows (recentes, Executar, pesquisas, área de transferência, temporários, Lixeira) | ✅ leva 6.1 (a Lixeira já existia) | A | Regras próprias (seção 5.5) | M |
 | R20 | Evidence Remover | Apaga de vez o espaço livre do disco (dados já excluídos) | ⬜ | A | Preenche o espaço livre (1 passada, NIST SP 800-88). Em SSD não há garantia, e o app diz isso | M |
@@ -113,7 +113,7 @@ O site oficial recusa leitura automática, então a lista vem da PCWorld (lança
 |---|---|---|---|---|---|---|
 | C01 | Health Check (PC Health Check) | Análise geral com recomendações | ✅ Painel: nota, gargalo, diagnóstico com "Corrigir" | — | — | — |
 | C02 | Limpeza personalizada (Windows e apps) | Temporários, sobras de instaladores, relatórios de erro, caches, Lixeira, documentos recentes; regras por aplicativo; apps da Store opcionais | 🟡 leva 6.1: motor de regras e Limpeza de Disco; falta a limpeza dos navegadores (6.2) | A | Motor de regras compatível com o formato **winapp2.ini** (4.068 regras, CC BY-SA 4.0), regras próprias e os módulos da Limpeza de Disco do Windows (`cleanmgr /sagerun`) | G |
-| C03 | Limpeza de navegadores | Cookies (com lista de sites a manter), histórico, cache, sessão, downloads, formulários | 🟡 só o cache | A | Igual à R17 | (R17) |
+| C03 | Limpeza de navegadores | Cookies (com lista de sites a manter), histórico, cache, sessão, downloads, formulários | ✅ leva 6.2 (a lista de downloads sai com o histórico; o cache fica na Limpeza) | A | Igual à R17 | (R17) |
 | C04 | Registro (registry cleaner) | Procura "entradas inválidas" no registro | ⬜ | M | **Versão restrita** (seção 5.10): só entradas com prova objetiva (apontam para arquivo que não existe), com backup e desfazer. A Microsoft não dá suporte a limpadores de registro (KB 2563254) e o ganho de desempenho é nulo; o app dirá isso | M |
 | C05 | Software Uninstaller (motor novo no v7) | Remove vários de uma vez, apaga sobras automaticamente, remove "temporariamente" e restaura depois | 🟡 (A29) | A/M | R01–R03. "Restaurar app removido" a partir do backup, sem garantia para apps com serviços ou drivers | (R01) + M |
 | C06 | Startup (inicialização, tarefas, menu de contexto, serviços) | Gerencia o que roda sozinho | 🟡 inicialização ✅, tarefas ✅ (M29), serviços ✅ (M30); **menu de contexto ⬜** | A | Gerenciador do menu de contexto do Explorador (seção 5.9) | M |
@@ -125,9 +125,9 @@ O site oficial recusa leitura automática, então a lista vem da PCWorld (lança
 | C12 | Performance Optimizer ("modo soneca") | Põe para dormir programas em segundo plano até a pessoa abrir | 🟡 modo eficiência e prioridade (Processos); serviços e tarefas separados | M | "Modo soneca" por aplicativo: desliga a inicialização, serviços (manual), tarefas e fecha os processos de fundo; acorda ao abrir o app (seção 5.9) | G |
 | C13 | Driver Updater | Procura e instala drivers novos | 🟡 aviso de driver de vídeo antigo (A23) | M | **Só pelo Windows Update** (API do Windows Update Agent, `Type='Driver'`), com backup dos drivers e ponto de restauração. Não usaremos base de terceiros nem baixaremos de sites de fabricantes | M |
 | C14 | Software Updater (com pular versão e pausar por app) | Atualiza programas desatualizados | ⬜ | A | **WinGet** (gerenciador de pacotes do Windows), pela API COM oficial (`Microsoft.WindowsPackageManager.ComInterop`), com reserva na linha de comando | G |
-| C15 | Limpeza agendada | Limpa em horários definidos | 🟡 semanal, com o PC parado (A39) | A | Diária, semanal, mensal ou ao iniciar, com a escolha do que limpar | P |
-| C16 | Monitoramento em tempo real ("Smart Cleaning") | Avisa quando o lixo passa de um limite; limpa o navegador ao fechar | ⬜ | A | Limite configurável (ex.: 1 GB); limpeza ao detectar que o navegador fechou | M |
-| C17 | Remoção de rastreadores (privacidade) | Apaga cookies de rastreamento | ⬜ | M | Apagar cookies com uma lista de sites a manter. **Sem lista de rastreadores de terceiros:** as mais usadas têm licença não comercial ou GPL; isso fica para revisão | P |
+| C15 | Limpeza agendada | Limpa em horários definidos | ✅ leva 6.2: ao abrir, todo dia, toda semana ou todo mês, com o PC parado | A | Diária, semanal, mensal ou ao iniciar, com a escolha do que limpar | P |
+| C16 | Monitoramento em tempo real ("Smart Cleaning") | Avisa quando o lixo passa de um limite; limpa o navegador ao fechar | ✅ leva 6.2 | A | Limite configurável (ex.: 1 GB); limpeza ao detectar que o navegador fechou | M |
+| C17 | Remoção de rastreadores (privacidade) | Apaga cookies de rastreamento | ✅ leva 6.2 (cookies com lista de sites a manter) | M | Apagar cookies com uma lista de sites a manter. **Sem lista de rastreadores de terceiros:** as mais usadas têm licença não comercial ou GPL; isso fica para revisão | P |
 | C18 | Suporte prioritário | — | — | N | É serviço, não função | — |
 | C19 | Vários aparelhos (macOS, Android) | — | — | **N** | Fora do escopo (o app é WPF para Windows) | — |
 | C20 | Suporte a Arm64 (novo no v7) | Roda nativo em PCs Arm | ⬜ | A | Publicar também `win-arm64` e testar as chamadas nativas | P |
@@ -557,7 +557,9 @@ Princípios herdados das fases anteriores, que valem para tudo:
 
 ### 6.1 Fases e levas
 
-**Andamento:** P1 ✅ (merge do PR #1) · P2 ✅ (job `windows` na CI, com teste de integração do desinstalador) · levas 5.1 a 5.4b ✅ (Fase 5 completa) · leva 6.1 ✅ (6.1a motor e executor, 6.1b tela "Limpeza avançada…").
+**Andamento:** P1 ✅ (merge do PR #1) · P2 ✅ (job `windows` na CI, com teste de integração do desinstalador) · levas 5.1 a 5.4b ✅ (Fase 5 completa) · leva 6.1 ✅ (6.1a motor e executor, 6.1b tela "Limpeza avançada…") · leva 6.2 ✅ (6.2a Core, SQLite e executor; 6.2b seção Navegadores, agendamento, aviso de lixo e limpar ao fechar).
+
+Na 6.2, o aviso de lixo acumulado traz "Abrir Limpeza" em vez de "Limpar agora": os links de notificação só navegam (qualquer página consegue abrir um link do app), então a pessoa decide dentro do app. Se o navegador mantém processos em segundo plano (Chrome com "continuar executando"), "limpar ao fechar" só roda quando todos terminam.
 
 Na 6.1, o arquivo `Winapp2.ini` da comunidade **não é baixado pelo app**: a versão fixada e o hash não puderam ser conferidos daqui. Em vez disso, a tela tem "Importar regras…", que lê um arquivo do formato que a pessoa já tenha. O download com hash fica para quando a Klivfy fixar a versão. "Limpar a área de transferência" esvazia só o conteúdo atual (o histórico do Windows+V não tem API pública simples).
 
@@ -583,7 +585,7 @@ Cada leva segue o ritual das anteriores: implementar, compilar, testar no Core, 
 | Leva | Entregas | Itens | Testes automatizados | Teste no Windows | Aceite |
 |---|---|---|---|---|---|
 | **6.1** ✅ | Motor de regras (formato winapp2), regras próprias (Windows, Office, Explorador), Limpeza de Disco do Windows (`cleanmgr /sagerun`), arquivos inúteis | C02, R15, R18, R19 | Core: parser do formato com todos os campos, curingas, variáveis de ambiente, lista negra; regras em pastas falsas | Rodar com 10 apps comuns; `Windows.old` numa VM atualizada | Nenhuma regra apaga fora dos caminhos declarados |
-| **6.2** | Dados dos navegadores (SQLite), lista de sites a manter, limpar ao fechar, monitoramento com limite, agendamento flexível | R17, C03, C15, C16, C17 | Core: montagem dos SQL, lista a manter, regras de agendamento; SQLite real em teste de integração (CI Windows) | Chrome, Edge e Firefox com 2 perfis; manter o login de 2 sites | Os sites mantidos continuam logados; favoritos do Firefox intactos |
+| **6.2** ✅ | Dados dos navegadores (SQLite), lista de sites a manter, limpar ao fechar, monitoramento com limite, agendamento flexível | R17, C03, C15, C16, C17 | Core: montagem dos SQL, lista a manter, regras de agendamento; SQLite real em teste de integração (CI Windows) | Chrome, Edge e Firefox com 2 perfis; manter o login de 2 sites | Os sites mantidos continuam logados; favoritos do Firefox intactos |
 | **6.3** | Espaço: por tipo de arquivo; duplicados com miniaturas, "manter mais antigo/novo" e Lixeira | C08, C09 | Core: escolha de qual manter, agrupamento por categoria | Pasta de fotos com cópias | Nunca apaga a última cópia de um grupo |
 
 #### Fase 7 — Manutenção e desempenho
