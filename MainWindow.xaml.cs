@@ -264,6 +264,7 @@ public partial class MainWindow : Window
             ShowSnack("Modo demonstração", "Aqui a simulação fica sempre ligada: nenhuma ação altera este computador.");
             return;
         }
+        if (!on && !Host.EnsureUnlocked("desligar o modo simulação")) { SimMode.IsChecked = true; return; } // B38
         Host.Settings.SimulationMode = on;
         Host.Settings.Save();
         SimMode.IsChecked = on;
@@ -285,7 +286,7 @@ public partial class MainWindow : Window
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
             case TabTweaks: LoadTweaks(); break;
-            case TabSettings: CfgMsg.Text = ""; LoadPlans(); break;
+            case TabSettings: CfgMsg.Text = ""; LoadPlans(); RefreshLockCard(); break;
         }
         Host.Settings.LastTab = Tabs.SelectedIndex;
         Host.Settings.Save();

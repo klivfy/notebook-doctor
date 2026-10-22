@@ -140,3 +140,116 @@ public class StartMenuLinkTests
         Assert.Equal("Atualizar atalho do Menu Iniciar", StartMenuLink.ButtonText(StartMenuState.Stale));
     }
 }
+
+public class SettingsLockTests
+{
+    private const int Fast = 1_000; // o padrão (600 mil) só no teste que confere o padrão
+
+    [Fact]
+    public void Senha_certa_confere_e_errada_nao()
+    {
+        string stored = PasswordHash.Create("segredo1", Fast);
+        Assert.True(PasswordHash.Verify("segredo1", stored));
+        Assert.False(PasswordHash.Verify("segredo2", stored));
+        Assert.False(PasswordHash.Verify("Segredo1", stored));
+    }
+
+    [Fact]
+    public void Padrao_usa_600_mil_iteracoes_e_sal_aleatorio()
+    {
+        string a = PasswordHash.Create("segredo1"), b = PasswordHash.Create("segredo1");
+        Assert.StartsWith("pbkdf2-sha256$600000$", a);
+        Assert.NotEqual(a, b); // sais diferentes
+        Assert.True(PasswordHash.Verify("segredo1", b));
+        Assert.DoesNotContain("segredo1", a);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("segredo1")]
+    [InlineData("md5$1000$AAAAAAAAAAA=$AAAAAAAAAAAAAAAAAAAAAA==")]
+    [InlineData("pbkdf2-sha256$abc$AAAAAAAAAAA=$AAAAAAAAAAAAAAAAAAAAAA==")]
+    [InlineData("pbkdf2-sha256$999999999$AAAAAAAAAAA=$AAAAAAAAAAAAAAAAAAAAAA==")] // travaria o app
+    [InlineData("pbkdf2-sha256$1000$não-é-base64$AAAAAAAAAAAAAAAAAAAAAA==")]
+    public void Codigo_invalido_nao_vale_como_senha(string? stored)
+    {
+        Assert.False(PasswordHash.IsValidFormat(stored));
+        Assert.False(PasswordHash.Verify("qualquer", stored));
+    }
+
+    [Fact]
+    public void Codigo_com_espacos_em_volta_ainda_vale()
+    {
+        string stored = PasswordHash.Create("segredo1", Fast);
+        Assert.True(PasswordHash.Verify("segredo1", "  " + stored + "\r\n"));
+    }
+
+    [Theory]
+    [InlineData("12345", "12345", "Use pelo menos 6 caracteres.")]
+    [InlineData("      ", "      ", "A senha não pode ser só espaços.")]
+    [InlineData("segredo1", "segredo2", "As duas senhas não são iguais.")]
+    [InlineData("segredo1", "segredo1", null)]
+    public void Senha_nova_e_conferida(string pw, string confirm, string? expected) =>
+        Assert.Equal(expected, PasswordHash.CheckNew(pw, confirm));
+
+    [Fact]
+    public void Libera_por_10_minutos()
+    {
+        var s = new LockSession();
+        var t = new DateTime(2026, 10, 22, 9, 0, 0);
+        string stored = PasswordHash.Create("segredo1", Fast);
+        Assert.False(s.IsUnlocked(t));
+        Assert.Equal(UnlockResult.Ok, s.TryUnlock("segredo1", stored, t));
+        Assert.True(s.IsUnlocked(t.AddMinutes(9)));
+        Assert.False(s.IsUnlocked(t.AddMinutes(10)));
+        s.Grant(t);
+        s.Lock();
+        Assert.False(s.IsUnlocked(t));
+    }
+
+    [Fact]
+    public void Cinco_erros_seguidos_esperam_30_segundos()
+    {
+        var s = new LockSession();
+        var t = new DateTime(2026, 10, 22, 9, 0, 0);
+        string stored = PasswordHash.Create("segredo1", Fast);
+        for (int i = 0; i < LockSession.MaxTries - 1; i++) Assert.Equal(UnlockResult.Wrong, s.TryUnlock("errada", stored, t));
+        Assert.Equal(UnlockResult.Blocked, s.TryUnlock("errada", stored, t));
+        // Nem a senha certa entra durante a espera
+        Assert.Equal(UnlockResult.Blocked, s.TryUnlock("segredo1", stored, t.AddSeconds(29)));
+        Assert.Equal(UnlockResult.Ok, s.TryUnlock("segredo1", stored, t.AddSeconds(30)));
+    }
+
+    [Fact]
+    public void Acerto_zera_a_contagem_de_erros()
+    {
+        var s = new LockSession();
+        var t = new DateTime(2026, 10, 22, 9, 0, 0);
+        string stored = PasswordHash.Create("segredo1", Fast);
+        for (int i = 0; i < LockSession.MaxTries - 1; i++) s.TryUnlock("errada", stored, t);
+        Assert.Equal(UnlockResult.Ok, s.TryUnlock("segredo1", stored, t));
+        s.Lock();
+        Assert.Equal(UnlockResult.Wrong, s.TryUnlock("errada", stored, t));
+    }
+
+    [Fact]
+    public void Texto_do_cartao()
+    {
+        Assert.StartsWith("Sem senha", LockSession.Describe(false, false, TimeSpan.Zero));
+        Assert.Equal("Configurações protegidas por senha. Bloqueado.", LockSession.Describe(true, false, TimeSpan.Zero));
+        Assert.Equal("Configurações protegidas por senha. Liberado por mais 10 minutos.", LockSession.Describe(true, false, TimeSpan.FromMinutes(9.5)));
+        Assert.Contains("1 minuto.", LockSession.Describe(true, false, TimeSpan.FromSeconds(20)));
+        Assert.StartsWith("Senha definida pela política", LockSession.Describe(true, true, TimeSpan.Zero));
+    }
+
+    [Fact]
+    public void Senha_nao_sai_na_exportacao_e_sobrevive_a_importar_e_redefinir()
+    {
+        string current = """{"SettingsLock":"pbkdf2-sha256$1000$x$y","TrayCpu":false}""";
+        Assert.DoesNotContain("SettingsLock", SettingsTransfer.Export(current, "1.2.0"));
+        string imported = SettingsTransfer.Export("""{"SettingsLock":null,"TrayCpu":true}""", "1.2.0");
+        Assert.Contains("pbkdf2-sha256$1000$x$y", SettingsTransfer.Merge(current, imported));
+        Assert.Contains("pbkdf2-sha256$1000$x$y", SettingsTransfer.Reset(current, """{"SettingsLock":null,"TrayCpu":false}"""));
+    }
+}

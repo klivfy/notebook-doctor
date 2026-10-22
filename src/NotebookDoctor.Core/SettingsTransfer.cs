@@ -15,6 +15,8 @@ public static class SettingsTransfer
     {
         "MiniLeft", "MiniTop", "LastTab", "FirstRunDone", "LastWeeklySummary", "LastRestorePoint", "LastWeeklyRun", "LastUpdateCheck", "LastCrashSeen",
         "WinLeft", "WinTop", "WinWidth", "WinHeight", "WinMaximized", "Grids", "TrayHintShown",
+        // B38: a senha não viaja na exportação nem cai ao importar ou redefinir; só sai por "Remover senha"
+        "SettingsLock",
     };
 
     public static string Export(string settingsJson, string appVersion)

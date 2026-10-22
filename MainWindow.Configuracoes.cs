@@ -19,6 +19,7 @@ public partial class MainWindow
     private async void Profile_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as Button)?.Tag is not string id || Profile.All.FirstOrDefault(x => x.Id == id) is not { } prof) return;
+        if (!Host.EnsureUnlocked($"ativar o perfil {prof.Name}")) return; // B38
         if (Simulate($"Ativar o perfil {prof.Name}", $"{prof.Description} Trocaria o plano de energia, os avisos e o Modo Foco conforme o perfil.")) return;
         var notes = new List<string>();
 
@@ -295,6 +296,7 @@ public partial class MainWindow
         CfgCloseExits.IsChecked = s.CloseExits;
         CfgCompact.IsChecked = s.Compact;
         RefreshStartMenu();
+        RefreshLockCard();
         SelectByTag(CfgSizeUnit, s.SizeUnit);
         SelectByTag(CfgTempUnit, s.TempUnit);
         SelectByTag(CfgOverlay, s.OverlayMode);
@@ -315,6 +317,7 @@ public partial class MainWindow
 
     private void SaveSettings_Click(object sender, RoutedEventArgs e)
     {
+        if (!Host.EnsureUnlocked("salvar as preferências")) { LoadSettingsIntoForm(); CfgMsg.Text = "Não salvo: as preferências voltaram ao que estava."; return; } // B38
         var s = Host.Settings;
         s.ThemeMode = (CfgTheme.SelectedItem as ComboBoxItem)?.Tag as string ?? "system";
         s.StartWithWindows = CfgStart.IsChecked == true;
@@ -390,6 +393,64 @@ public partial class MainWindow
         catch (Exception ex) { StartMenuMsg.Text = "Não foi possível mexer no atalho: " + ex.Message; }
     }
 
+    // ---------- B38: senha das configurações (modo empresa) ----------
+    public void RefreshLockCard()
+    {
+        bool demo = AppPaths.Demo, policy = Host.LockFromPolicy, has = Host.LockHash is not null;
+        var left = Host.Lock.UnlockedLeft(DateTime.Now);
+        LockState.Text = demo ? "Indisponível no modo demonstração." : LockSession.Describe(has, policy, left);
+        // Senha da política só muda no registro, por um administrador
+        LockEdit.Visibility = demo || policy ? Visibility.Collapsed : Visibility.Visible;
+        LockSetBtn.Content = has ? "Trocar senha" : "Definir senha";
+        LockRemoveBtn.Visibility = LockCopyBtn.Visibility = has && !policy ? Visibility.Visible : Visibility.Collapsed;
+        LockNowBtn.Visibility = has && left > TimeSpan.Zero ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void LockSet_Click(object sender, RoutedEventArgs e)
+    {
+        bool had = Host.LockHash is not null;
+        if (had && !Host.EnsureUnlocked("trocar a senha")) return;
+        if (PasswordHash.CheckNew(LockNew.Password, LockConfirm.Password) is { } problem) { LockMsg.Text = problem; return; }
+        Host.Settings.SettingsLock = PasswordHash.Create(LockNew.Password);
+        Host.Settings.Save();
+        Host.Lock.Grant(DateTime.Now); // quem acabou de definir não precisa digitar de novo
+        LockNew.Clear();
+        LockConfirm.Clear();
+        ActionLog.Add(had ? "Senha das configurações trocada" : "Senha das configurações definida", "Guardada só como código (hash); a senha em si não fica no computador.");
+        LockMsg.Text = "Senha salva. Se ela for esquecida, apagar as preferências na pasta de dados do app remove a senha (para impedir isso, use a política do Windows).";
+        RefreshLockCard();
+    }
+
+    private void LockRemove_Click(object sender, RoutedEventArgs e)
+    {
+        if (!Host.EnsureUnlocked("remover a senha")) return;
+        if (!Dialogs.Confirm(this, "Remover a senha?", "Qualquer pessoa que use este computador poderá mudar as configurações do Notebook Doctor.", "Remover")) return;
+        Host.Settings.SettingsLock = null;
+        Host.Settings.Save();
+        Host.Lock.Lock();
+        ActionLog.Add("Senha das configurações removida", "");
+        LockMsg.Text = "Senha removida.";
+        RefreshLockCard();
+    }
+
+    private void LockCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if (Host.Settings.SettingsLock is not { } code) return;
+        try
+        {
+            Clipboard.SetText(code);
+            LockMsg.Text = $@"Código copiado. A TI grava em HKLM\{SettingsLockPolicy.KeyPath}, valor de texto {SettingsLockPolicy.ValueName} (por GPO ou script), e a senha passa a valer para todos os usuários.";
+        }
+        catch (System.Runtime.InteropServices.COMException) { LockMsg.Text = "A área de transferência está ocupada por outro programa. Tente de novo."; }
+    }
+
+    private void LockNow_Click(object sender, RoutedEventArgs e)
+    {
+        Host.Lock.Lock();
+        LockMsg.Text = "Bloqueado: a próxima mudança vai pedir a senha.";
+        RefreshLockCard();
+    }
+
     // ---------- B30: colunas das tabelas ----------
     private void ShowAllColumns_Click(object sender, RoutedEventArgs e)
     {
@@ -424,6 +485,7 @@ public partial class MainWindow
 
     private void ImportSettings_Click(object sender, RoutedEventArgs e)
     {
+        if (!Host.EnsureUnlocked("importar preferências")) return; // B38
         var dlg = new Microsoft.Win32.OpenFileDialog { Title = "Importar preferências", Filter = "Preferências do Notebook Doctor (*.json)|*.json" };
         if (dlg.ShowDialog(this) != true) return;
         string merged;
@@ -443,6 +505,7 @@ public partial class MainWindow
 
     private void ResetSettings_Click(object sender, RoutedEventArgs e)
     {
+        if (!Host.EnsureUnlocked("redefinir as preferências")) return; // B38
         if (!Dialogs.Confirm(this, "Redefinir preferências?", "Tema, avisos, exceções, protegidos e demais escolhas voltam ao padrão. Histórico e registro de ações não mudam.\n\nSe quiser guardar as atuais, exporte antes.", "Redefinir", danger: true)) return;
         ApplySettingsJson(SettingsTransfer.Reset(CurrentSettingsJson(), System.Text.Json.JsonSerializer.Serialize(new AppSettings())), "Preferências redefinidas", "padrão do app");
     }

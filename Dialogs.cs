@@ -152,6 +152,47 @@ public static class Dialogs
         dlg.ShowDialog();
     }
 
+    /// <summary>
+    /// B38: pede a senha das configurações. <paramref name="check"/> devolve o erro a mostrar ou null quando a senha
+    /// está certa; com erro, o diálogo continua aberto. Devolve true se liberou.
+    /// </summary>
+    public static bool AskPassword(Window? owner, string what, Func<string, string?> check)
+    {
+        var dlg = NewWindow(owner!, "Senha das configurações", 420);
+        if (owner is null) dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen; // janela principal escondida (bandeja)
+        var heading = Heading("Senha das configurações", "FsTitleLarge", new Thickness(0, 0, 0, 8));
+        var body = new TextBlock
+        {
+            Text = $"Para {what}, digite a senha definida pelo responsável por este computador.",
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var box = new PasswordBox { Margin = new Thickness(0, 0, 0, 8) };
+        System.Windows.Automation.AutomationProperties.SetName(box, "Senha");
+        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
+        // Vermelho do tema não tem contraste 4,5:1 sobre o fundo escuro: o erro vai em semi-negrito na cor do texto
+        error.SetResourceReference(TextBlock.FontFamilyProperty, "FontSemi");
+        System.Windows.Automation.AutomationProperties.SetLiveSetting(error, System.Windows.Automation.AutomationLiveSetting.Assertive);
+
+        bool result = false;
+        var cancel = new Button { Content = "Cancelar", IsCancel = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        var ok = new Button { Content = "Desbloquear", IsDefault = true, Margin = new Thickness(0) };
+        ok.Click += (_, _) =>
+        {
+            string? msg = check(box.Password);
+            if (msg is null) { result = true; dlg.Close(); return; }
+            error.Text = msg;
+            box.Clear();
+            box.Focus();
+        };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, ok } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, body, box, error, buttons } };
+        dlg.Loaded += (_, _) => box.Focus();
+        dlg.ShowDialog();
+        return result;
+    }
+
     private static bool Show(Window owner, string title, string message, string ok, string? cancel, bool danger) =>
         Show(owner, title, message, ok, cancel, danger, out _, dontAskOption: false);
 

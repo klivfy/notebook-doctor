@@ -161,7 +161,7 @@ Critérios de impacto
 | B35 | Prévia dos arquivos antes de apagar | 🟡 "Ver arquivos" ou clique duplo: até 200 maiores, com tamanho e data; a Lixeira abre na tela do Windows |
 | B36 | "Não perguntar de novo" (só em ações não destrutivas) | 🟡 reabrir como administrador e criar plano de energia; "Voltar a pedir todas as confirmações" em Configurações |
 | B37 | Tema automático por horário | 🟡 "Claro de dia, escuro à noite" com horários configuráveis; troca sozinho com o app aberto |
-| B38 | Senha para alterar configurações (modo empresa) | ⬜ |
+| B38 | Senha para alterar configurações (modo empresa) | 🟡 salvar/importar/redefinir preferências, trocar de perfil, desligar a simulação e "Iniciar com o Windows" pedem a senha (vale 10 min; 5 erros = 30 s de espera). Só o hash PBKDF2-SHA256 fica guardado, fora da exportação. A TI pode fixar a senha pela política em HKLM (só administrador remove) |
 | B39 | Documentar argumentos de linha de comando (`--tab`, `--background`) | ✅ README, seção Linha de comando |
 | B40 | Log de diagnóstico exportável | 🟡 .txt sem dados pessoais com diagnóstico, erros, falhas, ações e avisos |
 | B41 | Abrir a pasta de dados pelo app | ✅ (botão em Sobre) |
@@ -219,4 +219,4 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-M22 Agrupar processos por aplicativo · M29 Tarefas agendadas de terceiros · M31 Extensões pesadas de navegador · M33 OneDrive · M36/M37 Logs de eventos e pontos de restauração antigos · M42 Amostragem menor na bateria · B38 Senha para alterar configurações · B25 Avaliação do app (precisa do endereço de avaliação) · B05 Efeito ripple (só se combinar com o visual do Windows 11).
+M22 Agrupar processos por aplicativo · M29 Tarefas agendadas de terceiros · M31 Extensões pesadas de navegador · M33 OneDrive · M36/M37 Logs de eventos e pontos de restauração antigos · M42 Amostragem menor na bateria · B25 Avaliação do app (precisa do endereço de avaliação) · B05 Efeito ripple (só se combinar com o visual do Windows 11).

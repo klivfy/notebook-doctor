@@ -51,6 +51,21 @@ As regras de diagnóstico, a nota de saúde, a detecção de vazamento de memór
 - Modo portátil: com um arquivo `portatil.txt` ao lado do executável, os dados ficam na pasta `dados` junto do app (o `HKCU` ainda é usado para iniciar com o Windows e para as notificações).
 - Sem telemetria. Com a opção ligada, relatórios de falha ficam na pasta `falhas`, sem nome de usuário, nome do computador nem pasta pessoal, e só saem no pacote de suporte que a pessoa anexar.
 
+## Modo empresa
+
+Em **Configurações › Senha das configurações** dá para exigir uma senha para salvar, importar ou redefinir as preferências, trocar de perfil, desligar o modo simulação e mudar "Iniciar com o Windows". Ver, analisar e limpar continuam livres. Depois de digitada, a senha vale por 10 minutos; cinco erros seguidos fazem o app esperar 30 segundos.
+
+O app guarda só um hash PBKDF2-SHA256 (600 mil iterações, sal aleatório) nas preferências do usuário, fora da exportação. Quem tem acesso à pasta de dados consegue apagar essa senha. Para valer de verdade, a TI grava o código no registro, onde só administradores mexem:
+
+```
+HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Klivfy\NotebookDoctor
+  SettingsLock (REG_SZ) = pbkdf2-sha256$600000$...$...
+```
+
+O código vem do botão **Copiar para a política do Windows**, depois de definir a senha no app. Com a política, a senha vale para todos os usuários do computador e o app não deixa trocá-la nem removê-la.
+
+Limite: a senha protege as telas do app. Quem editar o arquivo de preferências à mão (`settings.json`, na pasta de dados do usuário) ainda muda as opções. Ela evita mudanças casuais e por engano; não substitui as permissões do Windows.
+
 ## Documentos
 
 - [MELHORIAS.md](MELHORIAS.md): 150 melhorias e o status de cada uma

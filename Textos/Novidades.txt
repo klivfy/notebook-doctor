@@ -43,6 +43,7 @@ Configurações
 • Começar minimizado e opção de o X encerrar o app.
 • Modo compacto para telas pequenas: menu só com ícones e tabelas mais densas.
 • Atalho no Menu Iniciar, criado pelo próprio app.
+• Modo empresa: senha para mudar as configurações, definida no app ou pela política do Windows.
 • A janela reabre no mesmo lugar e no mesmo monitor.
 • Exportar, importar e redefinir as preferências.
 • Cor de destaque do Windows, ajustada para manter a leitura.

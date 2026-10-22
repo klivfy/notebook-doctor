@@ -130,6 +130,8 @@ public sealed class AppSettings
     public bool PlaySounds { get; set; }
     /// <summary>B36: confirmações não destrutivas que a pessoa pediu para não repetir.</summary>
     public List<string> SkipConfirm { get; set; } = new();
+    /// <summary>B38: hash da senha das configurações (PasswordHash); null = sem senha.</summary>
+    public string? SettingsLock { get; set; }
 
     /// <summary>Tema que vale agora ("system", "light" ou "dark"), resolvendo o modo por horário.</summary>
     public string EffectiveTheme(DateTime now) => ThemeSchedule.Resolve(ThemeMode, TimeOnly.FromDateTime(now), ThemeLightAt, ThemeDarkAt);

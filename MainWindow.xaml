@@ -848,6 +848,36 @@
                     </StackPanel>
                 </Border>
 
+                <!-- B38: modo empresa -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Senha das configurações (modo empresa)" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                   Text="Com senha, salvar, importar ou redefinir as preferências, trocar de perfil, desligar o modo simulação e mudar &quot;Iniciar com o Windows&quot; pedem a senha. Depois de digitada, vale por 10 minutos. Ver, analisar e limpar continuam livres."/>
+                        <TextBlock x:Name="LockState" FontFamily="{StaticResource FontMedium}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                        <StackPanel x:Name="LockEdit">
+                            <WrapPanel>
+                                <StackPanel Margin="0,0,12,8">
+                                    <TextBlock x:Name="LockNewLabel" Text="Nova senha" Style="{StaticResource Label}" Margin="0,0,0,4"/>
+                                    <PasswordBox x:Name="LockNew" Width="200" AutomationProperties.LabeledBy="{Binding ElementName=LockNewLabel}"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,8">
+                                    <TextBlock x:Name="LockConfirmLabel" Text="Repita a nova senha" Style="{StaticResource Label}" Margin="0,0,0,4"/>
+                                    <PasswordBox x:Name="LockConfirm" Width="200" AutomationProperties.LabeledBy="{Binding ElementName=LockConfirmLabel}"/>
+                                </StackPanel>
+                            </WrapPanel>
+                            <WrapPanel>
+                                <Button x:Name="LockSetBtn" Content="Definir senha" Style="{StaticResource TonalButton}" Click="LockSet_Click" Margin="0,0,8,8"/>
+                                <Button x:Name="LockRemoveBtn" Content="Remover senha" Style="{StaticResource TextButton}" Click="LockRemove_Click" Margin="0,0,8,8"/>
+                                <Button x:Name="LockCopyBtn" Content="Copiar para a política do Windows" Style="{StaticResource TextButton}" Click="LockCopy_Click" Margin="0,0,8,8"
+                                        ToolTip="Copia o código da senha (não a senha) para a TI gravar em HKLM\SOFTWARE\Policies\Klivfy\NotebookDoctor, valor SettingsLock. Assim a senha vale para todos os usuários e só um administrador remove."/>
+                            </WrapPanel>
+                        </StackPanel>
+                        <Button x:Name="LockNowBtn" Content="Bloquear agora" Style="{StaticResource TextButton}" Click="LockNow_Click" HorizontalAlignment="Left" Margin="0,0,8,8"/>
+                        <TextBlock x:Name="LockMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Sobre -->
                 <Border Style="{StaticResource Card}">
                     <StackPanel>

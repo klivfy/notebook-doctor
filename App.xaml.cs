@@ -101,7 +101,12 @@ public partial class App : Application
         _tray.ExitRequested += Quit;
         _tray.SupportRequested += AppInfo.OpenSupport;
         _tray.CleanRequested += () => _ = QuickCleanAsync(notify: true);
-        _tray.StartWithWindowsToggled += v => { Settings.StartWithWindows = v; Settings.ApplyStartWithWindows(); Settings.Save(); };
+        _tray.StartWithWindowsToggled += v =>
+        {
+            if (v == Settings.StartWithWindows) return; // eco da própria desmarcação abaixo
+            if (!EnsureUnlocked("mudar \"Iniciar com o Windows\"")) { _tray.SyncStartWithWindows(Settings.StartWithWindows); return; }
+            Settings.StartWithWindows = v; Settings.ApplyStartWithWindows(); Settings.Save();
+        };
         _tray.MiniToggled += SetMiniWidget;
 
         var win = new MainWindow();
@@ -586,6 +591,34 @@ public partial class App : Application
 
     /// <summary>Verdadeiro durante o encerramento: a janela deixa de se esconder na bandeja e fecha de fato.</summary>
     public bool Quitting { get; private set; }
+
+    // ---------- B38: senha das configurações ----------
+    public LockSession Lock { get; } = new();
+
+    /// <summary>Hash que vale agora: o da política da empresa (HKLM) ou o definido no app. Null = sem senha.</summary>
+    public string? LockHash => AppPaths.Demo ? null
+        : SettingsLockPolicy.Read() ?? (PasswordHash.IsValidFormat(Settings.SettingsLock) ? Settings.SettingsLock : null);
+
+    public bool LockFromPolicy => !AppPaths.Demo && SettingsLockPolicy.Read() is not null;
+
+    /// <summary>Sem senha ou já liberado, devolve true na hora; senão pede a senha. "what" completa "Para …, digite a senha".</summary>
+    public bool EnsureUnlocked(string what)
+    {
+        if (LockHash is not { } hash || Lock.IsUnlocked(DateTime.Now)) return true;
+        var owner = MainWindow is { IsVisible: true } w ? w : null;
+        bool ok = Dialogs.AskPassword(owner, what, pw =>
+        {
+            var now = DateTime.Now;
+            return Lock.TryUnlock(pw, hash, now) switch
+            {
+                UnlockResult.Ok => null,
+                UnlockResult.Blocked => $"Muitas tentativas erradas. Espere {Math.Ceiling(Lock.BlockedFor(now).TotalSeconds):0} segundos e tente de novo.",
+                _ => "Senha incorreta.",
+            };
+        });
+        if (ok) (MainWindow as NotebookDoctor.MainWindow)?.RefreshLockCard();
+        return ok;
+    }
 
     /// <summary>B10: "fechar encerra o app".</summary>
     public void ExitApp() => Quit();
