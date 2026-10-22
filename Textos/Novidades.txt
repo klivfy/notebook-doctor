@@ -8,6 +8,7 @@ Painel e diagnóstico
 
 Processos
 • Selecionar vários programas e encerrar de uma vez.
+• Processos do mesmo aplicativo numa linha só (Steam, Acrobat, Teams, Zoom e outros), com opção para separar.
 • Menu do botão direito (Shift+F10 pelo teclado), Enter abre o detalhe e Delete encerra, sempre com confirmação.
 
 Limpeza e espaço
@@ -19,6 +20,7 @@ Inicialização e ajustes
 • Serviços de outros fabricantes que podem ficar no modo manual, com "Desfazer".
 • Tarefas agendadas de outros fabricantes, com "Desativar" e "Desfazer".
 • Extensões instaladas nos navegadores, das mais pesadas para as mais leves.
+• Como administrador: apagar pontos de restauração antigos (o mais recente fica) e limpar logs de eventos grandes.
 
 Histórico
 • Tendências da semana, previsão de disco cheio e mapa de horários de lentidão.

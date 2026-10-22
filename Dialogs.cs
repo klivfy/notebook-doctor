@@ -56,15 +56,18 @@ public static class Dialogs
     }
 
     /// <summary>A47: cada processo de um programa, com PID, memória, CPU, threads, início e caminho.</summary>
-    public static void ShowProcessDetails(Window owner, string name)
+    /// <param name="members">M22: processos de um aplicativo agrupado; sem isso, só o processo <paramref name="name"/>.</param>
+    public static void ShowProcessDetails(Window owner, string name, IReadOnlyList<string>? members = null)
     {
+        members ??= [name];
         var rows = new List<object>();
-        foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
+        foreach (var p in members.SelectMany(System.Diagnostics.Process.GetProcessesByName))
             using (p)
             {
                 string Try(Func<string> f) { try { return f(); } catch { return "—"; } }
                 rows.Add(new
                 {
+                    Processo = p.ProcessName,
                     PID = p.Id,
                     RAM = $"{p.WorkingSet64 / 1048576:N0} MB",
                     CPU = Try(() => $"{p.TotalProcessorTime.TotalSeconds:N0} s"),
@@ -83,7 +86,7 @@ public static class Dialogs
                     Caminho = Try(() => p.MainModule?.FileName ?? "—"),
                 });
             }
-        var about = Services.ProcessKnowledge.Describe(name);
+        var about = Services.ProcessKnowledge.Describe(members[0]);
         var dlg = NewWindow(owner, $"Detalhes: {name}", 900);
         dlg.SizeToContent = SizeToContent.Manual;
         dlg.Height = 520;

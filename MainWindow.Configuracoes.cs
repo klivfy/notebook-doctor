@@ -295,6 +295,7 @@ public partial class MainWindow
         CfgStartMin.IsChecked = s.StartMinimized;
         CfgCloseExits.IsChecked = s.CloseExits;
         CfgCompact.IsChecked = s.Compact;
+        GroupByAppBox.IsChecked = s.GroupByApp; // M22: a opção fica na aba Processos
         RefreshStartMenu();
         RefreshLockCard();
         SelectByTag(CfgSizeUnit, s.SizeUnit);

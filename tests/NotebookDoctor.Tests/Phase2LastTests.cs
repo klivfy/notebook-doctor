@@ -193,3 +193,116 @@ public class OneDriveTests
         Assert.Null(OneDriveRule.Evaluate(null, 5));
     }
 }
+
+public class AppGroupsTests
+{
+    private static ProcGroup P(string name, int n = 1, double cpu = 1, long mem = 100) => new(name, n, cpu, mem, 10, 1);
+
+    [Fact]
+    public void Junta_a_familia_e_soma_os_numeros()
+    {
+        var list = AppGroups.Merge([P("steamwebhelper", 6, 3, 600), P("steam", 1, 1, 150), P("chrome", 10, 5, 1200)]);
+        var steam = Assert.Single(list, g => g.Name == "Steam");
+        Assert.Equal(["steam", "steamwebhelper"], steam.Members); // o principal vem primeiro
+        Assert.Equal("steam", steam.Main);
+        Assert.Equal(7, steam.Count);
+        Assert.Equal(4, steam.CpuPct);
+        Assert.Equal(750, steam.MemMB);
+        Assert.Equal(20, steam.IoKBs);
+        Assert.Equal(2, steam.Conns);
+        Assert.False(Assert.Single(list, g => g.Name == "chrome").Merged);
+    }
+
+    [Fact]
+    public void Um_so_processo_da_familia_fica_com_o_proprio_nome()
+    {
+        var g = Assert.Single(AppGroups.Merge([P("AcroCEF", 3)]));
+        Assert.Equal("AcroCEF", g.Name);
+        Assert.False(g.Merged);
+    }
+
+    [Fact]
+    public void Processos_compartilhados_nunca_entram_numa_familia()
+    {
+        foreach (var shared in new[] { "msedgewebview2", "node", "crashpad_handler", "QtWebEngineProcess", "svchost", "GoogleUpdate" })
+            Assert.Null(AppGroups.AppOf(shared));
+        Assert.Equal("Adobe Acrobat", AppGroups.AppOf("AcroCEF")); // sem diferenciar maiúsculas
+    }
+
+    [Fact]
+    public void Sem_juntar_cada_processo_na_sua_linha()
+    {
+        var list = AppGroups.Single([P("steam"), P("steamwebhelper")]);
+        Assert.Equal(2, list.Count);
+        Assert.All(list, g => Assert.False(g.Merged));
+    }
+}
+
+public class SystemCleanupTests
+{
+    [Fact]
+    public void Le_a_lista_de_pontos_do_PowerShell()
+    {
+        string json = """{"points":[{"SequenceNumber":12,"Description":"Windows Update","CreationTime":"20261001083000.000000-180"},{"SequenceNumber":15,"Description":"Notebook Doctor - Plano","CreationTime":"20261020153012.123456-180"}],"used":5368709120}""";
+        var (points, used) = RestorePointRules.ParseReport(json);
+        Assert.Equal(2, points.Count);
+        Assert.Equal(new DateTime(2026, 10, 20, 15, 30, 12), points[1].Created);
+        Assert.Equal(5L << 30, used);
+    }
+
+    [Fact]
+    public void Um_ponto_so_vem_como_objeto_e_lixo_nao_quebra()
+    {
+        Assert.Single(RestorePointRules.Parse("""{"SequenceNumber":3,"Description":"x","CreationTime":"20260101000000.000000+000"}"""));
+        Assert.Empty(RestorePointRules.Parse(""));
+        Assert.Empty(RestorePointRules.Parse("não é json"));
+        Assert.Empty(RestorePointRules.ParseReport("""{"points":[],"used":null}""").Points);
+        Assert.Null(RestorePointRules.ParseCim("2026"));
+    }
+
+    [Fact]
+    public void Apaga_todos_menos_o_mais_recente()
+    {
+        var a = new RestorePointInfo(10, "a", new DateTime(2026, 9, 1));
+        var b = new RestorePointInfo(11, "b", new DateTime(2026, 10, 1));
+        var c = new RestorePointInfo(12, "c", new DateTime(2026, 10, 20));
+        Assert.Equal([a, b], RestorePointRules.ToDelete([c, a, b]));
+        Assert.Empty(RestorePointRules.ToDelete([c]));
+        Assert.Empty(RestorePointRules.ToDelete([]));
+        // Datas ilegíveis: fica o de maior número de sequência
+        var x = new RestorePointInfo(1, "", DateTime.MinValue);
+        var y = new RestorePointInfo(2, "", DateTime.MinValue);
+        Assert.Equal([x], RestorePointRules.ToDelete([y, x]));
+    }
+
+    [Fact]
+    public void Texto_dos_pontos()
+    {
+        Assert.Equal("2 pontos de restauração. O mais recente é de 20/10/2026 15:30 (Notebook Doctor). Ocupam 5,0 GB no disco.",
+            RestorePointRules.Describe([new(1, "Antigo", new DateTime(2026, 9, 1)), new(2, "Notebook Doctor", new DateTime(2026, 10, 20, 15, 30, 0))], 5L << 30));
+        Assert.Equal("Nenhum ponto de restauração neste computador.", RestorePointRules.Describe([], 0));
+    }
+
+    [Fact]
+    public void Nome_do_log_a_partir_do_arquivo()
+    {
+        Assert.Equal("Microsoft-Windows-TaskScheduler/Operational", EventLogRules.NameFromFile("Microsoft-Windows-TaskScheduler%4Operational.evtx"));
+        Assert.Equal("Application", EventLogRules.NameFromFile("Application.evtx"));
+    }
+
+    [Fact]
+    public void So_logs_grandes_e_nunca_o_de_Seguranca()
+    {
+        const long MB = 1 << 20;
+        var list = EventLogRules.Candidates([
+            ("Security.evtx", 500 * MB),
+            ("Application.evtx", 20 * MB),
+            ("System.evtx", 64 * MB),
+            ("Microsoft-Windows-PowerShell%4Operational.evtx", 128 * MB),
+            ("leia-me.txt", 900 * MB),
+        ]);
+        Assert.Equal(["Microsoft-Windows-PowerShell/Operational", "System"], list.Select(l => l.Name));
+        Assert.Equal("128 MB", list[0].SizeText);
+        Assert.False(EventLogRules.CanClear("security"));
+    }
+}

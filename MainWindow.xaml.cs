@@ -7,8 +7,13 @@ using NotebookDoctor.Services;
 namespace NotebookDoctor;
 
 public sealed record ProcRow(string Name, int Count, double CpuPct, long MemMB, double IoKBs, int Conns, string About, string SafetyText,
-                             System.Windows.Media.ImageSource? Icon = null, string Severity = "")
+                             System.Windows.Media.ImageSource? Icon = null, string Severity = "", IReadOnlyList<string>? Members = null)
 {
+    /// <summary>M22: processos que a linha representa (vários quando o aplicativo foi agrupado).</summary>
+    public IReadOnlyList<string> Names => Members ?? [Name];
+    public bool Merged => Names.Count > 1;
+    /// <summary>Basta um processo protegido para a linha toda ficar protegida.</summary>
+    public bool IsProtected => Names.Any(ProcessTools.IsProtected);
     public bool HasIcon => Icon is not null;
     /// <summary>B32: lido pelo Narrador junto com o nome ("uso alto").</summary>
     public string SeverityText => RowSeverity.Spoken(Severity);
@@ -214,7 +219,7 @@ public partial class MainWindow : Window
         if (Host.Settings.PlaySounds) System.Media.SystemSounds.Asterisk.Play();
     }
 
-    private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid, TasksGrid, ExtensionsGrid];
+    private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid, TasksGrid, ExtensionsGrid, EventLogsGrid];
 
     public void SavePlacement()
     {

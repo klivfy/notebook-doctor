@@ -130,6 +130,8 @@ public sealed class AppSettings
     public bool PlaySounds { get; set; }
     /// <summary>B36: confirmações não destrutivas que a pessoa pediu para não repetir.</summary>
     public List<string> SkipConfirm { get; set; } = new();
+    /// <summary>M22: na aba Processos, junta processos do mesmo aplicativo (Steam + steamwebhelper).</summary>
+    public bool GroupByApp { get; set; } = true;
     /// <summary>B38: hash da senha das configurações (PasswordHash); null = sem senha.</summary>
     public string? SettingsLock { get; set; }
 

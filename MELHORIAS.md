@@ -90,7 +90,7 @@ Critérios de impacto
 | M19 | Relatório de falhas opcional | 🟡 opt-in em Configurações; fica no PC sem dados pessoais, vai no pacote de suporte e o app avisa na abertura seguinte. Sem envio automático |
 | M20 | Lista de exceções de alertas | ✅ |
 | M21 | Lista editável de processos protegidos | ✅ |
-| M22 | Agrupar processos por aplicativo | ⬜ |
+| M22 | Agrupar processos por aplicativo | 🟡 opção na aba Processos (ligada por padrão): lista fechada de famílias (Steam, Acrobat, Teams, Zoom, Docker, NVIDIA…); processos compartilhados (WebView2, node) ficam separados; encerrar, prioridade, eficiência e exceções valem para todos os processos da linha |
 | M23 | Ícones reais dos programas nas tabelas | ✅ (tabela de Processos) |
 | M24 | Busca e filtro nas tabelas | ✅ busca em Processos, Inicialização e Espaço |
 | M25 | Seleção múltipla e ações em lote | 🟡 seleção múltipla (Ctrl/Shift) em Processos e "Encerrar" com uma confirmação para todos; protegidos ficam de fora; não testado no Windows |
@@ -104,8 +104,8 @@ Critérios de impacto
 | M33 | Orientar OneDrive "arquivos sob demanda" | 🟡 achado quando o OneDrive tem 20 GB+ baixados, ou 3 GB+ com menos de 15% de disco livre; conta pelos atributos dos arquivos (nada é baixado), a cada 6 h, até 20 s |
 | M34 | Lixeira por unidade | 🟡 uma linha de Lixeira por unidade com itens, para esvaziar só a do disco cheio; não testado no Windows |
 | M35 | Limpar cache de miniaturas e ícones | 🟡 miniaturas (thumbcache) e cache de ícones na Limpeza, desmarcados; arquivos em uso são pulados; não testado no Windows |
-| M36 | Limpar logs de eventos grandes (opcional) | ⬜ |
-| M37 | Limpar pontos de restauração antigos (manter o último) | ⬜ |
+| M36 | Limpar logs de eventos grandes (opcional) | 🟡 aba Ajustes, como administrador: logs acima de 32 MB, com confirmação e simulação; o de Segurança nunca entra; botão para o Visualizador de Eventos (salvar cópia antes) |
+| M37 | Limpar pontos de restauração antigos (manter o último) | 🟡 aba Ajustes, como administrador: mostra quantos pontos e o espaço das cópias de sombra; apaga todos menos o mais recente (SRRemoveRestorePoint), com confirmação e simulação |
 | M38 | Caches de desenvolvimento (npm, NuGet, pip, Gradle) | ✅ npm, NuGet, Gradle, pip, Yarn e pnpm na Limpeza, desmarcados por padrão |
 | M39 | Caches de apps (Spotify, Teams, Discord, Slack) | 🟡 caches de Discord, Slack, Teams (clássico e novo) e VS Code, desmarcados; Spotify fica de fora porque o cache dele guarda as músicas offline; não testado no Windows |
 | M40 | Compactar disco virtual do WSL / detectar `vmmem` | 🟡 diagnóstico avisa disco virtual do WSL/Docker com 20 GB+ e explica como compactar (não compacta sozinho); não testado no Windows |
@@ -219,4 +219,4 @@ Critérios de impacto
 
 ## Próximo lote sugerido
 
-M22 Agrupar processos por aplicativo · M36/M37 Logs de eventos e pontos de restauração antigos · B25 Avaliação do app (precisa do endereço de avaliação) · B05 Efeito ripple (só se combinar com o visual do Windows 11).
+Fase 1 no Windows: A22 Updates travados · A23 Drivers desatualizados · A39 Integridade e TRIM agendados. Depois do merge: M13 Multi-idioma (PR próprio). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.

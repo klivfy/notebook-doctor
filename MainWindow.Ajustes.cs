@@ -16,7 +16,79 @@ public partial class MainWindow
         LoadServices();
         LoadTasks();
         LoadExtensions();
+        LoadSystemCleanup();
     }
+
+    // ---------- M37/M36: pontos de restauração e logs de eventos ----------
+    private bool _systemCleanupLoaded;
+    private List<RestorePointInfo> _restorePoints = new();
+
+    /// <summary>Usa o PowerShell (alguns segundos): roda na primeira vez que a aba abre e em "Verificar".</summary>
+    private async void LoadSystemCleanup(bool force = false)
+    {
+        if (_systemCleanupLoaded && !force) return;
+        _systemCleanupLoaded = true;
+        RestoreInfo.Text = "Verificando…";
+        var (points, used) = await Task.Run(RestorePoints.List);
+        _restorePoints = points;
+        RestoreInfo.Text = RestorePointRules.Describe(points, used)
+                           + (points.Count == 0 && !AppInfo.IsAdmin ? " Sem administrador, o Windows pode não mostrar os pontos." : "");
+        var logs = await Task.Run(EventLogs.Large);
+        EventLogsGrid.ItemsSource = logs ?? new List<EventLogFile>();
+        string min = Pt.Bytes(EventLogRules.MinBytes);
+        EventLogsInfo.Text = logs is null ? "Para ver o tamanho dos logs, abra o app como administrador."
+            : logs.Count == 0 ? $"Nenhum log passa de {min}. O de Segurança nunca entra."
+            : $"{Pt.N(logs.Count, "log passa", "logs passam")} de {min} ({Pt.Bytes(logs.Sum(l => l.Bytes))} no total). O de Segurança nunca entra.";
+    }
+
+    private void SystemCleanupRefresh_Click(object sender, RoutedEventArgs e) => LoadSystemCleanup(force: true);
+
+    /// <summary>Sem administrador, oferece reabrir e devolve true (quem chamou para).</summary>
+    private bool AskAdmin(string what)
+    {
+        if (AppInfo.IsAdmin) return false;
+        if (Dialogs.ConfirmOnce(this, Host.Settings, "admin-restart", "Precisa de administrador", $"{what} exige privilégios elevados. Reiniciar o Notebook Doctor como administrador agora?", "Reiniciar"))
+            Host.RestartAsAdmin();
+        return true;
+    }
+
+    private async void RestoreOld_Click(object sender, RoutedEventArgs e)
+    {
+        if (_restorePoints.Count == 0) { RestoreInfo.Text = "Nenhum ponto de restauração encontrado. Clique em Verificar (como administrador)."; return; }
+        var delete = RestorePointRules.ToDelete(_restorePoints);
+        if (delete.Count == 0) { RestoreInfo.Text = "Só há um ponto de restauração: ele fica, nada a apagar."; return; }
+        var keep = _restorePoints.Except(delete).First();
+        string keepText = $"{keep.Created:dd/MM/yyyy HH:mm}" + (keep.Description.Length > 0 ? $" ({keep.Description})" : "");
+        if (Simulate($"Apagar {Pt.N(delete.Count, "ponto de restauração antigo", "pontos de restauração antigos")}", $"Manteria o mais recente, de {keepText}.")) return;
+        if (AskAdmin("Apagar pontos de restauração")) return;
+        string list = string.Join("\n", delete.Take(8).Select(p => $"• {p.Created:dd/MM/yyyy HH:mm} {p.Description}")) + (delete.Count > 8 ? $"\n… e mais {delete.Count - 8}" : "");
+        if (!Dialogs.Confirm(this, $"Apagar {Pt.N(delete.Count, "ponto de restauração", "pontos de restauração")}?",
+                $"{list}\n\nFica o mais recente, de {keepText}.\n\nOs apagados não voltam: não será mais possível restaurar o Windows para essas datas.", "Apagar", danger: true)) return;
+        int ok = await Task.Run(() => delete.Count(p => RestorePoints.Remove(p.Sequence)));
+        ActionLog.Add("Pontos de restauração antigos apagados", $"{ok} de {delete.Count}; mantido o de {keepText}");
+        ShowSnack(ok == delete.Count ? $"{Pt.N(ok, "ponto antigo apagado", "pontos antigos apagados")}" : $"{ok} de {delete.Count} apagados",
+                  ok == delete.Count ? $"Ficou o de {keepText}." : "O Windows recusou alguns; tente de novo como administrador.");
+        LoadSystemCleanup(force: true);
+    }
+
+    private async void EventLogClear_Click(object sender, RoutedEventArgs e)
+    {
+        if (EventLogsGrid.SelectedItem is not EventLogFile log) { EventLogsInfo.Text = "Selecione um log na lista."; return; }
+        if (Simulate($"Limpar o log {log.Name}", $"Executaria \"wevtutil cl {log.Name}\" e liberaria cerca de {log.SizeText}.")) return;
+        if (AskAdmin("Limpar logs de eventos")) return;
+        if (!Dialogs.Confirm(this, "Limpar este log de eventos?",
+                $"{log.Name} ({log.SizeText})\n\nTodos os eventos dele são apagados para sempre. Se estiver investigando um problema, salve uma cópia antes pelo Visualizador de Eventos.", "Limpar", danger: true)) return;
+        try
+        {
+            int code = await EventLogs.ClearAsync(log.Name);
+            ActionLog.Add($"Log de eventos limpo: {log.Name}", $"{log.SizeText}; wevtutil terminou com código {code}");
+            ShowSnack(code == 0 ? $"{log.Name} limpo" : "O Windows não limpou o log", code == 0 ? $"Cerca de {log.SizeText} liberados." : $"wevtutil terminou com código {code}.");
+        }
+        catch (Exception ex) { ShowSnack("Não foi possível limpar", ex.Message); }
+        LoadSystemCleanup(force: true);
+    }
+
+    private void EventViewer_Click(object sender, RoutedEventArgs e) => AppInfo.OpenShell("eventvwr.msc");
 
     // ---------- M29: tarefas agendadas de terceiros ----------
     public sealed record TaskRow(string Path, string Name, string When, string Advice, string Reason, string Command, bool CanChange);

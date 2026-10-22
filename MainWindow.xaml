@@ -220,7 +220,12 @@
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="260"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="Programas agrupados por nome" Style="{StaticResource TitleMedium}"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                <TextBlock Text="Programas em execução" Style="{StaticResource TitleMedium}" Margin="0,0,16,0"/>
+                                <!-- M22 -->
+                                <CheckBox x:Name="GroupByAppBox" Content="Juntar processos do mesmo aplicativo" Click="GroupByApp_Click" VerticalAlignment="Top"
+                                          ToolTip="Ex.: Steam e steamwebhelper numa linha só. Encerrar, prioridade e modo eficiência valem para todos os processos da linha."/>
+                            </StackPanel>
                             <TextBox x:Name="ProcSearch" Grid.Column="1" Tag="Buscar programa…" VerticalAlignment="Top" TextChanged="ProcSearch_Changed"
                                      AutomationProperties.Name="Buscar programa"/>
                         </Grid>
@@ -653,6 +658,33 @@
                                     <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ExtensionsRefresh_Click" Margin="0,0,8,6"/>
                                     <TextBlock x:Name="ExtensionsMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                                AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        <!-- M36/M37: o que apaga dados do Windows de vez fica separado da Limpeza -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Limpeza do sistema (administrador)" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                           Text="Estas limpezas apagam dados do Windows que não voltam e não aparecem em Ações para desfazer. Por isso ficam separadas da Limpeza e só funcionam com o app aberto como administrador."/>
+                                <TextBlock Text="Pontos de restauração" FontFamily="{StaticResource FontMedium}" Margin="0,0,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock x:Name="RestoreInfo" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                                <WrapPanel Margin="0,8,0,16">
+                                    <Button Content="Apagar os antigos (manter o mais recente)" Style="{StaticResource TonalButton}" Click="RestoreOld_Click" Margin="0,0,8,6"/>
+                                    <Button Content="Verificar" Style="{StaticResource TextButton}" Click="SystemCleanupRefresh_Click" Margin="0,0,8,6"/>
+                                </WrapPanel>
+                                <TextBlock Text="Logs de eventos grandes" FontFamily="{StaticResource FontMedium}" Margin="0,0,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock x:Name="EventLogsInfo" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+                                <DataGrid x:Name="EventLogsGrid" MaxHeight="220" AutomationProperties.Name="Logs de eventos grandes">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Log" Binding="{Binding Name}" Width="*"/>
+                                        <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" SortMemberPath="Bytes" Width="110"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Limpar log selecionado" Style="{StaticResource DangerButton}" Click="EventLogClear_Click" Margin="0,0,8,6"/>
+                                    <Button Content="Abrir Visualizador de Eventos" Style="{StaticResource TextButton}" Click="EventViewer_Click" Margin="0,0,8,6"
+                                            ToolTip="Para salvar uma cópia de um log antes de limpar: clique direito no log › Salvar Todos os Eventos Como."/>
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
