@@ -7,31 +7,6 @@ using Microsoft.Win32;
 
 namespace NotebookDoctor.Services;
 
-public sealed record UnsignedApp(string Name, string Path);
-
-/// <param name="DefenderRealtime">Proteção em tempo real do Windows Defender (null = não deu para ler)</param>
-/// <param name="OtherAv">Antivírus de terceiros registrados no Windows (quando há, o Defender pode estar desligado de propósito)</param>
-public sealed record SecurityInfo(bool? DefenderRealtime, int? SignatureAgeDays, IReadOnlyList<string> OtherAv, IReadOnlyList<string> FirewallOff)
-{
-    public static readonly SecurityInfo Empty = new(null, null, Array.Empty<string>(), Array.Empty<string>());
-}
-
-public sealed record HealthInfo(
-    string DiskName, string DiskType, string DiskHealth, int? DiskWearPct, int? DiskTempC,
-    int? BatteryHealthPct, int? BatteryCycles,
-    int? BootSeconds, int? BootAvgSeconds,
-    bool RebootPending, bool OnAc, string ActivePlan, string? HighPlanGuid,
-    int StartupEnabled, long TempBytes,
-    IReadOnlyList<string> DriverErrors, IReadOnlyList<UnsignedApp> Unsigned, SecurityInfo? Security = null)
-{
-    public SecurityInfo Sec => Security ?? SecurityInfo.Empty;
-    public static readonly HealthInfo Empty = new("", "", "", null, null, null, null, null, null, false, false, "", null, 0, 0,
-        Array.Empty<string>(), Array.Empty<UnsignedApp>());
-    public bool HasDisk => DiskName.Length > 0;
-    public bool DiskHealthy => DiskHealth is "" or "Healthy";
-    public bool IsBalancedPlan => ActivePlan.Contains("quilibrado", StringComparison.OrdinalIgnoreCase) || ActivePlan.Contains("balanced", StringComparison.OrdinalIgnoreCase);
-}
-
 /// <summary>
 /// Coleta dados "lentos" (SMART, bateria, boot, plano de energia, lixo) fora da thread de interface.
 /// Sem administrador, alguns campos (desgaste/temperatura do SSD, log de boot) podem vir vazios: o app mostra "indisponível".
@@ -49,6 +24,12 @@ if($d){ $r=$d | Get-StorageReliabilityCounter; $o.disk=[ordered]@{name="$($d.Fri
 $b=@(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Diagnostics-Performance/Operational';Id=100} -MaxEvents 5 | ForEach-Object { $x=[xml]$_.ToXml(); ($x.Event.EventData.Data | Where-Object Name -eq 'BootTime').'#text' })
 $o.boot=$b
 $o.drivers=@(Get-PnpDevice -PresentOnly | Where-Object { $_.Status -eq 'Error' } | Select-Object -First 8 | ForEach-Object { "$($_.FriendlyName)" })
+try { $h=(New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher(); $c=$h.GetTotalHistoryCount(); if($c -gt 0){ $o.wu=@($h.QueryHistory(0,[Math]::Min($c,80)) | Where-Object { $_.Operation -eq 1 } | ForEach-Object { [ordered]@{t="$($_.Title)";d=$_.Date.ToLocalTime().ToString('yyyy-MM-ddTHH:mm:ss');r=[int]$_.ResultCode} }) } } catch {}
+$o.wuoff=("$((Get-Service wuauserv).StartType)" -eq 'Disabled')
+$o.wupause="$((Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings').PauseUpdatesExpiryTime)"
+$o.gpu=@(Get-CimInstance Win32_VideoController | ForEach-Object { [ordered]@{n="$($_.Name)";v="$($_.DriverVersion)";d=$(if($_.DriverDate){$_.DriverDate.ToString('yyyy-MM-dd')}else{''})} })
+$t=Get-ScheduledTask -TaskPath '\Microsoft\Windows\Defrag\' -TaskName 'ScheduledDefrag'; if($t){ $o.defrag=("$($t.State)" -ne 'Disabled') }
+$o.maintoff=((Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance').MaintenanceDisabled -eq 1)
 $o | ConvertTo-Json -Compress -Depth 4
 """;
 
@@ -58,7 +39,9 @@ $ErrorActionPreference='SilentlyContinue'
 $o=[ordered]@{}
 $mp=Get-MpComputerStatus
 if($mp){ $o.rt=$mp.RealTimeProtectionEnabled; $o.sig=$mp.AntivirusSignatureAge }
-$o.av=@(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct | ForEach-Object { "$($_.displayName)" })
+$avs=@(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntivirusProduct)
+$o.av=@($avs | ForEach-Object { "$($_.displayName)" })
+$o.avon=@($avs | Where-Object { (([int]$_.productState -shr 12) -band 0xF) -eq 1 } | ForEach-Object { "$($_.displayName)" })
 $o.fwoff=@(Get-NetFirewallProfile | Where-Object { -not $_.Enabled } | ForEach-Object { "$($_.Name)" })
 $o | ConvertTo-Json -Compress -Depth 3
 """;
@@ -86,8 +69,11 @@ $o | ConvertTo-Json -Compress -Depth 3
             }
             bool? rt = r.TryGetProperty("rt", out var rtv) && rtv.ValueKind is JsonValueKind.True or JsonValueKind.False ? rtv.GetBoolean() : null;
             int? sig = r.TryGetProperty("sig", out var sv) && sv.ValueKind == JsonValueKind.Number && sv.TryGetInt32(out int days) ? days : null;
-            var others = Strings(r, "av").Where(n => !n.Contains("Defender", StringComparison.OrdinalIgnoreCase)).ToList();
-            return new SecurityInfo(rt, sig, others, Strings(r, "fwoff"));
+            static bool NotDefender(string n) => !n.Contains("Defender", StringComparison.OrdinalIgnoreCase);
+            var others = Strings(r, "av").Where(NotDefender).ToList();
+            // productState: o 4º dígito hexadecimal (da direita) igual a 1 significa proteção em tempo real ligada
+            var othersOn = Strings(r, "avon").Where(NotDefender).ToList();
+            return new SecurityInfo(rt, sig, others, Strings(r, "fwoff"), othersOn);
         }
         catch { return SecurityInfo.Empty; }
     }
@@ -101,7 +87,9 @@ $o | ConvertTo-Json -Compress -Depth 3
         var tJunk = Task.Run(() => Cleaner.SafeJunkBytes(7));
         var tStart = Task.Run(() => StartupManager.List().Count(e => e.Enabled));
         var tUnsigned = Task.Run(FindUnsigned);
-        await Task.WhenAll(tPs, tBat, tPlan, tJunk, tStart, tUnsigned, tSec);
+        var tVhd = Task.Run(FindVirtualDisks);
+        var tOneDrive = Task.Run(OneDriveScan.Get);
+        await Task.WhenAll(tPs, tBat, tPlan, tJunk, tStart, tUnsigned, tSec, tVhd, tOneDrive);
 
         var (name, type, health, wear, temp, boots, drivers) = tPs.Result;
         var (batPct, cycles) = tBat.Result;
@@ -112,7 +100,8 @@ $o | ConvertTo-Json -Compress -Depth 3
 
         return new HealthInfo(name, type, health, wear, temp, batPct, cycles, bootLast, bootAvg,
             RebootPending(), System.Windows.SystemParameters.PowerLineStatus == System.Windows.PowerLineStatus.Online,
-            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result);
+            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result, tVhd.Result, tOneDrive.Result,
+            _updates, _gpus, _maintenance);
     }
 
     // Pastas de dados do usuário, onde malware costuma rodar. Pastas de desenvolvimento ficam de fora para evitar alarme falso.
@@ -156,6 +145,42 @@ $o | ConvertTo-Json -Compress -Depth 3
         }
     }
 
+    /// <summary>
+    /// M40: discos virtuais do WSL (distribuições da Microsoft Store e as instaladas com "wsl --install") e do Docker Desktop.
+    /// Só lê o tamanho dos arquivos.
+    /// </summary>
+    private static List<VirtualDisk> FindVirtualDisks()
+    {
+        string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var found = new List<VirtualDisk>();
+        void Add(string name, string path)
+        {
+            try { if (File.Exists(path)) found.Add(new VirtualDisk(name, path, new FileInfo(path).Length)); } catch { }
+        }
+        try
+        {
+            // Distribuições da Store: Packages\CanonicalGroupLimited.Ubuntu_...\LocalState\ext4.vhdx
+            foreach (var pkg in Directory.EnumerateDirectories(Path.Combine(local, "Packages")))
+            {
+                string name = Path.GetFileName(pkg).Split('_')[0];
+                // "CanonicalGroupLimited.Ubuntu22.04LTS" vira "Ubuntu22.04LTS": o nome vem depois do editor
+                Add(name.Contains('.') ? name[(name.IndexOf('.') + 1)..] : name, Path.Combine(pkg, "LocalState", "ext4.vhdx"));
+            }
+        }
+        catch { }
+        try
+        {
+            // WSL moderno: %LocalAppData%\wsl\{guid}\ext4.vhdx
+            string wsl = Path.Combine(local, "wsl");
+            if (Directory.Exists(wsl))
+                foreach (var dir in Directory.EnumerateDirectories(wsl)) Add("WSL", Path.Combine(dir, "ext4.vhdx"));
+        }
+        catch { }
+        Add("Docker Desktop", Path.Combine(local, @"Docker\wsl\data\ext4.vhdx"));
+        Add("Docker Desktop", Path.Combine(local, @"Docker\wsl\disk\docker_data.vhdx"));
+        return found;
+    }
+
     private static bool RebootPending()
     {
         try
@@ -185,10 +210,27 @@ $o | ConvertTo-Json -Compress -Depth 3
         finally { try { File.Delete(file); } catch { } }
     }
 
+    // A22, A23 e A39: lidos pelo mesmo script do disco, numa só chamada ao PowerShell
+    private static UpdateStatus? _updates;
+    private static List<GpuDriver> _gpus = new();
+    private static WindowsMaintenance? _maintenance;
+
+    private static void ReadUpkeep(JsonElement root)
+    {
+        _updates = new UpdateStatus(
+            root.TryGetProperty("wu", out var wu) ? UpdateRules.ParseHistory(wu) : new List<UpdateEntry>(),
+            root.TryGetProperty("wuoff", out var off) && off.ValueKind == JsonValueKind.True,
+            root.TryGetProperty("wupause", out var pause) && pause.ValueKind == JsonValueKind.String ? UpdateRules.ParsePause(pause.GetString()) : null);
+        _gpus = root.TryGetProperty("gpu", out var gpu) ? DriverRules.Parse(gpu) : new();
+        bool? defrag = root.TryGetProperty("defrag", out var df) && df.ValueKind is JsonValueKind.True or JsonValueKind.False ? df.GetBoolean() : null;
+        _maintenance = new WindowsMaintenance(defrag, root.TryGetProperty("maintoff", out var mo) && mo.ValueKind == JsonValueKind.True);
+    }
+
     private static (string name, string type, string health, int? wear, int? temp, List<int> boots, List<string> drivers) RunPowerShell()
     {
         var boots = new List<int>();
         var drivers = new List<string>();
+        _updates = null; _gpus = new(); _maintenance = null;
         try
         {
             string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(Script));
@@ -199,6 +241,7 @@ $o | ConvertTo-Json -Compress -Depth 3
             if (!p.WaitForExit(60000)) { try { p.Kill(); } catch { } return ("", "", "", null, null, boots, drivers); }
             using var doc = JsonDocument.Parse(output.Result.Trim());
             var root = doc.RootElement;
+            ReadUpkeep(root);
 
             if (root.TryGetProperty("boot", out var b))
             {

@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    # Linux sai mais barato que Windows em minutos do Actions; o WPF compila aqui com EnableWindowsTargeting
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compilar o app
+        run: dotnet build NotebookDoctor.csproj -c Release -p:EnableWindowsTargeting=true
+
+      - name: Testes
+        run: dotnet test tests/NotebookDoctor.Tests -c Release --logger "trx;LogFileName=resultados.trx"
+
+      - name: Publicar resultados dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-testes
+          path: tests/NotebookDoctor.Tests/TestResults/*.trx

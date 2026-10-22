@@ -16,6 +16,17 @@ public static class ReportExporter
         return file;
     }
 
+    /// <summary>B20: o mesmo relatório em PDF (texto), para anexar em e-mail ou chamado.</summary>
+    public static string ExportPdf(Snapshot s, IReadOnlyList<Finding> findings, IReadOnlyList<HistSample> week)
+    {
+        string dir = AppPaths.ExportDir();
+        Directory.CreateDirectory(dir);
+        string file = Path.Combine(dir, $"relatorio-{DateTime.Now:yyyy-MM-dd_HHmm}.pdf");
+        var lines = ReportContent.Lines(s, findings, week, Environment.MachineName, AppInfo.Version, $"Suporte: {AppInfo.SupportUrl} · {AppInfo.Copyright}");
+        File.WriteAllBytes(file, SimplePdf.Build(lines, $"Relatório Notebook Doctor {s.Time:dd/MM/yyyy}"));
+        return file;
+    }
+
     private static string E(string t) => WebUtility.HtmlEncode(t);
 
     private static string Build(Snapshot s, IReadOnlyList<Finding> findings, IReadOnlyList<HistSample> week)
@@ -39,8 +50,8 @@ table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px 8px;
         sb.Append($"<h1>Notebook Doctor</h1><div class=\"muted\">Relatório gerado em {s.Time:dd/MM/yyyy HH:mm} · {E(Environment.MachineName)}</div>");
         sb.Append("<div class=\"grid\">");
         sb.Append($"<div class=\"card\"><div class=\"muted\">Processador</div><div class=\"big\">{s.Cpu:0}%</div></div>");
-        sb.Append($"<div class=\"card\"><div class=\"muted\">Memória RAM</div><div class=\"big\">{s.RamPct:0}%</div><div class=\"muted\">{s.RamUsedGB:0.0} de {s.RamTotalGB:0.0} GB</div></div>");
-        sb.Append($"<div class=\"card\"><div class=\"muted\">Disco livre</div><div class=\"big\">{s.DiskFreePct:0}%</div><div class=\"muted\">{s.DiskFreeGB:0} GB</div></div></div>");
+        sb.Append($"<div class=\"card\"><div class=\"muted\">Memória RAM</div><div class=\"big\">{s.RamPct:0}%</div><div class=\"muted\">{Units.GbOf(s.RamUsedGB, s.RamTotalGB)}</div></div>");
+        sb.Append($"<div class=\"card\"><div class=\"muted\">Disco livre</div><div class=\"big\">{s.DiskFreePct:0}%</div><div class=\"muted\">{Units.Gb(s.DiskFreeGB, "0")}</div></div></div>");
 
         sb.Append("<h2>Diagnóstico</h2>");
         foreach (var f in findings)

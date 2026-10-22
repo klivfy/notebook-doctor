@@ -6,7 +6,7 @@ public sealed record BottleneckResult(string Resource, string Explanation);
 /// <summary>Nota de saúde (0–100) e identificação do gargalo atual, em linguagem simples.</summary>
 public static class Insights
 {
-    public static HealthScoreResult Score(IReadOnlyList<Snapshot> recent, HealthInfo h)
+    public static HealthScoreResult Score(IReadOnlyList<Snapshot> recent, HealthInfo h, TimeSpan? uptime = null)
     {
         if (recent.Count == 0) return new(0, "Analisando");
         var now = recent[^1];
@@ -20,7 +20,7 @@ public static class Insights
         if (h.HasDisk && !h.DiskHealthy) score -= 30;
         if (h.DiskWearPct >= 80) score -= 15;
         if (h.BatteryHealthPct < 60) score -= 8; else if (h.BatteryHealthPct < 75) score -= 4;
-        if (TimeSpan.FromMilliseconds(Environment.TickCount64).TotalDays >= 7) score -= 5;
+        if ((uptime ?? Uptime.Current).TotalDays >= 7) score -= 5;
         if (h.RebootPending) score -= 5;
         if (h.StartupEnabled > 10) score -= 5;
         score -= h.TempBytes > 2L << 30 ? 5 : h.TempBytes > 1L << 30 ? 2 : 0;

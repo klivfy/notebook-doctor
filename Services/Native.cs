@@ -4,6 +4,26 @@ namespace NotebookDoctor.Services;
 
 internal static class Native
 {
+    // ---------- M42: energia ----------
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SYSTEM_POWER_STATUS
+    {
+        public byte ACLineStatus, BatteryFlag, BatteryLifePercent, SystemStatusFlag;
+        public int BatteryLifeTime, BatteryFullLifeTime;
+    }
+
+    [DllImport("kernel32.dll")]
+    private static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS status);
+
+    /// <summary>Na bateria, economia de bateria ligada e carga (−1 = sem bateria ou desconhecida).</summary>
+    public static (bool OnBattery, bool Saver, int Percent) PowerStatus()
+    {
+        if (!GetSystemPowerStatus(out var s)) return (false, false, -1);
+        bool noBattery = (s.BatteryFlag & 128) != 0 || s.BatteryFlag == 255;
+        int pct = noBattery || s.BatteryLifePercent == 255 ? -1 : s.BatteryLifePercent;
+        return (s.ACLineStatus == 0, s.SystemStatusFlag == 1, pct);
+    }
+
     [DllImport("kernel32.dll")]
     public static extern bool GetSystemTimes(out long idle, out long kernel, out long user);
 
@@ -89,6 +109,39 @@ internal static class Native
     [StructLayout(LayoutKind.Sequential)]
     public struct LASTINPUTINFO { public uint cbSize; public uint dwTime; }
     [DllImport("user32.dll")] public static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
+
+    [DllImport("shell32.dll")]
+    private static extern int SHQueryUserNotificationState(out int state);
+
+    /// <summary>M43: app em tela cheia (2), jogo Direct3D em tela cheia (3) ou modo de apresentação (4).</summary>
+    public static bool IsFullscreenOrPresenting() => NotificationState() is 2 or 3 or 4;
+
+    /// <summary>QUERY_USER_NOTIFICATION_STATE do Windows (0 quando não deu para ler).</summary>
+    public static int NotificationState()
+    {
+        try { return SHQueryUserNotificationState(out int state) == 0 ? state : 0; }
+        catch { return 0; }
+    }
+
+    // ---------- M03: monitor da janela em primeiro plano ----------
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT { public int Left, Top, Right, Bottom; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MONITORINFO { public uint cbSize; public RECT rcMonitor, rcWork; public uint dwFlags; }
+
+    [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+    [DllImport("user32.dll")] private static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
+
+    /// <summary>Área inteira (em pixels) do monitor onde está a janela em primeiro plano; num jogo em tela cheia, a tela do jogo.</summary>
+    public static Box? ForegroundMonitor()
+    {
+        IntPtr mon = MonitorFromWindow(GetForegroundWindow(), 2 /* MONITOR_DEFAULTTONEAREST */);
+        var info = new MONITORINFO { cbSize = (uint)Marshal.SizeOf<MONITORINFO>() };
+        if (mon == IntPtr.Zero || !GetMonitorInfo(mon, ref info)) return null;
+        var r = info.rcMonitor;
+        return new Box(r.Left, r.Top, r.Right - r.Left, r.Bottom - r.Top);
+    }
 
     /// <summary>Há quanto tempo o usuário não mexe em mouse/teclado.</summary>
     public static TimeSpan IdleTime()

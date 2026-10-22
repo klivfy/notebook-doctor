@@ -80,13 +80,18 @@
     </Style>
 
     <!-- ============ Cartão tonal (M3 filled card) ============ -->
+    <!-- B15: densidade. App.ApplyDensity troca estes valores no modo compacto (Density, no Core). -->
+    <Thickness x:Key="CardPad">20</Thickness>
+    <Thickness x:Key="CardGap">6</Thickness>
+    <sys:Double x:Key="RowMin">40</sys:Double>
+
     <Style x:Key="Card" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource SurfaceContainer}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="16"/>
-        <Setter Property="Padding" Value="20"/>
-        <Setter Property="Margin" Value="6"/>
+        <Setter Property="Padding" Value="{DynamicResource CardPad}"/>
+        <Setter Property="Margin" Value="{DynamicResource CardGap}"/>
     </Style>
 
     <!-- ============ Botões: preenchido (padrão), tonal, texto, perigo ============ -->
@@ -242,6 +247,31 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Hint" Property="Visibility" Value="Visible"/>
                         </MultiTrigger>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource OnSurface}"/></Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Primary}"/>
+                            <Setter TargetName="Bd" Property="BorderThickness" Value="2"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- B38: campo de senha, com o mesmo visual da caixa de texto -->
+    <Style TargetType="PasswordBox">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource Primary}"/>
+        <Setter Property="SelectionBrush" Value="{DynamicResource Primary}"/>
+        <Setter Property="Padding" Value="12,9"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Border x:Name="Bd" CornerRadius="6" BorderThickness="1" BorderBrush="{DynamicResource Outline}" Background="Transparent">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource OnSurface}"/></Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Primary}"/>
@@ -516,6 +546,63 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- M26: menu de clique direito no tema do app (sem submenus) -->
+    <Style TargetType="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource SurfaceContainer}"/>
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource OutlineVariant}"/>
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4">
+                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="12,8" MinWidth="200">
+                        <DockPanel>
+                            <!-- B30: marca de seleção nos itens marcáveis (escolha de colunas); some nos menus comuns -->
+                            <TextBlock x:Name="Check" DockPanel.Dock="Left" Text="&#xE73E;" FontFamily="{StaticResource FontIcons}" FontSize="12"
+                                       Width="22" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
+                        </DockPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsCheckable" Value="True">
+                            <Setter TargetName="Check" Property="Visibility" Value="Hidden"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource StateHover}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Height="1" Margin="8,4" Background="{DynamicResource OutlineVariant}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="DataGrid">
         <Setter Property="AutoGenerateColumns" Value="False"/>
         <Setter Property="IsReadOnly" Value="True"/>
@@ -525,7 +612,7 @@
         <Setter Property="GridLinesVisibility" Value="None"/>
         <Setter Property="SelectionMode" Value="Single"/>
         <Setter Property="SelectionUnit" Value="FullRow"/>
-        <Setter Property="MinRowHeight" Value="40"/>
+        <Setter Property="MinRowHeight" Value="{DynamicResource RowMin}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>

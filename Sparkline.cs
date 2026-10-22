@@ -6,7 +6,10 @@ namespace NotebookDoctor;
 /// <summary>Gráfico de linha minimalista (0..Max). Cor e grade vêm do tema via DynamicResource.</summary>
 public sealed class Sparkline : FrameworkElement
 {
-    private IReadOnlyList<double> _values = Array.Empty<double>();
+    private IReadOnlyList<double> _all = Array.Empty<double>();
+    private IReadOnlyList<double> _values = Array.Empty<double>(); // trecho à vista (tudo, sem zoom)
+    private readonly Services.ChartViewport _view = new();
+    private double? _dragX;
 
     public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
         nameof(Stroke), typeof(Brush), typeof(Sparkline),
@@ -20,7 +23,7 @@ public sealed class Sparkline : FrameworkElement
     public Brush GridBrush { get => (Brush)GetValue(GridBrushProperty); set => SetValue(GridBrushProperty, value); }
     public double Max { get; set; } = 100;
 
-    private IReadOnlyList<DateTime>? _times;
+    private IReadOnlyList<DateTime>? _allTimes, _times;
     private int _hover = -1;
     private readonly System.Windows.Controls.ToolTip _tip = new() { Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse };
 
@@ -29,6 +32,14 @@ public sealed class Sparkline : FrameworkElement
 
     /// <summary>Nome do gráfico lido pelo Narrador antes do resumo (ex.: "CPU, últimos 2 minutos").</summary>
     public string Title { get; set; } = "Gráfico";
+
+    /// <summary>M04: roda do mouse aproxima, arrastar move, clique duplo volta. Pelo teclado: + e −, setas, Home.</summary>
+    public bool Zoomable
+    {
+        get => _zoomable;
+        set { _zoomable = value; Focusable = value; }
+    }
+    private bool _zoomable;
 
     public Sparkline()
     {
@@ -39,9 +50,18 @@ public sealed class Sparkline : FrameworkElement
 
     public void SetValues(IReadOnlyList<double> values, IReadOnlyList<DateTime>? times = null)
     {
-        _values = values;
-        _times = times is not null && times.Count == values.Count ? times : null;
-        if (_hover >= values.Count) _hover = -1;
+        _all = values;
+        _allTimes = times is not null && times.Count == values.Count ? times : null;
+        _view.SetTotal(values.Count);
+        Slice();
+    }
+
+    /// <summary>Recorta o trecho à vista da série completa e redesenha.</summary>
+    private void Slice()
+    {
+        _values = _view.Zoomed ? _all.Skip(_view.Start).Take(_view.Count).ToList() : _all;
+        _times = _allTimes is null ? null : _view.Zoomed ? _allTimes.Skip(_view.Start).Take(_view.Count).ToList() : _allTimes;
+        _hover = -1;
         System.Windows.Automation.AutomationProperties.SetName(this, Summary());
         InvalidateVisual();
     }
@@ -49,7 +69,10 @@ public sealed class Sparkline : FrameworkElement
     /// <summary>Resumo textual do gráfico: o mesmo conteúdo da imagem, para quem não a vê.</summary>
     public string Summary() => _values.Count == 0
         ? $"{Title}: sem dados ainda"
-        : $"{Title}: agora {_values[^1]:0}{Unit}, média {_values.Average():0}{Unit}, mínimo {_values.Min():0}{Unit}, pico {_values.Max():0}{Unit}";
+        : $"{Title}{ZoomText()}: {(_view.Zoomed ? "último ponto" : "agora")} {_values[^1]:0}{Unit}, média {_values.Average():0}{Unit}, mínimo {_values.Min():0}{Unit}, pico {_values.Max():0}{Unit}";
+
+    private string ZoomText() =>
+        !_view.Zoomed ? "" : _times is { Count: > 0 } t ? $", com zoom de {t[0]:dd/MM HH:mm} a {t[^1]:dd/MM HH:mm}" : ", com zoom";
 
     protected override System.Windows.Automation.Peers.AutomationPeer OnCreateAutomationPeer() => new SparklinePeer(this);
 
@@ -63,16 +86,79 @@ public sealed class Sparkline : FrameworkElement
         protected override bool IsControlElementCore() => true;
     }
 
+    // ---------- M04: zoom pela roda, arraste, clique duplo e teclado ----------
+    private void ZoomBy(double factor, double anchor)
+    {
+        _view.Zoom(factor, anchor);
+        Slice();
+    }
+
+    protected override void OnMouseWheel(System.Windows.Input.MouseWheelEventArgs e)
+    {
+        base.OnMouseWheel(e);
+        // Sem zoom, girar para baixo rola a página como sempre; só aproximar prende a roda no gráfico
+        if (!Zoomable || ActualWidth <= 0 || _all.Count < Services.ChartViewport.MinPoints || (e.Delta < 0 && !_view.Zoomed)) return;
+        ZoomBy(e.Delta > 0 ? 0.8 : 1.25, e.GetPosition(this).X / ActualWidth);
+        e.Handled = true;
+    }
+
+    protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonDown(e);
+        if (!Zoomable) return;
+        Focus();
+        if (e.ClickCount == 2) { _view.Reset(); Slice(); return; }
+        if (_view.Zoomed) { _dragX = e.GetPosition(this).X; CaptureMouse(); }
+    }
+
+    protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonUp(e);
+        _dragX = null;
+        ReleaseMouseCapture();
+    }
+
+    protected override void OnLostMouseCapture(System.Windows.Input.MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        _dragX = null;
+    }
+
+    protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (!Zoomable) return;
+        int step = Math.Max(1, _view.Count / 10);
+        switch (e.Key)
+        {
+            case System.Windows.Input.Key.Add or System.Windows.Input.Key.OemPlus: ZoomBy(0.8, 0.5); break;
+            case System.Windows.Input.Key.Subtract or System.Windows.Input.Key.OemMinus: ZoomBy(1.25, 0.5); break;
+            case System.Windows.Input.Key.Left: _view.Pan(-step); Slice(); break;
+            case System.Windows.Input.Key.Right: _view.Pan(step); Slice(); break;
+            case System.Windows.Input.Key.Home: _view.Reset(); Slice(); break;
+            default: return;
+        }
+        e.Handled = true;
+    }
+
     // M04: dica com valor e horário do ponto sob o mouse
     protected override void OnMouseMove(System.Windows.Input.MouseEventArgs e)
     {
         base.OnMouseMove(e);
         if (_values.Count < 2 || ActualWidth <= 0) return;
+        if (_dragX is { } from && _view.Zoomed)
+        {
+            // Arrastar para a direita mostra pontos mais antigos, como num mapa
+            int moved = (int)Math.Round((from - e.GetPosition(this).X) / ActualWidth * (_view.Count - 1));
+            if (moved != 0) { _view.Pan(moved); _dragX = e.GetPosition(this).X; Slice(); }
+            return;
+        }
         int i = (int)Math.Round(e.GetPosition(this).X / ActualWidth * (_values.Count - 1));
         i = Math.Clamp(i, 0, _values.Count - 1);
         if (i == _hover) return;
         _hover = i;
-        _tip.Content = $"{_values[i]:0.#}{Unit}" + (_times is not null ? $" · {_times[i]:dd/MM HH:mm}" : "");
+        _tip.Content = $"{_values[i]:0.#}{Unit}" + (_times is not null ? $" · {_times[i]:dd/MM HH:mm}" : "")
+                       + (!Zoomable ? "" : _view.Zoomed ? "\nClique duplo volta ao período todo" : "\nRoda do mouse aproxima");
         InvalidateVisual();
     }
 

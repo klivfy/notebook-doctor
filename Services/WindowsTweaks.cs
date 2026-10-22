@@ -78,7 +78,7 @@ public static class WindowsTweaks
             : auto ? $"Gerenciado pelo Windows · {Cleaner.FormatBytes(pageSize)} agora"
             : $"Tamanho fixo ({string.Join("; ", paging)}) · {Cleaner.FormatBytes(pageSize)} agora";
         list.Add(new Tweak("pagefile", "Arquivo de paginação (memória virtual)", pageNow,
-            $"Quando a RAM ({ramGB:0} GB) enche, o Windows usa o disco como extensão. Sem ele, ou com tamanho fixo pequeno, programas podem fechar sozinhos por falta de memória. O recomendado é deixar o Windows gerenciar o tamanho.",
+            $"Quando a RAM ({Units.Gb(ramGB, "0")}) enche, o Windows usa o disco como extensão. Sem ele, ou com tamanho fixo pequeno, programas podem fechar sozinhos por falta de memória. O recomendado é deixar o Windows gerenciar o tamanho.",
             auto ? "Já recomendado" : "Deixar o Windows gerenciar",
             $@"Altera HKLM\{MemKey}\PagingFiles para ""?:\pagefile.sys"" (gerenciado pelo sistema). Exige reiniciar o computador.",
             NeedsAdmin: true, Recommended: !auto, CanApply: !auto));

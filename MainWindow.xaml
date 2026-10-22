@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:NotebookDoctor"
         Title="Notebook Doctor" Icon="app.ico" Width="1160" Height="740" MinWidth="720" MinHeight="560"
         Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
-        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" Language="pt-BR"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         WindowStartupLocation="CenterScreen" SourceInitialized="Window_SourceInitialized" SizeChanged="Window_SizeChanged">
     <Window.Resources>
@@ -55,7 +55,7 @@
             <!-- PAINEL: nota de saúde primeiro, métricas compactas, diagnóstico com as correções -->
             <TabItem Header="Painel">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
-                    <StackPanel>
+                    <StackPanel x:Name="PainelContent">
                         <!-- Alerta de programa pesado (A41) -->
                         <Border x:Name="HeavyBanner" Style="{StaticResource Card}" Visibility="Collapsed"
                                 Background="{DynamicResource SecondaryContainer}" Padding="18,12">
@@ -82,7 +82,7 @@
                                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
                                 <StackPanel Margin="0,0,28,0">
-                                    <TextBlock Text="Nota de saúde" Style="{StaticResource Label}"/>
+                                    <TextBlock Text="Nota de saúde" Style="{StaticResource Label}" ToolTip="De 0 a 100. Junta uso de CPU e memória, espaço livre, saúde do disco e da bateria e problemas encontrados. 75 ou mais é bom." AutomationProperties.HelpText="De 0 a 100. Junta uso de CPU e memória, espaço livre, saúde do disco e da bateria e problemas encontrados. 75 ou mais é bom."/>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock x:Name="ScoreText" Text="–" FontFamily="{StaticResource FontDisplay}" FontSize="{DynamicResource FsHero}"/>
                                         <TextBlock Text="/100" Style="{StaticResource Muted}" VerticalAlignment="Bottom" Margin="4,0,0,12"/>
@@ -93,7 +93,7 @@
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1" VerticalAlignment="Top">
-                                    <TextBlock Text="Gargalo agora" Style="{StaticResource Label}"/>
+                                    <TextBlock Text="Gargalo agora" Style="{StaticResource Label}" ToolTip="O recurso que mais limita o computador neste momento, pelos últimos minutos de uso." AutomationProperties.HelpText="O recurso que mais limita o computador neste momento, pelos últimos minutos de uso."/>
                                     <TextBlock x:Name="BottleneckName" Style="{StaticResource Value}"/>
                                     <TextBlock x:Name="BottleneckText" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                     <local:Sparkline x:Name="ScoreSpark" Height="40" Margin="0,12,0,0" Unit="" Title="Nota de saúde, última hora"
@@ -105,17 +105,24 @@
                                             ToolTip="Limpa temporários antigos com segurança. Não apaga documentos, downloads nem a Lixeira."/>
                                     <Button x:Name="FocusBtn" Content="Modo Foco" Style="{StaticResource TonalButton}" Margin="0,8,0,0" Click="Focus_Click"
                                             ToolTip="Dá prioridade ao programa em uso: abaixa a prioridade dos pesados em segundo plano e ativa Alto desempenho, se existir. Nada é fechado; tudo volta ao desligar."/>
-                                    <Button Content="Exportar relatório" Style="{StaticResource TextButton}" Margin="0,4,0,0" Click="Export_Click"/>
+                                    <Button Content="Exportar relatório" Style="{StaticResource TextButton}" Margin="0,4,0,0" Click="Export_Click"
+                                            ToolTip="Relatório em HTML, que abre no navegador"/>
+                                    <Button Content="Exportar em PDF" Style="{StaticResource TextButton}" Margin="0,0,0,0" Click="ExportPdf_Click"
+                                            ToolTip="O mesmo relatório em PDF, para anexar em e-mail ou chamado"/>
+                                    <Button Content="Copiar resumo" Style="{StaticResource TextButton}" Margin="0,0,0,0" Click="CopySummary_Click"
+                                            ToolTip="Copia nota, uso atual e problemas encontrados, para colar numa conversa ou chamado"/>
+                                    <Button Content="Salvar imagem do painel" Style="{StaticResource TextButton}" Margin="0,0,0,0" Click="PainelImage_Click"
+                                            ToolTip="Salva o painel inteiro em PNG e copia a imagem, para colar num chamado"/>
                                 </StackPanel>
 
                                 <!-- Fatos de saúde do hardware -->
                                 <WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,16,0,0">
                                     <StackPanel Margin="0,0,40,0">
-                                        <TextBlock x:Name="DiskHealthTitle" Text="Disco · saúde" Style="{StaticResource Label}"/>
+                                        <TextBlock x:Name="DiskHealthTitle" Text="Disco · saúde" Style="{StaticResource Label}" ToolTip="Estado informado pelo próprio disco (SMART). Desgaste e temperatura do SSD aparecem com o app em modo administrador." AutomationProperties.HelpText="Estado informado pelo próprio disco (SMART). Desgaste e temperatura do SSD aparecem com o app em modo administrador."/>
                                         <TextBlock x:Name="DiskHealthText" Style="{StaticResource Value}"/>
                                     </StackPanel>
                                     <StackPanel>
-                                        <TextBlock Text="Bateria · tempo de inicialização" Style="{StaticResource Label}"/>
+                                        <TextBlock Text="Bateria · tempo de inicialização" Style="{StaticResource Label}" ToolTip="Capacidade da bateria comparada à de fábrica e quanto o Windows levou para iniciar da última vez." AutomationProperties.HelpText="Capacidade da bateria comparada à de fábrica e quanto o Windows levou para iniciar da última vez."/>
                                         <TextBlock x:Name="BatteryBootText" Style="{StaticResource Value}"/>
                                     </StackPanel>
                                 </WrapPanel>
@@ -128,7 +135,7 @@
                                 <StackPanel Margin="0,0,20,0">
                                     <DockPanel>
                                         <TextBlock x:Name="CpuText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
-                                        <TextBlock Text="Processador" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Processador" Style="{StaticResource Label}" VerticalAlignment="Center" ToolTip="Quanto do processador está ocupado. Picos curtos são normais; acima de 85% por minutos seguidos deixa tudo lento." AutomationProperties.HelpText="Quanto do processador está ocupado. Picos curtos são normais; acima de 85% por minutos seguidos deixa tudo lento."/>
                                     </DockPanel>
                                     <ProgressBar x:Name="CpuBar" Margin="0,6,0,8" AutomationProperties.Name="Uso do processador"/>
                                     <local:Sparkline x:Name="CpuSpark" Height="32" Title="Processador, últimos minutos"
@@ -138,7 +145,7 @@
                                 <StackPanel Margin="0,0,20,0">
                                     <DockPanel>
                                         <TextBlock x:Name="RamText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
-                                        <TextBlock Text="Memória" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Memória" Style="{StaticResource Label}" VerticalAlignment="Center" ToolTip="Memória RAM em uso. Acima de 85%, o Windows começa a usar o disco como memória e fica lento." AutomationProperties.HelpText="Memória RAM em uso. Acima de 85%, o Windows começa a usar o disco como memória e fica lento."/>
                                     </DockPanel>
                                     <ProgressBar x:Name="RamBar" Margin="0,6,0,8" AutomationProperties.Name="Uso da memória"/>
                                     <local:Sparkline x:Name="RamSpark" Height="32" Title="Memória, últimos minutos"
@@ -148,7 +155,7 @@
                                 <StackPanel>
                                     <DockPanel>
                                         <TextBlock x:Name="DiskText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
-                                        <TextBlock Text="Disco (atividade)" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Disco (atividade)" Style="{StaticResource Label}" VerticalAlignment="Center" ToolTip="Quanto do tempo o disco está ocupado lendo ou gravando. Perto de 100% por muito tempo trava abrir programas e arquivos." AutomationProperties.HelpText="Quanto do tempo o disco está ocupado lendo ou gravando. Perto de 100% por muito tempo trava abrir programas e arquivos."/>
                                     </DockPanel>
                                     <ProgressBar x:Name="DiskBar" Margin="0,6,0,8" AutomationProperties.Name="Atividade do disco"/>
                                     <local:Sparkline x:Name="DiskSpark" Height="32" Title="Atividade do disco, últimos minutos"
@@ -213,44 +220,80 @@
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="260"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="Programas agrupados por nome" Style="{StaticResource TitleMedium}"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                <TextBlock Text="Programas em execução" Style="{StaticResource TitleMedium}" Margin="0,0,16,0"/>
+                                <!-- M22 -->
+                                <CheckBox x:Name="GroupByAppBox" Content="Juntar processos do mesmo aplicativo" Click="GroupByApp_Click" VerticalAlignment="Top"
+                                          ToolTip="Ex.: Steam e steamwebhelper numa linha só. Encerrar, prioridade e modo eficiência valem para todos os processos da linha."/>
+                            </StackPanel>
                             <TextBox x:Name="ProcSearch" Grid.Column="1" Tag="Buscar programa…" VerticalAlignment="Top" TextChanged="ProcSearch_Changed"
                                      AutomationProperties.Name="Buscar programa"/>
                         </Grid>
-                        <DataGrid x:Name="ProcGrid" Grid.Row="1" MouseDoubleClick="ProcGrid_DoubleClick" AutomationProperties.Name="Programas em execução">
-                            <DataGrid.Columns>
-                                <!-- Ícone, nome e, numa segunda linha, o que é o programa -->
-                                <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="190" SortMemberPath="Name">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,6" ToolTip="{Binding About}">
-                                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                                <Grid Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource OnSurfaceVariant}"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    <Image Source="{Binding Icon}" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"
-                                                           Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
+                        <!-- B33: totais do que está à vista (respeita a busca) -->
+                        <DockPanel Grid.Row="1">
+                            <TextBlock x:Name="ProcTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,6,0,0" TextTrimming="CharacterEllipsis"/>
+                            <DataGrid x:Name="ProcGrid" SelectionMode="Extended" MouseDoubleClick="ProcGrid_DoubleClick" PreviewKeyDown="ProcGrid_KeyDown" AutomationProperties.Name="Programas em execução">
+                                <!-- M26: as mesmas ações dos botões, mais abrir o local e pesquisar o nome -->
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="_Detalhes" Click="ProcDetails_Click"/>
+                                        <MenuItem Header="Abrir _local do arquivo" Click="ProcOpenLocation_Click"/>
+                                        <MenuItem Header="_Pesquisar na internet o que é" Click="ProcSearchOnline_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="_Baixar prioridade" Click="LowerPriority_Click"/>
+                                        <MenuItem Header="_Restaurar prioridade" Click="RestorePriority_Click"/>
+                                        <MenuItem Header="Modo _eficiência" Click="Efficiency_Click"/>
+                                        <MenuItem Header="_Não avisar sobre este" Click="AlertException_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="E_ncerrar…" Click="KillSelected_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
+                                <DataGrid.Columns>
+                                    <!-- Ícone, nome e, numa segunda linha, o que é o programa -->
+                                    <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="190" SortMemberPath="Name">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,6" ToolTip="{Binding About}" AutomationProperties.HelpText="{Binding SeverityText}">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <!-- B32: barra na cor do peso (o número da coluna diz o mesmo) -->
+                                                    <Border Width="4" CornerRadius="2" Margin="0,0,8,0">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="Transparent"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Severity}" Value="high"><Setter Property="Background" Value="{DynamicResource Error}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Severity}" Value="mid"><Setter Property="Background" Value="{DynamicResource Warning}"/></DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                    </Border>
+                                                    <Grid Grid.Column="1" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource OnSurfaceVariant}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <Image Source="{Binding Icon}" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"
+                                                               Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
+                                                    </Grid>
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding About}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
                                                 </Grid>
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding About}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
-                                                </StackPanel>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Processos" Binding="{Binding Count}" Width="96" MinWidth="96"/>
-                                <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPct, StringFormat=0.0}" Width="64" MinWidth="64"/>
-                                <DataGridTextColumn Header="Memória (MB)" Binding="{Binding MemMB, StringFormat=N0}" Width="92" MinWidth="92"/>
-                                <DataGridTextColumn Header="Disco e rede (KB/s)" Binding="{Binding IoKBs, StringFormat=N0}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="92" MinWidth="92"/>
-                                <DataGridTextColumn Header="Pode fechar?" Binding="{Binding SafetyText}" Width="130" MinWidth="120">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Processos" Binding="{Binding Count}" Width="96" MinWidth="96"/>
+                                    <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPct, StringFormat=0.0}" Width="64" MinWidth="64"/>
+                                    <DataGridTextColumn Header="Memória (MB)" Binding="{Binding MemMB, StringFormat=N0}" Width="92" MinWidth="92"/>
+                                    <DataGridTextColumn Header="Disco e rede (KB/s)" Binding="{Binding IoKBs, StringFormat=N0}" Width="110" MinWidth="110"/>
+                                    <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="92" MinWidth="92"/>
+                                    <DataGridTextColumn Header="Pode fechar?" Binding="{Binding SafetyText}" Width="130" MinWidth="120">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
                             <Button Content="Detalhes" Style="{StaticResource TonalButton}" Click="ProcDetails_Click" Margin="0,0,8,6"
                                     ToolTip="Cada processo do programa selecionado, com PID, memória e caminho (ou clique duplo na linha)."/>
@@ -276,7 +319,7 @@
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <TextBlock x:Name="CleanHeader" Text="Clique em Analisar para ver o que pode ser removido." Style="{StaticResource TitleMedium}"
                                    AutomationProperties.LiveSetting="Polite"/>
-                        <DataGrid x:Name="CleanGrid" Grid.Row="1" AutomationProperties.Name="Locais que podem ser limpos">
+                        <DataGrid x:Name="CleanGrid" Grid.Row="1" PreviewKeyDown="CleanGrid_KeyDown" MouseDoubleClick="CleanPreview_Click" AutomationProperties.Name="Locais que podem ser limpos">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn Header="Limpar" Width="Auto" MinWidth="88">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -295,6 +338,12 @@
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
                             <Button Content="Analisar" Style="{StaticResource TonalButton}" Click="Scan_Click" Margin="0,0,8,6"/>
                             <Button Content="Limpar selecionados" Click="Clean_Click" Margin="0,0,8,6"/>
+                            <!-- B35: o que seria apagado no local selecionado, sem apagar nada -->
+                            <Button Content="Ver arquivos" Style="{StaticResource TonalButton}" Click="CleanPreview_Click" Margin="0,0,8,6"
+                                    ToolTip="Lista o que a limpeza apagaria no local selecionado (clique duplo na linha faz o mesmo)."/>
+                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="CleanSelectAll_Click" Margin="0,0,8,6"
+                                    ToolTip="Marca todos os locais que podem ser limpos, menos a Lixeira (apagar dela é definitivo)"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="CleanSelectNone_Click" Margin="0,0,8,6"/>
                             <TextBlock x:Name="CleanMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>
                         </WrapPanel>
@@ -325,26 +374,30 @@
                             <TextBox x:Name="SpaceSearch" Width="170" Tag="Filtrar…" VerticalAlignment="Center" TextChanged="SpaceSearch_Changed" Margin="0,0,0,6"
                                      AutomationProperties.Name="Filtrar resultados"/>
                         </WrapPanel>
-                        <DataGrid x:Name="SpaceGrid" Grid.Row="2" AutomationProperties.Name="Resultado da análise de espaço">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Item" Binding="{Binding Name}" Width="340">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                            <Setter Property="ToolTip" Value="{Binding Path}"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="110"/>
-                                <DataGridTemplateColumn Header="Proporção" Width="*">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ProgressBar Value="{Binding Percent, Mode=OneWay}" Foreground="{DynamicResource ChartDisk}" Margin="0,0,12,0"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <!-- B33: totais do que está à vista (respeita a busca) -->
+                        <DockPanel Grid.Row="2">
+                            <TextBlock x:Name="SpaceTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,6,0,0" TextTrimming="CharacterEllipsis"/>
+                            <DataGrid x:Name="SpaceGrid" AutomationProperties.Name="Resultado da análise de espaço">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Item" Binding="{Binding Name}" Width="340">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                <Setter Property="ToolTip" Value="{Binding Path}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="110"/>
+                                    <DataGridTemplateColumn Header="Proporção" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ProgressBar Value="{Binding Percent, Mode=OneWay}" Foreground="{DynamicResource ChartDisk}" Margin="0,0,12,0"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
                         <WrapPanel Grid.Row="3" Margin="0,14,0,0">
                             <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="SpaceOpen_Click" Margin="0,0,8,6"/>
                             <Button x:Name="SpaceUninstallBtn" Content="Desinstalar…" Visibility="Collapsed" Click="SpaceUninstall_Click" Margin="0,0,8,6"/>
@@ -367,16 +420,35 @@
                             <TextBox x:Name="StartupSearch" Grid.Column="1" Tag="Buscar…" VerticalAlignment="Top" TextChanged="StartupSearch_Changed"
                                      AutomationProperties.Name="Buscar na inicialização"/>
                         </Grid>
-                        <DataGrid x:Name="StartupGrid" Grid.Row="1" AutomationProperties.Name="Programas de inicialização">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170"/>
-                                <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
-                                <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250"/>
-                                <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <!-- B33: totais do que está à vista (respeita a busca) -->
+                        <DockPanel Grid.Row="1">
+                            <TextBlock x:Name="StartupTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,6,0,0" TextTrimming="CharacterEllipsis"/>
+                            <DataGrid x:Name="StartupGrid" AutomationProperties.Name="Programas de inicialização">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170"/>
+                                    <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
+                                    <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250">
+                                        <!-- B32: impacto alto em semi-negrito (vermelho em texto não teria contraste no tema escuro) -->
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Severity}" Value="high">
+                                                        <Setter Property="FontFamily" Value="{StaticResource FontSemi}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="Editor" Binding="{Binding Publisher}" Width="200"/>
+                                    <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
                             <Button Content="Ativar / Desativar selecionado" Click="ToggleStartup_Click" Margin="0,0,8,6"/>
+                            <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="StartupOpen_Click" Margin="0,0,8,6"
+                                    ToolTip="Abre a pasta do programa com o arquivo selecionado"/>
                             <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="RefreshStartup_Click" Margin="0,0,8,6"/>
                             <TextBlock x:Name="StartupMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>
@@ -403,13 +475,31 @@
                                             ToolTip="Salva o período escolhido em Documentos › Notebook Doctor, pronto para abrir no Excel."/>
                                 </WrapPanel>
                                 <TextBlock x:Name="HCpuLabel" Text="CPU" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="HCpu" Height="70" Title="CPU no período" Stroke="{DynamicResource ChartCpu}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="HCpu" Zoomable="True" Height="70" Title="CPU no período" Stroke="{DynamicResource ChartCpu}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 <TextBlock x:Name="HRamLabel" Text="Memória" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="HRam" Height="70" Title="Memória no período" Stroke="{DynamicResource ChartRam}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="HRam" Zoomable="True" Height="70" Title="Memória no período" Stroke="{DynamicResource ChartRam}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 <TextBlock x:Name="HDiskLabel" Text="Espaço livre no disco" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="HFree" Height="70" Title="Espaço livre no disco no período" Stroke="{DynamicResource ChartDisk}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="HFree" Zoomable="True" Height="70" Title="Espaço livre no disco no período" Stroke="{DynamicResource ChartDisk}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 <TextBlock x:Name="HScoreLabel" Text="Nota de saúde" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="HScore" Height="70" Unit="" Title="Nota de saúde no período" Stroke="{DynamicResource OnSurfaceVariant}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="HScore" Zoomable="True" Height="70" Unit="" Title="Nota de saúde no período" Stroke="{DynamicResource OnSurfaceVariant}" GridBrush="{DynamicResource OutlineVariant}"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- M48 e M50: comparação com a semana passada e previsão do disco -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Tendências" Style="{StaticResource TitleMedium}"/>
+                                <TextBlock x:Name="HCompare" TextWrapping="Wrap" LineHeight="24"/>
+                                <TextBlock x:Name="HDiskForecast" TextWrapping="Wrap" LineHeight="24" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- M49: em que dias e horários o PC costuma ficar sob carga (último mês) -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Quando o computador fica mais lento" Style="{StaticResource TitleMedium}"/>
+                                <TextBlock x:Name="HHeatInfo" TextWrapping="Wrap" Style="{StaticResource Muted}" Margin="0,0,0,10"/>
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Focusable="False">
+                                    <Grid x:Name="HeatGrid" AutomationProperties.Name="Mapa de calor de lentidão por dia e hora"/>
+                                </ScrollViewer>
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource Card}">
@@ -427,20 +517,21 @@
                                     <TextBlock x:Name="ProcTimelineInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="16,0,0,0" TextWrapping="Wrap"/>
                                 </WrapPanel>
                                 <TextBlock x:Name="PCpuLabel" Text="CPU" Margin="0,16,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="PCpu" Height="60" Title="CPU do programa no período" Stroke="{DynamicResource ChartCpu}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="PCpu" Zoomable="True" Height="60" Title="CPU do programa no período" Stroke="{DynamicResource ChartCpu}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 <TextBlock x:Name="PRamLabel" Text="Memória" Margin="0,16,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="PRam" Height="60" Unit=" MB" Title="Memória do programa no período" Stroke="{DynamicResource ChartRam}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="PRam" Zoomable="True" Height="60" Unit=" MB" Title="Memória do programa no período" Stroke="{DynamicResource ChartRam}" GridBrush="{DynamicResource OutlineVariant}"/>
                             </StackPanel>
                         </Border>
-                        <!-- M46: avisos disparados -->
+                        <!-- M46/M47: linha do tempo do período (avisos, ações do app, instalações e picos de uso) -->
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
-                                <TextBlock Text="Avisos disparados no período" Style="{StaticResource TitleMedium}"/>
-                                <TextBlock x:Name="AlertsEmpty" Text="Nenhum aviso no período." Style="{StaticResource Muted}"/>
-                                <DataGrid x:Name="AlertsGrid" MaxHeight="320" AutomationProperties.Name="Avisos disparados">
+                                <TextBlock Text="Linha do tempo do período" Style="{StaticResource TitleMedium}"/>
+                                <TextBlock x:Name="AlertsEmpty" Text="Nada registrado no período." Style="{StaticResource Muted}"/>
+                                <DataGrid x:Name="AlertsGrid" MaxHeight="320" AutomationProperties.Name="Linha do tempo do período">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Quando" Binding="{Binding TimeText}" Width="110"/>
-                                        <DataGridTextColumn Header="Aviso" Binding="{Binding Title}" Width="200">
+                                        <DataGridTextColumn Header="Tipo" Binding="{Binding Kind}" Width="130"/>
+                                        <DataGridTextColumn Header="Evento" Binding="{Binding Title}" Width="200">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Margin" Value="0,6"/></Style>
                                             </DataGridTextColumn.ElementStyle>
@@ -495,6 +586,108 @@
                                           Content="Modo simulação: mostrar o que cada correção faria, sem alterar nada (vale para todo o app)"/>
                             </StackPanel>
                         </Border>
+                        <!-- M30: serviços de terceiros que iniciam com o Windows -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Serviços de terceiros que iniciam com o Windows" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Serviços do próprio Windows não aparecem aqui. Em manual, o serviço continua instalado e o programa ainda pode iniciá-lo quando precisar; só deixa de abrir sozinho no boot."/>
+                                <DataGrid x:Name="ServicesGrid" MaxHeight="320" AutomationProperties.Name="Serviços de terceiros">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Serviço" Binding="{Binding DisplayName}" Width="220"/>
+                                        <DataGridTextColumn Header="Recomendação" Binding="{Binding Advice}" Width="140"/>
+                                        <DataGridTextColumn Header="Por quê" Binding="{Binding Reason}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Mudar para manual" Click="ServiceManual_Click" Margin="0,0,8,6"/>
+                                    <TextBlock x:Name="ServicesMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
+                                               AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        <!-- M29: tarefas agendadas de terceiros -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Tarefas agendadas de terceiros" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Programas que se agendam para rodar ao ligar, ao entrar ou em horários fixos. As tarefas do Windows não aparecem. Desativar não apaga a tarefa e pode ser desfeito na aba Ações."/>
+                                <DataGrid x:Name="TasksGrid" MaxHeight="320" AutomationProperties.Name="Tarefas agendadas de terceiros">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Tarefa" Binding="{Binding Name}" Width="200"/>
+                                        <DataGridTextColumn Header="Quando roda" Binding="{Binding When}" Width="120"/>
+                                        <DataGridTextColumn Header="Recomendação" Binding="{Binding Advice}" Width="130"/>
+                                        <DataGridTextColumn Header="Por quê" Binding="{Binding Reason}" Width="*">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Programa" Binding="{Binding Command}" Width="200"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Desativar tarefa" Click="TaskDisable_Click" Margin="0,0,8,6"/>
+                                    <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="TasksRefresh_Click" Margin="0,0,8,6"/>
+                                    <TextBlock x:Name="TasksMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
+                                               AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        <!-- M31: extensões de navegador -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Extensões de navegador" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Cada extensão gasta memória e pode deixar as páginas mais lentas. As mais pesadas ficam sempre carregadas e rodam em todos os sites. O navegador não informa a memória de cada uma; o peso é estimado pelo que a extensão pede. Para desativar ou remover, use a página de extensões do navegador."/>
+                                <DataGrid x:Name="ExtensionsGrid" MaxHeight="320" AutomationProperties.Name="Extensões de navegador">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Extensão" Binding="{Binding Name}" Width="220"/>
+                                        <DataGridTextColumn Header="Navegador" Binding="{Binding Browser}" Width="90"/>
+                                        <DataGridTextColumn Header="Perfil" Binding="{Binding Profile}" Width="110"/>
+                                        <DataGridTextColumn Header="Peso estimado" Binding="{Binding Weight}" Width="*">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Versão" Binding="{Binding Version}" Width="90"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Abrir extensões do navegador" Style="{StaticResource TonalButton}" Click="ExtensionsOpen_Click" Margin="0,0,8,6"
+                                            ToolTip="Abre a página de extensões do navegador da linha selecionada (ou do primeiro da lista)."/>
+                                    <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ExtensionsRefresh_Click" Margin="0,0,8,6"/>
+                                    <TextBlock x:Name="ExtensionsMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
+                                               AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                        <!-- M36/M37: o que apaga dados do Windows de vez fica separado da Limpeza -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Limpeza do sistema (administrador)" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                           Text="Estas limpezas apagam dados do Windows que não voltam e não aparecem em Ações para desfazer. Por isso ficam separadas da Limpeza e só funcionam com o app aberto como administrador."/>
+                                <TextBlock Text="Pontos de restauração" FontFamily="{StaticResource FontMedium}" Margin="0,0,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock x:Name="RestoreInfo" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                                <WrapPanel Margin="0,8,0,16">
+                                    <Button Content="Apagar os antigos (manter o mais recente)" Style="{StaticResource TonalButton}" Click="RestoreOld_Click" Margin="0,0,8,6"/>
+                                    <Button Content="Verificar" Style="{StaticResource TextButton}" Click="SystemCleanupRefresh_Click" Margin="0,0,8,6"/>
+                                </WrapPanel>
+                                <TextBlock Text="Logs de eventos grandes" FontFamily="{StaticResource FontMedium}" Margin="0,0,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock x:Name="EventLogsInfo" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+                                <DataGrid x:Name="EventLogsGrid" MaxHeight="220" AutomationProperties.Name="Logs de eventos grandes">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Log" Binding="{Binding Name}" Width="*"/>
+                                        <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" SortMemberPath="Bytes" Width="110"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Limpar log selecionado" Style="{StaticResource DangerButton}" Click="EventLogClear_Click" Margin="0,0,8,6"/>
+                                    <Button Content="Abrir Visualizador de Eventos" Style="{StaticResource TextButton}" Click="EventViewer_Click" Margin="0,0,8,6"
+                                            ToolTip="Para salvar uma cópia de um log antes de limpar: clique direito no log › Salvar Todos os Eventos Como."/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
                         <ItemsControl x:Name="TweaksList" Focusable="False" AutomationProperties.Name="Ajustes do Windows">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -547,25 +740,105 @@
                                 <ComboBoxItem Content="Seguir o Windows" Tag="system"/>
                                 <ComboBoxItem Content="Claro" Tag="light"/>
                                 <ComboBoxItem Content="Escuro" Tag="dark"/>
+                                <ComboBoxItem Content="Claro de dia, escuro à noite" Tag="schedule"/>
                             </ComboBox>
                         </Grid>
+                        <!-- M13: idioma (vale ao reabrir) -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Idioma" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CfgLanguage" Grid.Column="1" AutomationProperties.Name="Idioma" ToolTip="Vale ao reabrir o app.">
+                                <ComboBoxItem Content="Automático (idioma do Windows)" Tag="auto"/>
+                                <ComboBoxItem Content="Português (Brasil)" Tag="pt"/>
+                                <ComboBoxItem Content="English" Tag="en"/>
+                                <ComboBoxItem Content="Español" Tag="es"/>
+                            </ComboBox>
+                        </Grid>
+                        <!-- B37: horários do tema automático -->
+                        <WrapPanel Margin="0,0,0,8">
+                            <TextBlock Text="No tema por horário: claro a partir das" VerticalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBox x:Name="CfgThemeLight" Width="70" Margin="8,0,8,6" VerticalAlignment="Center" AutomationProperties.Name="Início do tema claro"/>
+                            <TextBlock Text="e escuro a partir das" VerticalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBox x:Name="CfgThemeDark" Width="70" Margin="8,0,0,6" VerticalAlignment="Center" AutomationProperties.Name="Início do tema escuro"/>
+                        </WrapPanel>
+                        <!-- B16/B17 -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Text="Tamanhos" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CfgSizeUnit" Grid.Column="1" AutomationProperties.Name="Unidade de tamanho">
+                                <ComboBoxItem Content="GB, como o Windows (base 1024)" Tag="windows"/>
+                                <ComboBoxItem Content="GB, como na caixa do disco (base 1000)" Tag="decimal"/>
+                                <ComboBoxItem Content="GiB (base 1024)" Tag="binary"/>
+                            </ComboBox>
+                            <TextBlock Grid.Row="1" Text="Temperatura" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                            <ComboBox x:Name="CfgTempUnit" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" AutomationProperties.Name="Unidade de temperatura">
+                                <ComboBoxItem Content="Celsius (°C)" Tag="c"/>
+                                <ComboBoxItem Content="Fahrenheit (°F)" Tag="f"/>
+                            </ComboBox>
+                        </Grid>
+                        <!-- B21: ainda sem instalador, o próprio app cria o atalho, na pasta Programas do usuário -->
+                        <WrapPanel Margin="0,0,0,8">
+                            <Button x:Name="StartMenuBtn" Content="Adicionar ao Menu Iniciar" Style="{StaticResource TonalButton}" Click="StartMenu_Click" Margin="0,0,12,4"/>
+                            <TextBlock x:Name="StartMenuMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,4"
+                                       AutomationProperties.LiveSetting="Polite"/>
+                        </WrapPanel>
                         <CheckBox x:Name="CfgStart" Content="Iniciar com o Windows (fica na bandeja)"/>
+                        <CheckBox x:Name="CfgTrayCpu" Content="Mostrar o uso da CPU (%) no ícone da bandeja"/>
+                        <CheckBox x:Name="CfgSounds" Content="Som discreto ao terminar uma limpeza"/>
+                        <CheckBox x:Name="CfgStartMin" Content="Ao abrir pelo atalho, começar minimizado na barra de tarefas"/>
+                        <CheckBox x:Name="CfgCloseExits" Content="Fechar a janela encerra o app (em vez de continuar na bandeja)"
+                                  ToolTip="Desligado, o X só esconde a janela: os avisos e o histórico continuam funcionando."/>
+                        <CheckBox x:Name="CfgCompact" Content="Modo compacto: menu só com ícones e tabelas mais densas, para telas pequenas"/>
                         <CheckBox x:Name="CfgAlerts" Content="Avisar quando CPU ou RAM ficarem altas"/>
                         <CheckBox x:Name="CfgToasts" Content="Usar notificações do Windows (com botões)"/>
                         <CheckBox x:Name="CfgWeekly" Content="Limpar temporários toda semana, com o PC parado"/>
                         <CheckBox x:Name="CfgRestore" Content="Criar ponto de restauração antes de mudar o sistema (só no modo administrador)"/>
                         <CheckBox x:Name="CfgMini" Content="Mini-widget sempre visível (CPU, memória e disco num canto da tela)"/>
                         <CheckBox x:Name="CfgUpdates" Content="Procurar nova versão uma vez por dia"/>
+                        <!-- M03: overlay que não recebe clique nem foco, por cima de jogos e apps em tela cheia -->
+                        <Grid Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Text="Overlay de desempenho (CPU, RAM e temperatura)" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0"/>
+                            <ComboBox x:Name="CfgOverlay" Grid.Column="1" AutomationProperties.Name="Overlay de desempenho"
+                                      ToolTip="Jogos em tela cheia exclusiva podem cobrir o overlay; no modo janela sem bordas ele aparece.">
+                                <ComboBoxItem Content="Desligado" Tag="off"/>
+                                <ComboBoxItem Content="Em jogos e apps em tela cheia" Tag="fullscreen"/>
+                                <ComboBoxItem Content="Sempre" Tag="always"/>
+                            </ComboBox>
+                            <TextBlock Grid.Row="1" Text="Canto do overlay" VerticalAlignment="Center" Margin="0,8,12,0"/>
+                            <ComboBox x:Name="CfgOverlayCorner" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" AutomationProperties.Name="Canto do overlay">
+                                <ComboBoxItem Content="Superior esquerdo" Tag="top-left"/>
+                                <ComboBoxItem Content="Superior direito" Tag="top-right"/>
+                                <ComboBoxItem Content="Inferior esquerdo" Tag="bottom-left"/>
+                                <ComboBoxItem Content="Inferior direito" Tag="bottom-right"/>
+                            </ComboBox>
+                        </Grid>
+                        <!-- M19: opt-in; o relatório fica no PC e só sai no pacote de suporte que a pessoa anexar -->
+                        <CheckBox x:Name="CfgCrash" Content="Guardar relatórios de falha, sem dados pessoais, para o pacote do suporte"
+                                  ToolTip="Nada é enviado pela internet. Os relatórios ficam na pasta de dados do app e vão no pacote para o suporte."/>
                         <CheckBox x:Name="CfgHotkey" Content="Atalho Ctrl+Alt+N abre o painel de qualquer lugar"/>
+                        <CheckBox x:Name="CfgAccent" Content="Usar a cor de destaque do Windows (ajustada para manter a leitura)"/>
+                        <!-- M43/M44: sem notificações em tela cheia ou no horário escolhido (os avisos continuam no Histórico) -->
+                        <CheckBox x:Name="CfgQuietFull" Content="Sem notificações com app em tela cheia, jogo ou apresentação"/>
+                        <WrapPanel>
+                            <CheckBox x:Name="CfgQuiet" Content="Horário silencioso, das" VerticalAlignment="Center"/>
+                            <TextBox x:Name="CfgQuietStart" Width="70" Margin="8,0,8,6" VerticalAlignment="Center" AutomationProperties.Name="Início do horário silencioso"/>
+                            <TextBlock Text="às" VerticalAlignment="Center" Margin="0,0,0,6"/>
+                            <TextBox x:Name="CfgQuietEnd" Width="70" Margin="8,0,0,6" VerticalAlignment="Center" AutomationProperties.Name="Fim do horário silencioso"/>
+                        </WrapPanel>
                         <Grid Margin="0,16,0,20">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
                             <TextBlock x:Name="CfgDaysLabel" Text="Apagar temporários com mais de (dias)" VerticalAlignment="Center" Margin="0,0,12,10" TextWrapping="Wrap"/>
                             <TextBox x:Name="CfgDays" Grid.Column="1" Margin="0,0,0,10" AutomationProperties.LabeledBy="{Binding ElementName=CfgDaysLabel}"/>
                             <TextBlock x:Name="CfgCpuLabel" Text="Alerta de CPU a partir de (%)" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,12,10" TextWrapping="Wrap"/>
                             <TextBox x:Name="CfgCpu" Grid.Row="1" Grid.Column="1" Margin="0,0,0,10" AutomationProperties.LabeledBy="{Binding ElementName=CfgCpuLabel}"/>
-                            <TextBlock x:Name="CfgRamLabel" Text="Alerta de RAM a partir de (%)" Grid.Row="2" VerticalAlignment="Center" Margin="0,0,12,0" TextWrapping="Wrap"/>
-                            <TextBox x:Name="CfgRam" Grid.Row="2" Grid.Column="1" AutomationProperties.LabeledBy="{Binding ElementName=CfgRamLabel}"/>
+                            <TextBlock x:Name="CfgRamLabel" Text="Alerta de RAM a partir de (%)" Grid.Row="2" VerticalAlignment="Center" Margin="0,0,12,10" TextWrapping="Wrap"/>
+                            <TextBox x:Name="CfgRam" Grid.Row="2" Grid.Column="1" Margin="0,0,0,10" AutomationProperties.LabeledBy="{Binding ElementName=CfgRamLabel}"/>
+                            <TextBlock x:Name="CfgAlertMinLabel" Text="Avisar só depois de quantos minutos seguidos" Grid.Row="3" VerticalAlignment="Center" Margin="0,0,12,0" TextWrapping="Wrap"/>
+                            <TextBox x:Name="CfgAlertMin" Grid.Row="3" Grid.Column="1" AutomationProperties.LabeledBy="{Binding ElementName=CfgAlertMinLabel}"/>
                         </Grid>
                         <StackPanel Orientation="Horizontal">
                             <Button Content="Salvar" Click="SaveSettings_Click"/>
@@ -653,14 +926,72 @@
                     </StackPanel>
                 </Border>
 
+                <!-- M07/B42: levar as preferências para outro PC ou voltar ao padrão -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Backup das preferências" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                   Text="Exporta tema, avisos, exceções, protegidos e demais escolhas para um arquivo, para usar em outro computador. Histórico e registro de ações não entram."/>
+                        <WrapPanel>
+                            <Button Content="Exportar…" Style="{StaticResource TonalButton}" Click="ExportSettings_Click" Margin="0,0,8,8"/>
+                            <Button Content="Importar…" Style="{StaticResource TonalButton}" Click="ImportSettings_Click" Margin="0,0,8,8"/>
+                            <Button Content="Redefinir para o padrão" Style="{StaticResource TextButton}" Click="ResetSettings_Click" Margin="0,0,8,8"/>
+                            <!-- B36 -->
+                            <Button Content="Voltar a pedir todas as confirmações" Style="{StaticResource TextButton}" Click="ResetConfirms_Click" Margin="0,0,8,8"/>
+                            <!-- B30 -->
+                            <Button Content="Mostrar todas as colunas das tabelas" Style="{StaticResource TextButton}" Click="ShowAllColumns_Click" Margin="0,0,8,8"
+                                    ToolTip="Volta a mostrar as colunas escondidas pelo clique direito no título das tabelas."/>
+                        </WrapPanel>
+                        <TextBlock x:Name="BackupMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- B38: modo empresa -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Senha das configurações (modo empresa)" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                   Text="Com senha, salvar, importar ou redefinir as preferências, trocar de perfil, desligar o modo simulação e mudar &quot;Iniciar com o Windows&quot; pedem a senha. Depois de digitada, vale por 10 minutos. Ver, analisar e limpar continuam livres."/>
+                        <TextBlock x:Name="LockState" FontFamily="{StaticResource FontMedium}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                        <StackPanel x:Name="LockEdit">
+                            <WrapPanel>
+                                <StackPanel Margin="0,0,12,8">
+                                    <TextBlock x:Name="LockNewLabel" Text="Nova senha" Style="{StaticResource Label}" Margin="0,0,0,4"/>
+                                    <PasswordBox x:Name="LockNew" Width="200" AutomationProperties.LabeledBy="{Binding ElementName=LockNewLabel}"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,8">
+                                    <TextBlock x:Name="LockConfirmLabel" Text="Repita a nova senha" Style="{StaticResource Label}" Margin="0,0,0,4"/>
+                                    <PasswordBox x:Name="LockConfirm" Width="200" AutomationProperties.LabeledBy="{Binding ElementName=LockConfirmLabel}"/>
+                                </StackPanel>
+                            </WrapPanel>
+                            <WrapPanel>
+                                <Button x:Name="LockSetBtn" Content="Definir senha" Style="{StaticResource TonalButton}" Click="LockSet_Click" Margin="0,0,8,8"/>
+                                <Button x:Name="LockRemoveBtn" Content="Remover senha" Style="{StaticResource TextButton}" Click="LockRemove_Click" Margin="0,0,8,8"/>
+                                <Button x:Name="LockCopyBtn" Content="Copiar para a política do Windows" Style="{StaticResource TextButton}" Click="LockCopy_Click" Margin="0,0,8,8"
+                                        ToolTip="Copia o código da senha (não a senha) para a TI gravar em HKLM\SOFTWARE\Policies\Klivfy\NotebookDoctor, valor SettingsLock. Assim a senha vale para todos os usuários e só um administrador remove."/>
+                            </WrapPanel>
+                        </StackPanel>
+                        <Button x:Name="LockNowBtn" Content="Bloquear agora" Style="{StaticResource TextButton}" Click="LockNow_Click" HorizontalAlignment="Left" Margin="0,0,8,8"/>
+                        <TextBlock x:Name="LockMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Sobre -->
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="Sobre" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level2"/>
                         <TextBlock x:Name="AboutText" TextWrapping="Wrap" Margin="0,0,0,4"/>
                         <TextBlock Text="Fonte Google Sans Flex, licença SIL Open Font License 1.1." Style="{StaticResource Label}" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                        <!-- B23/B24: textos embutidos no app, abrem sem internet -->
+                        <WrapPanel Margin="0,0,0,4">
+                            <Button Content="Novidades" Style="{StaticResource TextButton}" Tag="Novidades" Click="AboutText_Click" Margin="0,0,8,8"/>
+                            <Button Content="Seus dados e privacidade" Style="{StaticResource TextButton}" Tag="Privacidade" Click="AboutText_Click" Margin="0,0,8,8"/>
+                            <Button Content="Licenças e créditos" Style="{StaticResource TextButton}" Tag="Licencas" Click="AboutText_Click" Margin="0,0,8,8"/>
+                        </WrapPanel>
                         <WrapPanel>
                             <Button Content="Abrir suporte" Click="Support_Click" Margin="0,0,8,8"/>
+                            <Button Content="Exportar log de diagnóstico" Style="{StaticResource TextButton}" Click="DiagnosticLog_Click" Margin="0,0,8,8"
+                                    ToolTip="Um .txt com diagnóstico, erros recentes, ações e avisos, sem nome de usuário nem do computador. Bom para colar num e-mail."/>
                             <Button Content="Gerar pacote para o suporte" Style="{StaticResource TonalButton}" Click="SupportPackage_Click" Margin="0,0,8,8"
                                     ToolTip="Cria um .zip só com dados técnicos (sem seu nome de usuário nem o nome do computador) para anexar no atendimento."/>
                             <Button x:Name="UpdateBtn" Content="Procurar atualização" Style="{StaticResource TextButton}" Click="CheckUpdate_Click" Margin="0,0,8,8"/>

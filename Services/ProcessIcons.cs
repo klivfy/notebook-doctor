@@ -45,7 +45,8 @@ public static class ProcessIcons
         catch { return null; }
     }
 
-    private static string? ExePath(string name)
+    /// <summary>Caminho do executável do primeiro processo com esse nome que o Windows deixa consultar.</summary>
+    public static string? ExePath(string name)
     {
         foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
             using (p)

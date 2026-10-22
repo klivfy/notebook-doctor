@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Notebook Doctor · mini" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
-        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsLabel}" Language="pt-BR"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsLabel}"
         Foreground="{DynamicResource OnSurface}" UseLayoutRounding="True"
         MouseLeftButtonDown="Drag" MouseDoubleClick="Open" KeyDown="Window_KeyDown"
         AutomationProperties.Name="Mini-widget do Notebook Doctor">

@@ -13,7 +13,8 @@ public partial class App : Application
     private SystemMonitor _monitor = null!;
     private TrayIcon _tray = null!;
     private readonly List<Snapshot> _recent = new();           // ~últimos 3 minutos ao vivo
-    private DateTime _highCpuSince = DateTime.MinValue, _lastAlert = DateTime.MinValue, _lastDiskAlert = DateTime.MinValue, _lastHeatAlert = DateTime.MinValue;
+    private readonly Sustained _cpuHigh = new(), _ramHigh = new();
+    private DateTime _lastAlert = DateTime.MinValue, _lastDiskAlert = DateTime.MinValue, _lastHeatAlert = DateTime.MinValue;
 
     public AppSettings Settings { get; private set; } = new();
     public HistoryStore History { get; private set; } = null!;
@@ -49,26 +50,49 @@ public partial class App : Application
             try { System.Diagnostics.Process.GetProcessById(parentPid).WaitForExit(15000); } catch { }
         }
         string? uri = e.Args.FirstOrDefault(a => a.StartsWith(Toasts.Scheme + ":", StringComparison.OrdinalIgnoreCase));
-        _single = new Mutex(true, @"Local\NotebookDoctor.SingleInstance", out bool first);
+        // A demonstração é uma instância à parte: abre mesmo com o app de verdade rodando
+        _single = new Mutex(true, @"Local\NotebookDoctor.SingleInstance" + (AppPaths.Demo ? ".Demo" : ""), out bool first);
         if (!first)
         {
             // Já está rodando: repassa o pedido (abrir o painel ou o link clicado na notificação) para a instância aberta
-            SendToRunningInstance(uri ?? $"{Toasts.Scheme}:open");
+            // --tab=N (jump list, atalhos) vira o mesmo pedido que a notificação usa para abrir uma aba
+            var tabRequest = e.Args.FirstOrDefault(a => a.StartsWith("--tab="));
+            SendToRunningInstance(uri ?? (tabRequest is not null ? $"{Toasts.Scheme}:tab/{tabRequest[6..]}" : $"{Toasts.Scheme}:open"));
             Shutdown();
             return;
         }
 
-        DispatcherUnhandledException += (_, a) => { LogError(a.Exception); a.Handled = true; };
+        DispatcherUnhandledException += (_, a) => { LogError(a.Exception); CrashLog.Save(a.Exception, "tela (o app continuou aberto)"); a.Handled = true; };
+        AppDomain.CurrentDomain.UnhandledException += (_, a) =>
+        {
+            if (a.ExceptionObject is not Exception ex) return;
+            LogError(ex);
+            CrashLog.Save(ex, "segundo plano (o app fechou)");
+        };
+        TaskScheduler.UnobservedTaskException += (_, a) => { LogError(a.Exception); CrashLog.Save(a.Exception, "tarefa em segundo plano"); a.SetObserved(); };
 
-        Settings = AppSettings.Load();
-        ThemeManager.Apply(Settings.ThemeMode);
+        Settings = AppPaths.Demo ? StartDemo() : AppSettings.Load();
+        ApplyLanguage();
+        CrashLog.Enabled = Settings.CrashReports;
+        Settings.ApplyUnits();
+        ThemeManager.UseAccent = Settings.UseAccentColor;
+        ApplyTheme();
         TextScale.Apply();
+        ApplyDensity();
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, _) => Dispatcher.BeginInvoke(() =>
         {
-            if (Settings.ThemeMode == "system") ThemeManager.Apply("system");
+            // Tema e cor de destaque do Windows podem mudar com o app aberto
+            if (Settings.ThemeMode == "system" || Settings.UseAccentColor) ApplyTheme();
             TextScale.Apply(); // o Windows avisa por aqui quando o "Tamanho do texto" muda
         });
+        // A02: ao ligar ou tirar da tomada, sugere o plano de energia adequado
+        _onAc = SystemParameters.PowerLineStatus == PowerLineStatus.Online;
+        Microsoft.Win32.SystemEvents.PowerModeChanged += (_, a) =>
+        {
+            if (a.Mode == Microsoft.Win32.PowerModes.StatusChange) Dispatcher.BeginInvoke(() => _ = OnPowerSourceChangedAsync());
+        };
         History = new HistoryStore();
+        if (AppPaths.Demo) History.Seed(DemoData.Week(DateTime.Now));
         _monitor = new SystemMonitor();
 
         _tray = new TrayIcon(Settings.StartWithWindows);
@@ -78,18 +102,33 @@ public partial class App : Application
         _tray.ExitRequested += Quit;
         _tray.SupportRequested += AppInfo.OpenSupport;
         _tray.CleanRequested += () => _ = QuickCleanAsync(notify: true);
-        _tray.StartWithWindowsToggled += v => { Settings.StartWithWindows = v; Settings.ApplyStartWithWindows(); Settings.Save(); };
+        _tray.StartWithWindowsToggled += v =>
+        {
+            if (v == Settings.StartWithWindows) return; // eco da própria desmarcação abaixo
+            if (!EnsureUnlocked("mudar \"Iniciar com o Windows\"")) { _tray.SyncStartWithWindows(Settings.StartWithWindows); return; }
+            Settings.StartWithWindows = v; Settings.ApplyStartWithWindows(); Settings.Save();
+        };
         _tray.MiniToggled += SetMiniWidget;
 
         var win = new MainWindow();
         MainWindow = win;
-        if (!e.Args.Contains("--background")) ShowWindow();
+        if (e.Args.Contains("--background")) { }
+        // B09: aberto pelo atalho, sem pedido de aba ou de notificação, começa minimizado na barra de tarefas
+        else if (Settings.StartMinimized && Settings.FirstRunDone && uri is null && !e.Args.Any(a => a.StartsWith("--tab=")))
+        {
+            win.WindowState = WindowState.Minimized;
+            win.Show();
+        }
+        else ShowWindow();
         // Atalho: --tab=N abre direto na aba N (0 = Painel). Útil para testes e atalhos do Windows.
         var tabArg = e.Args.FirstOrDefault(a => a.StartsWith("--tab="));
         if (tabArg is not null && int.TryParse(tabArg[6..], out int tab)) win.SelectTab(tab);
         if (uri is not null) HandleUri(uri);
 
-        _ = Task.Run(Toasts.EnsureRegistered);
+        // A jump list e o registro das notificações são do app instalado, não da demonstração
+        if (!AppPaths.Demo) { _ = Task.Run(Toasts.EnsureRegistered); SetJumpList(); }
+        _overlayTimer.Tick += (_, _) => UpdateOverlay();
+        _overlayTimer.Start();
         _ = ListenForOtherInstancesAsync(_cts.Token);
         if (Settings.LastWeeklySummary == DateTime.MinValue) { Settings.LastWeeklySummary = DateTime.Now; Settings.Save(); }
         if (!Settings.FirstRunDone && !e.Args.Contains("--background") && !e.Args.Any(a => a.StartsWith("--tab=")))
@@ -97,12 +136,13 @@ public partial class App : Application
                                    System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
         if (Settings.MiniWidget) SetMiniWidget(true);
+        OfferCrashReport();
         _hotkey.Pressed += ToggleWindow;
         ApplyHotkey();
         // M08: Alto Contraste ligado ou desligado com o app aberto
         SystemParameters.StaticPropertyChanged += (_, a) =>
         {
-            if (a.PropertyName == nameof(SystemParameters.HighContrast)) Dispatcher.BeginInvoke(() => ThemeManager.Apply(Settings.ThemeMode));
+            if (a.PropertyName == nameof(SystemParameters.HighContrast)) Dispatcher.BeginInvoke(() => ApplyTheme());
         };
         _ = RunLoopAsync(_cts.Token);
         _ = CheckUpdatesLaterAsync(_cts.Token);
@@ -168,7 +208,7 @@ public partial class App : Application
     public void SetPendingUpdate(UpdateInfo? info) => PendingUpdate = info;
 
     // ---------- Instância única + links "notebookdoctor:" ----------
-    private static string PipeName => $"NotebookDoctor.{Environment.UserName}";
+    private static string PipeName => $"NotebookDoctor.{Environment.UserName}" + (AppPaths.Demo ? ".Demo" : "");
 
     private static void SendToRunningInstance(string message)
     {
@@ -200,6 +240,21 @@ public partial class App : Application
         }
     }
 
+    private bool _onAc;
+
+    private async Task OnPowerSourceChangedAsync()
+    {
+        bool onAc = SystemParameters.PowerLineStatus == PowerLineStatus.Online;
+        if (onAc == _onAc) return; // StatusChange também dispara quando só a carga da bateria muda
+        _onAc = onAc;
+        _ = RefreshHealthAsync();
+        if (!Settings.AlertsEnabled) return;
+        var plans = await Task.Run(PowerPlans.List);
+        if (PowerAdvice.Suggest(onAc, plans) is not { } s) return;
+        if (MainWindow is NotebookDoctor.MainWindow { IsVisible: true } win) win.ShowPowerSuggestion(s);
+        else if (!IsQuietNow()) Notify(s.Title, s.Reason, ("Ver energia", $"tab/{Diagnosis.TabSettings}"));
+    }
+
     /// <summary>
     /// Ações de link. Só navegação: qualquer página web pode abrir um link "notebookdoctor:",
     /// então nada aqui encerra programas, apaga arquivos ou muda configurações.
@@ -214,6 +269,7 @@ public partial class App : Application
             case "heavy": win.SelectTab(0); break;
             case "report": win.ExportReport(); break;
             case "update": win.SelectTab(8); win.OfferUpdate(); break;
+            case "protection": AppInfo.OpenShell("SystemPropertiesProtection.exe"); break; // só abre a tela do Windows
             case var t when t.StartsWith("tab/") && int.TryParse(t[4..], out int i): win.SelectTab(i); break;
         }
     }
@@ -222,13 +278,17 @@ public partial class App : Application
     /// <summary>Aviso de problema: entra no histórico de alertas (M46) e vira notificação.</summary>
     private void Alert(string title, string text, params (string label, string action)[] buttons)
     {
-        AlertLog.Add(title, text);
-        Notify(title, text, buttons);
+        bool quiet = IsQuietNow();
+        AlertLog.Add(title, text, silenced: quiet);
+        if (!quiet) Notify(title, text, buttons);
     }
+
+    /// <summary>M43/M44: horário silencioso ou alguém em tela cheia, jogo ou apresentação.</summary>
+    private bool IsQuietNow() => Settings.InQuietHours(DateTime.Now) || (Settings.QuietFullscreen && Native.IsFullscreenOrPresenting());
 
     public void Notify(string title, string text, params (string label, string action)[] buttons)
     {
-        if (Settings.NativeNotifications && Toasts.Show(title, text, buttons)) return;
+        if (Settings.NativeNotifications && !AppPaths.Demo && Toasts.Show(title, text, buttons)) return;
         _tray.Notify(title, text);
     }
 
@@ -239,10 +299,56 @@ public partial class App : Application
         MainWindow.Activate();
     }
 
+    /// <summary>M07/B42: depois de importar ou redefinir, relê o arquivo e aplica tudo como se tivesse sido salvo na tela.</summary>
+    public void ReloadSettingsFromDisk()
+    {
+        Settings = AppSettings.Load();
+        Settings.ApplyStartWithWindows();
+        ApplySettingsChanged();
+        SetMiniWidget(Settings.MiniWidget);
+        ApplyHotkey();
+        (MainWindow as NotebookDoctor.MainWindow)?.ReloadSettings();
+    }
+
+    /// <summary>M19: depois de uma falha, avisa uma vez e leva ao "Gerar pacote para o suporte" (nada é enviado sozinho).</summary>
+    private void OfferCrashReport()
+    {
+        if (!Settings.CrashReports || CrashReport.CountSince(CrashLog.Files(), Settings.LastCrashSeen) == 0) return;
+        Settings.LastCrashSeen = DateTime.Now;
+        Settings.Save();
+        string what = CrashLog.LatestHeadline();
+        Notify("O Notebook Doctor teve um erro", (what.Length > 0 ? what + ". " : "") +
+               "O relatório ficou guardado sem dados pessoais e vai no pacote para o suporte, se você quiser enviar.",
+               ("Ver em Configurações", $"tab/{Diagnosis.TabSettings}"));
+    }
+
+    private string _appliedTheme = "";
+
+    /// <summary>Aplica o tema escolhido; no modo por horário, o claro ou o escuro conforme a hora.</summary>
+    private void ApplyTheme()
+    {
+        _appliedTheme = Settings.EffectiveTheme(DateTime.Now);
+        ThemeManager.Apply(_appliedTheme);
+    }
+
     public void ApplySettingsChanged()
     {
         _tray.SyncStartWithWindows(Settings.StartWithWindows);
-        ThemeManager.Apply(Settings.ThemeMode);
+        CrashLog.Enabled = Settings.CrashReports;
+        Settings.ApplyUnits();
+        ThemeManager.UseAccent = Settings.UseAccentColor;
+        ApplyTheme();
+        ApplyDensity();
+    }
+
+    /// <summary>B15: modo compacto. Os estilos leem estes recursos com DynamicResource, então a troca vale na hora.</summary>
+    private void ApplyDensity()
+    {
+        bool compact = Settings.Compact;
+        Resources["CardPad"] = new Thickness(Density.CardPadding(compact));
+        Resources["CardGap"] = new Thickness(Density.CardMargin(compact));
+        Resources["RowMin"] = Density.RowHeight(compact);
+        (MainWindow as NotebookDoctor.MainWindow)?.ApplyNavDensity();
     }
 
     private async Task RunLoopAsync(CancellationToken ct)
@@ -251,13 +357,14 @@ public partial class App : Application
         {
             try
             {
-                var snap = await Task.Run(_monitor.Sample, ct);
+                var snap = AppPaths.Demo ? DemoData.Sample(DateTime.Now, _demoTick++) : await Task.Run(_monitor.Sample, ct);
                 Latest = snap;
                 _recent.Add(snap);
-                if (_recent.Count > 36) _recent.RemoveAt(0);
+                Sampling.TrimRecent(_recent, snap.Time); // M42: com amostras espaçadas, a nota não usa dados velhos
                 Score = Insights.Score(_recent, Health);
                 History.Record(snap, Score.Score);
-                _tray.Update(snap);
+                _tray.Update(snap, Score.Score, Settings.TrayCpu);
+                if (Settings.ThemeMode == ThemeSchedule.Mode && Settings.EffectiveTheme(DateTime.Now) != _appliedTheme) ApplyTheme(); // B37
                 CheckAlerts(snap);
                 CheckHeavyPrograms(snap);
                 CheckHeat(snap);
@@ -266,12 +373,15 @@ public partial class App : Application
                 if ((DateTime.Now - _lastProbe).TotalMinutes >= 30) _ = RefreshHealthAsync();
                 await CheckWeeklyAsync();
                 SnapshotReady?.Invoke(snap);
+                if (_overlay is { IsVisible: true }) _overlay.Update(snap);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex) { LogError(ex); }
 
-            // Janela aberta: atualiza a cada 3 s. Em segundo plano: a cada 15 s para quase não gastar CPU.
-            try { await Task.Delay(WindowVisible ? 3000 : 15000, ct); } catch (OperationCanceledException) { break; }
+            // M42: 3 s à vista; em segundo plano, 15 s na tomada e 30–60 s na bateria
+            var power = Native.PowerStatus();
+            var wait = Sampling.Interval(WindowVisible || _overlay is { IsVisible: true }, power.OnBattery, power.Saver, power.Percent);
+            try { await Task.Delay(wait, ct); } catch (OperationCanceledException) { break; }
         }
     }
 
@@ -283,7 +393,7 @@ public partial class App : Application
         _lastProbe = DateTime.Now;
         try
         {
-            Health = await HealthProbe.RunAsync();
+            Health = AppPaths.Demo ? DemoData.Health() : await HealthProbe.RunAsync();
             HealthUpdated?.Invoke();
         }
         catch (Exception ex) { LogError(ex); }
@@ -326,7 +436,7 @@ public partial class App : Application
         var last = _recent.Where(x => (s.Time - x.Time).TotalMinutes <= 2).ToList();
         string? msg = null;
         if (last.Count >= 6 && last.All(x => x.TempC >= 90))
-            msg = $"Temperatura em {s.TempC:0} °C há 2 minutos.";
+            msg = $"Temperatura em {Units.Temp(s.TempC)} há 2 minutos.";
         else
         {
             var loaded = _recent.TakeLast(12).Where(x => x.Cpu >= 70 && x.CpuPerf >= 0).ToList();
@@ -367,22 +477,18 @@ public partial class App : Application
         if (s.DiskFreePct < 10 && (DateTime.Now - _lastDiskAlert).TotalHours >= 6)
         {
             _lastDiskAlert = DateTime.Now;
-            Alert("Pouco espaço no disco", $"Só {s.DiskFreePct:0}% livre ({s.DiskFreeGB:0} GB).", ("Abrir Limpeza", "tab/2"), ("Ver o que ocupa", "tab/3"));
+            Alert("Pouco espaço no disco", $"Só {s.DiskFreePct:0}% livre ({Units.Gb(s.DiskFreeGB, "0")}).", ("Abrir Limpeza", "tab/2"), ("Ver o que ocupa", "tab/3"));
         }
         string? msg = null;
-        if (s.Cpu >= Settings.CpuAlertPct)
+        int minutes = Settings.AlertMinutes;
+        if (_cpuHigh.Update(s.Cpu >= Settings.CpuAlertPct, s.Time, minutes))
         {
-            if (_highCpuSince == DateTime.MinValue) _highCpuSince = s.Time;
-            if ((s.Time - _highCpuSince).TotalMinutes >= 3)
-            {
-                var top = s.TopByCpu.FirstOrDefault();
-                if (top is not null && Settings.IsAlertException(top.Name)) top = null; // carga esperada: não avisa
-                else msg = $"CPU em {s.Cpu:0}% há mais de 3 minutos." + (top is null ? "" : $" Maior consumo: {top.Name} ({top.CpuPct:0}%).");
-            }
+            var top = s.TopByCpu.FirstOrDefault();
+            if (top is not null && Settings.IsAlertException(top.Name)) top = null; // carga esperada: não avisa
+            else msg = $"CPU em {s.Cpu:0}% há {Pt.N(minutes, "minuto", "minutos")} ou mais." + (top is null ? "" : $" Maior consumo: {top.Name} ({top.CpuPct:0}%).");
         }
-        else _highCpuSince = DateTime.MinValue;
 
-        if (msg is null && s.RamPct >= Settings.RamAlertPct)
+        if (_ramHigh.Update(s.RamPct >= Settings.RamAlertPct, s.Time, minutes) && msg is null)
         {
             var top = s.TopByMem.FirstOrDefault();
             if (top is null || !Settings.IsAlertException(top.Name)) msg = $"Memória em {s.RamPct:0}%." + (top is null ? "" : $" Maior consumo: {top.Name} ({top.MemMB} MB).");
@@ -396,9 +502,9 @@ public partial class App : Application
 
     private async Task CheckWeeklyAsync()
     {
-        if (!Settings.WeeklyCleanup || (DateTime.Now - Settings.LastWeeklyRun).TotalDays < 7) return;
-        // Manutenção em horário ocioso: só roda quando ninguém mexe no computador há 10 minutos (e não durante o Modo Foco)
-        if (Native.IdleTime() < TimeSpan.FromMinutes(10) || Focus.Active) return;
+        if (AppPaths.Demo || !Settings.WeeklyCleanup || (DateTime.Now - Settings.LastWeeklyRun).TotalDays < 7) return;
+        // A39: manutenção em horário ocioso: 10 minutos sem uso, fora do Modo Foco e na tomada
+        if (!MaintenanceRules.CanRunIdleTask(Native.IdleTime(), Focus.Active, Native.PowerStatus().OnBattery)) return;
         Settings.LastWeeklyRun = DateTime.Now;
         Settings.Save();
         await QuickCleanAsync(notify: true);
@@ -428,14 +534,134 @@ public partial class App : Application
         if (AppInfo.RestartElevated()) Quit();
     }
 
+    // ---------- M13: idioma ----------
+    /// <summary>Idioma, formato de números e datas e tradução das telas. Roda uma vez, antes de abrir qualquer janela.</summary>
+    private void ApplyLanguage()
+    {
+        Loc.Use(Loc.Resolve(Settings.Language, System.Globalization.CultureInfo.InstalledUICulture.Name));
+        var culture = Loc.Culture;
+        System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
+        System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.CurrentUICulture = culture;
+        FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
+            new FrameworkPropertyMetadata(System.Windows.Markup.XmlLanguage.GetLanguage(culture.IetfLanguageTag)));
+        Localizer.Install();
+    }
+
+    /// <summary>Reabre o app (troca de idioma). A instância nova espera esta fechar.</summary>
+    public void Restart()
+    {
+        if (Environment.ProcessPath is not { } exe) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe,
+                $"--wait-parent={Environment.ProcessId}" + (AppPaths.Demo ? " --demo" : "")) { UseShellExecute = false });
+            Quit();
+        }
+        catch { /* sem permissão para iniciar: a pessoa reabre pelo atalho */ }
+    }
+
+    // ---------- B26: modo demonstração ----------
+    private int _demoTick;
+
+    /// <summary>Começa do zero a cada abertura: apaga a pasta da demonstração anterior e liga a simulação.</summary>
+    private static AppSettings StartDemo()
+    {
+        foreach (var f in Directory.GetFiles(AppPaths.Dir))
+            try { File.Delete(f); } catch { }
+        var s = new AppSettings
+        {
+            FirstRunDone = true, SimulationMode = true, CheckUpdates = false, GlobalHotkey = false, NativeNotifications = false,
+            WeeklyCleanup = false, StartWithWindows = false, LastWeeklySummary = DateTime.Now, LastUpdateCheck = DateTime.Now,
+        };
+        s.Save();
+        return s;
+    }
+
+    // ---------- M03: overlay em jogos ----------
+    private OverlayWindow? _overlay;
+    private readonly System.Windows.Threading.DispatcherTimer _overlayTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+
+    /// <summary>A cada 2 s confere se tem jogo ou app em tela cheia e mostra ou esconde o overlay no monitor dele.</summary>
+    private void UpdateOverlay()
+    {
+        // Desligado (o padrão) nem consulta o Windows
+        bool show = Settings.OverlayMode != Overlay.Off && Latest is not null && Overlay.ShouldShow(Settings.OverlayMode, Native.NotificationState());
+        if (!show) { _overlay?.Hide(); return; }
+        if (_overlay is null) { _overlay = new OverlayWindow(); }
+        if (!_overlay.IsVisible) { _overlay.Update(Latest!); _overlay.Show(); _overlay.UpdateLayout(); } // tamanho certo antes de posicionar
+        if (Native.ForegroundMonitor() is { } monitor) _overlay.PlaceOn(monitor, Settings.OverlayCorner);
+    }
+
+    /// <summary>B48: atalhos no clique direito do ícone na barra de tarefas e no Menu Iniciar. Cada um abre o app na aba certa.</summary>
+    private void SetJumpList()
+    {
+        if (Environment.ProcessPath is not { } exe) return;
+        System.Windows.Shell.JumpTask Item(string title, int tab, string description) => new()
+        {
+            Title = title, Description = description, Arguments = $"--tab={tab}",
+            ApplicationPath = exe, IconResourcePath = exe, IconResourceIndex = 0,
+        };
+        try
+        {
+            var list = new System.Windows.Shell.JumpList(new System.Windows.Shell.JumpItem[]
+            {
+                Item("Limpeza", 2, "Ver o que pode ser limpo"),
+                Item("Processos", 1, "Ver os programas em execução"),
+                Item("Histórico", 5, "Ver o uso dos últimos dias"),
+            }, showFrequent: false, showRecent: false);
+            System.Windows.Shell.JumpList.SetJumpList(this, list);
+            list.Apply();
+        }
+        catch (Exception ex) { LogError(ex); } // a jump list é só conveniência
+    }
+
     /// <summary>Fecha para o instalador poder substituir o executável.</summary>
     public void QuitForUpdate() => Quit();
 
+    /// <summary>Verdadeiro durante o encerramento: a janela deixa de se esconder na bandeja e fecha de fato.</summary>
+    public bool Quitting { get; private set; }
+
+    // ---------- B38: senha das configurações ----------
+    public LockSession Lock { get; } = new();
+
+    /// <summary>Hash que vale agora: o da política da empresa (HKLM) ou o definido no app. Null = sem senha.</summary>
+    public string? LockHash => AppPaths.Demo ? null
+        : SettingsLockPolicy.Read() ?? (PasswordHash.IsValidFormat(Settings.SettingsLock) ? Settings.SettingsLock : null);
+
+    public bool LockFromPolicy => !AppPaths.Demo && SettingsLockPolicy.Read() is not null;
+
+    /// <summary>Sem senha ou já liberado, devolve true na hora; senão pede a senha. "what" completa "Para …, digite a senha".</summary>
+    public bool EnsureUnlocked(string what)
+    {
+        if (LockHash is not { } hash || Lock.IsUnlocked(DateTime.Now)) return true;
+        var owner = MainWindow is { IsVisible: true } w ? w : null;
+        bool ok = Dialogs.AskPassword(owner, what, pw =>
+        {
+            var now = DateTime.Now;
+            return Lock.TryUnlock(pw, hash, now) switch
+            {
+                UnlockResult.Ok => null,
+                UnlockResult.Blocked => $"Muitas tentativas erradas. Espere {Math.Ceiling(Lock.BlockedFor(now).TotalSeconds):0} segundos e tente de novo.",
+                _ => "Senha incorreta.",
+            };
+        });
+        if (ok) (MainWindow as NotebookDoctor.MainWindow)?.RefreshLockCard();
+        return ok;
+    }
+
+    /// <summary>B10: "fechar encerra o app".</summary>
+    public void ExitApp() => Quit();
+
     private void Quit()
     {
+        if (Quitting) return;
+        Quitting = true;
+        (MainWindow as NotebookDoctor.MainWindow)?.SavePlacement();
         if (Focus.Active) Task.Run(Focus.StopAsync).Wait(3000); // devolve as prioridades e o plano de energia
         _cts.Cancel();
         _mini?.Close();
+        _overlayTimer.Stop();
+        _overlay?.Close();
         _hotkey.Dispose();
         _tray.Dispose();
         _monitor.Dispose();

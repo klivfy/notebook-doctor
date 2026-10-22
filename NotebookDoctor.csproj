@@ -21,6 +21,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- O app fica na raiz; a biblioteca e os testes têm projeto próprio e não entram na compilação dele -->
+    <Compile Remove="src/**;tests/**" />
+    <None Remove="src/**;tests/**" />
+    <Page Remove="src/**;tests/**" />
+    <ProjectReference Include="src/NotebookDoctor.Core/NotebookDoctor.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Uma parte do MainWindow por aba; aparecem agrupadas sob MainWindow.xaml no Visual Studio -->
+    <Compile Update="MainWindow.*.cs" DependentUpon="MainWindow.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="app.ico" />
     <Resource Include="icon-256.png" />
   </ItemGroup>
@@ -28,6 +41,11 @@
   <ItemGroup>
     <!-- Google Sans Flex (SIL OFL) embutida no executável: o app não depende da fonte instalada -->
     <Resource Include="Fonts\*.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- B23/B24: novidades, licenças e "Seus dados" mostrados no Sobre, sem depender de internet -->
+    <EmbeddedResource Include="Textos\*.txt" LogicalName="Textos.%(Filename).txt" />
   </ItemGroup>
 
   <ItemGroup>

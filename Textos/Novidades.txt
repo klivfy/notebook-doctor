@@ -1,0 +1,60 @@
+Painel e diagnóstico
+• "Corrigir" em todos os problemas encontrados, com explicação de cada um.
+• Aviso de plano Alto desempenho na bateria, de mais de um antivírus ativo e de disco virtual do WSL grande.
+• Aviso quando o OneDrive guarda muitos arquivos no disco, com o caminho para "Liberar espaço".
+• Avisos de Windows Update desativado, atualização falhando ou muito tempo sem atualizar.
+• Aviso de driver de vídeo genérico ou com mais de 2 anos, e de manutenção automática do Windows desligada.
+• A limpeza semanal só roda com o computador parado e na tomada.
+• Na bateria, o app consulta o computador com menos frequência quando está em segundo plano.
+• Sugestão de plano de energia ao ligar ou tirar o notebook da tomada.
+• Relatório em PDF e botão "Copiar resumo" para colar num chamado.
+
+Processos
+• Selecionar vários programas e encerrar de uma vez.
+• Processos do mesmo aplicativo numa linha só (Steam, Acrobat, Teams, Zoom e outros), com opção para separar.
+• Menu do botão direito (Shift+F10 pelo teclado), Enter abre o detalhe e Delete encerra, sempre com confirmação.
+
+Limpeza e espaço
+• Caches do Discord, Slack, Teams e VS Code, e miniaturas do Windows.
+• Lixeira de cada unidade e botões "Marcar todos" e "Desmarcar todos".
+
+Inicialização e ajustes
+• Coluna com o editor de cada programa e botão "Abrir local".
+• Serviços de outros fabricantes que podem ficar no modo manual, com "Desfazer".
+• Tarefas agendadas de outros fabricantes, com "Desativar" e "Desfazer".
+• Extensões instaladas nos navegadores, das mais pesadas para as mais leves.
+• Como administrador: apagar pontos de restauração antigos (o mais recente fica) e limpar logs de eventos grandes.
+
+Histórico
+• Tendências da semana, previsão de disco cheio e mapa de horários de lentidão.
+• Linha do tempo com avisos, ações e programas instalados.
+
+Avisos
+• Horário silencioso e silêncio com app em tela cheia ou apresentação.
+• Aviso de CPU ou memória alta só depois de alguns minutos seguidos.
+
+Barra de tarefas e bandeja
+• Selo de alerta no ícone da barra de tarefas e atalhos (Limpeza, Processos, Histórico) no clique direito.
+• Uso da CPU no ícone da bandeja (opcional) e CPU, RAM, disco e nota no menu dela.
+
+Gráficos e tabelas
+• Zoom nos gráficos do Histórico: roda do mouse, arrastar e clique duplo para voltar.
+• As tabelas lembram a ordenação e a largura das colunas, e mostram totais no rodapé.
+• Clique direito no título de uma tabela para escolher as colunas visíveis.
+
+Jogos e apresentações
+• Overlay com CPU, RAM e temperatura por cima de jogos em tela cheia (opcional).
+• Modo demonstração com dados fictícios (NotebookDoctor.exe --demo).
+
+Configurações
+• Tamanhos em GB do Windows, GB da caixa do disco ou GiB, e temperatura em °C ou °F.
+• Tema claro de dia e escuro à noite, nos horários que você escolher.
+• Começar minimizado e opção de o X encerrar o app.
+• Modo compacto para telas pequenas: menu só com ícones e tabelas mais densas.
+• Atalho no Menu Iniciar, criado pelo próprio app.
+• Modo empresa: senha para mudar as configurações, definida no app ou pela política do Windows.
+• A janela reabre no mesmo lugar e no mesmo monitor.
+• Exportar, importar e redefinir as preferências.
+• Cor de destaque do Windows, ajustada para manter a leitura.
+• Modo portátil: com um arquivo portatil.txt ao lado do app, os dados ficam na pasta "dados".
+• Relatório de falhas opcional, guardado sem dados pessoais.

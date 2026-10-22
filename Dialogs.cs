@@ -12,6 +12,18 @@ public static class Dialogs
     public static void Info(Window owner, string title, string message) =>
         Show(owner, title, message, "OK", null, false);
 
+    /// <summary>
+    /// B36: confirmação com "Não perguntar de novo". Só para ações que não apagam nem fecham nada
+    /// (ex.: reabrir como administrador, criar um plano de energia). Dispensada, devolve true sem mostrar.
+    /// </summary>
+    public static bool ConfirmOnce(Window owner, Services.AppSettings s, string key, string title, string message, string confirmText)
+    {
+        if (s.SkipConfirm.Contains(key)) return true;
+        bool ok = Show(owner, title, message, confirmText, "Cancelar", false, out bool dontAsk, dontAskOption: true);
+        if (ok && dontAsk) { s.SkipConfirm.Add(key); s.Save(); }
+        return ok;
+    }
+
     /// <summary>M14: boas-vindas na primeira execução, com as escolhas principais já à mão.</summary>
     public static void ShowWelcome(Window owner, Services.AppSettings s)
     {
@@ -44,15 +56,18 @@ public static class Dialogs
     }
 
     /// <summary>A47: cada processo de um programa, com PID, memória, CPU, threads, início e caminho.</summary>
-    public static void ShowProcessDetails(Window owner, string name)
+    /// <param name="members">M22: processos de um aplicativo agrupado; sem isso, só o processo <paramref name="name"/>.</param>
+    public static void ShowProcessDetails(Window owner, string name, IReadOnlyList<string>? members = null)
     {
+        members ??= [name];
         var rows = new List<object>();
-        foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
+        foreach (var p in members.SelectMany(System.Diagnostics.Process.GetProcessesByName))
             using (p)
             {
                 string Try(Func<string> f) { try { return f(); } catch { return "—"; } }
                 rows.Add(new
                 {
+                    Processo = p.ProcessName,
                     PID = p.Id,
                     RAM = $"{p.WorkingSet64 / 1048576:N0} MB",
                     CPU = Try(() => $"{p.TotalProcessorTime.TotalSeconds:N0} s"),
@@ -71,7 +86,7 @@ public static class Dialogs
                     Caminho = Try(() => p.MainModule?.FileName ?? "—"),
                 });
             }
-        var about = Services.ProcessKnowledge.Describe(name);
+        var about = Services.ProcessKnowledge.Describe(members[0]);
         var dlg = NewWindow(owner, $"Detalhes: {name}", 900);
         dlg.SizeToContent = SizeToContent.Manual;
         dlg.Height = 520;
@@ -107,7 +122,7 @@ public static class Dialogs
         dlg.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
         dlg.SetResourceReference(Control.FontFamilyProperty, "FontBody");
         dlg.SetResourceReference(Control.FontSizeProperty, "FsBody");
-        dlg.Language = System.Windows.Markup.XmlLanguage.GetLanguage("pt-BR");
+        dlg.Language = System.Windows.Markup.XmlLanguage.GetLanguage(Services.Loc.Culture.IetfLanguageTag);
         dlg.SourceInitialized += (_, _) => ThemeManager.ApplyTitleBar(dlg);
     }
 
@@ -120,7 +135,71 @@ public static class Dialogs
         return t;
     }
 
-    private static bool Show(Window owner, string title, string message, string ok, string? cancel, bool danger)
+    /// <summary>B23/B24: texto longo (novidades, licenças, privacidade) com rolagem.</summary>
+    public static void ShowText(Window owner, string title, string text)
+    {
+        var dlg = NewWindow(owner, title, 600);
+        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var body = new TextBox
+        {
+            Text = text, TextWrapping = TextWrapping.Wrap, IsReadOnly = true, BorderThickness = new Thickness(0),
+            Background = System.Windows.Media.Brushes.Transparent, Padding = new Thickness(0),
+        };
+        body.SetResourceReference(Control.ForegroundProperty, "OnSurfaceVariant");
+        System.Windows.Automation.AutomationProperties.SetName(body, title);
+        var scroll = new ScrollViewer { Content = body, MaxHeight = 440, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(0, 0, 0, 16) };
+        var ok = new Button { Content = "Fechar", HorizontalAlignment = HorizontalAlignment.Right, IsDefault = true, IsCancel = true };
+        ok.Click += (_, _) => dlg.Close();
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, scroll, ok } };
+        dlg.Loaded += (_, _) => body.Focus(); // leitor de tela começa pelo texto; setas rolam
+        dlg.ShowDialog();
+    }
+
+    /// <summary>
+    /// B38: pede a senha das configurações. <paramref name="check"/> devolve o erro a mostrar ou null quando a senha
+    /// está certa; com erro, o diálogo continua aberto. Devolve true se liberou.
+    /// </summary>
+    public static bool AskPassword(Window? owner, string what, Func<string, string?> check)
+    {
+        var dlg = NewWindow(owner!, "Senha das configurações", 420);
+        if (owner is null) dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen; // janela principal escondida (bandeja)
+        var heading = Heading("Senha das configurações", "FsTitleLarge", new Thickness(0, 0, 0, 8));
+        var body = new TextBlock
+        {
+            Text = $"Para {what}, digite a senha definida pelo responsável por este computador.",
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var box = new PasswordBox { Margin = new Thickness(0, 0, 0, 8) };
+        System.Windows.Automation.AutomationProperties.SetName(box, "Senha");
+        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
+        // Vermelho do tema não tem contraste 4,5:1 sobre o fundo escuro: o erro vai em semi-negrito na cor do texto
+        error.SetResourceReference(TextBlock.FontFamilyProperty, "FontSemi");
+        System.Windows.Automation.AutomationProperties.SetLiveSetting(error, System.Windows.Automation.AutomationLiveSetting.Assertive);
+
+        bool result = false;
+        var cancel = new Button { Content = "Cancelar", IsCancel = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        var ok = new Button { Content = "Desbloquear", IsDefault = true, Margin = new Thickness(0) };
+        ok.Click += (_, _) =>
+        {
+            string? msg = check(box.Password);
+            if (msg is null) { result = true; dlg.Close(); return; }
+            error.Text = msg;
+            box.Clear();
+            box.Focus();
+        };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, ok } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, body, box, error, buttons } };
+        dlg.Loaded += (_, _) => box.Focus();
+        dlg.ShowDialog();
+        return result;
+    }
+
+    private static bool Show(Window owner, string title, string message, string ok, string? cancel, bool danger) =>
+        Show(owner, title, message, ok, cancel, danger, out _, dontAskOption: false);
+
+    private static bool Show(Window owner, string title, string message, string ok, string? cancel, bool danger, out bool dontAsk, bool dontAskOption)
     {
         var dlg = new Window
         {
@@ -151,8 +230,13 @@ public static class Dialogs
         o.Click += (_, _) => { result = true; dlg.Close(); };
         buttons.Children.Add(o);
 
-        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, body, buttons } };
+        var panel = new StackPanel { Margin = new Thickness(24), Children = { heading, body } };
+        var skip = new CheckBox { Content = "Não perguntar de novo", Margin = new Thickness(0, -12, 0, 16) };
+        if (dontAskOption) panel.Children.Add(skip);
+        panel.Children.Add(buttons);
+        dlg.Content = panel;
         dlg.ShowDialog();
+        dontAsk = skip.IsChecked == true;
         return result;
     }
 }

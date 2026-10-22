@@ -5,7 +5,20 @@ namespace NotebookDoctor.Services;
 
 public static class AppPaths
 {
-    public static readonly string Dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NotebookDoctor");
+    /// <summary>
+    /// B43: com um arquivo "portatil.txt" (ou "portable.txt") ao lado do executável, os dados ficam na pasta "dados" junto do app,
+    /// para rodar de um pendrive. O registro do Windows ainda é usado para iniciar com o Windows e para as notificações.
+    /// </summary>
+    public static readonly bool Portable = new[] { "portatil.txt", "portable.txt" }.Any(f => File.Exists(Path.Combine(AppContext.BaseDirectory, f)));
+
+    /// <summary>B26: "--demo" abre com dados fictícios, numa pasta temporária própria, com a simulação sempre ligada.</summary>
+    public static readonly bool Demo = Environment.GetCommandLineArgs().Contains("--demo");
+
+    public static readonly string Dir = Demo
+        ? Path.Combine(Path.GetTempPath(), "NotebookDoctor-demo")
+        : Portable
+        ? Path.Combine(AppContext.BaseDirectory, "dados")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NotebookDoctor");
     public static string Settings => Path.Combine(Dir, "settings.json");
     public static string History => Path.Combine(Dir, "history.jsonl");
     public static string Reports => Path.Combine(Dir, "relatorios");
@@ -64,9 +77,79 @@ public sealed class AppSettings
     public bool CheckUpdates { get; set; } = true;
     public DateTime LastUpdateCheck { get; set; } = DateTime.MinValue;
     /// <summary>A38: mostra o que cada correção faria, sem alterar nada.</summary>
-    public bool SimulationMode { get; set; }
+    public bool SimulationMode
+    {
+        get => _simulation || AppPaths.Demo; // B26: na demonstração nem importar ou redefinir as preferências desliga a simulação
+        set => _simulation = value;
+    }
+    private bool _simulation;
     /// <summary>M01: Ctrl+Alt+N abre ou esconde o painel de qualquer lugar.</summary>
     public bool GlobalHotkey { get; set; } = true;
+
+    /// <summary>M09: usa a cor de destaque do Windows nos botões e seleções (ajustada para manter o contraste).</summary>
+    public bool UseAccentColor { get; set; }
+    /// <summary>M44: horário sem notificações (os avisos continuam no histórico).</summary>
+    public bool QuietHours { get; set; }
+    public string QuietStart { get; set; } = "22:00";
+    public string QuietEnd { get; set; } = "07:00";
+    /// <summary>M43: sem notificações com app em tela cheia, jogo ou apresentação.</summary>
+    public bool QuietFullscreen { get; set; } = true;
+    /// <summary>M45: minutos seguidos acima do limite antes de avisar de CPU ou RAM alta.</summary>
+    public int AlertMinutes { get; set; } = 3;
+    /// <summary>M19: guardar relatórios de falha (sem dados pessoais) para o pacote de suporte. Desligado até a pessoa ligar.</summary>
+    public bool CrashReports { get; set; }
+    public DateTime LastCrashSeen { get; set; } = DateTime.MinValue;
+    /// <summary>B07/B45: posição, tamanho e monitor da janela (área sem maximizar) para reabrir no mesmo lugar.</summary>
+    public double? WinLeft { get; set; }
+    public double? WinTop { get; set; }
+    public double? WinWidth { get; set; }
+    public double? WinHeight { get; set; }
+    public bool WinMaximized { get; set; }
+    /// <summary>M03: overlay de desempenho ("off", "fullscreen" ou "always") e o canto da tela.</summary>
+    public string OverlayMode { get; set; } = Overlay.Off;
+    public string OverlayCorner { get; set; } = "top-left";
+    /// <summary>B16/B17: "windows", "decimal" ou "binary"; "c" ou "f".</summary>
+    public string SizeUnit { get; set; } = "windows";
+    public string TempUnit { get; set; } = "c";
+    /// <summary>B09: ao abrir pelo atalho, a janela começa minimizada na barra de tarefas.</summary>
+    public bool StartMinimized { get; set; }
+    /// <summary>B10: o X da janela encerra o app em vez de deixá-lo na bandeja.</summary>
+    public bool CloseExits { get; set; }
+    /// <summary>B15: menu só com ícones, tabelas e cartões mais densos.</summary>
+    public bool Compact { get; set; }
+    /// <summary>B29/B30/B31: ordenação, colunas ocultas e larguras de coluna de cada tabela.</summary>
+    public Dictionary<string, GridLayout> Grids { get; set; } = new();
+    /// <summary>B01: número da CPU no ícone da bandeja.</summary>
+    public bool TrayCpu { get; set; }
+    /// <summary>B37: com o tema "schedule", claro a partir de ThemeLightAt e escuro a partir de ThemeDarkAt.</summary>
+    public string ThemeLightAt { get; set; } = "07:00";
+    public string ThemeDarkAt { get; set; } = "19:00";
+    /// <summary>B49: o aviso "continua na bandeja" já apareceu uma vez.</summary>
+    public bool TrayHintShown { get; set; }
+    /// <summary>B13: som discreto ao terminar uma limpeza.</summary>
+    public bool PlaySounds { get; set; }
+    /// <summary>B36: confirmações não destrutivas que a pessoa pediu para não repetir.</summary>
+    public List<string> SkipConfirm { get; set; } = new();
+    /// <summary>M13: "auto" (idioma do Windows), "pt", "en" ou "es". Vale ao reabrir o app.</summary>
+    public string Language { get; set; } = Loc.Auto;
+    /// <summary>M22: na aba Processos, junta processos do mesmo aplicativo (Steam + steamwebhelper).</summary>
+    public bool GroupByApp { get; set; } = true;
+    /// <summary>B38: hash da senha das configurações (PasswordHash); null = sem senha.</summary>
+    public string? SettingsLock { get; set; }
+
+    /// <summary>Tema que vale agora ("system", "light" ou "dark"), resolvendo o modo por horário.</summary>
+    public string EffectiveTheme(DateTime now) => ThemeSchedule.Resolve(ThemeMode, TimeOnly.FromDateTime(now), ThemeLightAt, ThemeDarkAt);
+
+    /// <summary>Aplica as unidades escolhidas aos textos (o Core lê de <see cref="Units"/>).</summary>
+    public void ApplyUnits()
+    {
+        Units.Size = Units.ParseSize(SizeUnit);
+        Units.Temperature = Units.ParseTemp(TempUnit);
+    }
+
+    public bool InQuietHours(DateTime now) =>
+        QuietHours && AlertPolicy.TryParseClock(QuietStart, out var a) && AlertPolicy.TryParseClock(QuietEnd, out var b)
+        && AlertPolicy.InQuietHours(TimeOnly.FromDateTime(now), a, b);
 
     public bool IsAlertException(string name) => AlertExceptions.Contains(name, StringComparer.OrdinalIgnoreCase);
 
@@ -100,6 +183,7 @@ public sealed class AppSettings
 
     public void ApplyStartWithWindows()
     {
+        if (AppPaths.Demo) return; // a demonstração não mexe no registro
         using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
         if (key is null) return;
         if (StartWithWindows && Environment.ProcessPath is { } exe)

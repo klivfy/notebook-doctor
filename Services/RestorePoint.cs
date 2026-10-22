@@ -10,6 +10,8 @@ namespace NotebookDoctor.Services;
 /// </summary>
 public static class RestorePoint
 {
+    public const string ProtectionOff = "não criado (Proteção do Sistema desativada?)";
+
     public static async Task<string> EnsureAsync(AppSettings settings, string reason)
     {
         if (!settings.RestorePointBeforeChanges) return "desativado nas configurações";
@@ -27,7 +29,7 @@ public static class RestorePoint
                 { CreateNoWindow = true, UseShellExecute = false, RedirectStandardError = true });
                 if (p is null) return "não criado";
                 if (!p.WaitForExit(90000)) { try { p.Kill(); } catch { } return "não criado (demorou demais)"; }
-                if (p.ExitCode != 0) return "não criado (Proteção do Sistema desativada?)";
+                if (p.ExitCode != 0) return ProtectionOff;
                 settings.LastRestorePoint = DateTime.Now;
                 settings.Save();
                 return "criado";

@@ -39,6 +39,9 @@ public static class SupportPackage
             string text = File.ReadAllText(errors);
             Add("erros.log", text.Length > 200_000 ? text[^200_000..] : text); // só o final, se for grande
         }
+        // M19: relatórios de falha (só existem com o opt-in ligado; já foram gravados sem dados pessoais)
+        foreach (var f in CrashLog.Files())
+            Add("falhas/" + Path.GetFileName(f), File.ReadAllText(f));
         return zip;
     }
 
@@ -50,15 +53,9 @@ public static class SupportPackage
     }
 
     /// <summary>Troca dados que identificam a pessoa ou o computador por marcadores.</summary>
-    public static string Redact(string text)
-    {
-        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        if (home.Length > 3) text = text.Replace(home, "<pasta-pessoal>", StringComparison.OrdinalIgnoreCase)
-                                        .Replace(home.Replace("\\", "\\\\"), "<pasta-pessoal>", StringComparison.OrdinalIgnoreCase);
-        foreach (var (value, mark) in new[] { (Environment.UserName, "<usuario>"), (Environment.MachineName, "<computador>"), (Environment.UserDomainName, "<dominio>") })
-            if (value.Length >= 3) text = text.Replace(value, mark, StringComparison.OrdinalIgnoreCase);
-        return text;
-    }
+    public static string Redact(string text) =>
+        Redaction.Apply(text, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        Environment.UserName, Environment.MachineName, Environment.UserDomainName);
 
     private static string SystemText(Snapshot? s, HealthInfo h)
     {
@@ -71,7 +68,7 @@ public static class SupportPackage
         {
             sb.AppendLine($"CPU agora: {s.Cpu:0}% · RAM: {s.RamUsedGB:0.0} de {s.RamTotalGB:0.0} GB ({s.RamPct:0}%)");
             sb.AppendLine($"Disco do sistema: {s.DiskFreeGB:0} GB livres ({s.DiskFreePct:0}%) · atividade {s.DiskBusy:0}%");
-            if (s.TempC > 0) sb.AppendLine($"Temperatura: {s.TempC:0} °C");
+            if (s.TempC > 0) sb.AppendLine($"Temperatura: {Units.Temp(s.TempC)}");
             sb.AppendLine("Mais pesados agora: " + string.Join(", ", s.TopByCpu.Take(5).Select(g => $"{g.Name} {g.CpuPct:0}%/{g.MemMB} MB")));
         }
         if (h.HasDisk) sb.AppendLine($"Disco: {h.DiskType} · {(h.DiskHealthy ? "saudável" : h.DiskHealth)}" + (h.DiskWearPct is { } w ? $" · desgaste {w}%" : ""));
