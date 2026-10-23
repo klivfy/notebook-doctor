@@ -1,0 +1,144 @@
+using System.IO;
+using System.Text;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using NotebookDoctor.Services;
+
+namespace NotebookDoctor;
+
+/// <summary>
+/// Verificação visual automática (<c>--demo --smoke=pasta</c>), usada pela CI no Windows. Abre cada aba e cada janela nos temas claro e
+/// escuro, salva uma imagem PNG de cada uma e anota qualquer erro (recurso de estilo que falta, modelo quebrado). Termina o app com código
+/// 0 se tudo abriu e 1 se algo falhou; o relatório fica em <c>smoke.txt</c> na mesma pasta.
+/// </summary>
+public static class Smoke
+{
+    public static string? FolderFromArgs(IEnumerable<string> args) =>
+        args.FirstOrDefault(a => a.StartsWith("--smoke=", StringComparison.Ordinal)) is { } a ? a[8..].Trim('"') : null;
+
+    private static readonly List<string> Errors = [];
+    private static readonly StringBuilder Log = new();
+
+    public static async Task RunAsync(MainWindow main, string folder)
+    {
+        Directory.CreateDirectory(folder);
+        // Erros de interface que o app normalmente engole também contam como falha aqui
+        Application.Current.DispatcherUnhandledException += (_, e) => { Errors.Add("Exceção na tela: " + e.Exception); e.Handled = true; };
+        // Avisos de ligação (binding) quebrada não derrubam a tela, mas vão para o relatório
+        System.Diagnostics.PresentationTraceSources.DataBindingSource.Listeners.Add(new BindingWarnings());
+        System.Diagnostics.PresentationTraceSources.DataBindingSource.Switch.Level = System.Diagnostics.SourceLevels.Error;
+        try
+        {
+            foreach (var theme in new[] { "light", "dark" })
+            {
+                ThemeManager.Apply(theme);
+                await Idle(600);
+                for (int tab = 0; tab <= AppTabs.Settings; tab++)
+                {
+                    await Step($"{theme}-aba-{tab:00}", async () =>
+                    {
+                        main.SelectTab(tab);
+                        await Idle(500);
+                        Save(main, folder, $"{theme}-aba-{tab:00}");
+                    });
+                }
+                await Tool(theme, folder, "limpeza-avancada", () => new AdvancedCleanWindow(main));
+                await Tool(theme, folder, "menu-de-contexto", () => new ContextMenuWindow(main));
+                await Tool(theme, folder, "desfragmentar", () => new DefragWindow(main));
+                await Tool(theme, folder, "drivers", () => new DriversWindow(main));
+                await Tool(theme, folder, "duplicados", () => new DuplicatesWindow(main, []));
+                await Tool(theme, folder, "recuperar-ntfs", () => new NtfsRecoveryWindow(main));
+                await Tool(theme, folder, "recuperar", () => new RecoveryWindow(main));
+                await Tool(theme, folder, "registro", () => new RegistryCheckWindow(main));
+                await Tool(theme, folder, "apagar-de-vez", () => new SecureEraseWindow(main));
+                await Tool(theme, folder, "soneca", () => new SnoozeWindow(main));
+                await Tool(theme, folder, "atualizar-programas", () => new UpdatesWindow(main));
+                await Tool(theme, folder, "ferramentas-do-windows", () => new WindowsToolsWindow(main));
+                await Modal(theme, folder, "dialogo-info", () => Dialogs.Info(main, "Informação", "Texto de exemplo de um aviso do app, com duas linhas para conferir a quebra."));
+                await Modal(theme, folder, "dialogo-perigo", () => Dialogs.Confirm(main, "Apagar", "Confirmação de uma ação que não pode ser desfeita.", "Apagar", danger: true));
+                await Modal(theme, folder, "boas-vindas", () => Dialogs.ShowWelcome(main, App.Current.Settings));
+            }
+        }
+        catch (Exception ex) { Errors.Add("Falha geral: " + ex); }
+
+        Log.AppendLine(Errors.Count == 0 ? "OK: todas as telas abriram." : $"FALHAS: {Errors.Count}");
+        foreach (var e in Errors) Log.AppendLine(e).AppendLine();
+        File.WriteAllText(Path.Combine(folder, "smoke.txt"), Log.ToString(), new UTF8Encoding(false));
+        Console.Out.Write(Log.ToString());
+        Environment.Exit(Errors.Count == 0 ? 0 : 1);
+    }
+
+    private sealed class BindingWarnings : System.Diagnostics.TraceListener
+    {
+        public override void Write(string? message) { }
+        public override void WriteLine(string? message) { if (message is not null) Log.AppendLine("aviso " + message); }
+    }
+
+    private static async Task Step(string name, Func<Task> action)
+    {
+        try { await action(); Log.AppendLine("ok    " + name); }
+        catch (Exception ex) { Errors.Add($"{name}: {ex}"); Log.AppendLine("ERRO  " + name); }
+    }
+
+    private static Task Tool(string theme, string folder, string name, Func<Window> create) => Step($"{theme}-{name}", async () =>
+    {
+        var w = create();
+        w.ShowActivated = false;
+        w.Show();
+        await Idle(900);
+        Save(w, folder, $"{theme}-{name}");
+        w.Hide(); // Hide, e não Close: janelas ocupadas recusam fechar, e o processo termina logo depois
+    });
+
+    /// <summary>Diálogos modais: um temporizador fotografa e fecha a janela nova enquanto o ShowDialog espera.</summary>
+    private static Task Modal(string theme, string folder, string name, Action open) => Step($"{theme}-{name}", async () =>
+    {
+        var before = Application.Current.Windows.OfType<Window>().ToHashSet();
+        Exception? failure = null;
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
+        timer.Tick += (_, _) =>
+        {
+            var dlg = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => !before.Contains(w) && w.IsVisible);
+            if (dlg is null) return;
+            timer.Stop();
+            try { Save(dlg, folder, $"{theme}-{name}"); } catch (Exception ex) { failure = ex; }
+            dlg.Close();
+        };
+        timer.Start();
+        open();
+        timer.Stop();
+        await Idle(200);
+        if (failure is not null) throw failure;
+    });
+
+    private static async Task Idle(int ms)
+    {
+        await Task.Delay(ms);
+        await Dispatcher.CurrentDispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+    }
+
+    /// <summary>Desenha a janela inteira (o conteúdo, sobre a cor de fundo do tema) num PNG do tamanho dela.</summary>
+    private static void Save(Window w, string folder, string name)
+    {
+        w.UpdateLayout();
+        if (w.Content is not FrameworkElement root || root.ActualWidth < 1) throw new InvalidOperationException($"{name}: janela sem conteúdo");
+        double dpi = VisualTreeHelper.GetDpi(w).PixelsPerInchX;
+        double scale = dpi / 96;
+        int width = (int)Math.Ceiling(root.ActualWidth * scale), height = (int)Math.Ceiling(root.ActualHeight * scale);
+        var visual = new DrawingVisual();
+        using (var dc = visual.RenderOpen())
+        {
+            var bg = Application.Current.TryFindResource("Surface") as Brush ?? Brushes.White;
+            dc.DrawRectangle(bg, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+            dc.DrawRectangle(new VisualBrush(root), null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+        }
+        var bmp = new RenderTargetBitmap(width, height, dpi, dpi, PixelFormats.Pbgra32);
+        bmp.Render(visual);
+        var png = new PngBitmapEncoder();
+        png.Frames.Add(BitmapFrame.Create(bmp));
+        using var fs = File.Create(Path.Combine(folder, name + ".png"));
+        png.Save(fs);
+    }
+}

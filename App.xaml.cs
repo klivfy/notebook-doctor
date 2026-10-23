@@ -127,6 +127,9 @@ public partial class App : Application
         var tabArg = e.Args.FirstOrDefault(a => a.StartsWith("--tab="));
         if (tabArg is not null && AppTabs.Parse(tabArg[6..]) is int tab) win.SelectTab(tab);
         if (uri is not null) HandleUri(uri);
+        // Verificação visual da CI: só na demonstração, que não toca no computador
+        if (AppPaths.Demo && Smoke.FolderFromArgs(e.Args) is { } smoke)
+            Dispatcher.BeginInvoke(async () => await Smoke.RunAsync(win, smoke), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
         // A jump list e o registro das notificações são do app instalado, não da demonstração
         if (!AppPaths.Demo) { _ = Task.Run(Toasts.EnsureRegistered); SetJumpList(); }
