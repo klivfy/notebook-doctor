@@ -1,3 +1,10 @@
+Visual novo, no estilo do Windows 11 (novo)
+• Cores, fonte (Segoe UI Variable), cantos e botões no padrão do Windows 11, nos temas claro e escuro.
+• No Windows 11, o fundo da janela acompanha o papel de parede (Mica).
+• Navegação em trilho, com ícone e nome curto, e um ponto quando o Painel tem algo para ver.
+• Painel com a nota de saúde em destaque, o botão "Otimizar agora" largo e atalhos para Diagnóstico, Processos, Limpeza e Inicialização.
+• Ferramentas da Limpeza em cartões com descrição; janelas de ferramenta com título grande.
+
 Programas (novo)
 • Nova aba com os programas instalados, os apps da Microsoft Store e as atualizações do Windows.
 • Tamanho, data de instalação, tipo, para quem foi instalado e arquitetura de cada um; ícones, busca e totais.

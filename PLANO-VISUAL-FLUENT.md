@@ -4,6 +4,23 @@ Pedido: aproximar o visual do Notebook Doctor do Microsoft PC Manager (5 captura
 
 > **Regra de sala limpa.** O PC Manager usa a linguagem pública do Windows 11 (Fluent 2 / WinUI). O plano copia **a linguagem**, não o produto: os valores vêm dos recursos de tema públicos do WinUI (`microsoft-ui-xaml`, licença MIT) e das diretrizes de design do Windows. **Não entram:** o logotipo, as ilustrações 3D (placa-mãe, laptop, confete), os ícones próprios, os textos, o nome "PC Manager" e o fluxo idêntico de telas. Os ícones continuam da fonte do sistema (Segoe Fluent Icons), e as ilustrações, se houver, serão próprias.
 
+## Andamento
+
+| Leva | Situação | Commit |
+|---|---|---|
+| Verificação visual (`--demo --smoke`) na CI, com imagens de todas as telas | ✅ | `34f73d6` |
+| V1 · Fundamentos | ✅ tokens Fluent, Segoe UI Variable, Mica, `Styles.xaml` dividido, teste de contraste (80 pares) | `b0a5645` |
+| V2 · Controles | ✅ botões, caixas, interruptor, campos, combo, tabelas, menus, barra de progresso | `beee0bf` |
+| V3 · Moldura | ✅ trilho de navegação com ponto de pendência, camada de conteúdo, título de 28 px, aviso no estilo InfoBar | `9cad52b` |
+| V4 · Início | ✅ cartão da nota de saúde com ação larga, menu "Mais", atalhos 2 × 2, diagnóstico com ícones de estado | `9cad52b` |
+| V5 · Seções e janelas | ✅ janelas de ferramenta com título de 28 px e fundo da moldura; cartões-linha na Limpeza; tradução das janelas corrigida | `3460def` |
+| V6 · Polimento | ✅ animações 167/250 ms, mini-widget, `DESIGN.md` | `5f1c2ba` |
+| Decisões V-D1 a V-D6 | ⏳ com você (seção 7); o app usa a recomendação de cada uma até lá | — |
+
+**Fora do escopo do redesign, visto pela verificação visual:** textos montados no código do Painel (chip "n pontos de atenção", linha "Ligado há…", estado do disco e da bateria, nota "Regular/Bom") continuam em português com o app em inglês ou espanhol. É a pendência "M13, mensagens do código" do `MELHORIAS.md`; o `smoke.txt` da CI agora lista esses textos.
+
+**Ainda não feito do plano:** migrar as 464 margens numéricas para os tokens de espaço (os tokens existem; a troca, tela por tela, fica para quando cada tela for mexida) e passar as outras abas (Espaço, Ajustes, Sistema, Configurações) para cartões-linha.
+
 ---
 
 ## 1. O que as capturas mostram (medido nos pixels, tema escuro)
