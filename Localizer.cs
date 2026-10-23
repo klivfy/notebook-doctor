@@ -24,6 +24,10 @@ public static class Localizer
         if (Loc.IsSource) return;
         EventManager.RegisterClassHandler(typeof(FrameworkElement), FrameworkElement.LoadedEvent,
             new RoutedEventHandler((s, _) => { if (s is DependencyObject d) Apply(d); }));
+        // Toda janela (ferramentas, diálogos) é traduzida inteira quando abre: o Loaded de cada elemento sozinho deixava textos do XAML
+        // das janelas de ferramenta em português
+        EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent,
+            new RoutedEventHandler((s, _) => { if (s is Window w) ApplyTree(w); }));
     }
 
     /// <summary>Traduz uma janela inteira de uma vez. Usado antes de ler os títulos das colunas (GridMemory).</summary>

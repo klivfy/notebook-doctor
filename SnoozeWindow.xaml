@@ -3,12 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Modo soneca" Width="1060" Height="720" MinWidth="820" MinHeight="540"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Modo soneca">
-    <Grid Margin="22">
+    <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Modo soneca" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Text="Modo soneca" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
         <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
                    Text="Põe um programa para dormir: desliga a inicialização, deixa os serviços dele em manual, desativa as tarefas agendadas e fecha o que ele deixa em segundo plano. Nada é apagado. Ao abrir o programa, ele acorda; ao fechar, volta a dormir. Antivírus, áudio, vídeo, touchpad, rede e acesso remoto nunca dormem."/>
         <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Programas que rodam sozinhos" SelectionMode="Single">

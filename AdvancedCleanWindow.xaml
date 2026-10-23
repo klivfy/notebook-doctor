@@ -3,12 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Limpeza avançada" Width="1000" Height="720" MinWidth="780" MinHeight="540"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Limpeza avançada">
-    <Grid Margin="22">
+    <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Limpeza avançada" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Text="Limpeza avançada" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
         <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
                    Text="Rastros do Windows e do Office, regras de programas, arquivos inúteis e a Limpeza de Disco do Windows. Você vê o que sai antes de apagar; o registro vai para um backup que dá para desfazer em Ações."/>
 

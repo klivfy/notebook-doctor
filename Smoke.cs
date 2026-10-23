@@ -72,6 +72,20 @@ public static class Smoke
         Environment.Exit(Errors.Count == 0 ? 0 : 1);
     }
 
+    /// <summary>Com o app em outro idioma, texto visível que ainda é uma chave em português é tradução que faltou aplicar.</summary>
+    private static void ReportUntranslated(Window w, string name)
+    {
+        if (Loc.IsSource) return;
+        var seen = new HashSet<string>();
+        void Walk(DependencyObject d)
+        {
+            if (d is System.Windows.Controls.TextBlock { IsVisible: true } tb && tb.Text is { Length: > 1 } t && Loc.TryT(t, out var en) && en != t && seen.Add(t))
+                Log.AppendLine($"aviso [{name}] sem tradução: {t}");
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++) Walk(VisualTreeHelper.GetChild(d, i));
+        }
+        Walk(w);
+    }
+
     private sealed class BindingWarnings : System.Diagnostics.TraceListener
     {
         public override void Write(string? message) { }
@@ -181,6 +195,7 @@ public static class Smoke
         }
         var bmp = new RenderTargetBitmap(width, height, dpi, dpi, PixelFormats.Pbgra32);
         bmp.Render(visual);
+        ReportUntranslated(w, name);
         var png = new PngBitmapEncoder();
         png.Frames.Add(BitmapFrame.Create(bmp));
         using var fs = File.Create(Path.Combine(folder, name + ".png"));

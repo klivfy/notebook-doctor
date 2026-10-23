@@ -3,12 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Atualizar programas" Width="1020" Height="720" MinWidth="780" MinHeight="540"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Atualizar programas">
-    <Grid Margin="22">
+    <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Atualizar programas" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Text="Atualizar programas" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
         <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
                    Text="Usa o WinGet (Instalador de Aplicativo) e o catálogo público dele. Só aparecem programas que o catálogo reconhece. Apps da Microsoft Store se atualizam pela Store. Atualizar não pode ser desfeito."/>
         <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Programas com versão nova" PreviewKeyDown="Grid_KeyDown">

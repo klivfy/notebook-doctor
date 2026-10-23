@@ -3,12 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Verificar registro" Width="1100" Height="720" MinWidth="820" MinHeight="540"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Verificar registro">
-    <Grid Margin="22">
+    <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Verificar registro" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Text="Verificar registro" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
         <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
                    Text="Aponta só entradas do registro com prova de estarem quebradas: o arquivo que elas citam não existe mais, numa unidade que está presente. Não mexe em CLSID, ActiveX, bibliotecas de tipos, MUICache nem no Menu Iniciar. Cada item vai para um backup antes de sair, e dá para desfazer em Ações. Registro limpo não deixa o PC mais rápido: use para tirar lixo, não como ajuste de desempenho."/>
         <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Entradas do registro com prova de estarem quebradas" PreviewKeyDown="Grid_KeyDown">

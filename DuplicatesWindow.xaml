@@ -3,12 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Arquivos duplicados" Width="1020" Height="700" MinWidth="780" MinHeight="520"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Arquivos duplicados">
-    <Grid Margin="22">
+    <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Arquivos duplicados" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Text="Arquivos duplicados" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
         <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
                    Text="Cada grupo tem arquivos idênticos (mesmo conteúdo, conferido byte a byte). Marque as cópias que podem sair: uma cópia de cada grupo sempre fica, e o app confere de novo no disco antes de apagar."/>
         <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Cópias de arquivos idênticos" PreviewKeyDown="Grid_KeyDown" MouseDoubleClick="Reveal_Click">

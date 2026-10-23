@@ -3,12 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Menu de contexto" Width="1100" Height="720" MinWidth="820" MinHeight="540"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Menu de contexto">
-    <Grid Margin="22">
+    <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Menu de contexto" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Text="Menu de contexto" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
         <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
                    Text="O que aparece ao clicar com o botão direito em arquivos, pastas e unidades. Desativar um verbo só o esconde do menu. Desativar um manipulador guarda um backup da chave e a apaga; reativar devolve tudo. O que é do Windows não pode ser desativado aqui. Os itens do menu novo do Windows 11 que vêm de apps da Store não ficam no registro e não aparecem."/>
         <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Itens do menu de contexto" SelectionMode="Single" MouseDoubleClick="Reveal_Click">

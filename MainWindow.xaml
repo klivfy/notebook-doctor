@@ -387,6 +387,8 @@
 
             <!-- LIMPEZA -->
             <TabItem Header="Limpeza">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -417,21 +419,28 @@
                             <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="CleanSelectAll_Click" Margin="0,0,8,6"
                                     ToolTip="Marca todos os locais que podem ser limpos, menos a Lixeira (apagar dela é definitivo)"/>
                             <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="CleanSelectNone_Click" Margin="0,0,8,6"/>
-                            <Button Content="Desfragmentar…" Style="{StaticResource TextButton}" Click="Defrag_Click" Margin="0,0,8,6"
-                                    ToolTip="Analisa e desfragmenta HDs, refaz o TRIM de SSDs, mostra o mapa da unidade e junta os pedaços de um arquivo ou pasta."/>
-                            <Button Content="Recuperar arquivos…" Style="{StaticResource TextButton}" Click="Recovery_Click" Margin="0,0,8,6"
-                                    ToolTip="Procura arquivos apagados em um pen drive, cartão ou disco, pelo Windows File Recovery, e guarda o que achar em outra unidade."/>
-                            <Button Content="Apagar de vez…" Style="{StaticResource TextButton}" Click="SecureErase_Click" Margin="0,0,8,6"
-                                    ToolTip="Apaga arquivos e pastas sem chance de recuperar, limpa o espaço livre de uma unidade ou apaga um pen drive inteiro."/>
-                            <Button Content="Verificar registro…" Style="{StaticResource TextButton}" Click="RegistryCheck_Click" Margin="0,0,8,6"
-                                    ToolTip="Aponta só entradas do registro com prova de estarem quebradas (o arquivo que citam não existe mais) e apaga as que você marcar, com backup."/>
-                            <Button Content="Limpeza avançada…" Style="{StaticResource TonalButton}" Click="AdvancedClean_Click" Margin="0,0,8,6"
-                                    ToolTip="Rastros do Windows e do Office, regras de programas, arquivos inúteis e a Limpeza de Disco do Windows."/>
                             <TextBlock x:Name="CleanMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>
                         </WrapPanel>
                     </Grid>
                 </Border>
+                <!-- Redesign V5: as ferramentas da limpeza como cartões-linha (ícone, título, descrição e seta) -->
+                <StackPanel Grid.Row="1">
+                    <TextBlock Text="Mais ferramentas" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
+                    <UniformGrid Columns="3">
+                        <Button Content="Limpeza avançada…" Tag="&#xE9F5;" Style="{StaticResource ActionRow}" Click="AdvancedClean_Click"
+                                ToolTip="Rastros do Windows e do Office, regras de programas, arquivos inúteis e a Limpeza de Disco do Windows."/>
+                        <Button Content="Desfragmentar…" Tag="&#xEDA2;" Style="{StaticResource ActionRow}" Click="Defrag_Click"
+                                ToolTip="Analisa e desfragmenta HDs, refaz o TRIM de SSDs, mostra o mapa da unidade e junta os pedaços de um arquivo ou pasta."/>
+                        <Button Content="Recuperar arquivos…" Tag="&#xE777;" Style="{StaticResource ActionRow}" Click="Recovery_Click"
+                                ToolTip="Procura arquivos apagados em um pen drive, cartão ou disco, pelo Windows File Recovery, e guarda o que achar em outra unidade."/>
+                        <Button Content="Apagar de vez…" Tag="&#xE74D;" Style="{StaticResource ActionRow}" Click="SecureErase_Click"
+                                ToolTip="Apaga arquivos e pastas sem chance de recuperar, limpa o espaço livre de uma unidade ou apaga um pen drive inteiro."/>
+                        <Button Content="Verificar registro…" Tag="&#xE9D5;" Style="{StaticResource ActionRow}" Click="RegistryCheck_Click"
+                                ToolTip="Aponta só entradas do registro com prova de estarem quebradas (o arquivo que citam não existe mais) e apaga as que você marcar, com backup."/>
+                    </UniformGrid>
+                </StackPanel>
+              </Grid>
             </TabItem>
 
             <!-- ESPAÇO (mapa de uso do disco) -->

@@ -3,15 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Recuperar arquivos (motor do app)" Width="1180" Height="800" MinWidth="900" MinHeight="620"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Recuperar arquivos (motor do app)">
-    <Grid Margin="22">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBlock Text="Recuperar arquivos (motor do app)" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Text="Recuperar arquivos (motor do app)" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
         <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
                    Text="O app lê a lista de arquivos (MFT) de uma unidade NTFS, mostra o que foi apagado e a chance de cada arquivo voltar inteiro, deixa você ver uma prévia e copia os que você marcar para OUTRA unidade. A unidade de origem só é lida, nunca gravada. Quanto antes você parar de usá-la, melhor."/>
         <DockPanel Grid.Row="2" Margin="0,0,0,8">

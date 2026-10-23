@@ -3,12 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Recuperar arquivos" Width="900" Height="760" MinWidth="720" MinHeight="600"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource SurfaceContainer}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Recuperar arquivos">
     <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
-        <StackPanel Margin="22">
-            <TextBlock Text="Recuperar arquivos apagados" Style="{StaticResource TitleMedium}" AutomationProperties.HeadingLevel="Level1"/>
+        <StackPanel Margin="24">
+            <TextBlock Text="Recuperar arquivos apagados" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
             <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,12"
                        Text="Usa o Windows File Recovery (winfr), gratuito e da Microsoft, que lê a unidade e grava os arquivos que achar numa pasta de OUTRA unidade. Nem sempre dá para recuperar tudo, e quanto antes você parar de usar a unidade, melhor."/>
 
