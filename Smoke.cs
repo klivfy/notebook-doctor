@@ -56,6 +56,8 @@ public static class Smoke
                 await Tool(theme, folder, "soneca", () => new SnoozeWindow(main));
                 await Tool(theme, folder, "atualizar-programas", () => new UpdatesWindow(main));
                 await Tool(theme, folder, "ferramentas-do-windows", () => new WindowsToolsWindow(main));
+                // Controles em estados que as telas de demonstração não mostram sozinhas
+                await Tool(theme, folder, "controles", () => Controls(main));
                 await Modal(theme, folder, "dialogo-info", () => Dialogs.Info(main, "Informação", "Texto de exemplo de um aviso do app, com duas linhas para conferir a quebra."));
                 await Modal(theme, folder, "dialogo-perigo", () => Dialogs.Confirm(main, "Apagar", "Confirmação de uma ação que não pode ser desfeita.", "Apagar", danger: true));
                 await Modal(theme, folder, "boas-vindas", () => Dialogs.ShowWelcome(main, App.Current.Settings));
@@ -80,6 +82,43 @@ public static class Smoke
     {
         try { await action(); Log.AppendLine("ok    " + name); }
         catch (Exception ex) { Errors.Add($"{name}: {ex}"); Log.AppendLine("ERRO  " + name); }
+    }
+
+    /// <summary>Uma folha com os controles em cada estado: botões, caixas, interruptor, campos e barras (inclusive a de andamento sem fim).</summary>
+    private static Window Controls(Window owner)
+    {
+        var w = new Window { Owner = owner, Title = "Controles", Width = 720, Height = 520, ShowInTaskbar = false };
+        w.SetResourceReference(Window.BackgroundProperty, "Surface");
+        w.SetResourceReference(Window.FontFamilyProperty, "FontBody");
+        w.SetResourceReference(Window.FontSizeProperty, "FsBody");
+        w.SetResourceReference(Window.ForegroundProperty, "OnSurface");
+        var panel = new System.Windows.Controls.StackPanel { Margin = new Thickness(24) };
+        System.Windows.Controls.WrapPanel Row(params UIElement[] items)
+        {
+            var r = new System.Windows.Controls.WrapPanel { Margin = new Thickness(0, 0, 0, 12) };
+            foreach (var i in items) r.Children.Add(i);
+            return r;
+        }
+        System.Windows.Controls.Button Btn(string text, string? style = null, bool enabled = true)
+        {
+            var b = new System.Windows.Controls.Button { Content = text, IsEnabled = enabled };
+            if (style is not null) b.SetResourceReference(FrameworkElement.StyleProperty, style);
+            return b;
+        }
+        panel.Children.Add(Row(Btn("Destaque"), Btn("Padrão", "TonalButton"), Btn("Sutil", "TextButton"), Btn("Perigo", "DangerButton"), Btn("Desligado", null, false)));
+        var sw = new System.Windows.Controls.CheckBox { Content = "Interruptor ligado", IsChecked = true, Width = 260 };
+        sw.SetResourceReference(FrameworkElement.StyleProperty, "ToggleSwitch");
+        var swOff = new System.Windows.Controls.CheckBox { Content = "Interruptor desligado", Width = 260 };
+        swOff.SetResourceReference(FrameworkElement.StyleProperty, "ToggleSwitch");
+        panel.Children.Add(Row(new System.Windows.Controls.CheckBox { Content = "Marcada", IsChecked = true, Margin = new Thickness(0, 0, 16, 0) },
+            new System.Windows.Controls.CheckBox { Content = "Desmarcada" }));
+        panel.Children.Add(Row(sw, swOff));
+        panel.Children.Add(Row(new System.Windows.Controls.TextBox { Width = 260, Tag = "Texto de ajuda", Margin = new Thickness(0, 0, 12, 0) },
+            new System.Windows.Controls.ComboBox { Width = 200, ItemsSource = new[] { "Primeira opção", "Segunda" }, SelectedIndex = 0 }));
+        panel.Children.Add(new System.Windows.Controls.ProgressBar { Value = 62, Margin = new Thickness(0, 0, 0, 12) });
+        panel.Children.Add(new System.Windows.Controls.ProgressBar { IsIndeterminate = true });
+        w.Content = panel;
+        return w;
     }
 
     private static Task Tool(string theme, string folder, string name, Func<Window> create) => Step($"{theme}-{name}", async () =>
