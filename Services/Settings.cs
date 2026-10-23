@@ -145,6 +145,8 @@ public sealed class AppSettings
     public bool CloseExits { get; set; }
     /// <summary>B15: menu só com ícones, tabelas e cartões mais densos.</summary>
     public bool Compact { get; set; }
+    /// <summary>Redesign V3: "rail" (trilho com ícone sobre o rótulo, padrão do Windows 11) ou "expanded" (lateral larga com ícone e texto).</summary>
+    public string NavStyle { get; set; } = "rail";
     /// <summary>B29/B30/B31: ordenação, colunas ocultas e larguras de coluna de cada tabela.</summary>
     public Dictionary<string, GridLayout> Grids { get; set; } = new();
     /// <summary>B01: número da CPU no ícone da bandeja.</summary>

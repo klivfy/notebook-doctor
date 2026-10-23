@@ -171,7 +171,13 @@ public static class Smoke
         {
             var bg = Application.Current.TryFindResource("Surface") as Brush ?? Brushes.White;
             dc.DrawRectangle(bg, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
-            dc.DrawRectangle(new VisualBrush(root), null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+            // Sem esticar: o pincel mostra a área do conteúdo em tamanho real, a partir do canto
+            var brush = new VisualBrush(root)
+            {
+                Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top,
+                ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, root.ActualWidth, root.ActualHeight),
+            };
+            dc.DrawRectangle(brush, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
         }
         var bmp = new RenderTargetBitmap(width, height, dpi, dpi, PixelFormats.Pbgra32);
         bmp.Render(visual);

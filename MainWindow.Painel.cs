@@ -144,8 +144,9 @@ public partial class MainWindow
         ScoreLabel.Text = sc.Label;
         // Cor só para estado: o número fica na cor do texto (contraste alto) e o estado vai num chip (texto preto/branco sobre a cor)
         string scoreKey = sc.Score <= 0 ? "SurfaceVariant" : sc.Score >= 75 ? "Success" : sc.Score >= 55 ? "Warning" : "Error";
-        ScoreChip.SetResourceReference(Border.BackgroundProperty, scoreKey);
-        ScoreLabel.SetResourceReference(TextBlock.ForegroundProperty, sc.Score <= 0 ? "OnSurface" : "On" + scoreKey);
+        // Redesign: fundo suave do estado e texto na cor do estado (contraste conferido por ThemeContrastTests)
+        ScoreChip.SetResourceReference(Border.BackgroundProperty, sc.Score <= 0 ? scoreKey : scoreKey + "Container");
+        ScoreLabel.SetResourceReference(TextBlock.ForegroundProperty, sc.Score <= 0 ? "OnSurface" : scoreKey);
         if (sc.Score <= 0) ScoreLabel.Text = "Calculando…";
         System.Windows.Automation.AutomationProperties.SetName(ScoreText, sc.Score > 0 ? $"Nota de saúde {sc.Score} de 100, {sc.Label}" : "Nota de saúde ainda sendo calculada");
         FeedScorePulse(sc.Score);
@@ -306,6 +307,7 @@ public partial class MainWindow
         FindingsList.ItemsSource = findings;
         UpdateStatusChip(findings);
         UpdateTaskbarBadge(findings);
+        UpdateTiles(s, findings);
 
         var bn = Insights.Bottleneck(recent);
         BottleneckName.Text = bn.Resource;
@@ -357,15 +359,41 @@ public partial class MainWindow
         return img;
     }
 
+    // ---------- Redesign V4: atalhos 2 × 2 do Painel ----------
+    private void UpdateTiles(Snapshot s, IReadOnlyList<Finding> findings)
+    {
+        int problems = findings.Count(f => f.Level == "PROBLEMA"), warns = findings.Count(f => f.Level == "ATENCAO");
+        TileDiagValue.Text = problems + warns == 0 ? Loc.T("Tudo certo") : Pt.N(problems + warns, Loc.T("ponto a ver"), Loc.T("pontos a ver"));
+        TileProcValue.Text = Pt.N(s.Groups.Count, Loc.T("programa aberto"), Loc.T("programas abertos"));
+        TileDiskValue.Text = Loc.F("{0} livres ({1}%)", Units.Gb(s.DiskFreeGB, "0"), s.DiskFreePct.ToString("0"));
+    }
+
+    private void TileDiagnosis_Click(object sender, RoutedEventArgs e) => DiagnosisCard.BringIntoView();
+    private void TileProcesses_Click(object sender, RoutedEventArgs e) => SelectTab(AppTabs.Processes);
+    private void TileClean_Click(object sender, RoutedEventArgs e) => SelectTab(AppTabs.Clean);
+    private void TileStartup_Click(object sender, RoutedEventArgs e) => SelectTab(AppTabs.Startup);
+
+    /// <summary>"Mais": exportar e compartilhar, num menu, para o cartão principal ter uma ação só.</summary>
+    private void More_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { ContextMenu: { } menu } b) return;
+        menu.PlacementTarget = b;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.IsOpen = true;
+    }
+
     private void UpdateStatusChip(IReadOnlyList<Finding> findings)
     {
         int problems = findings.Count(f => f.Level == "PROBLEMA"), warns = findings.Count(f => f.Level == "ATENCAO");
-        (string bg, string fg, string text) = problems > 0 ? ("Error", "OnError", Pt.N(problems, "problema", "problemas"))
-                                            : warns > 0 ? ("Warning", "OnWarning", Pt.N(warns, "ponto de atenção", "pontos de atenção"))
-                                            : ("Success", "OnSuccess", "Tudo certo");
+        // Redesign: chip no fundo suave do estado com o texto na cor do estado (como o InfoBar do Windows)
+        (string bg, string fg, string text) = problems > 0 ? ("ErrorContainer", "Error", Pt.N(problems, "problema", "problemas"))
+                                            : warns > 0 ? ("WarningContainer", "Warning", Pt.N(warns, "ponto de atenção", "pontos de atenção"))
+                                            : ("SuccessContainer", "Success", "Tudo certo");
         StatusChip.SetResourceReference(Border.BackgroundProperty, bg);
         StatusText.SetResourceReference(TextBlock.ForegroundProperty, fg);
         StatusText.Text = text;
+        // Ponto de pendência no item do Painel da navegação
+        if (Nav.Items[AppTabs.Panel] is ListBoxItem panelItem) NavLabel.SetBadge(panelItem, problems + warns > 0);
     }
 
     // ---------- M15: explicações abertas no diagnóstico ----------

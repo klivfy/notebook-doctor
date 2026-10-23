@@ -30,6 +30,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Localizer.ApplyTree(this); // M13: antes de o GridMemory ler os títulos das colunas
+        // Rótulos curtos do trilho de navegação: propriedade própria, fora da tradução automática
+        foreach (var item in Nav.Items.OfType<ListBoxItem>())
+            if (NavLabel.GetShort(item) is { } shortLabel) NavLabel.SetShort(item, Loc.T(shortLabel));
         RestorePlacement();
         foreach (var grid in Grids()) GridMemory.Attach(grid, Host.Settings, grid == CleanGrid ? 2 : 1); // Limpeza: a caixa de marcar e o local
         // B33: a lista muda (dados novos, busca, ordenação) e o rodapé acompanha
@@ -147,9 +150,12 @@ public partial class MainWindow : Window
     /// <summary>Menu só com ícones na janela estreita ou no modo compacto (B15).</summary>
     public void ApplyNavDensity()
     {
-        bool icons = Density.NavIconsOnly(ActualWidth, TextScale.Factor, Host.Settings.Compact);
-        Nav.Tag = icons ? "compact" : null;
-        NavPane.MinWidth = icons ? 0 : 200;
+        // Redesign V3: trilho (ícone sobre o rótulo) é o padrão; o modo largo encolhe para só ícones em janela estreita
+        bool rail = Host.Settings.NavStyle != "expanded";
+        bool icons = !rail && Density.NavIconsOnly(ActualWidth, TextScale.Factor, Host.Settings.Compact);
+        Nav.Tag = rail ? "rail" : icons ? "compact" : null;
+        NavPane.Width = rail ? 88 * Math.Max(1, TextScale.Factor * 0.9) : double.NaN;
+        NavPane.MinWidth = rail || icons ? 0 : 220;
     }
 
     // ---------- Busca nas tabelas (M24) ----------
