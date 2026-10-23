@@ -1,0 +1,104 @@
+using System.Globalization;
+using System.Xml.Linq;
+using Xunit;
+
+namespace NotebookDoctor.Tests;
+
+/// <summary>
+/// Redesign V1: confere, direto dos arquivos de tema, os contrastes que o plano promete (WCAG 2): texto 4,5:1 e contornos, gráficos e
+/// indicadores 3:1, nos temas claro e escuro.
+/// </summary>
+public class ThemeContrastTests
+{
+    private static Dictionary<string, string> Theme(string name)
+    {
+        string dir = AppContext.BaseDirectory;
+        while (!File.Exists(Path.Combine(dir, "Themes", name + ".xaml"))) dir = Path.GetDirectoryName(dir) ?? throw new FileNotFoundException(name);
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        return XDocument.Load(Path.Combine(dir, "Themes", name + ".xaml")).Root!.Elements()
+            .Where(e => e.Name.LocalName == "SolidColorBrush")
+            .ToDictionary(e => e.Attribute(x + "Key")!.Value, e => e.Attribute("Color")!.Value);
+    }
+
+    private static double Luminance(string hex)
+    {
+        hex = hex.TrimStart('#');
+        if (hex.Length == 8) hex = hex[2..]; // só cores opacas entram nas contas
+        double Channel(int i)
+        {
+            double c = int.Parse(hex.Substring(i, 2), NumberStyles.HexNumber) / 255.0;
+            return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+        }
+        return 0.2126 * Channel(0) + 0.7152 * Channel(2) + 0.0722 * Channel(4);
+    }
+
+    private static double Ratio(string a, string b)
+    {
+        double la = Luminance(a), lb = Luminance(b);
+        return (Math.Max(la, lb) + 0.05) / (Math.Min(la, lb) + 0.05);
+    }
+
+    public static TheoryData<string, string, string, double> Pairs()
+    {
+        var data = new TheoryData<string, string, string, double>();
+        foreach (var theme in new[] { "Light", "Dark" })
+        {
+            void Add(string fg, string bg, double min) => data.Add(theme, fg, bg, min);
+            foreach (var bg in new[] { "Surface", "LayerFill", "SurfaceContainer" })
+            {
+                Add("OnSurface", bg, 4.5);
+                Add("OnSurfaceVariant", bg, 4.5);
+                Add("AccentText", bg, 4.5);
+            }
+            Add("OnPrimary", "Primary", 4.5);
+            Add("OnPrimaryContainer", "PrimaryContainer", 4.5);
+            Add("OnSecondaryContainer", "SecondaryContainer", 4.5);
+            Add("OnSurface", "ControlFill", 4.5);
+            Add("OnSurface", "SurfaceVariant", 4.5);
+            foreach (var state in new[] { "Error", "Warning", "Success" })
+            {
+                Add("On" + state, state, 4.5);
+                Add(state, "SurfaceContainer", 4.5);
+                Add(state, state + "Container", 4.5);
+                Add("OnSurface", state + "Container", 4.5);
+            }
+            Add("OnSurface", "InfoContainer", 4.5);
+            Add("Outline", "SurfaceContainer", 3);
+            Add("Primary", "SurfaceContainer", 3);
+            Add("FocusStroke", "Surface", 3);
+            Add("InverseOnSurface", "InverseSurface", 4.5);
+            Add("InversePrimary", "InverseSurface", 4.5);
+            foreach (var series in new[] { "ChartCpu", "ChartRam", "ChartDisk", "LevelLow", "LevelMid", "LevelHigh", "LevelCrit" })
+                Add(series, "SurfaceContainer", 3);
+        }
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(Pairs))]
+    public void Contraste_minimo(string theme, string fg, string bg, double min)
+    {
+        var t = Theme(theme);
+        double r = Ratio(t[fg], t[bg]);
+        Assert.True(r >= min, $"{theme}: {fg} {t[fg]} sobre {bg} {t[bg]} = {r:0.00}:1 (mínimo {min}:1)");
+    }
+
+    [Fact]
+    public void Os_dois_temas_tem_as_mesmas_chaves()
+    {
+        var light = Theme("Light").Keys.Order().ToList();
+        var dark = Theme("Dark").Keys.Order().ToList();
+        Assert.Equal(light, dark);
+    }
+
+    [Fact]
+    public void Graficos_nao_usam_a_cor_de_acao()
+    {
+        foreach (var theme in new[] { "Light", "Dark" })
+        {
+            var t = Theme(theme);
+            foreach (var series in new[] { "ChartCpu", "ChartRam", "ChartDisk" })
+                Assert.NotEqual(t["Primary"], t[series]);
+        }
+    }
+}

@@ -28,7 +28,7 @@ public static class Dialogs
     public static void ShowWelcome(Window owner, Services.AppSettings s)
     {
         var dlg = NewWindow(owner, "Bem-vindo ao Notebook Doctor", 520);
-        var heading = Heading("Bem-vindo ao Notebook Doctor", "FsTitleLarge", new Thickness(0, 0, 0, 8));
+        var heading = Heading("Bem-vindo ao Notebook Doctor", "FsTitle", new Thickness(0, 0, 0, 8));
         var intro = new TextBlock
         {
             Text = "O app acompanha CPU, memória e disco, explica o que deixa o notebook lento e corrige com segurança. " +
@@ -213,7 +213,7 @@ public static class Dialogs
     {
         string title = Services.Loc.F("Desinstalar {0}?", Services.Pt.N(programs.Count, Services.Loc.T("programa"), Services.Loc.T("programas")));
         var dlg = NewWindow(owner, title, 520);
-        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
         var list = new ListBox { ItemsSource = programs, MaxHeight = 200, Margin = new Thickness(0, 0, 0, 12) };
         System.Windows.Automation.AutomationProperties.SetName(list, title);
         var body = new TextBlock
@@ -250,7 +250,7 @@ public static class Dialogs
     {
         string title = Services.Loc.T("Procurar sobras de um programa já removido");
         var dlg = NewWindow(owner, title, 520);
-        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
         var body = new TextBlock
         {
             Text = Services.Loc.T("Para programas que não aparecem mais na lista, mas deixaram pastas e registro. Com a pasta, a busca também acha o que aponta para ela."),
@@ -459,7 +459,7 @@ public static class Dialogs
     private static TextBlock Heading(string text, string sizeKey, Thickness margin)
     {
         var t = new TextBlock { Text = text, Margin = margin, TextWrapping = TextWrapping.Wrap };
-        t.SetResourceReference(TextBlock.FontFamilyProperty, "FontMedium");
+        t.SetResourceReference(TextBlock.FontFamilyProperty, "FontTitle");
         t.SetResourceReference(TextBlock.FontSizeProperty, sizeKey);
         System.Windows.Automation.AutomationProperties.SetHeadingLevel(t, System.Windows.Automation.AutomationHeadingLevel.Level1);
         return t;
@@ -511,7 +511,7 @@ public static class Dialogs
     {
         string title = Services.Loc.T("Apagar a unidade inteira");
         var dlg = NewWindow(owner, title, 560);
-        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
         var body = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 14) };
         var (letter, label) = Services.DriveWipeRules.Confirmation(drive);
         var letterLabel = new TextBlock { Text = Services.Loc.F("Digite a letra da unidade ({0}:) para confirmar", letter), Margin = new Thickness(0, 0, 0, 4) };
@@ -547,7 +547,7 @@ public static class Dialogs
     public static void ShowText(Window owner, string title, string text)
     {
         var dlg = NewWindow(owner, title, 600);
-        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
         var body = new TextBox
         {
             Text = text, TextWrapping = TextWrapping.Wrap, IsReadOnly = true, BorderThickness = new Thickness(0),
@@ -571,7 +571,7 @@ public static class Dialogs
     {
         var dlg = NewWindow(owner!, "Senha das configurações", 420);
         if (owner is null) dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen; // janela principal escondida (bandeja)
-        var heading = Heading("Senha das configurações", "FsTitleLarge", new Thickness(0, 0, 0, 8));
+        var heading = Heading("Senha das configurações", "FsTitle", new Thickness(0, 0, 0, 8));
         var body = new TextBlock
         {
             Text = $"Para {what}, digite a senha definida pelo responsável por este computador.",
@@ -621,7 +621,7 @@ public static class Dialogs
         };
         Theme(dlg);
 
-        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
         var body = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 24) };
         body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
 

@@ -1,0 +1,79 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- Redesign V1: tokens na linguagem do Windows 11 (Fluent). Valores de cor nos temas Light/Dark; aqui ficam fonte, tamanho,
+         raio e espaço. Referência: recursos de tema públicos do WinUI (microsoft-ui-xaml, licença MIT). -->
+
+    <!-- ============ Tipografia · Segoe UI Variable (a fonte do Windows 11; no Windows 10 cai para Segoe UI) ============
+         FontMedium e FontSemi são o peso forte (semibold) do Fluent. Google Sans Flex (embutida em /Fonts) fica só na nota de
+         saúde, a marca do app (FontBrand). -->
+    <FontFamily x:Key="FontBody">Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="FontMedium">Segoe UI Variable Text Semibold, Segoe UI Semibold, Segoe UI</FontFamily>
+    <FontFamily x:Key="FontSemi">Segoe UI Variable Text Semibold, Segoe UI Semibold, Segoe UI</FontFamily>
+    <FontFamily x:Key="FontTitle">Segoe UI Variable Display Semibold, Segoe UI Semibold, Segoe UI</FontFamily>
+    <FontFamily x:Key="FontBrand">/Fonts/#Google Sans Flex 36pt 36pt SemiBold, Segoe UI Variable Display Semibold, Segoe UI</FontFamily>
+    <FontFamily x:Key="FontDisplay">/Fonts/#Google Sans Flex 36pt 36pt SemiBold, Segoe UI Variable Display Semibold, Segoe UI</FontFamily>
+    <FontFamily x:Key="FontIcons">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <!-- Escala do Windows (px a 100%). TextScale.Apply multiplica pelo "Tamanho do texto" do Windows (Acessibilidade).
+         Label 13 fica acima do mínimo de 10 pt; Caption 12 só em rótulos curtos da navegação. -->
+    <sys:Double x:Key="FsCaption">12</sys:Double>
+    <sys:Double x:Key="FsLabel">13</sys:Double>
+    <sys:Double x:Key="FsBody">14</sys:Double>
+    <sys:Double x:Key="FsTitleMedium">16</sys:Double>
+    <sys:Double x:Key="FsTitle">20</sys:Double>
+    <sys:Double x:Key="FsTitleLarge">22</sys:Double>
+    <sys:Double x:Key="FsPageTitle">28</sys:Double>
+    <sys:Double x:Key="FsDisplay">40</sys:Double>
+    <sys:Double x:Key="FsHero">56</sys:Double>
+
+    <!-- ============ Forma: raio ============ -->
+    <CornerRadius x:Key="RadiusControl">4</CornerRadius>
+    <CornerRadius x:Key="RadiusCard">8</CornerRadius>
+    <CornerRadius x:Key="RadiusLayer">8,0,0,0</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">12</CornerRadius>
+
+    <!-- ============ Espaço: escala de 4 ============ -->
+    <Thickness x:Key="Space4">4</Thickness>
+    <Thickness x:Key="Space8">8</Thickness>
+    <Thickness x:Key="Space12">12</Thickness>
+    <Thickness x:Key="Space16">16</Thickness>
+    <Thickness x:Key="Space24">24</Thickness>
+    <Thickness x:Key="Space32">32</Thickness>
+    <!-- Distâncias recorrentes: entre botões de uma fila, abaixo de um título, entre cartões-linha -->
+    <Thickness x:Key="GapButton">0,0,8,0</Thickness>
+    <Thickness x:Key="GapTitle">0,0,0,12</Thickness>
+    <Thickness x:Key="GapRow">0,0,0,4</Thickness>
+    <Thickness x:Key="PagePad">24,0,24,24</Thickness>
+
+    <!-- ============ Anel de foco do teclado ============
+         O WPF só mostra o FocusVisualStyle quando o foco chega pelo teclado (Tab, setas), nunca por clique. -->
+    <Style x:Key="FocusRing">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border Margin="-3" CornerRadius="7" BorderThickness="2" BorderBrush="{DynamicResource FocusStroke}" SnapsToDevicePixels="True"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="FocusRingPill">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border Margin="-3" CornerRadius="7" BorderThickness="2" BorderBrush="{DynamicResource FocusStroke}" SnapsToDevicePixels="True"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="FocusRingTight">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border Margin="1" CornerRadius="4" BorderThickness="2" BorderBrush="{DynamicResource FocusStroke}" SnapsToDevicePixels="True"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
