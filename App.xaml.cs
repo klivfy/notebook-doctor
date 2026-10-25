@@ -680,6 +680,8 @@ public partial class App : Application
         FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
             new FrameworkPropertyMetadata(System.Windows.Markup.XmlLanguage.GetLanguage(culture.IetfLanguageTag)));
         Localizer.Install();
+        LiveRegions.Install(); // U4: textos marcados como região viva são lidos pelo leitor de tela quando mudam
+        WindowFit.Install(); // U2: janelas maiores que a área útil do monitor encolhem para caber
     }
 
     /// <summary>Reabre o app (troca de idioma). A instância nova espera esta fechar.</summary>

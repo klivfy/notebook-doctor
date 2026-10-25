@@ -74,6 +74,29 @@ public class WindowPlacementTests
 {
     private static readonly Box Main = new(0, 0, 1920, 1040), Right = new(1920, 0, 1280, 984);
 
+    // U2: 1366 × 768 com escala de 125%, sem a barra de tarefas
+    private static readonly Box Notebook = new(0, 0, 1092, 566);
+
+    [Fact]
+    public void Ferramenta_maior_que_o_notebook_encolhe_e_entra_inteira()
+    {
+        var fit = WindowPlacement.Inside(new Box(-44, -117, 1180, 800), Notebook);
+        Assert.Equal(new Box(0, 0, 1092, 566), fit);
+    }
+
+    [Fact]
+    public void Janela_que_cabe_fica_onde_esta()
+    {
+        var w = new Box(100, 50, 900, 500);
+        Assert.Equal(w, WindowPlacement.Inside(w, Notebook));
+    }
+
+    [Fact]
+    public void Janela_que_passa_da_borda_volta_para_dentro_sem_encolher()
+    {
+        Assert.Equal(new Box(192, 66, 900, 500), WindowPlacement.Inside(new Box(400, 200, 900, 500), Notebook));
+    }
+
     [Fact]
     public void Volta_no_mesmo_lugar_e_no_segundo_monitor()
     {

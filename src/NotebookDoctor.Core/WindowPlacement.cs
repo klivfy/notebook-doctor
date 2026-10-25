@@ -34,4 +34,16 @@ public static class WindowPlacement
         double y = Math.Clamp(saved.Y, screen.Y, Math.Max(screen.Y, screen.Bottom - h));
         return new Box(x, y, w, h);
     }
+
+    /// <summary>
+    /// U2: a janela inteira dentro da área útil do monitor. Encolhe o que passar (inclusive abaixo do mínimo que ela
+    /// pede, porque botões fora da tela são piores que uma janela apertada) e traz para dentro o que ficou de fora.
+    /// </summary>
+    public static Box Inside(Box window, Box area)
+    {
+        double w = Math.Min(window.Width, area.Width), h = Math.Min(window.Height, area.Height);
+        double x = Math.Clamp(window.X, area.X, area.Right - w);
+        double y = Math.Clamp(window.Y, area.Y, area.Bottom - h);
+        return new Box(x, y, w, h);
+    }
 }

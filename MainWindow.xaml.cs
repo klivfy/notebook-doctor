@@ -135,6 +135,9 @@ public partial class MainWindow : Window
         SnackAction.Content = actionLabel;
         SnackAction.Visibility = actionLabel is null ? Visibility.Collapsed : Visibility.Visible;
         Snack.Visibility = Visibility.Visible;
+        // O texto pode ser o mesmo do aviso anterior: pede a leitura de novo, agora que está na tela
+        LiveRegions.Announce(SnackTitle);
+        if (text.Length > 0) LiveRegions.Announce(SnackText);
         _snackTimer.Stop();
         _snackTimer.Interval = TimeSpan.FromSeconds(seconds + text.Length / 25); // tempo de leitura cresce com o texto
         _snackTimer.Start();
@@ -193,21 +196,12 @@ public partial class MainWindow : Window
     {
         var s = Host.Settings;
         if (s.WinLeft is not { } x || s.WinTop is not { } y || s.WinWidth is not { } w || s.WinHeight is not { } h) return;
-        if (WindowPlacement.Fit(new Box(x, y, w, h), WorkAreas(), MinWidth, MinHeight) is not { } fit) return; // monitor sumiu: centraliza
+        if (WindowPlacement.Fit(new Box(x, y, w, h), WindowFit.WorkAreas(), MinWidth, MinHeight) is not { } fit) return; // monitor sumiu: centraliza
         WindowStartupLocation = WindowStartupLocation.Manual;
         (Left, Top, Width, Height) = (fit.X, fit.Y, fit.Width, fit.Height);
         if (s.WinMaximized) WindowState = WindowState.Maximized;
     }
 
-    /// <summary>Área útil de cada monitor (sem a barra de tarefas), convertida para as unidades do WPF.</summary>
-    private static List<Box> WorkAreas()
-    {
-        var primary = System.Windows.Forms.Screen.PrimaryScreen;
-        double scale = primary is null || SystemParameters.PrimaryScreenWidth <= 0 ? 1 : primary.Bounds.Width / SystemParameters.PrimaryScreenWidth;
-        return System.Windows.Forms.Screen.AllScreens
-            .Select(sc => new Box(sc.WorkingArea.X / scale, sc.WorkingArea.Y / scale, sc.WorkingArea.Width / scale, sc.WorkingArea.Height / scale))
-            .ToList();
-    }
 
     private void UpdateTotals(DataGrid grid)
     {
