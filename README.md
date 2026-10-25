@@ -1,6 +1,6 @@
 # Notebook Doctor
 
-Aplicativo de bandeja para Windows que mostra o que deixa o notebook lento e corrige com segurança: diagnóstico em tempo real, limpeza, gerenciamento de processos e inicialização, histórico, ajustes do Windows e notificações. Interface em Material Design 3 (tema claro e escuro) com a fonte Google Sans Flex.
+Aplicativo de bandeja para Windows que mostra o que deixa o notebook lento e corrige com segurança: diagnóstico em tempo real, limpeza, gerenciamento de processos e inicialização, histórico, ajustes do Windows e notificações. Interface no estilo do Windows 11 (Fluent), em português, inglês e espanhol, nos temas claro e escuro (sistema de design em `DESIGN.md`).
 
 - .NET 8, WPF (com Windows Forms só para o ícone da bandeja)
 - Suporte: https://klivfy.com/suporte
