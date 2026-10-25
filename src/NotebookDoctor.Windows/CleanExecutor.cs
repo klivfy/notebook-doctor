@@ -70,7 +70,7 @@ public static class CleanExecutor
 
     private static bool Act(CleanAction action, Func<CleanAction, bool>? onAction)
     {
-        if (action == CleanAction.FlushDns) return BackupStore.Run("ipconfig.exe", "/flushdns", 30_000) == 0;
+        if (action == CleanAction.FlushDns) return BackupStore.Run(30_000, "ipconfig.exe", "/flushdns") == 0;
         return onAction?.Invoke(action) ?? false;
     }
 

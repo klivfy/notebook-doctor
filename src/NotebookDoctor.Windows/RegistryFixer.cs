@@ -50,9 +50,11 @@ public static class RegistryFixer
         using (var session = store.Begin("Verificador de registro"))
         {
             id = session.Id;
+            // C8: uma leitura dos ProgIDs referenciados para a correção inteira, e só se houver item de ProgID
+            var referenced = new Lazy<HashSet<string>>(() => RegistryChecker.ReferencedProgIds(sys));
             foreach (var issue in issues)
             {
-                if (!RegistryChecker.StillBroken(sys, issue, systemRoot, fontsDir)) { skipped++; continue; }
+                if (!RegistryChecker.StillBroken(sys, issue, systemRoot, fontsDir, referenced)) { skipped++; continue; }
                 try
                 {
                     if (issue.Value is null)

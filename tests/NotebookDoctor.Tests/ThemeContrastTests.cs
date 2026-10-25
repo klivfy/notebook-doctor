@@ -64,6 +64,9 @@ public class ThemeContrastTests
             }
             Add("OnSurface", "InfoContainer", 4.5);
             Add("Outline", "SurfaceContainer", 3);
+            // U14: o sublinhado do campo é o que o identifica (a borda fica abaixo de 3:1), sobre o fundo do próprio campo
+            Add("Outline", "ControlFill", 3);
+            Add("Outline", "ControlFillHover", 3);
             Add("Primary", "SurfaceContainer", 3);
             Add("FocusStroke", "Surface", 3);
             Add("InverseOnSurface", "InverseSurface", 4.5);

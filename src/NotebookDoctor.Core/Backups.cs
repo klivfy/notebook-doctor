@@ -67,6 +67,21 @@ public static class BackupRules
     }
 
     /// <summary>
+    /// S3: onde uma entrada do zip de uma pasta volta, ou null se ela sairia da pasta. O Desfazer como administrador lê
+    /// o backup de uma pasta do usuário; uma entrada com ".." ou de outra unidade não pode escrever fora do lugar dela.
+    /// </summary>
+    public static string? FolderTarget(string entry, string folder)
+    {
+        string target = PathOfEntry(entry);
+        if (target.Split('\\').Any(part => part is "." or "..")) return null;
+        return Paths.IsUnder(target, folder) ? target : null;
+    }
+
+    /// <summary>S3: o arquivo do backup (.reg, .xml) só pode ser um nome solto dentro da pasta da sessão.</summary>
+    public static string? ArchiveFile(string archive) =>
+        archive.Length > 0 && archive.IndexOfAny(['\\', '/', ':']) < 0 && archive is not ("." or "..") ? archive : null;
+
+    /// <summary>
     /// Sessões a apagar: as com mais de 30 dias e, se o total passar de 2 GB, as mais antigas até caber. A mais nova
     /// sempre fica, para dar para desfazer a última remoção.
     /// </summary>

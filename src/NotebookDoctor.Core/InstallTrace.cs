@@ -199,7 +199,7 @@ public static class TraceRules
             }
         }
         // Só a chave mais alta criada: as de dentro saem junto com ela
-        var created = createdKeys.Where(k => !createdKeys.Any(p => !ReferenceEquals(p, k) && Paths.IsUnder(k, p) && !Paths.Same(k, p))).OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
+        var created = Paths.TopLevel(createdKeys);
         int deleted = before.Keys.Keys.Count(k => !after.Keys.ContainsKey(k) && !IsNoiseKey(k));
         return new RegistryChanges(created, createdValues, modified, deleted);
     }
@@ -211,7 +211,7 @@ public static class TraceRules
     {
         var list = files.Where(f => !IsNoisePath(f.Path, places, appDataDir)).ToList();
         var createdDirs = list.Where(f => f.Created && f.Directory).Select(f => Paths.Clean(f.Path)).ToList();
-        var topDirs = createdDirs.Where(d => !createdDirs.Any(p => !Paths.Same(p, d) && Paths.IsUnder(d, p))).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(d => d, StringComparer.OrdinalIgnoreCase).ToList();
+        var topDirs = Paths.TopLevel(createdDirs);
         bool InCreatedDir(string path) => topDirs.Any(d => Paths.IsUnder(path, d));
         string? uninstall = registry.CreatedKeys.FirstOrDefault(k => LeftoverScanner.SoftwareRoots.Any(r => Paths.Same(Paths.Parent(k), $@"{r}\Microsoft\Windows\CurrentVersion\Uninstall")));
         string name = (uninstall is null ? null : displayNameOf(uninstall)) ?? Path.GetFileNameWithoutExtension(installer.Replace('\\', '/'));

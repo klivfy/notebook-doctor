@@ -42,9 +42,9 @@ public static class LeftoverRemover
             case LeftoverKind.Service:
             {
                 string name = Paths.Leaf(l.Path);
-                BackupStore.Run("sc.exe", $"stop \"{name}\"", 30_000);
+                BackupStore.Run(30_000, "sc.exe", "stop", name);
                 backup.AddKey(l.Path, BackupKind.Service);
-                int code = BackupStore.Run("sc.exe", $"delete \"{name}\"");
+                int code = BackupStore.Run("sc.exe", "delete", name);
                 if (code == 1060) { RegistryPaths.DeleteTree(l.Path); return Ok(l); } // não estava registrado: sobrou só a chave
                 if (code == 1072) return new RemovalResult(l, true, true, ""); // marcado para sair no reinício
                 return code == 0 ? Ok(l) : new RemovalResult(l, false, false, Loc.F("O Windows não removeu o serviço (código {0}).", code));

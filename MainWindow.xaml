@@ -46,7 +46,8 @@
                 <TextBlock x:Name="SubTitle" Text="Monitor de desempenho" Style="{StaticResource Label}" Margin="0,4,0,0" TextWrapping="Wrap"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button x:Name="SimChip" Content="Simulação ligada" Style="{StaticResource TonalButton}" Visibility="Collapsed" Click="SimChip_Click"
+                <Button x:Name="SimChip" Content="Simulação ligada" Style="{StaticResource StatusChipButton}" Visibility="Collapsed" Click="SimChip_Click" VerticalAlignment="Center"
+                        AutomationProperties.Name="Simulação ligada: abrir Ajustes para desligar"
                         ToolTip="Nenhuma correção altera o computador enquanto a simulação estiver ligada. Clique para ver em Ajustes."/>
                 <Button Content="Suporte" Style="{StaticResource TextButton}" Click="Support_Click" ToolTip="Abrir klivfy.com/suporte"/>
                 <Border x:Name="StatusChip" CornerRadius="{StaticResource RadiusPill}" Padding="12,4" Background="{DynamicResource SurfaceVariant}" VerticalAlignment="Center">
@@ -95,7 +96,7 @@
                                             </ContextMenu>
                                         </Button.ContextMenu>
                                     </Button>
-                                    <TextBlock Text="&#xEB51;" FontFamily="{StaticResource FontIcons}" FontSize="20" Foreground="{DynamicResource AccentText}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                    <TextBlock Text="&#xEB51;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" Foreground="{DynamicResource AccentText}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                                     <TextBlock Text="Nota de saúde" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsTitle}" VerticalAlignment="Center"
                                                AutomationProperties.HeadingLevel="Level2"
                                                ToolTip="De 0 a 100. Junta uso de CPU e memória, espaço livre, saúde do disco e da bateria e problemas encontrados. 75 ou mais é bom." AutomationProperties.HelpText="De 0 a 100. Junta uso de CPU e memória, espaço livre, saúde do disco e da bateria e problemas encontrados. 75 ou mais é bom."/>
@@ -154,7 +155,7 @@
                         <UniformGrid x:Name="Tiles" Columns="2">
                             <Button Style="{StaticResource TileButton}" Click="TileDiagnosis_Click" AutomationProperties.Name="Diagnóstico">
                                 <Grid>
-                                    <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource FontIcons}" FontSize="20" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
+                                    <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
                                     <StackPanel>
                                         <TextBlock Text="Diagnóstico" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsCardTitle}"/>
                                         <TextBlock Text="O que foi encontrado" Style="{StaticResource Label}" Margin="0,12,0,0"/>
@@ -164,7 +165,7 @@
                             </Button>
                             <Button Style="{StaticResource TileButton}" Click="TileProcesses_Click" AutomationProperties.Name="Processos">
                                 <Grid>
-                                    <TextBlock Text="&#xE8FD;" FontFamily="{StaticResource FontIcons}" FontSize="20" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
+                                    <TextBlock Text="&#xE8FD;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
                                     <StackPanel>
                                         <TextBlock Text="Processos" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsCardTitle}"/>
                                         <TextBlock Text="Em execução" Style="{StaticResource Label}" Margin="0,12,0,0"/>
@@ -174,7 +175,7 @@
                             </Button>
                             <Button Style="{StaticResource TileButton}" Click="TileClean_Click" AutomationProperties.Name="Limpeza">
                                 <Grid>
-                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource FontIcons}" FontSize="20" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
+                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
                                     <StackPanel>
                                         <TextBlock Text="Limpeza" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsCardTitle}"/>
                                         <TextBlock x:Name="TileDiskLabel" Text="Espaço livre" Style="{StaticResource Label}" Margin="0,12,0,0"/>
@@ -184,7 +185,7 @@
                             </Button>
                             <Button Style="{StaticResource TileButton}" Click="TileStartup_Click" AutomationProperties.Name="Inicialização">
                                 <Grid>
-                                    <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource FontIcons}" FontSize="20" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
+                                    <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
                                     <StackPanel>
                                         <TextBlock Text="Inicialização" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsCardTitle}"/>
                                         <TextBlock Text="Programas que abrem com o Windows" Style="{StaticResource Label}" Margin="0,12,0,0" TextTrimming="CharacterEllipsis"/>
@@ -241,7 +242,7 @@
                                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                                 <Border x:Name="Chip" Width="36" Height="36" CornerRadius="18" VerticalAlignment="Top" Margin="0,0,16,0"
                                                         Background="{DynamicResource SuccessContainer}">
-                                                    <TextBlock x:Name="ChipGlyph" Text="&#xE73E;" FontFamily="{StaticResource FontIcons}" FontSize="16"
+                                                    <TextBlock x:Name="ChipGlyph" Text="&#xE73E;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIcon}"
                                                                Foreground="{DynamicResource Success}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                                 <StackPanel Grid.Column="1">
@@ -588,7 +589,7 @@
                             <!-- U8: uma ação principal, duas secundárias e o resto em Mais (antes eram onze botões lado a lado) -->
                             <Button Content="Atualizar programas…" Style="{StaticResource TonalButton}" Click="ProgUpdates_Click" Margin="0,0,8,8"
                                     ToolTip="Procura versões novas pelo WinGet e atualiza os que você marcar. Dá para pular uma versão ou pausar um programa."/>
-                            <Button Content="Mirar" Style="{StaticResource TextButton}" Margin="0,0,8,8" Click="ProgHunt_Click"
+                            <Button Content="Mirar numa janela" Style="{StaticResource TextButton}" Margin="0,0,8,8" Click="ProgHunt_Click"
                                     PreviewMouseLeftButtonDown="ProgHunt_Down" PreviewMouseLeftButtonUp="ProgHunt_Up"
                                     ToolTip="Segure, arraste até a janela de um programa e solte: o app mostra de qual programa instalado ela é."/>
                             <Button Content="Mais…" Style="{StaticResource TextButton}" Margin="0,0,8,8" Click="More_Click"
@@ -1271,6 +1272,8 @@
                     <StackPanel>
                         <TextBlock Text="Sobre" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
                         <TextBlock x:Name="AboutText" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                        <!-- U12: os direitos autorais ficam aqui, não no rodapé de todas as telas -->
+                        <TextBlock x:Name="AboutCopyright" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,4"/>
                         <TextBlock Text="Fonte Google Sans Flex, licença SIL Open Font License 1.1." Style="{StaticResource Label}" Margin="0,0,0,12" TextWrapping="Wrap"/>
                         <!-- B23/B24: textos embutidos no app, abrem sem internet -->
                         <WrapPanel Margin="0,0,0,4">
@@ -1302,7 +1305,7 @@
             <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.22"/></Border.Effect>
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <TextBlock Text="&#xE946;" FontFamily="{StaticResource FontIcons}" FontSize="16" Foreground="{DynamicResource AccentText}"
+                <TextBlock Text="&#xE946;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIcon}" Foreground="{DynamicResource AccentText}"
                            VerticalAlignment="Top" Margin="0,4,12,0" AutomationProperties.Name="Informação"/>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock x:Name="SnackTitle" FontFamily="{StaticResource FontSemi}" Foreground="{DynamicResource OnSurface}" TextWrapping="Wrap"
@@ -1317,8 +1320,5 @@
             </Grid>
         </Border>
 
-        <!-- Rodapé discreto -->
-        <TextBlock Grid.Column="1" Grid.Row="2" x:Name="FooterText" Style="{StaticResource Label}" FontSize="{DynamicResource FsCaption}" HorizontalAlignment="Center" Margin="12,0,12,8"
-                   TextTrimming="CharacterEllipsis" ToolTip="Notebook Doctor"/>
     </Grid>
 </Window>

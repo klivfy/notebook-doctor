@@ -81,7 +81,13 @@ public partial class MainWindow
         for (int r = 0; r < 8; r++) HeatGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18) });
 
         void Place(UIElement e, int row, int col) { Grid.SetRow(e, row); Grid.SetColumn(e, col); HeatGrid.Children.Add(e); }
-        TextBlock Label(string text) => new() { Text = text, FontSize = 10, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
+        // U11: rótulos com o menor token de texto (12 px), que cresce com o "Tamanho do texto" do Windows
+        TextBlock Label(string text)
+        {
+            var label = new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
+            label.SetResourceReference(TextBlock.FontSizeProperty, "FsCaption");
+            return label;
+        }
 
         for (int h = 0; h < 24; h += 3) Place(Label($"{h}h"), 0, h + 1);
         for (int d = 0; d < 7; d++)

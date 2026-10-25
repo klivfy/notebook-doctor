@@ -47,6 +47,7 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 | `FsTitle` | 20 semibold | Títulos de diálogo, números das métricas |
 | `PageTitle` / `FsPageTitle` | 28 semibold | Título de página e de janela de ferramenta |
 | `FsHero` | 56 | Só a nota de saúde |
+| `FsIcon` / `FsIconLarge` | 16 / 20 | Ícones (Segoe Fluent Icons) em linhas e botões / na navegação e nos cartões. Crescem com o "Tamanho do texto" |
 
 ## Forma e espaço
 
@@ -63,6 +64,7 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 | Botão sutil | `TextButton` | Ações terciárias, links |
 | Perigo | `DangerButton` | Ação destrutiva, sempre com confirmação |
 | Ícone | `IconButton` | Fechar, "Mais"; precisa de `AutomationProperties.Name` |
+| Chip de estado | `StatusChipButton` | Um estado que vale para o app todo (Simulação ligada); clicar leva para onde se muda. Nunca para ações |
 | Interruptor | `ToggleSwitch` (CheckBox) | Opção que vale na hora |
 | Cartão | `Card` | Agrupar conteúdo |
 | Ladrilho | `TileButton` | Atalho com resumo (Painel), cartão inteiro clicável |

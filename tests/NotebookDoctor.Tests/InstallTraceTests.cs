@@ -254,3 +254,25 @@ public class InstallMonitorIntegrationTests
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); }
     }
 }
+
+/// <summary>C9: só os caminhos mais altos, em n log n.</summary>
+public class TopLevelPathsTests
+{
+    [Fact]
+    public void Fica_so_o_mais_alto_de_cada_arvore()
+    {
+        var top = Paths.TopLevel([@"C:\A\x", @"C:\A", @"C:\A B", @"C:\A\x\y", @"c:\a", @"C:\B\z", @"C:\Apple"]);
+        Assert.Equal([@"C:\A", @"C:\A B", @"C:\Apple", @"C:\B\z"], top);
+    }
+
+    [Fact]
+    public void Trinta_mil_chaves_terminam_rapido()
+    {
+        var keys = Enumerable.Range(0, 300).SelectMany(i => Enumerable.Range(0, 100).Select(j => $@"HKLM\Software\App{i}\Sub{j}"))
+            .Concat(Enumerable.Range(0, 300).Select(i => $@"HKLM\Software\App{i}")).ToList();
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var top = Paths.TopLevel(keys);
+        Assert.Equal(300, top.Count);
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2), $"levou {watch.Elapsed}");
+    }
+}

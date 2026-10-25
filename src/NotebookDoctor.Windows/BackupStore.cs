@@ -88,7 +88,7 @@ public sealed class BackupStore(string root)
                 switch (item.Kind)
                 {
                     case BackupKind.RegistryKey or BackupKind.Service:
-                        if (Run("reg.exe", $"import \"{Path.Combine(dir, item.Archive)}\"") != 0) throw new IOException("reg import");
+                        if (Run("reg.exe", "import", Archive(dir, item)) != 0) throw new IOException("reg import");
                         services |= item.Kind == BackupKind.Service;
                         break;
                     case BackupKind.RegistryValue:
@@ -106,13 +106,14 @@ public sealed class BackupStore(string root)
                         Directory.CreateDirectory(item.OriginalPath);
                         foreach (var entry in folderZip.Entries.Where(e => e.FullName.StartsWith(item.Archive + "/", StringComparison.Ordinal)))
                         {
-                            string target = BackupRules.PathOfEntry(entry.FullName);
+                            // S3: entrada com ".." ou de outra pasta não escreve fora do lugar desta
+                            string target = BackupRules.FolderTarget(entry.FullName, item.OriginalPath) ?? throw new IOException("entrada fora da pasta");
                             if (entry.FullName.EndsWith('/')) Directory.CreateDirectory(target);
                             else Extract(entry, target);
                         }
                         break;
                     case BackupKind.Task:
-                        if (Run("schtasks.exe", $"/Create /TN \"{item.OriginalPath}\" /XML \"{Path.Combine(dir, item.Archive)}\" /F") != 0) throw new IOException("schtasks");
+                        if (Run("schtasks.exe", "/Create", "/TN", item.OriginalPath, "/XML", Archive(dir, item), "/F") != 0) throw new IOException("schtasks");
                         break;
                 }
                 ok++;
@@ -139,9 +140,24 @@ public sealed class BackupStore(string root)
         entry.ExtractToFile(target, overwrite: true);
     }
 
-    internal static int Run(string exe, string args, int timeoutMs = 60_000)
+    /// <summary>S3: o arquivo .reg ou .xml do item, sempre dentro da pasta da sessão (o manifesto é um arquivo do usuário).</summary>
+    private static string Archive(string dir, BackupItem item)
     {
-        using var p = Process.Start(new ProcessStartInfo(exe, args) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true });
+        string path = Path.Combine(dir, BackupRules.ArchiveFile(item.Archive) ?? throw new IOException("arquivo do backup fora da pasta"));
+        return File.Exists(path) ? path : throw new IOException("arquivo do backup ausente");
+    }
+
+    internal static int Run(string exe, params string[] args) => Run(60_000, exe, args);
+
+    /// <summary>
+    /// Roda um programa do Windows. S3: cada argumento vai separado (ArgumentList), então aspas num nome de chave ou de
+    /// tarefa não mudam o comando.
+    /// </summary>
+    internal static int Run(int timeoutMs, string exe, params string[] args)
+    {
+        var info = new ProcessStartInfo(exe) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        foreach (var a in args) info.ArgumentList.Add(a);
+        using var p = Process.Start(info);
         if (p is null) return -1;
         _ = p.StandardOutput.ReadToEndAsync(); // lê para o processo não travar com o buffer cheio
         _ = p.StandardError.ReadToEndAsync();
@@ -230,7 +246,7 @@ public sealed class BackupSession : IDisposable
     public void AddKey(string key, BackupKind kind = BackupKind.RegistryKey)
     {
         string file = $"{++_n:000}.reg";
-        if (BackupStore.Run("reg.exe", $"export \"{key}\" \"{Path.Combine(_dir, file)}\" /y") != 0)
+        if (BackupStore.Run("reg.exe", "export", key, Path.Combine(_dir, file), "/y") != 0)
             throw new IOException(Loc.F("Não foi possível guardar a chave {0} antes de apagar.", key));
         Manifest.Items.Add(new BackupItem { Kind = kind, OriginalPath = key, Archive = file });
         BackupStore.Save(_dir, Manifest);

@@ -38,9 +38,9 @@ public partial class MainWindow : Window
         // B33: a lista muda (dados novos, busca, ordenação) e o rodapé acompanha
         foreach (var grid in new[] { ProcGrid, SpaceGrid, ProgGrid, StartupGrid })
             ((System.Collections.Specialized.INotifyCollectionChanged)grid.Items).CollectionChanged += (_, _) => UpdateTotals(grid);
-        FooterText.Text = AppInfo.Copyright;
-        AboutText.Text = $"Notebook Doctor {AppInfo.Version}\nSuporte: klivfy.com/suporte"
-                         + (AppPaths.Portable ? $"\nModo portátil: dados em {AppPaths.Dir}" : "");
+        AboutCopyright.Text = AppInfo.Copyright;
+        AboutText.Text = Loc.F("Notebook Doctor {0}\nSuporte: klivfy.com/suporte", AppInfo.Version)
+                         + (AppPaths.Portable ? "\n" + Loc.F("Modo portátil: dados em {0}", AppPaths.Dir) : "");
         RefreshAdminCard();
         LoadSettingsIntoForm();
         RefreshProfileCard();

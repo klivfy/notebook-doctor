@@ -213,6 +213,23 @@ public class RegistryCheckTests
         Assert.False(RegistryChecker.StillBroken(pid, pidIssue, Win, Fonts));
     }
 
+    /// <summary>C8: a lista de ProgIDs referenciados é lida uma vez por correção, e só quando há item de ProgID.</summary>
+    [Fact]
+    public void ProgIds_referenciados_sao_lidos_uma_vez()
+    {
+        var pid = ProgId();
+        var pidIssue = Assert.Single(Scan(pid));
+        int reads = 0;
+        var referenced = new Lazy<HashSet<string>>(() => { reads++; return RegistryChecker.ReferencedProgIds(pid); });
+        for (int i = 0; i < 3; i++) Assert.True(RegistryChecker.StillBroken(pid, pidIssue, Win, Fonts, referenced));
+        Assert.Equal(1, reads);
+
+        var run = new FakeRegSystem().Key(RunUser, ("Velho", @"C:\Velho\upd.exe"));
+        var runIssue = Assert.Single(Scan(run));
+        var unused = new Lazy<HashSet<string>>(() => throw new InvalidOperationException("não devia ler"));
+        Assert.True(RegistryChecker.StillBroken(run, runIssue, Win, Fonts, unused));
+    }
+
     [Theory]
     [InlineData(RegIssueKind.Uninstall, @"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\X", null, true)]
     [InlineData(RegIssueKind.Uninstall, @"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall", null, false)]        // a raiz inteira

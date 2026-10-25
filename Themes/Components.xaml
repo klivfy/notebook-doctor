@@ -89,7 +89,7 @@
                         <!-- Largo e compacto: ícone ao lado do texto -->
                         <StackPanel x:Name="Wide" Orientation="Horizontal" Margin="14,8,16,8" VerticalAlignment="Center">
                             <Grid>
-                                <TextBlock x:Name="Glyph" Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="16"
+                                <TextBlock x:Name="Glyph" Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIcon}"
                                            VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
                                 <Ellipse x:Name="DotWide" Width="7" Height="7" Fill="{DynamicResource Warning}" HorizontalAlignment="Right" VerticalAlignment="Top"
                                          Margin="0,-3,-5,0" Visibility="Collapsed"/>
@@ -99,7 +99,7 @@
                         <!-- Trilho: ícone sobre o rótulo curto -->
                         <StackPanel x:Name="Tall" Margin="4,8,4,7" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
                             <Grid HorizontalAlignment="Center">
-                                <TextBlock x:Name="GlyphTall" Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="20"
+                                <TextBlock x:Name="GlyphTall" Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}"
                                            HorizontalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
                                 <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource Warning}" HorizontalAlignment="Right" VerticalAlignment="Top"
                                          Margin="0,-2,-6,0" Visibility="Collapsed"/>
@@ -208,7 +208,7 @@
                         <Border x:Name="Layer" Background="{DynamicResource StateHover}" CornerRadius="{StaticResource RadiusCard}" Opacity="0"/>
                         <Grid Margin="{TemplateBinding Padding}">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="20" VerticalAlignment="Center" Margin="2,0,14,0"
+                            <TextBlock Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" VerticalAlignment="Center" Margin="2,0,14,0"
                                        Foreground="{TemplateBinding Foreground}"/>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <ContentPresenter TextElement.FontFamily="{StaticResource FontSemi}"/>

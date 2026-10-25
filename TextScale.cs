@@ -12,7 +12,7 @@ public static class TextScale
     private static readonly (string Key, double Px)[] Sizes =
     [
         ("FsCaption", 12), ("FsLabel", 13), ("FsBody", 14), ("FsCardTitle", 16), ("FsTitle", 20),
-        ("FsPageTitle", 28), ("FsHero", 56),
+        ("FsPageTitle", 28), ("FsHero", 56), ("FsIcon", 16), ("FsIconLarge", 20),
     ];
 
     public static double Factor { get; private set; } = 1;

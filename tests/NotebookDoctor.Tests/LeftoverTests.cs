@@ -461,6 +461,28 @@ public class BackupRulesTests
         Assert.Equal(Paths.Clean(path), BackupRules.PathOfEntry(entry));
     }
 
+    /// <summary>S3: o Desfazer como administrador não escreve fora da pasta restaurada nem lê .reg fora da sessão.</summary>
+    [Theory]
+    [InlineData("C/Apps/Velho/a.dll", @"C:\Apps\Velho\a.dll")]
+    [InlineData("C/Apps/Velho/sub/b.txt", @"C:\Apps\Velho\sub\b.txt")]
+    [InlineData("C/Apps/Velho/../../Windows/System32/x.dll", null)]
+    [InlineData("C/Apps/Velho2/a.dll", null)]
+    [InlineData("C/Windows/System32/x.dll", null)]
+    [InlineData("D/Apps/Velho/a.dll", null)]
+    public void Entrada_do_zip_so_volta_para_dentro_da_pasta(string entry, string? expected) =>
+        Assert.Equal(expected, BackupRules.FolderTarget(entry, @"C:\Apps\Velho"));
+
+    [Theory]
+    [InlineData("001.reg", "001.reg")]
+    [InlineData("tarefa.xml", "tarefa.xml")]
+    [InlineData(@"..\..\outro.reg", null)]
+    [InlineData(@"C:\Temp\malicioso.reg", null)]
+    [InlineData("sub/x.reg", null)]
+    [InlineData("..", null)]
+    [InlineData("", null)]
+    public void Arquivo_do_backup_e_so_um_nome_solto(string archive, string? expected) =>
+        Assert.Equal(expected, BackupRules.ArchiveFile(archive));
+
     [Fact]
     public void Vencidos_por_idade_e_tamanho_mas_o_mais_novo_fica()
     {

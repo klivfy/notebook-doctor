@@ -24,6 +24,9 @@
     <sys:Double x:Key="FsTitle">20</sys:Double>
     <sys:Double x:Key="FsPageTitle">28</sys:Double>
     <sys:Double x:Key="FsHero">56</sys:Double>
+    <!-- U11: ícones (Segoe Fluent Icons) crescem junto com o texto: 16 nas linhas e botões, 20 na navegação e nos cartões -->
+    <sys:Double x:Key="FsIcon">16</sys:Double>
+    <sys:Double x:Key="FsIconLarge">20</sys:Double>
 
     <!-- ============ Forma: raio ============ -->
     <CornerRadius x:Key="RadiusControl">4</CornerRadius>

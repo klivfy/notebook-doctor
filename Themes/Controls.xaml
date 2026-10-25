@@ -53,6 +53,31 @@
         <Setter Property="Background" Value="{DynamicResource Error}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnError}"/>
     </Style>
+    <!-- U13: chip de estado clicável (Simulação ligada). Tem cara de estado, não de botão: pílula no fundo de informação,
+         com o ícone de info; clicar leva para onde se muda o estado -->
+    <Style x:Key="StatusChipButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="FontSize" Value="{DynamicResource FsLabel}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border Background="{DynamicResource InfoContainer}" CornerRadius="{StaticResource RadiusPill}"/>
+                        <Border x:Name="Layer" Background="{DynamicResource OnSurface}" CornerRadius="{StaticResource RadiusPill}" Opacity="0"/>
+                        <StackPanel Orientation="Horizontal" Margin="12,4">
+                            <TextBlock Text="&#xE946;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsLabel}" VerticalAlignment="Center"
+                                       Margin="0,0,8,0" Foreground="{DynamicResource OnSurface}"/>
+                            <ContentPresenter VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </StackPanel>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Layer" Property="Opacity" Value="0.06"/></Trigger>
+                        <Trigger Property="IsPressed" Value="True"><Setter TargetName="Layer" Property="Opacity" Value="0.12"/></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <!-- Botão só com ícone (fechar aviso): 32×32 e nome acessível obrigatório via AutomationProperties.Name -->
     <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource TextButton}">
         <Setter Property="FontFamily" Value="{StaticResource FontIcons}"/>
@@ -212,7 +237,11 @@
                             <Setter TargetName="Line" Property="Background" Value="{DynamicResource Primary}"/>
                             <Setter TargetName="Line" Property="Height" Value="2"/>
                         </Trigger>
-                        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
+                        <!-- U14: desligado, só o texto esmaece; o sublinhado continua inteiro, é ele que mostra que ali há um campo -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="PART_ContentHost" Property="Opacity" Value="0.4"/>
+                            <Setter TargetName="Hint" Property="Opacity" Value="0.4"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

@@ -38,8 +38,16 @@ public static class Localizer
         foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>()) ApplyTree(child);
     }
 
+    /// <summary>
+    /// C10: elemento já traduzido. A janela é traduzida inteira no Loaded dela e depois cada elemento recebia o próprio
+    /// Loaded, que traduzia tudo de novo; agora cada elemento passa uma vez só.
+    /// </summary>
+    private static readonly DependencyProperty DoneProperty = DependencyProperty.RegisterAttached("Done", typeof(bool), typeof(Localizer));
+
     private static void Apply(DependencyObject d)
     {
+        if (d.IsSealed || d is Freezable { IsFrozen: true } || (bool)d.GetValue(DoneProperty)) return; // congelado: não muda nem tem texto a traduzir
+        d.SetValue(DoneProperty, true);
         foreach (var p in Plain) Translate(d, p);
         switch (d)
         {

@@ -257,6 +257,21 @@ public static class Paths
 
     public static bool Same(string a, string b) => string.Equals(Clean(a), Clean(b), StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// C9: só os caminhos mais altos, sem repetidos: de "C:\A", "C:\A\x" e "C:\B" ficam "C:\A" e "C:\B". Ordena com a barra
+    /// antes de qualquer letra, para cada caminho vir logo depois do que o contém, e compara só com o último guardado:
+    /// n log n em vez de n² (um instalador cria dezenas de milhares de chaves).
+    /// </summary>
+    public static List<string> TopLevel(IEnumerable<string> paths)
+    {
+        var sorted = paths.Select(Clean).Where(p => p.Length > 0)
+            .OrderBy(p => p.Replace('\\', '\u0001'), StringComparer.OrdinalIgnoreCase).ToList();
+        var top = new List<string>();
+        foreach (var p in sorted)
+            if (top.Count == 0 || !IsUnder(p, top[^1])) top.Add(p);
+        return top.OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
     /// <summary>O próprio diretório ou algo dentro dele ("C:\App" contém "C:\App\x", mas não "C:\Apple").</summary>
     public static bool IsUnder(string path, string dir)
     {

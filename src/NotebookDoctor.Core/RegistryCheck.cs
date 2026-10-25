@@ -279,7 +279,11 @@ public static class RegistryChecker
     }
 
     /// <summary>A prova ainda vale agora? É o que o executor pergunta antes de apagar cada item.</summary>
-    public static bool StillBroken(IRegistryCheckSystem sys, RegIssue issue, string systemRoot, string fontsDir)
+    /// <param name="referenced">
+    /// C8: os ProgIDs referenciados, lidos uma vez por correção (<see cref="ReferencedProgIds"/> percorre o registro
+    /// inteiro; antes era relido a cada item). Lido no começo, só pode sobrar referência: o erro é pular, nunca apagar.
+    /// </param>
+    public static bool StillBroken(IRegistryCheckSystem sys, RegIssue issue, string systemRoot, string fontsDir, Lazy<HashSet<string>>? referenced = null)
     {
         if (!Allowed(issue)) return false;
         return issue.Kind switch
@@ -289,7 +293,7 @@ public static class RegistryChecker
             RegIssueKind.Run => CheckRun(sys, issue.Key, issue.Value!) is not null,
             RegIssueKind.SharedDll => CheckSharedDll(sys, issue.Key, issue.Value!) is not null,
             RegIssueKind.Font => CheckFont(sys, issue.Key, issue.Value!, fontsDir) is not null,
-            _ => CheckProgId(sys, ParentOf(issue.Key), issue.Key[(ParentOf(issue.Key).Length + 1)..], ReferencedProgIds(sys), systemRoot) is not null,
+            _ => CheckProgId(sys, ParentOf(issue.Key), issue.Key[(ParentOf(issue.Key).Length + 1)..], referenced?.Value ?? ReferencedProgIds(sys), systemRoot) is not null,
         };
     }
 }
