@@ -58,8 +58,8 @@ public static class Smoke
                 await Tool(theme, folder, "ferramentas-do-windows", () => new WindowsToolsWindow(main));
                 // Controles em estados que as telas de demonstração não mostram sozinhas
                 await Tool(theme, folder, "controles", () => Controls(main));
-                await Modal(theme, folder, "dialogo-info", () => Dialogs.Info(main, "Informação", "Texto de exemplo de um aviso do app, com duas linhas para conferir a quebra."));
-                await Modal(theme, folder, "dialogo-perigo", () => Dialogs.Confirm(main, "Apagar", "Confirmação de uma ação que não pode ser desfeita.", "Apagar", danger: true));
+                await Modal(theme, folder, "dialogo-info", () => Dialogs.Info(main, Loc.T("Informação"), Loc.T("Texto de exemplo de um aviso do app, com duas linhas para conferir a quebra.")));
+                await Modal(theme, folder, "dialogo-perigo", () => Dialogs.Confirm(main, Loc.T("Apagar"), Loc.T("Confirmação de uma ação que não pode ser desfeita."), Loc.T("Apagar"), danger: true));
                 await Modal(theme, folder, "boas-vindas", () => Dialogs.ShowWelcome(main, App.Current.Settings));
             }
         }
@@ -134,15 +134,15 @@ public static class Smoke
             return b;
         }
         panel.Children.Add(Row(Btn("Destaque"), Btn("Padrão", "TonalButton"), Btn("Sutil", "TextButton"), Btn("Perigo", "DangerButton"), Btn("Desligado", null, false)));
-        var sw = new System.Windows.Controls.CheckBox { Content = "Interruptor ligado", IsChecked = true, Width = 260 };
+        var sw = new System.Windows.Controls.CheckBox { Content = Loc.T("Interruptor ligado"), IsChecked = true, Width = 260 };
         sw.SetResourceReference(FrameworkElement.StyleProperty, "ToggleSwitch");
         var swOff = new System.Windows.Controls.CheckBox { Content = "Interruptor desligado", Width = 260 };
         swOff.SetResourceReference(FrameworkElement.StyleProperty, "ToggleSwitch");
         panel.Children.Add(Row(new System.Windows.Controls.CheckBox { Content = "Marcada", IsChecked = true, Margin = new Thickness(0, 0, 16, 0) },
             new System.Windows.Controls.CheckBox { Content = "Desmarcada" }));
         panel.Children.Add(Row(sw, swOff));
-        panel.Children.Add(Row(new System.Windows.Controls.TextBox { Width = 260, Tag = "Texto de ajuda", Margin = new Thickness(0, 0, 12, 0) },
-            new System.Windows.Controls.ComboBox { Width = 200, ItemsSource = new[] { "Primeira opção", "Segunda" }, SelectedIndex = 0 }));
+        panel.Children.Add(Row(new System.Windows.Controls.TextBox { Width = 260, Tag = Loc.T("Texto de ajuda"), Margin = new Thickness(0, 0, 12, 0) },
+            new System.Windows.Controls.ComboBox { Width = 200, ItemsSource = new[] { Loc.T("Primeira opção"), Loc.T("Segunda") }, SelectedIndex = 0 }));
         panel.Children.Add(new System.Windows.Controls.ProgressBar { Value = 62, Margin = new Thickness(0, 0, 0, 12) });
         panel.Children.Add(new System.Windows.Controls.ProgressBar { IsIndeterminate = true });
         w.Content = panel;

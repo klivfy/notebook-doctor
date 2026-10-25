@@ -55,7 +55,8 @@ def code_keys():
             keys.setdefault(unescape(m.group(1)), rel)
             keys.setdefault(unescape(m.group(2)), rel)
         for m in re.finditer(r"(?:ShowSnack|Simulate)\(([^;]*)\);", s):
-            for lm in re.finditer(r"(?<![$\w])" + LIT, m.group(1)):
+            # Literais comparados (t.Id == "pagefile") são identificadores, não texto da tela
+            for lm in re.finditer(r"(?<![$\w])(?<![=!]=\s)" + LIT, m.group(1)):
                 k = unescape(lm.group(1))
                 if re.search(r"[A-Za-zÀ-ú]{3}", k):
                     keys.setdefault(k, rel)

@@ -17,7 +17,7 @@ public partial class MainWindow
         _startup = StartupManager.List();
         StartupGrid.ItemsSource = _startup;
         ApplyFilter(StartupGrid, StartupSearch.Text, o => o is StartupEntry s ? s.Name + " " + s.Command : "");
-        StartupMsg.Text = $"{_startup.Count(x => x.Enabled)} ativos de {_startup.Count}";
+        StartupMsg.Text = Loc.F("{0} ativos de {1}", _startup.Count(x => x.Enabled), _startup.Count);
     }
 
     // Leva 7.3 (C12)

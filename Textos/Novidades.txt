@@ -5,7 +5,7 @@ Revisão de segurança, dados e acessibilidade (novo)
 • Regras de limpeza nunca levam cookies, senhas ou favoritos de subpastas, e a remoção de sobras não apaga tipos do Windows (http, mailto, .txt).
 • O leitor de tela (Narrador, NVDA) passa a anunciar avisos e andamento.
 • Janelas de ferramenta se ajustam à tela de notebooks pequenos (1366 × 768 com escala de 125%).
-• Em inglês e espanhol, o Painel, Processos, Limpeza, Inicialização, Ajustes e Histórico não misturam mais frases em português.
+• Em inglês e espanhol, o Painel, Processos, Limpeza, Inicialização, Ajustes e Histórico não misturam mais frases em português; a memória ("11,8 de 16 GB"), os programas ativos, a nota de administrador, a desfragmentação e os filtros da recuperação também foram traduzidos.
 • A atualização automática só aceita instalador assinado exatamente pela Klivfy: um certificado de outra empresa com "Klivfy" no nome não passa mais.
 • Apagar de vez recusa uma pasta que tenha uma biblioteca do OneDrive ou do SharePoint dentro (a sincronização apagaria também na nuvem) e avisa quando a lista foi cortada e parte dos arquivos fica para a próxima vez.
 • Cancelar a limpeza avançada no meio registra em Ações o que já saiu, com Desfazer para o registro.

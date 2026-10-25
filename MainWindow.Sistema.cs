@@ -76,7 +76,7 @@ public partial class MainWindow
             BoardMaker = "Acme", BoardProduct = "Notebook 15", BoardVersion = "Rev 1.0", BiosVendor = "Acme", BiosVersion = "F.20", BiosDate = "2024-01-15",
             Gpus = [new RawGpu("Intel(R) Iris(R) Xe Graphics", "31.0.101.4502", "2023-06-01", 128L << 20, "1920x1080 @ 60 Hz")],
             Disks = [new RawDisk("NVMe Acme 512GB", "SSD", "NVMe", 512_110_190_592, "Healthy", 41, 4)], PredictFailure = false,
-            Audio = ["Realtek High Definition Audio"], Usb = ["Mouse sem fio", "Webcam HD"], Bluetooth = ["Fone Bluetooth"],
+            Audio = ["Realtek High Definition Audio"], Usb = [Loc.T("Mouse sem fio"), Loc.T("Webcam HD")], Bluetooth = [Loc.T("Fone Bluetooth")],
             Temps = [new RawTemp("ACPI", "TZ00_0", 48)],
         };
         var net = new List<NetAdapter> { new("Wi-Fi", "Intel(R) Wi-Fi 6 AX201", "Wireless80211", "", 866, true, ["192.168.0.12"], "192.168.0.1", ["1.1.1.1"]) };
