@@ -34,6 +34,6 @@ A CI (`.github/workflows/ci.yml`) roda os testes no Linux e no Windows, publica 
 ## Fluxo de uma leva
 
 1. Implementar com testes (Core primeiro; `[WindowsFact]` para o que toca o sistema).
-2. Traduções em `en.json` e `es.json`.
+2. Traduções em `en.json` e `es.json` (skill `traducoes`, com `scripts/traducoes.py`).
 3. Uma linha em `Textos/Novidades.txt` (no topo) e o andamento em `MELHORIAS.md`.
-4. Commit em português, descrevendo o que muda para a pessoa e o porquê; push; conferir a CI e as telas.
+4. Commit em português, descrevendo o que muda para a pessoa e o porquê; push; conferir a CI e as telas (skill `telas`, com `scripts/telas.py`).

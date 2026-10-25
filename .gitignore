@@ -5,3 +5,7 @@ publish/
 .vs/
 *.zip
 *.exe
+
+# Ajustes do Claude Code por pessoa (ganchos locais não vão para quem clona)
+.claude/settings.local.json
+smoke-out/
