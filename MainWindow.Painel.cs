@@ -71,7 +71,7 @@ public partial class MainWindow
                 {
                     ActionLog.Add("Reinício pedido", "shutdown /r /t 10");
                     int code = await SystemIntegrity.RunAsync("shutdown.exe", "/r /t 10", _ => { }, CancellationToken.None);
-                    if (code != 0) ShowSnack("O Windows não aceitou o reinício", $"O comando terminou com código {code}. Reinicie pelo menu Iniciar.");
+                    if (code != 0) ShowSnack("O Windows não aceitou o reinício", Loc.F("O comando terminou com código {0}. Reinicie pelo menu Iniciar.", code));
                 }
                 break;
             case var tab when tab.StartsWith("tab:") && int.TryParse(tab[4..], out int idx):
@@ -98,7 +98,7 @@ public partial class MainWindow
             if (Host.Focus.Active)
             {
                 string msg = await Host.Focus.StopAsync();
-                FocusBtn.Content = "Modo Foco";
+                FocusBtn.Content = Loc.T("Modo Foco");
                 ActionLog.Add("Modo Foco desligado", msg);
                 ShowSnack("Modo Foco desligado", msg);
             }
@@ -106,7 +106,7 @@ public partial class MainWindow
             {
                 if (Simulate("Ligar o Modo Foco", "Baixaria a prioridade dos programas pesados em segundo plano e ativaria Alto desempenho, se existir. Nada seria fechado.")) return;
                 string msg = await Host.Focus.StartAsync(snap, Host.Health);
-                FocusBtn.Content = "Desligar Modo Foco";
+                FocusBtn.Content = Loc.T("Desligar Modo Foco");
                 ActionLog.Add("Modo Foco ligado", msg);
                 ShowSnack("Modo Foco ligado", msg + " Nenhum programa foi fechado; ao desligar, tudo volta ao que era.",
                           "Desligar", () => Focus_Click(this, new RoutedEventArgs()));
@@ -121,8 +121,8 @@ public partial class MainWindow
         var a = Host.HeavyAlert;
         HeavyBanner.Visibility = a is null ? Visibility.Collapsed : Visibility.Visible;
         if (a is null) return;
-        HeavyTitle.Text = $"{a.Name} está usando {a.CpuPct:0}% da CPU há mais de 3 minutos";
-        HeavySub.Text = $"Desde {a.Since:HH:mm} · {a.MemMB} MB de RAM. Se não estiver em uso, encerrar libera o processador.";
+        HeavyTitle.Text = Loc.F("{0} está usando {1:0}% da CPU há mais de 3 minutos", a.Name, a.CpuPct);
+        HeavySub.Text = Loc.F("Desde {0:HH:mm} · {1} MB de RAM. Se não estiver em uso, encerrar libera o processador.", a.Since, a.MemMB);
     }
 
     private void HeavyKill_Click(object sender, RoutedEventArgs e)
@@ -141,29 +141,29 @@ public partial class MainWindow
         var h = Host.Health;
         var sc = Host.Score;
         ScoreText.Text = sc.Score > 0 ? sc.Score.ToString() : "–";
-        ScoreLabel.Text = sc.Label;
+        ScoreLabel.Text = Loc.T(sc.Label);
         // Cor só para estado: o número fica na cor do texto (contraste alto) e o estado vai num chip (texto preto/branco sobre a cor)
         string scoreKey = sc.Score <= 0 ? "SurfaceVariant" : sc.Score >= 75 ? "Success" : sc.Score >= 55 ? "Warning" : "Error";
         // Redesign: fundo suave do estado e texto na cor do estado (contraste conferido por ThemeContrastTests)
         ScoreChip.SetResourceReference(Border.BackgroundProperty, sc.Score <= 0 ? scoreKey : scoreKey + "Container");
         ScoreLabel.SetResourceReference(TextBlock.ForegroundProperty, sc.Score <= 0 ? "OnSurface" : scoreKey);
-        if (sc.Score <= 0) ScoreLabel.Text = "Calculando…";
-        System.Windows.Automation.AutomationProperties.SetName(ScoreText, sc.Score > 0 ? $"Nota de saúde {sc.Score} de 100, {sc.Label}" : "Nota de saúde ainda sendo calculada");
+        if (sc.Score <= 0) ScoreLabel.Text = Loc.T("Calculando…");
+        System.Windows.Automation.AutomationProperties.SetName(ScoreText, sc.Score > 0 ? Loc.F("Nota de saúde {0} de 100, {1}", sc.Score, Loc.T(sc.Label)) : Loc.T("Nota de saúde ainda sendo calculada"));
         FeedScorePulse(sc.Score);
 
         if (h.HasDisk)
         {
-            DiskHealthTitle.Text = $"{(h.DiskType.Length > 0 ? h.DiskType : "Disco")} · saúde";
-            string state = h.DiskHealthy ? "Saudável" : h.DiskHealth;
-            DiskHealthText.Text = state + (h.DiskWearPct is { } w ? $" · desgaste {w}%" : "") + (h.DiskTempC is { } t ? " · " + Units.Temp(t) : "");
-            DiskHealthText.ToolTip = h.DiskWearPct is null ? "Desgaste e temperatura do SSD só aparecem com o app em modo administrador." : null;
+            DiskHealthTitle.Text = Loc.F("{0} · saúde", h.DiskType.Length > 0 ? h.DiskType : Loc.T("Disco"));
+            string state = Loc.T(h.DiskHealthy ? "Saudável" : h.DiskHealth);
+            DiskHealthText.Text = state + (h.DiskWearPct is { } w ? " · " + Loc.F("desgaste {0}%", w) : "") + (h.DiskTempC is { } t ? " · " + Units.Temp(t) : "");
+            DiskHealthText.ToolTip = h.DiskWearPct is null ? Loc.T("Desgaste e temperatura do SSD só aparecem com o app em modo administrador.") : null;
         }
-        else DiskHealthText.Text = "indisponível";
+        else DiskHealthText.Text = Loc.T("indisponível");
 
-        string bat = h.BatteryHealthPct is { } b ? $"{b}%" + (h.BatteryCycles is { } c ? $" ({c:N0} ciclos)" : "") : "sem bateria";
+        string bat = h.BatteryHealthPct is { } b ? $"{b}%" + (h.BatteryCycles is { } c ? " " + Loc.F("({0:N0} ciclos)", c) : "") : Loc.T("sem bateria");
         string boot = h.BootSeconds is { } s ? $"{s} s" : "–";
         BatteryBootText.Text = $"{bat} · boot {boot}";
-        BatteryBootText.ToolTip = h.BootSeconds is null ? "O tempo de boot vem do log do Windows e pode exigir modo administrador." : null;
+        BatteryBootText.ToolTip = h.BootSeconds is null ? Loc.T("O tempo de boot vem do log do Windows e pode exigir modo administrador.") : null;
     }
 
     // ---------- Otimizar agora (A01) ----------
@@ -172,7 +172,7 @@ public partial class MainWindow
         if (Host.Settings.SimulationMode)
         {
             long would = await Task.Run(() => Cleaner.SafeJunkBytes(Host.Settings.TempDays));
-            Simulate("Otimizar agora", $"Apagaria cerca de {Cleaner.FormatBytes(would)} de temporários com mais de {Host.Settings.TempDays} dias" + (AppInfo.IsAdmin ? " e otimizaria o SSD (TRIM)." : "."));
+            Simulate("Otimizar agora", Loc.F(AppInfo.IsAdmin ? "Apagaria cerca de {0} de temporários com mais de {1} dias e otimizaria o SSD (TRIM)." : "Apagaria cerca de {0} de temporários com mais de {1} dias.", Cleaner.FormatBytes(would), Host.Settings.TempDays));
             return;
         }
         OptimizeBtn.IsEnabled = false;
@@ -184,11 +184,11 @@ public partial class MainWindow
         OptimizeBtn.IsEnabled = true;
 
         string compare = before is null || after is null ? "" :
-            $"Antes → depois: espaço livre {Units.Gb(before.DiskFreeGB)} → {Units.Gb(after.DiskFreeGB)} · memória {before.RamPct:0}% → {after.RamPct:0}% · nota {scoreBefore} → {Host.Score.Score}. ";
-        string admin = AppInfo.IsAdmin ? "O SSD também foi otimizado (TRIM)." : "Pastas do Windows e otimização do SSD exigem o modo administrador.";
+            Loc.F("Antes → depois: espaço livre {0} → {1} · memória {2:0}% → {3:0}% · nota {4} → {5}.", Units.Gb(before.DiskFreeGB), Units.Gb(after.DiskFreeGB), before.RamPct, after.RamPct, scoreBefore, Host.Score.Score) + " ";
+        string admin = Loc.T(AppInfo.IsAdmin ? "O SSD também foi otimizado (TRIM)." : "Pastas do Windows e otimização do SSD exigem o modo administrador.");
         // Resultado no próprio app, sem diálogo modal; o detalhe fica no registro de Ações
         var outcome = CleanOutcome.Describe(freed);
-        ShowSnack(outcome.Celebrate ? outcome.Title : $"Otimização concluída: {Cleaner.FormatBytes(freed)} liberados", compare + admin,
+        ShowSnack(outcome.Celebrate ? Loc.T(outcome.Title) : Loc.F("Otimização concluída: {0} liberados", Cleaner.FormatBytes(freed)), compare + admin,
                   "Mais opções", () => Tabs.SelectedIndex = TabClean, seconds: 15);
         PlayDoneSound();
     }
@@ -260,7 +260,7 @@ public partial class MainWindow
             using (var fs = System.IO.File.Create(file)) png.Save(fs);
             bool copied = true;
             try { Clipboard.SetImage(bmp); } catch { copied = false; } // outro programa segurando a área de transferência
-            ShowSnack("Imagem do painel salva", (copied ? "Também foi copiada: cole com Ctrl+V. " : "") + System.IO.Path.GetFileName(file),
+            ShowSnack("Imagem do painel salva", (copied ? Loc.T("Também foi copiada: cole com Ctrl+V.") + " " : "") + System.IO.Path.GetFileName(file),
                       "Abrir", () => AppInfo.OpenShell(file), seconds: 12);
         }
         catch (Exception ex) { ShowSnack("Não foi possível salvar a imagem", ex.Message); }
@@ -278,19 +278,23 @@ public partial class MainWindow
     }
 
     // ---------- Painel ----------
+    /// <summary>"3 d 4 h", "2 h 5 min" ou só "4 min" quando ainda não passou uma hora.</summary>
+    private static string Uptime(TimeSpan up) =>
+        up.TotalDays >= 1 ? $"{(int)up.TotalDays} d {up.Hours} h" : up.Hours > 0 ? $"{up.Hours} h {up.Minutes} min" : $"{up.Minutes} min";
+
     private void OnSnapshot(Snapshot s)
     {
         if (!IsVisible) return;
 
         var up = TimeSpan.FromMilliseconds(Environment.TickCount64);
-        SubTitle.Text = $"Ligado há {(up.TotalDays >= 1 ? $"{(int)up.TotalDays} d {up.Hours} h" : $"{up.Hours} h {up.Minutes} min")} · {(AppInfo.IsAdmin ? "administrador" : "usuário padrão")} · rede ↓ {FormatRate(s.NetDownKBs)} ↑ {FormatRate(s.NetUpKBs)}";
+        SubTitle.Text = Loc.F("Ligado há {0} · {1} · rede ↓ {2} ↑ {3}", Uptime(up), Loc.T(AppInfo.IsAdmin ? "administrador" : "usuário padrão"), FormatRate(s.NetDownKBs), FormatRate(s.NetUpKBs));
 
         CpuText.Text = $"{s.Cpu:0}%";
-        CpuSub.Text = $"Maior: {s.TopByCpu.FirstOrDefault()?.Name ?? "–"}" + (s.TempC > 0 ? " · " + Units.Temp(s.TempC) : "");
+        CpuSub.Text = Loc.F("Maior: {0}", s.TopByCpu.FirstOrDefault()?.Name ?? "–") + (s.TempC > 0 ? " · " + Units.Temp(s.TempC) : "");
         RamText.Text = $"{s.RamPct:0}%";
         RamSub.Text = Units.GbOf(s.RamUsedGB, s.RamTotalGB);
         DiskText.Text = $"{s.DiskBusy:0}%";
-        DiskSub.Text = $"ocupado · {Units.Gb(s.DiskFreeGB, "0")} livres ({s.DiskFreePct:0}%)";
+        DiskSub.Text = Loc.F("ocupado · {0} livres ({1:0}%)", Units.Gb(s.DiskFreeGB, "0"), s.DiskFreePct);
 
         var recent = Host.Recent;
         var times = recent.Select(x => x.Time).ToList();
@@ -310,7 +314,7 @@ public partial class MainWindow
         UpdateTiles(s, findings);
 
         var bn = Insights.Bottleneck(recent);
-        BottleneckName.Text = bn.Resource;
+        BottleneckName.Text = Loc.T(bn.Resource);
         BottleneckText.Text = bn.Explanation;
         RefreshHealthStrip();
         RefreshHeavyBanner();
@@ -388,7 +392,7 @@ public partial class MainWindow
         // Redesign: chip no fundo suave do estado com o texto na cor do estado (como o InfoBar do Windows)
         (string bg, string fg, string text) = problems > 0 ? ("ErrorContainer", "Error", Pt.N(problems, "problema", "problemas"))
                                             : warns > 0 ? ("WarningContainer", "Warning", Pt.N(warns, "ponto de atenção", "pontos de atenção"))
-                                            : ("SuccessContainer", "Success", "Tudo certo");
+                                            : ("SuccessContainer", "Success", Loc.T("Tudo certo"));
         StatusChip.SetResourceReference(Border.BackgroundProperty, bg);
         StatusText.SetResourceReference(TextBlock.ForegroundProperty, fg);
         StatusText.Text = text;

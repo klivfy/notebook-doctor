@@ -99,4 +99,28 @@ public class LocTests
             .ToList();
         Assert.True(missing.Count == 0, "Sem tradução:\n" + string.Join("\n", missing));
     }
+
+    /// <summary>
+    /// U1: além do Loc.T, os textos que o app traduz por dentro também precisam estar no dicionário: as duas formas do
+    /// Pt.N, os textos fixos do aviso flutuante (ShowSnack) e da simulação, e os dois lados de Loc.T(cond ? "a" : "b").
+    /// </summary>
+    [Fact]
+    public void Plurais_avisos_e_simulacoes_tem_traducao()
+    {
+        var en = Loc.Load("en");
+        const string Lit = @"""((?:[^""\\]|\\.)*)""";
+        var keys = new List<string>();
+        foreach (var f in Directory.EnumerateFiles(Root(), "*.cs", SearchOption.AllDirectories)
+                     .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") && !f.Contains("Tests")))
+        {
+            string code = File.ReadAllText(f);
+            foreach (Match m in Regex.Matches(code, @"Pt\.N\([^,]+,\s*" + Lit + @"\s*,\s*" + Lit)) keys.AddRange([m.Groups[1].Value, m.Groups[2].Value]);
+            foreach (Match m in Regex.Matches(code, @"Loc\.[TF]\([^;""]*?\?\s*" + Lit + @"\s*:\s*" + Lit)) keys.AddRange([m.Groups[1].Value, m.Groups[2].Value]);
+            foreach (Match call in Regex.Matches(code, @"(?:ShowSnack|Simulate)\(([^;]*)\);"))
+                foreach (Match m in Regex.Matches(call.Groups[1].Value, @"(?<![$\w]|[=!]= )" + Lit))
+                    if (Regex.IsMatch(m.Groups[1].Value, "[A-Za-zÀ-ú]{3}")) keys.Add(m.Groups[1].Value);
+        }
+        var missing = keys.Select(Regex.Unescape).Where(k => !en.ContainsKey(k)).Distinct().ToList();
+        Assert.True(missing.Count == 0, "Sem tradução:\n" + string.Join("\n", missing));
+    }
 }

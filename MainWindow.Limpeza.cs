@@ -11,11 +11,11 @@ public partial class MainWindow
     // ---------- Limpeza ----------
     private async void Scan_Click(object sender, RoutedEventArgs e)
     {
-        CleanMsg.Text = "Analisando…";
+        CleanMsg.Text = Loc.T("Analisando…");
         int days = Host.Settings.TempDays;
         var items = new System.Collections.ObjectModel.ObservableCollection<CleanItem>();
         CleanGrid.ItemsSource = items;
-        void Header() => CleanHeader.Text = $"{Cleaner.FormatBytes(items.Where(i => i.Selected).Sum(i => i.Bytes))} marcados para limpeza · {Cleaner.FormatBytes(items.Sum(i => i.Bytes))} no total (temporários com mais de {days} dias; caches inteiros).";
+        void Header() => CleanHeader.Text = Loc.F("{0} marcados para limpeza · {1} no total (temporários com mais de {2} dias; caches inteiros).", Cleaner.FormatBytes(items.Where(i => i.Selected).Sum(i => i.Bytes)), Cleaner.FormatBytes(items.Sum(i => i.Bytes)), days);
         // Cada local aparece assim que é medido; caches grandes (npm, NuGet) chegam por último
         // O total "marcados para limpeza" acompanha cada caixa marcada ou desmarcada
         await Cleaner.ScanProgressiveAsync(days, item => Dispatcher.BeginInvoke(() => { item.PropertyChanged += (_, _) => Header(); items.Add(item); Header(); }));
@@ -27,21 +27,21 @@ public partial class MainWindow
     private async void Clean_Click(object sender, RoutedEventArgs e)
     {
         CleanGrid.CommitEdit(DataGridEditingUnit.Row, true);
-        if (CleanGrid.ItemsSource is not IEnumerable<CleanItem> source || !source.Any(i => i.Selected)) { CleanMsg.Text = "Nada selecionado."; return; }
+        if (CleanGrid.ItemsSource is not IEnumerable<CleanItem> source || !source.Any(i => i.Selected)) { CleanMsg.Text = Loc.T("Nada selecionado."); return; }
         var items = source.ToList();
         var chosen = items.Where(i => i.Selected).ToList();
         string list = string.Join("\n", chosen.Select(i => $"• {i.Label} ({i.SizeText})"));
-        string extra = chosen.Any(i => i.IsRecycleBin) ? "\n\nA Lixeira será esvaziada DEFINITIVAMENTE." : "";
-        if (Simulate("Limpar os itens marcados", $"Apagaria: {string.Join("; ", chosen.Select(i => $"{i.Label} ({i.SizeText})"))}.")) return;
-        if (!Dialogs.Confirm(this, "Confirmar limpeza", $"Apagar os itens abaixo?\n\n{list}{extra}", "Apagar", danger: chosen.Any(i => i.IsRecycleBin))) return;
+        string extra = chosen.Any(i => i.IsRecycleBin) ? "\n\n" + Loc.T("A Lixeira será esvaziada DEFINITIVAMENTE.") : "";
+        if (Simulate("Limpar os itens marcados", Loc.F("Apagaria: {0}.", string.Join("; ", chosen.Select(i => $"{i.Label} ({i.SizeText})"))))) return;
+        if (!Dialogs.Confirm(this, "Confirmar limpeza", Loc.T("Apagar os itens abaixo?") + $"\n\n{list}{extra}", "Apagar", danger: chosen.Any(i => i.IsRecycleBin))) return;
 
-        CleanMsg.Text = "Limpando…";
+        CleanMsg.Text = Loc.T("Limpando…");
         int days = Host.Settings.TempDays;
         // B12: mostra em que etapa está, para limpezas longas não parecerem travadas
-        var progress = new Progress<(int Step, int Steps, string Label)>(p => CleanMsg.Text = $"Limpando {p.Step} de {p.Steps}: {p.Label}…");
+        var progress = new Progress<(int Step, int Steps, string Label)>(p => CleanMsg.Text = Loc.F("Limpando {0} de {1}: {2}…", p.Step, p.Steps, p.Label));
         long freed = await Task.Run(() => Cleaner.Clean(items, days, progress));
         var (title, text, celebrate) = CleanOutcome.Describe(freed);
-        CleanMsg.Text = $"{title} {text}";
+        CleanMsg.Text = $"{Loc.T(title)} {Loc.T(text)}";
         if (celebrate) ShowSnack(title, text, seconds: 12); // B14
         PlayDoneSound();
         ActionLog.Add("Limpeza (seção Limpeza)", $"{Cleaner.FormatBytes(freed)} liberados: {string.Join(", ", chosen.Select(i => i.Label.Split('(')[0].Trim()))}");
@@ -52,18 +52,18 @@ public partial class MainWindow
     // ---------- B35: prévia do que seria apagado ----------
     private async void CleanPreview_Click(object sender, RoutedEventArgs e)
     {
-        if (CleanGrid.SelectedItem is not CleanItem item) { CleanMsg.Text = "Selecione um local para ver os arquivos."; return; }
+        if (CleanGrid.SelectedItem is not CleanItem item) { CleanMsg.Text = Loc.T("Selecione um local para ver os arquivos."); return; }
         if (item.IsRecycleBin)
         {
             // A Lixeira não é uma pasta comum: a própria tela do Windows mostra o conteúdo
             AppInfo.OpenShell("shell:RecycleBinFolder");
             return;
         }
-        CleanMsg.Text = "Listando…";
+        CleanMsg.Text = Loc.T("Listando…");
         int days = Host.Settings.TempDays;
         var files = await Task.Run(() => Cleaner.Preview(item, days));
         CleanMsg.Text = "";
-        Dialogs.ShowText(this, $"O que seria apagado: {item.Label}", CleanPreview.Format(item.Label, item.Paths, files));
+        Dialogs.ShowText(this, Loc.F("O que seria apagado: {0}", item.Label), CleanPreview.Format(item.Label, item.Paths, files));
     }
 
     // ---------- B34: marcar e desmarcar todos ----------

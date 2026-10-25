@@ -33,14 +33,14 @@ public partial class MainWindow
 
         if (prof.Focus && !Host.Focus.Active && Host.Latest is { } snap) notes.Add(await Host.Focus.StartAsync(snap, Host.Health));
         else if (!prof.Focus && Host.Focus.Active) notes.Add(await Host.Focus.StopAsync());
-        FocusBtn.Content = Host.Focus.Active ? "Desligar Modo Foco" : "Modo Foco";
+        FocusBtn.Content = Loc.T(Host.Focus.Active ? "Desligar Modo Foco" : "Modo Foco");
 
         Host.Settings.ActiveProfile = prof.Id;
         Host.Settings.Save();
         LoadSettingsIntoForm();
         RefreshProfileCard();
         ActionLog.Add($"Perfil: {prof.Name}", string.Join(" ", notes));
-        ShowSnack($"Perfil {prof.Name} ativo", (target is { } t ? $"Plano de energia: {t.Name}. " : "") + string.Join(" ", notes),
+        ShowSnack(Loc.F("Perfil {0} ativo", Loc.T(prof.Name)), (target is { } t ? Loc.F("Plano de energia: {0}.", t.Name) + " " : "") + string.Join(" ", notes.Select(Loc.T)),
                   "Ver em Ações", () => Tabs.SelectedIndex = TabActions);
     }
 
@@ -104,16 +104,16 @@ public partial class MainWindow
 
     /// <summary>A02: sugestão ao ligar ou tirar da tomada, com a troca a um clique.</summary>
     public void ShowPowerSuggestion(PowerSuggestion s) =>
-        ShowSnack(s.Title, s.Reason, $"Usar {s.Plan.Name}", async () =>
+        ShowSnack(s.Title, s.Reason, Loc.F("Usar {0}", s.Plan.Name), async () =>
         {
-            if (await ActivatePlanAsync(s.Plan.Guid)) ShowSnack($"Plano ativo: {s.Plan.Name}", "Dá para desfazer na aba Ações.");
+            if (await ActivatePlanAsync(s.Plan.Guid)) ShowSnack(Loc.F("Plano ativo: {0}", s.Plan.Name), "Dá para desfazer na aba Ações.");
         }, seconds: 20);
 
     // ---------- Teste de conexão (A46) ----------
     private async void NetTest_Click(object sender, RoutedEventArgs e)
     {
         NetTestBtn.IsEnabled = false;
-        NetTestResult.Text = "Testando… (uns 10 segundos)";
+        NetTestResult.Text = Loc.T("Testando… (uns 10 segundos)");
         try { NetTestResult.Text = string.Join("\n", await NetTest.RunAsync()); }
         finally { NetTestBtn.IsEnabled = true; }
     }
@@ -219,7 +219,7 @@ public partial class MainWindow
             string file = System.IO.Path.Combine(AppPaths.ExportDir(), $"log-diagnostico-{DateTime.Now:yyyy-MM-dd_HHmm}.txt");
             System.IO.File.WriteAllText(file, SupportPackage.Redact(text), new System.Text.UTF8Encoding(true));
             AppInfo.OpenShell(file);
-            ShowSnack("Log de diagnóstico salvo", $"{System.IO.Path.GetFileName(file)}, em {System.IO.Path.GetDirectoryName(file)}. Sem nome de usuário nem do computador.");
+            ShowSnack("Log de diagnóstico salvo", Loc.F("{0}, em {1}. Sem nome de usuário nem do computador.", System.IO.Path.GetFileName(file), System.IO.Path.GetDirectoryName(file)));
         }
         catch (Exception ex) { ShowSnack("Não foi possível salvar o log", ex.Message); }
     }
@@ -228,7 +228,7 @@ public partial class MainWindow
     private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
     {
         UpdateBtn.IsEnabled = false;
-        UpdateMsg.Text = "Procurando…";
+        UpdateMsg.Text = Loc.T("Procurando…");
         try
         {
             var (result, info) = await Updater.CheckAsync();
@@ -252,7 +252,7 @@ public partial class MainWindow
     {
         if (Host.PendingUpdate is not { } info) return;
         UpdateMsg.Text = $"Versão {info.Version} disponível. {info.Notes}".Trim();
-        ShowSnack($"Versão {info.Version} disponível", info.Notes, "Instalar", () => _ = InstallUpdateAsync(info), seconds: 20);
+        ShowSnack(Loc.F("Versão {0} disponível", info.Version), info.Notes, "Instalar", () => _ = InstallUpdateAsync(info), seconds: 20);
     }
 
     private async Task InstallUpdateAsync(UpdateInfo info)
@@ -265,7 +265,7 @@ public partial class MainWindow
         {
             var progress = new Progress<int>(p => UpdateMsg.Text = $"Baixando… {p}%");
             string file = await Updater.DownloadAndVerifyAsync(info, progress);
-            UpdateMsg.Text = "Instalador conferido. Abrindo…";
+            UpdateMsg.Text = Loc.T("Instalador conferido. Abrindo…");
             ActionLog.Add($"Atualização para {info.Version}", "Instalador verificado (SHA-256 e assinatura Klivfy).");
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(file) { UseShellExecute = true });
             Host.QuitForUpdate();
@@ -326,7 +326,7 @@ public partial class MainWindow
 
     private void SaveSettings_Click(object sender, RoutedEventArgs e)
     {
-        if (!Host.EnsureUnlocked("salvar as preferências")) { LoadSettingsIntoForm(); CfgMsg.Text = "Não salvo: as preferências voltaram ao que estava."; return; } // B38
+        if (!Host.EnsureUnlocked("salvar as preferências")) { LoadSettingsIntoForm(); CfgMsg.Text = Loc.T("Não salvo: as preferências voltaram ao que estava."); return; } // B38
         var s = Host.Settings;
         s.ThemeMode = (CfgTheme.SelectedItem as ComboBoxItem)?.Tag as string ?? "system";
         string oldLanguage = s.Language;
@@ -389,7 +389,7 @@ public partial class MainWindow
         {
             // A demonstração não grava nada fora da pasta temporária dela
             StartMenuBtn.IsEnabled = false;
-            StartMenuMsg.Text = "Indisponível no modo demonstração.";
+            StartMenuMsg.Text = Loc.T("Indisponível no modo demonstração.");
             return;
         }
         var state = StartMenu.Current();
@@ -416,10 +416,10 @@ public partial class MainWindow
     {
         bool demo = AppPaths.Demo, policy = Host.LockFromPolicy, has = Host.LockHash is not null;
         var left = Host.Lock.UnlockedLeft(DateTime.Now);
-        LockState.Text = demo ? "Indisponível no modo demonstração." : LockSession.Describe(has, policy, left);
+        LockState.Text = demo ? Loc.T("Indisponível no modo demonstração.") : LockSession.Describe(has, policy, left);
         // Senha da política só muda no registro, por um administrador
         LockEdit.Visibility = demo || policy ? Visibility.Collapsed : Visibility.Visible;
-        LockSetBtn.Content = has ? "Trocar senha" : "Definir senha";
+        LockSetBtn.Content = Loc.T(has ? "Trocar senha" : "Definir senha");
         LockRemoveBtn.Visibility = LockCopyBtn.Visibility = has && !policy ? Visibility.Visible : Visibility.Collapsed;
         LockNowBtn.Visibility = has && left > TimeSpan.Zero ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -435,7 +435,7 @@ public partial class MainWindow
         LockNew.Clear();
         LockConfirm.Clear();
         ActionLog.Add(had ? "Senha das configurações trocada" : "Senha das configurações definida", "Guardada só como código (hash); a senha em si não fica no computador.");
-        LockMsg.Text = "Senha salva. Se ela for esquecida, apagar as preferências na pasta de dados do app remove a senha (para impedir isso, use a política do Windows).";
+        LockMsg.Text = Loc.T("Senha salva. Se ela for esquecida, apagar as preferências na pasta de dados do app remove a senha (para impedir isso, use a política do Windows).");
         RefreshLockCard();
     }
 
@@ -447,7 +447,7 @@ public partial class MainWindow
         Host.Settings.Save();
         Host.Lock.Lock();
         ActionLog.Add("Senha das configurações removida", "");
-        LockMsg.Text = "Senha removida.";
+        LockMsg.Text = Loc.T("Senha removida.");
         RefreshLockCard();
     }
 
@@ -459,13 +459,13 @@ public partial class MainWindow
             Clipboard.SetText(code);
             LockMsg.Text = $@"Código copiado. A TI grava em HKLM\{SettingsLockPolicy.KeyPath}, valor de texto {SettingsLockPolicy.ValueName} (por GPO ou script), e a senha passa a valer para todos os usuários.";
         }
-        catch (System.Runtime.InteropServices.COMException) { LockMsg.Text = "A área de transferência está ocupada por outro programa. Tente de novo."; }
+        catch (System.Runtime.InteropServices.COMException) { LockMsg.Text = Loc.T("A área de transferência está ocupada por outro programa. Tente de novo."); }
     }
 
     private void LockNow_Click(object sender, RoutedEventArgs e)
     {
         Host.Lock.Lock();
-        LockMsg.Text = "Bloqueado: a próxima mudança vai pedir a senha.";
+        LockMsg.Text = Loc.T("Bloqueado: a próxima mudança vai pedir a senha.");
         RefreshLockCard();
     }
 
@@ -473,7 +473,7 @@ public partial class MainWindow
     private void ShowAllColumns_Click(object sender, RoutedEventArgs e)
     {
         GridMemory.ShowAll(Grids(), Host.Settings);
-        BackupMsg.Text = "Todas as colunas voltaram a aparecer.";
+        BackupMsg.Text = Loc.T("Todas as colunas voltaram a aparecer.");
     }
 
     private static void SelectByTag(ComboBox box, string tag) =>

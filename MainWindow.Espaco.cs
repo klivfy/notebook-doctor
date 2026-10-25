@@ -83,7 +83,7 @@ public partial class MainWindow
                 msg => Dispatcher.BeginInvoke(() => SpaceMsg.Text = msg), ct);
             SpaceMsg.Text = $"Pronto: {_space.Count} itens em {root} · total {Cleaner.FormatBytes(_space.Sum(x => x.Bytes))}. Só leitura: nada foi apagado.";
         }
-        catch (OperationCanceledException) { SpaceMsg.Text = "Análise cancelada."; }
+        catch (OperationCanceledException) { SpaceMsg.Text = Loc.T("Análise cancelada."); }
         finally { SpaceScanBtn.IsEnabled = true; SpaceCancelBtn.IsEnabled = false; }
     }
 
@@ -102,20 +102,20 @@ public partial class MainWindow
     {
         if (!IsLoaded || e.Source != SpaceMode) return;
         SpaceGrid.ItemsSource = null;
-        SpaceMsg.Text = "Clique em Analisar.";
+        SpaceMsg.Text = Loc.T("Clique em Analisar.");
         string mode = (SpaceMode.SelectedItem as ComboBoxItem)?.Tag as string ?? "folders";
         SpaceMin.Visibility = SpaceDupesBtn.Visibility = mode == "dupes" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void SpaceOpen_Click(object sender, RoutedEventArgs e)
     {
-        if (SpaceGrid.SelectedItem is not FolderUsage f) { SpaceMsg.Text = "Selecione um item na lista."; return; }
+        if (SpaceGrid.SelectedItem is not FolderUsage f) { SpaceMsg.Text = Loc.T("Selecione um item na lista."); return; }
         if (f.IsFile && System.IO.File.Exists(f.Path))
         {
             try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{f.Path}\""); } catch { }
         }
         else if (System.IO.Directory.Exists(f.Path)) AppInfo.OpenShell(f.Path);
-        else SpaceMsg.Text = "Este item não informa uma pasta.";
+        else SpaceMsg.Text = Loc.T("Este item não informa uma pasta.");
     }
 
     // A29 passou para a aba Programas (Fase 5)

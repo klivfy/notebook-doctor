@@ -1,6 +1,7 @@
 namespace NotebookDoctor.Services;
 
 public sealed record HealthScoreResult(int Score, string Label);
+/// <summary><see cref="Resource"/> é a chave em português (a tela traduz); <see cref="Explanation"/> já vem no idioma em uso.</summary>
 public sealed record BottleneckResult(string Resource, string Explanation);
 
 /// <summary>Nota de saúde (0–100) e identificação do gargalo atual, em linguagem simples.</summary>
@@ -32,7 +33,7 @@ public static class Insights
 
     public static BottleneckResult Bottleneck(IReadOnlyList<Snapshot> recent)
     {
-        if (recent.Count == 0) return new("–", "Coletando dados…");
+        if (recent.Count == 0) return new("–", Loc.T("Coletando dados…"));
         var now = recent[^1];
         var last = recent.TakeLast(12).ToList();
         double cpu = last.Average(s => s.Cpu), disk = last.Average(s => s.DiskBusy);
@@ -40,22 +41,22 @@ public static class Insights
         if (cpu >= 70)
         {
             var top = now.TopByCpu.FirstOrDefault();
-            return new("Processador", $"A CPU está em {cpu:0}% em média." + (top is { CpuPct: > 5 } ? $" Quem mais usa: {top.Name} ({top.CpuPct:0}%)." : "") + " Feche o que não estiver usando.");
+            return new("Processador", Loc.F("A CPU está em {0:0}% em média.", cpu) + (top is { CpuPct: > 5 } ? " " + Loc.F("Quem mais usa: {0} ({1:0}%).", top.Name, top.CpuPct) : "") + " " + Loc.T("Feche o que não estiver usando."));
         }
         if (now.RamPct >= 85)
         {
             var top = now.TopByMem.FirstOrDefault();
-            return new("Memória RAM", $"{now.RamPct:0}% da memória em uso; o Windows começa a usar o disco no lugar da RAM, o que deixa tudo lento." + (top is null ? "" : $" Maior consumo: {top.Name} ({top.MemMB} MB)."));
+            return new("Memória RAM", Loc.F("{0:0}% da memória em uso; o Windows começa a usar o disco no lugar da RAM, o que deixa tudo lento.", now.RamPct) + (top is null ? "" : " " + Loc.F("Maior consumo: {0} ({1} MB).", top.Name, top.MemMB)));
         }
         if (disk >= 70)
         {
             var io = now.TopIo;
-            return new("Disco", $"O disco está {disk:0}% ocupado: programas esperam leitura/gravação." +
-                (io is null ? " Pode ser antivírus, indexação ou atualização em andamento." : $" Quem mais movimenta dados agora: {io.Name} ({io.IoKBs / 1024:0.0} MB/s)."));
+            return new("Disco", Loc.F("O disco está {0:0}% ocupado: programas esperam leitura/gravação.", disk) + " " +
+                (io is null ? Loc.T("Pode ser antivírus, indexação ou atualização em andamento.") : Loc.F("Quem mais movimenta dados agora: {0} ({1:0.0} MB/s).", io.Name, io.IoKBs / 1024)));
         }
         if (now.DiskFreePct < 10)
-            return new("Espaço em disco", $"Só {now.DiskFreePct:0}% livre. Pouco espaço atrapalha atualizações e arquivo de paginação.");
-        if (cpu >= 45) return new("Processador (leve)", $"A CPU está em {cpu:0}%: ainda há folga, mas algo consome em segundo plano.");
-        return new("Nenhum", "Nenhum recurso está no limite agora. Se ainda parecer lento, veja o plano de energia e a temperatura.");
+            return new("Espaço em disco", Loc.F("Só {0:0}% livre. Pouco espaço atrapalha atualizações e arquivo de paginação.", now.DiskFreePct));
+        if (cpu >= 45) return new("Processador (leve)", Loc.F("A CPU está em {0:0}%: ainda há folga, mas algo consome em segundo plano.", cpu));
+        return new("Nenhum", Loc.T("Nenhum recurso está no limite agora. Se ainda parecer lento, veja o plano de energia e a temperatura."));
     }
 }

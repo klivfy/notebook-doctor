@@ -26,7 +26,7 @@ public partial class MainWindow
     private void ProcDetails_Click(object sender, RoutedEventArgs e)
     {
         if (ProcGrid.SelectedItem is ProcRow r) Dialogs.ShowProcessDetails(this, r.Name, r.Names);
-        else ProcMsg.Text = "Selecione um programa na lista.";
+        else ProcMsg.Text = Loc.T("Selecione um programa na lista.");
     }
 
     // ---------- Processos ----------
@@ -62,7 +62,7 @@ public partial class MainWindow
     private void KillSelected_Click(object sender, RoutedEventArgs e)
     {
         var rows = ProcGrid.SelectedItems.OfType<ProcRow>().ToList();
-        if (rows.Count == 0) { ProcMsg.Text = "Selecione um programa na lista (Ctrl ou Shift para vários)."; return; }
+        if (rows.Count == 0) { ProcMsg.Text = Loc.T("Selecione um programa na lista (Ctrl ou Shift para vários)."); return; }
         if (rows.Count == 1 && !rows[0].Merged) { KillProgram(rows[0].Name, rows[0].Count, rows[0].MemMB); return; }
         KillPrograms(rows);
     }
@@ -72,13 +72,13 @@ public partial class MainWindow
     {
         var allowed = rows.Where(r => !r.IsProtected).ToList();
         var skipped = rows.Except(allowed).Select(r => r.Name).ToList();
-        string skippedText = skipped.Count > 0 ? $"\n\nFicam de fora (protegidos): {string.Join(", ", skipped)}." : "";
-        if (allowed.Count == 0) { ProcMsg.Text = "Todos os selecionados são protegidos: nada a encerrar."; return; }
+        string skippedText = skipped.Count > 0 ? "\n\n" + Loc.F("Ficam de fora (protegidos): {0}.", string.Join(", ", skipped)) : "";
+        if (allowed.Count == 0) { ProcMsg.Text = Loc.T("Todos os selecionados são protegidos: nada a encerrar."); return; }
         long mem = allowed.Sum(r => r.MemMB);
         string list = string.Join("\n", allowed.Select(r => $"• {r.Name} ({Pt.N(r.Count, "processo", "processos")}, {r.MemMB:N0} MB){(r.Merged ? $": {string.Join(", ", r.Names)}" : "")} — {r.SafetyText}"));
-        if (Simulate($"Encerrar {Pt.N(allowed.Count, "programa", "programas")}", $"Fecharia {string.Join(", ", allowed.Select(r => r.Name))} ({mem:N0} MB).")) return;
-        if (!Dialogs.Confirm(this, $"Encerrar {Pt.N(allowed.Count, "programa", "programas")}?",
-                $"{list}{skippedText}\n\nTrabalho não salvo nesses programas será perdido.", "Encerrar todos", danger: true)) return;
+        if (Simulate(Loc.F("Encerrar {0}", Pt.N(allowed.Count, "programa", "programas")), Loc.F("Fecharia {0} ({1:N0} MB).", string.Join(", ", allowed.Select(r => r.Name)), mem))) return;
+        if (!Dialogs.Confirm(this, Loc.F("Encerrar {0}?", Pt.N(allowed.Count, "programa", "programas")),
+                $"{list}{skippedText}\n\n" + Loc.T("Trabalho não salvo nesses programas será perdido."), "Encerrar todos", danger: true)) return;
 
         int done = 0; long freed = 0;
         foreach (var r in allowed)
@@ -89,8 +89,8 @@ public partial class MainWindow
             ActionLog.Add("Programa encerrado", $"{r.Name} ({Pt.N(n, "processo", "processos")}, {r.MemMB:N0} MB)");
         }
         ProcMsg.Text = done == allowed.Count ? $"{Pt.N(done, "programa encerrado", "programas encerrados")}."
-                     : $"{done} de {allowed.Count} encerrados; os outros já tinham fechado ou falta permissão.";
-        if (done > 0) ShowSnack(ProcMsg.Text, $"{freed:N0} MB de memória liberados.");
+                     : Loc.F("{0} de {1} encerrados; os outros já tinham fechado ou falta permissão.", done, allowed.Count);
+        if (done > 0) ShowSnack(ProcMsg.Text, Loc.F("{0:N0} MB de memória liberados.", freed));
         RefreshHeavyBanner();
     }
 
@@ -100,7 +100,7 @@ public partial class MainWindow
 
     private void SetPriority(bool lower)
     {
-        if (ProcGrid.SelectedItem is not ProcRow g) { ProcMsg.Text = "Selecione um programa na lista."; return; }
+        if (ProcGrid.SelectedItem is not ProcRow g) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
         if (g.IsProtected) { ProcMsg.Text = $"{g.Name} é do sistema: a prioridade não é alterada."; return; }
         if (Simulate(lower ? $"Baixar a prioridade de {g.Name}" : $"Restaurar a prioridade de {g.Name}",
                      $"Mudaria {Pt.N(g.Count, "processo", "processos")} para prioridade {(lower ? "abaixo do normal" : "normal")}.")) return;
@@ -115,7 +115,7 @@ public partial class MainWindow
     // ---------- Exceções de avisos (M20) a partir da tabela de processos ----------
     private void AlertException_Click(object sender, RoutedEventArgs e)
     {
-        if (ProcGrid.SelectedItem is not ProcRow g) { ProcMsg.Text = "Selecione um programa na lista."; return; }
+        if (ProcGrid.SelectedItem is not ProcRow g) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
         var s = Host.Settings;
         // Os avisos são por processo: num aplicativo agrupado, todos os processos dele entram
         var names = g.Names.Where(n => !s.IsAlertException(n)).ToList();
@@ -125,7 +125,7 @@ public partial class MainWindow
         LoadSettingsIntoForm();
         if (Host.HeavyAlert is { } heavy && names.Contains(heavy.Name, StringComparer.OrdinalIgnoreCase)) Host.IgnoreHeavy(heavy.Name);
         ActionLog.Add($"Sem avisos: {g.Name}", $"{string.Join(", ", names)}: adicionado às exceções de avisos (Configurações › Exceções).");
-        ShowSnack($"{g.Name} não gera mais avisos", "Ele continua sendo medido e aparece normalmente nas tabelas.",
+        ShowSnack(Loc.F("{0} não gera mais avisos", g.Name), "Ele continua sendo medido e aparece normalmente nas tabelas.",
                   "Desfazer", () =>
                   {
                       s.AlertExceptions.RemoveAll(n => names.Contains(n, StringComparer.OrdinalIgnoreCase));
@@ -137,7 +137,7 @@ public partial class MainWindow
     // ---------- A19: modo eficiência ----------
     private void Efficiency_Click(object sender, RoutedEventArgs e)
     {
-        if (ProcGrid.SelectedItem is not ProcRow g) { ProcMsg.Text = "Selecione um programa na lista."; return; }
+        if (ProcGrid.SelectedItem is not ProcRow g) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
         if (g.IsProtected) { ProcMsg.Text = $"{g.Name} é protegido: o modo eficiência não é aplicado."; return; }
         if (Simulate($"Modo eficiência em {g.Name}", $"Ligaria o modo econômico do Windows (EcoQoS) e a prioridade baixa em {Pt.N(g.Count, "processo", "processos")}. O programa continuaria aberto.")) return;
         var done = g.Names.Select(name => (Name: name, N: ProcessActions.SetEfficiency(name, on: true))).ToList();
@@ -149,7 +149,7 @@ public partial class MainWindow
     // ---------- M26: menu de clique direito ----------
     private void ProcOpenLocation_Click(object sender, RoutedEventArgs e)
     {
-        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = "Selecione um programa na lista."; return; }
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
         if (ProcessIcons.ExePath(r.Names[0]) is not { } path) { ProcMsg.Text = $"O Windows não informa onde está {r.Name} (processo do sistema ou de outro usuário)."; return; }
         // Argumento entre aspas: o Explorador só seleciona o arquivo, não o executa
         try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
@@ -158,14 +158,14 @@ public partial class MainWindow
     /// <summary>Leva 5.3: abre a aba Programas no programa instalado dono do processo.</summary>
     private async void ProcShowProgram_Click(object sender, RoutedEventArgs e)
     {
-        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = "Selecione um programa na lista."; return; }
-        if (ProcessIcons.ExePath(r.Names[0]) is not { } exe) { ProcMsg.Text = "O Windows não deixou ver o arquivo desse processo."; return; }
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        if (ProcessIcons.ExePath(r.Names[0]) is not { } exe) { ProcMsg.Text = Loc.T("O Windows não deixou ver o arquivo desse processo."); return; }
         await RevealProgramForAsync(exe);
     }
 
     private void ProcSearchOnline_Click(object sender, RoutedEventArgs e)
     {
-        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = "Selecione um programa na lista."; return; }
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
         AppInfo.OpenShell("https://www.bing.com/search?q=" + Uri.EscapeDataString($"{r.Name}.exe o que é processo"));
     }
 }

@@ -1,3 +1,12 @@
+Revisão de segurança, dados e acessibilidade (novo)
+• A limpeza como administrador apaga cada arquivo pelo identificador e confere onde ele está de fato: uma pasta trocada por atalho de sistema no meio da limpeza não leva mais a exclusão para fora.
+• O backup de cada item fica gravado e fechado antes de o original sair: se o PC desligar no meio, o Desfazer ainda devolve tudo.
+• Itens que não cabem na Lixeira não somem mais em silêncio: o Windows pergunta antes de apagar de vez.
+• Regras de limpeza nunca levam cookies, senhas ou favoritos de subpastas, e a remoção de sobras não apaga tipos do Windows (http, mailto, .txt).
+• O leitor de tela (Narrador, NVDA) passa a anunciar avisos e andamento.
+• Janelas de ferramenta se ajustam à tela de notebooks pequenos (1366 × 768 com escala de 125%).
+• Em inglês e espanhol, o Painel, Processos, Limpeza, Inicialização, Ajustes e Histórico não misturam mais frases em português.
+
 Visual novo, no estilo do Windows 11 (novo)
 • Cores, fonte (Segoe UI Variable), cantos e botões no padrão do Windows 11, nos temas claro e escuro.
 • No Windows 11, o fundo da janela acompanha o papel de parede (Mica).

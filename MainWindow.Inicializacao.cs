@@ -30,7 +30,7 @@ public partial class MainWindow
 
     private async void ToggleStartup_Click(object sender, RoutedEventArgs e)
     {
-        if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = "Selecione um item."; return; }
+        if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = Loc.T("Selecione um item."); return; }
         try
         {
             bool before = entry.Enabled;
@@ -38,7 +38,7 @@ public partial class MainWindow
             string restore = await EnsureRestorePointAsync("Programas de inicializacao");
             StartupManager.SetEnabled(entry, !before);
             StartupGrid.Items.Refresh();
-            StartupMsg.Text = $"{entry.Name}: {entry.State.ToLower()}. Vale a partir do próximo login (reversível aqui).";
+            StartupMsg.Text = $"{entry.Name}: {entry.StateText.ToLower()}. " + Loc.T("Vale a partir do próximo login (reversível aqui).");
             ActionLog.Add($"Inicialização: {entry.Name} {(before ? "desativado" : "ativado")}", $"Ponto de restauração: {restore}", "startup", entry.Name, $"{StartupManager.SubKeyOf(entry)}|{before}");
             _ = Host.RefreshHealthAsync();
         }
@@ -48,7 +48,7 @@ public partial class MainWindow
     /// <summary>Leva 5.3: abre a aba Programas no programa instalado dono do item.</summary>
     private async void StartupShowProgram_Click(object sender, RoutedEventArgs e)
     {
-        if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = "Selecione um item na lista."; return; }
+        if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = Loc.T("Selecione um item na lista."); return; }
         if (entry.FilePath is not { } path) { StartupMsg.Text = $"{entry.Name}: o arquivo do comando não foi encontrado."; return; }
         if (path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
             try { path = StartMenu.ReadTarget(path); }
@@ -59,7 +59,7 @@ public partial class MainWindow
     // ---------- M27: abrir a pasta do item ----------
     private void StartupOpen_Click(object sender, RoutedEventArgs e)
     {
-        if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = "Selecione um item na lista."; return; }
+        if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = Loc.T("Selecione um item na lista."); return; }
         if (entry.FilePath is not { } path) { StartupMsg.Text = $"{entry.Name}: o arquivo do comando não foi encontrado."; return; }
         // Argumento entre aspas: o Explorador só seleciona o arquivo, não o executa
         try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }

@@ -10,8 +10,11 @@ public sealed class StartupEntry
     public string Origin { get; init; } = "";
     public bool Enabled { get; set; }
     public string State => Enabled ? "Ativado" : "Desativado";
+    public string StateText => Loc.T(State);
     /// <summary>Estimativa pelo que o programa já consumiu desde que abriu (CPU acumulada e RAM). Não é a medição do Windows.</summary>
     public string Impact { get; set; } = "";
+    /// <summary>O mesmo <see cref="Impact"/> no idioma em uso (o Impact em português segue para a cor da linha).</summary>
+    public string ImpactText { get; set; } = "";
     /// <summary>B32: "high" ou "mid" para destacar a linha.</summary>
     public string Severity => RowSeverity.Startup(Impact);
     internal string ApprovalSubKey { get; init; } = "Run";
@@ -48,9 +51,9 @@ public static class StartupManager
         string? path = CommandLine.ExecutablePath(e.Command);
         // Sem caminho completo (ex.: "rundll32.exe ..."), procura na pasta do Windows
         if (path is not null && !Path.IsPathRooted(path)) path = Path.Combine(Environment.SystemDirectory, path);
-        if (path is null || !File.Exists(path)) { e.Publisher = "Arquivo não encontrado"; return; }
+        if (path is null || !File.Exists(path)) { e.Publisher = Loc.T("Arquivo não encontrado"); return; }
         e.FilePath = path;
-        e.Publisher = path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? FilePublisher.Describe(path) : "Atalho ou script (veja o local)";
+        e.Publisher = path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? FilePublisher.Describe(path) : Loc.T("Atalho ou script (veja o local)");
     }
 
     private static void FillImpact(List<StartupEntry> entries)
@@ -72,9 +75,10 @@ public static class StartupManager
         foreach (var e in entries)
         {
             string exe = ExeName(e.Command);
-            if (exe.Length == 0 || !usage.TryGetValue(exe, out var u)) { e.Impact = "Não está em execução"; continue; }
+            if (exe.Length == 0 || !usage.TryGetValue(exe, out var u)) { e.Impact = "Não está em execução"; e.ImpactText = Loc.T(e.Impact); continue; }
             string level = u.cpuSec >= 20 || u.mb >= 300 ? "Alto" : u.cpuSec >= 5 || u.mb >= 100 ? "Médio" : "Baixo";
             e.Impact = $"{level} ({u.cpuSec:0} s de CPU, {u.mb} MB)";
+            e.ImpactText = Loc.F("{0} ({1:0} s de CPU, {2} MB)", Loc.T(level), u.cpuSec, u.mb);
         }
     }
 

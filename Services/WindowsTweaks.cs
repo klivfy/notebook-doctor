@@ -9,8 +9,13 @@ namespace NotebookDoctor.Services;
 public sealed record Tweak(string Id, string Title, string Current, string Why, string ActionLabel, string Preview,
                            bool NeedsAdmin, bool Recommended, bool CanApply)
 {
-    public string Badge => !CanApply ? "Nada a fazer" : Recommended ? "Recomendado" : "Opcional";
-    public string AdminNote => NeedsAdmin && !AppInfo.IsAdmin ? "Exige o modo administrador" : "";
+    public string Badge => Loc.T(!CanApply ? "Nada a fazer" : Recommended ? "Recomendado" : "Opcional");
+    public string AdminNote => NeedsAdmin && !AppInfo.IsAdmin ? Loc.T("Exige o modo administrador") : "";
+
+    // U1: Title e ActionLabel ficam em português (Apply decide pelo rótulo); a tela mostra estes
+    public string TitleText => Loc.T(Title);
+    public string ActionText => Loc.T(ActionLabel);
+    public string SimulateLabel => Loc.T("Simular");
 }
 
 /// <summary>
@@ -51,11 +56,11 @@ public static class WindowsTweaks
         long hiber = RootFileSize("hiberfil.sys");
         bool hiberOn = hiber > 0;
         list.Add(new Tweak("hibernate", "Hibernação",
-            hiberOn ? $"Ligada · hiberfil.sys ocupa {Cleaner.FormatBytes(hiber)}" : "Desligada (sem hiberfil.sys)",
-            "O Windows reserva no disco um arquivo do tamanho de boa parte da RAM para poder hibernar. Quem só usa Suspender não precisa dele; desligar devolve esse espaço. Desligar também desativa a Inicialização Rápida.",
+            hiberOn ? Loc.F("Ligada · hiberfil.sys ocupa {0}", Cleaner.FormatBytes(hiber)) : Loc.T("Desligada (sem hiberfil.sys)"),
+            Loc.T("O Windows reserva no disco um arquivo do tamanho de boa parte da RAM para poder hibernar. Quem só usa Suspender não precisa dele; desligar devolve esse espaço. Desligar também desativa a Inicialização Rápida."),
             hiberOn ? "Desligar hibernação" : "Religar hibernação",
-            hiberOn ? $"Executa \"powercfg /hibernate off\". Apaga {SysRoot}hiberfil.sys ({Cleaner.FormatBytes(hiber)}), tira \"Hibernar\" do menu Energia e desliga a Inicialização Rápida."
-                    : "Executa \"powercfg /hibernate on\". Recria o hiberfil.sys e volta a permitir Hibernar e a Inicialização Rápida.",
+            hiberOn ? Loc.F("Executa \"powercfg /hibernate off\". Apaga {0}hiberfil.sys ({1}), tira \"Hibernar\" do menu Energia e desliga a Inicialização Rápida.", SysRoot, Cleaner.FormatBytes(hiber))
+                    : Loc.T("Executa \"powercfg /hibernate on\". Recria o hiberfil.sys e volta a permitir Hibernar e a Inicialização Rápida."),
             NeedsAdmin: true, Recommended: hiberOn && diskFreePct < 20, CanApply: true));
 
         // ---- A35 Inicialização Rápida ----
@@ -63,10 +68,10 @@ public static class WindowsTweaks
         bool fastOn = fast == 1 && hiberOn;
         double upDays = TimeSpan.FromMilliseconds(Environment.TickCount64).TotalDays;
         list.Add(new Tweak("faststartup", "Inicialização Rápida",
-            !hiberOn ? "Inativa (precisa da hibernação ligada)" : fastOn ? $"Ligada · o Windows está há {upDays:0.#} dias sem reiniciar de verdade" : "Desligada",
-            "Com ela, \"Desligar\" na verdade hiberna o núcleo do Windows: o boot fica alguns segundos mais rápido, mas problemas e memória acumulada não são zerados, e drivers e atualizações às vezes não se aplicam. Desligar faz cada desligamento ser completo.",
+            !hiberOn ? Loc.T("Inativa (precisa da hibernação ligada)") : fastOn ? Loc.F("Ligada · o Windows está há {0:0.#} dias sem reiniciar de verdade", upDays) : Loc.T("Desligada"),
+            Loc.T("Com ela, \"Desligar\" na verdade hiberna o núcleo do Windows: o boot fica alguns segundos mais rápido, mas problemas e memória acumulada não são zerados, e drivers e atualizações às vezes não se aplicam. Desligar faz cada desligamento ser completo."),
             fastOn ? "Desligar Inicialização Rápida" : "Ligar Inicialização Rápida",
-            $@"Altera HKLM\{PowerKey}\HiberbootEnabled de {(fast ?? 0)} para {(fastOn ? 0 : 1)}. Vale a partir do próximo desligamento.",
+            Loc.F(@"Altera HKLM\{0}\HiberbootEnabled de {1} para {2}. Vale a partir do próximo desligamento.", PowerKey, fast ?? 0, fastOn ? 0 : 1),
             NeedsAdmin: true, Recommended: fastOn && upDays >= 3, CanApply: hiberOn));
 
         // ---- A32 Arquivo de paginação ----
@@ -74,33 +79,33 @@ public static class WindowsTweaks
         bool auto = paging.Any(p => p.StartsWith("?:", StringComparison.Ordinal));
         bool none = paging.Length == 0 || paging.All(string.IsNullOrWhiteSpace);
         long pageSize = RootFileSize("pagefile.sys");
-        string pageNow = none ? "Desativado (sem arquivo de paginação)"
-            : auto ? $"Gerenciado pelo Windows · {Cleaner.FormatBytes(pageSize)} agora"
-            : $"Tamanho fixo ({string.Join("; ", paging)}) · {Cleaner.FormatBytes(pageSize)} agora";
+        string pageNow = none ? Loc.T("Desativado (sem arquivo de paginação)")
+            : auto ? Loc.F("Gerenciado pelo Windows · {0} agora", Cleaner.FormatBytes(pageSize))
+            : Loc.F("Tamanho fixo ({0}) · {1} agora", string.Join("; ", paging), Cleaner.FormatBytes(pageSize));
         list.Add(new Tweak("pagefile", "Arquivo de paginação (memória virtual)", pageNow,
-            $"Quando a RAM ({Units.Gb(ramGB, "0")}) enche, o Windows usa o disco como extensão. Sem ele, ou com tamanho fixo pequeno, programas podem fechar sozinhos por falta de memória. O recomendado é deixar o Windows gerenciar o tamanho.",
+            Loc.F("Quando a RAM ({0}) enche, o Windows usa o disco como extensão. Sem ele, ou com tamanho fixo pequeno, programas podem fechar sozinhos por falta de memória. O recomendado é deixar o Windows gerenciar o tamanho.", Units.Gb(ramGB, "0")),
             auto ? "Já recomendado" : "Deixar o Windows gerenciar",
-            $@"Altera HKLM\{MemKey}\PagingFiles para ""?:\pagefile.sys"" (gerenciado pelo sistema). Exige reiniciar o computador.",
+            Loc.F(@"Altera HKLM\{0}\PagingFiles para ""?:\pagefile.sys"" (gerenciado pelo sistema). Exige reiniciar o computador.", MemKey),
             NeedsAdmin: true, Recommended: !auto, CanApply: !auto));
 
         // ---- A33 Efeitos visuais ----
         var fx = VisualEffects.Read();
         int onCount = fx.Values.Count(v => v);
         list.Add(new Tweak("visualfx", "Efeitos visuais",
-            onCount == 0 ? "No modo \"melhor desempenho\" (efeitos desligados)" : $"{onCount} de {fx.Count} efeitos ligados (animações, sombras, transparência)",
-            "Animações, sombras e transparência usam a placa de vídeo integrada e a CPU. Em notebooks mais simples, desligar deixa a interface mais ágil. O texto continua suavizado.",
+            onCount == 0 ? Loc.T("No modo \"melhor desempenho\" (efeitos desligados)") : Loc.F("{0} de {1} efeitos ligados (animações, sombras, transparência)", onCount, fx.Count),
+            Loc.T("Animações, sombras e transparência usam a placa de vídeo integrada e a CPU. Em notebooks mais simples, desligar deixa a interface mais ágil. O texto continua suavizado."),
             onCount == 0 ? "Já no melhor desempenho" : "Usar melhor desempenho",
-            "Desliga: " + string.Join(", ", fx.Where(kv => kv.Value).Select(kv => VisualEffects.Label(kv.Key))) + ". Vale na hora, só para seu usuário.",
+            Loc.F("Desliga: {0}. Vale na hora, só para seu usuário.", string.Join(", ", fx.Where(kv => kv.Value).Select(kv => Loc.T(VisualEffects.Label(kv.Key))))),
             NeedsAdmin: false, Recommended: false, CanApply: onCount > 0));
 
         // ---- A34 Apps em segundo plano ----
         bool bgOff = ReadDword(Registry.CurrentUser, BgKey, "GlobalUserDisabled") == 1 || ReadDword(Registry.CurrentUser, SearchKey, "BackgroundAppGlobalToggle") == 0;
         list.Add(new Tweak("bgapps", "Apps da Microsoft Store em segundo plano",
-            bgOff ? "Bloqueados" : "Permitidos",
-            "Apps da Store (Notícias, Fotos, Clima, Xbox…) podem rodar mesmo fechados para atualizar conteúdo. Bloquear economiza CPU, memória e bateria. Esses apps podem deixar de mostrar notificações até serem abertos. Programas comuns, como o Chrome, não são afetados.",
+            Loc.T(bgOff ? "Bloqueados" : "Permitidos"),
+            Loc.T("Apps da Store (Notícias, Fotos, Clima, Xbox…) podem rodar mesmo fechados para atualizar conteúdo. Bloquear economiza CPU, memória e bateria. Esses apps podem deixar de mostrar notificações até serem abertos. Programas comuns, como o Chrome, não são afetados."),
             bgOff ? "Permitir de novo" : "Bloquear segundo plano",
-            bgOff ? $@"Remove o bloqueio em HKCU\{BgKey}\GlobalUserDisabled e HKCU\{SearchKey}\BackgroundAppGlobalToggle."
-                  : $@"Grava HKCU\{BgKey}\GlobalUserDisabled = 1 e HKCU\{SearchKey}\BackgroundAppGlobalToggle = 0. Só para seu usuário.",
+            bgOff ? Loc.F(@"Remove o bloqueio em HKCU\{0}\GlobalUserDisabled e HKCU\{1}\BackgroundAppGlobalToggle.", BgKey, SearchKey)
+                  : Loc.F(@"Grava HKCU\{0}\GlobalUserDisabled = 1 e HKCU\{1}\BackgroundAppGlobalToggle = 0. Só para seu usuário.", BgKey, SearchKey),
             NeedsAdmin: false, Recommended: false, CanApply: true));
 
         return list;

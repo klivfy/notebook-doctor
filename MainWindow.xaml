@@ -246,20 +246,20 @@
                                                 </Border>
                                                 <StackPanel Grid.Column="1">
                                                     <!-- O nível também em texto: a cor nunca é o único sinal -->
-                                                    <TextBlock x:Name="ChipText" Text="{Binding Tag}" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}"
+                                                    <TextBlock x:Name="ChipText" Text="{Binding TagText}" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}"
                                                                Foreground="{DynamicResource Success}"/>
-                                                    <TextBlock Text="{Binding Title}" FontFamily="{StaticResource FontMedium}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding TitleText}" FontFamily="{StaticResource FontMedium}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                                                     <TextBlock Text="{Binding Detail}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
-                                                    <TextBlock Text="{Binding Advice}" TextWrapping="Wrap" Margin="0,2,0,0"/>
-                                                    <ToggleButton x:Name="WhyToggle" Content="Por que isso importa?" HorizontalAlignment="Left" Margin="0,4,0,0"
+                                                    <TextBlock Text="{Binding AdviceText}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                    <ToggleButton x:Name="WhyToggle" Content="{Binding WhyLabel}" HorizontalAlignment="Left" Margin="0,4,0,0"
                                                                   Visibility="{Binding HasWhy, Converter={StaticResource B2V}}" Style="{StaticResource WhyToggle}"
                                                                   IsChecked="{Binding WhyOpen, Mode=OneWay}" Checked="WhyToggle_Changed" Unchecked="WhyToggle_Changed"
-                                                                  AutomationProperties.HelpText="{Binding Title}"/>
-                                                    <TextBlock Text="{Binding Why}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"
+                                                                  AutomationProperties.HelpText="{Binding TitleText}"/>
+                                                    <TextBlock Text="{Binding WhyText}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"
                                                                Visibility="{Binding IsChecked, ElementName=WhyToggle, Converter={StaticResource B2V}}"/>
                                                 </StackPanel>
-                                                <Button Grid.Column="2" Content="{Binding FixLabel}" Style="{StaticResource TonalButton}" Margin="12,0,0,0" VerticalAlignment="Top"
-                                                        AutomationProperties.HelpText="{Binding Title}"
+                                                <Button Grid.Column="2" Content="{Binding FixLabelText}" Style="{StaticResource TonalButton}" Margin="12,0,0,0" VerticalAlignment="Top"
+                                                        AutomationProperties.HelpText="{Binding TitleText}"
                                                         Visibility="{Binding HasFix, Converter={StaticResource B2V}}" Click="Fix_Click"/>
                                             </Grid>
                                             <DataTemplate.Triggers>
@@ -626,8 +626,8 @@
                             <DataGrid x:Name="StartupGrid" AutomationProperties.Name="Programas de inicialização">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170"/>
-                                    <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="100"/>
-                                    <DataGridTextColumn Header="Impacto estimado" Binding="{Binding Impact}" Width="250">
+                                    <DataGridTextColumn Header="Estado" Binding="{Binding StateText}" SortMemberPath="State" Width="100"/>
+                                    <DataGridTextColumn Header="Impacto estimado" Binding="{Binding ImpactText}" SortMemberPath="Impact" Width="250">
                                         <!-- B32: impacto alto em semi-negrito (vermelho em texto não teria contraste no tema escuro) -->
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
@@ -903,16 +903,16 @@
                                                 <Border x:Name="Badge" DockPanel.Dock="Right" CornerRadius="8" Padding="10,3" VerticalAlignment="Top" Background="{DynamicResource SurfaceVariant}">
                                                     <TextBlock x:Name="BadgeText" Text="{Binding Badge}" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}"/>
                                                 </Border>
-                                                <TextBlock Text="{Binding Title}" Style="{StaticResource TitleMedium}" Margin="0,0,12,4" AutomationProperties.HeadingLevel="Level3"/>
+                                                <TextBlock Text="{Binding TitleText}" Style="{StaticResource TitleMedium}" Margin="0,0,12,4" AutomationProperties.HeadingLevel="Level3"/>
                                             </DockPanel>
                                             <TextBlock Text="{Binding Current}" Style="{StaticResource Value}" Margin="0,0,0,6"/>
                                             <TextBlock Text="{Binding Why}" Style="{StaticResource Muted}" TextWrapping="Wrap"/>
                                             <TextBlock x:Name="Admin" Text="{Binding AdminNote}" Style="{StaticResource Label}" Margin="0,6,0,0"/>
                                             <WrapPanel Margin="0,12,0,0">
-                                                <Button Content="{Binding ActionLabel}" IsEnabled="{Binding CanApply}" Click="Tweak_Click" Margin="0,0,8,0"
-                                                        AutomationProperties.HelpText="{Binding Title}"/>
-                                                <Button Content="Simular" Style="{StaticResource TextButton}" Click="TweakSimulate_Click"
-                                                        AutomationProperties.HelpText="{Binding Title}" ToolTip="Mostra o que seria alterado, sem mudar nada"/>
+                                                <Button Content="{Binding ActionText}" IsEnabled="{Binding CanApply}" Click="Tweak_Click" Margin="0,0,8,0"
+                                                        AutomationProperties.HelpText="{Binding TitleText}"/>
+                                                <Button Content="{Binding SimulateLabel}" Style="{StaticResource TextButton}" Click="TweakSimulate_Click"
+                                                        AutomationProperties.HelpText="{Binding TitleText}" ToolTip="Mostra o que seria alterado, sem mudar nada"/>
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>

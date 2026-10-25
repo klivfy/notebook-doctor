@@ -72,19 +72,33 @@ public static class Smoke
         Environment.Exit(Errors.Count == 0 ? 0 : 1);
     }
 
-    /// <summary>Com o app em outro idioma, texto visível que ainda é uma chave em português é tradução que faltou aplicar.</summary>
+    /// <summary>
+    /// Com o app em outro idioma, texto visível que ainda é uma chave em português é tradução que faltou aplicar; e, em
+    /// inglês, texto com cara de português (acentos ou palavras como "de", "com", "não") é texto montado no código que
+    /// não passou pela tradução (U1).
+    /// </summary>
     private static void ReportUntranslated(Window w, string name)
     {
         if (Loc.IsSource) return;
         var seen = new HashSet<string>();
         void Walk(DependencyObject d)
         {
-            if (d is System.Windows.Controls.TextBlock { IsVisible: true } tb && tb.Text is { Length: > 1 } t && Loc.TryT(t, out var en) && en != t && seen.Add(t))
-                Log.AppendLine($"aviso [{name}] sem tradução: {t}");
+            if (d is System.Windows.Controls.TextBlock { IsVisible: true } tb && tb.Text is { Length: > 1 } t && seen.Add(t))
+            {
+                if (Loc.TryT(t, out var en) && en != t) Log.AppendLine($"aviso [{name}] sem tradução: {t}");
+                else if (Loc.Language == "en" && LooksPortuguese(t)) Log.AppendLine($"aviso [{name}] parece português: {t}");
+            }
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++) Walk(VisualTreeHelper.GetChild(d, i));
         }
         Walk(w);
     }
+
+    private static readonly System.Text.RegularExpressions.Regex Portuguese = new(
+        @"[ãõçáéíóúâêôàÃÕÇÁÉÍÓÚÂÊÔ]|\b(de|da|dos|das|sem|não|uma|pode|ligado|arquivos?|pasta|programas?|limpeza)\b",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>Caminhos ficam de fora: são dados da pessoa, não textos do app. ("do" e "com" ficam de fora por existirem em inglês e em endereços.)</summary>
+    private static bool LooksPortuguese(string t) => !t.Contains(":\\") && Portuguese.IsMatch(t);
 
     private sealed class BindingWarnings : System.Diagnostics.TraceListener
     {

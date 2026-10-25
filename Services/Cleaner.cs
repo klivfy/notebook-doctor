@@ -45,12 +45,12 @@ public static class Cleaner
     private static IEnumerable<CleanItem> SafeTargets(bool defaultSelected)
     {
         string win = Environment.GetEnvironmentVariable("SystemRoot") ?? @"C:\Windows";
-        yield return new CleanItem { Label = "Temporários do usuário", Paths = [Path.GetTempPath().TrimEnd('\\')], Selected = defaultSelected };
+        yield return new CleanItem { Label = Loc.T("Temporários do usuário"), Paths = [Path.GetTempPath().TrimEnd('\\')], Selected = defaultSelected };
         bool admin = AppInfo.IsAdmin;
-        yield return new CleanItem { Label = admin ? "Temporários do Windows" : "Temporários do Windows (exige administrador)", Paths = [Path.Combine(win, "Temp")], Selected = defaultSelected && admin, CanClean = admin };
-        yield return new CleanItem { Label = "Cache de internet do Windows", Paths = [Path.Combine(Local, @"Microsoft\Windows\INetCache")], Selected = defaultSelected };
-        yield return new CleanItem { Label = "Relatórios de erro (WER)", Paths = [Path.Combine(Local, @"Microsoft\Windows\WER")], Selected = defaultSelected };
-        yield return new CleanItem { Label = "Dumps de falha de aplicativos", Paths = [Path.Combine(Local, "CrashDumps")], Selected = defaultSelected };
+        yield return new CleanItem { Label = Loc.T(admin ? "Temporários do Windows" : "Temporários do Windows (exige administrador)"), Paths = [Path.Combine(win, "Temp")], Selected = defaultSelected && admin, CanClean = admin };
+        yield return new CleanItem { Label = Loc.T("Cache de internet do Windows"), Paths = [Path.Combine(Local, @"Microsoft\Windows\INetCache")], Selected = defaultSelected };
+        yield return new CleanItem { Label = Loc.T("Relatórios de erro (WER)"), Paths = [Path.Combine(Local, @"Microsoft\Windows\WER")], Selected = defaultSelected };
+        yield return new CleanItem { Label = Loc.T("Dumps de falha de aplicativos"), Paths = [Path.Combine(Local, "CrashDumps")], Selected = defaultSelected };
     }
 
     /// <summary>Caches de navegadores: desmarcados por padrão (o navegador recria; páginas podem demorar mais na 1ª abertura).</summary>
@@ -69,13 +69,13 @@ public static class Cleaner
                 foreach (var sub in new[] { "Cache", "Code Cache", "GPUCache" })
                     paths.Add(Path.Combine(profile, sub));
             paths.Add(Path.Combine(root, "ShaderCache"));
-            yield return new CleanItem { Label = $"Cache do {name} (feche o navegador antes)", Paths = paths.Where(Directory.Exists).ToArray(), Selected = false, IgnoreAge = true };
+            yield return new CleanItem { Label = Loc.F("Cache do {0} (feche o navegador antes)", name), Paths = paths.Where(Directory.Exists).ToArray(), Selected = false, IgnoreAge = true };
         }
         string ff = Path.Combine(Local, @"Mozilla\Firefox\Profiles");
         if (Directory.Exists(ff))
             yield return new CleanItem
             {
-                Label = "Cache do Firefox (feche o navegador antes)",
+                Label = Loc.F("Cache do {0} (feche o navegador antes)", "Firefox"),
                 Paths = Directory.EnumerateDirectories(ff).Select(d => Path.Combine(d, "cache2")).Where(Directory.Exists).ToArray(),
                 Selected = false, IgnoreAge = true,
             };
@@ -96,7 +96,7 @@ public static class Cleaner
             ("Armazém do pnpm", Path.Combine(Local, @"pnpm\store")),
         })
             if (Directory.Exists(path))
-                yield return new CleanItem { Label = $"Dev · {label} (baixado de novo quando preciso)", Paths = [path], Selected = false, IgnoreAge = true };
+                yield return new CleanItem { Label = Loc.F("Dev · {0} (baixado de novo quando preciso)", Loc.T(label)), Paths = [path], Selected = false, IgnoreAge = true };
     }
 
     /// <summary>
@@ -120,18 +120,18 @@ public static class Cleaner
         {
             var existing = paths.Where(Directory.Exists).ToArray();
             if (existing.Length > 0)
-                yield return new CleanItem { Label = $"Cache do {label} (feche o app antes; conversas e login ficam)", Paths = existing, Selected = false, IgnoreAge = true };
+                yield return new CleanItem { Label = Loc.F("Cache do {0} (feche o app antes; conversas e login ficam)", Loc.T(label)), Paths = existing, Selected = false, IgnoreAge = true };
         }
 
         // M35: o Explorador recria as miniaturas; os arquivos em uso agora são pulados e saem na próxima vez
         yield return new CleanItem
         {
-            Label = "Miniaturas e ícones do Explorador (recriados quando preciso)",
+            Label = Loc.T("Miniaturas e ícones do Explorador (recriados quando preciso)"),
             Paths = [Path.Combine(Local, @"Microsoft\Windows\Explorer")], Selected = false, IgnoreAge = true, Pattern = "thumbcache_*.db",
         };
         yield return new CleanItem
         {
-            Label = "Cache de ícones do Explorador (recriado quando preciso)",
+            Label = Loc.T("Cache de ícones do Explorador (recriado quando preciso)"),
             Paths = [Path.Combine(Local, @"Microsoft\Windows\Explorer")], Selected = false, IgnoreAge = true, Pattern = "iconcache_*.db",
         };
     }
@@ -141,9 +141,9 @@ public static class Cleaner
     {
         string win = Environment.GetEnvironmentVariable("SystemRoot") ?? @"C:\Windows";
         bool admin = AppInfo.IsAdmin;
-        string suffix = admin ? "" : " (exige administrador)";
-        yield return new CleanItem { Label = "Download de atualizações do Windows" + suffix, Paths = [Path.Combine(win, @"SoftwareDistribution\Download")], Selected = false, IgnoreAge = true, CanClean = admin };
-        yield return new CleanItem { Label = "Cache de Otimização de Entrega" + suffix, Paths = [Path.Combine(win, @"ServiceProfiles\NetworkService\AppData\Local\Microsoft\Windows\DeliveryOptimization\Cache")], Selected = false, IgnoreAge = true, CanClean = admin };
+        string suffix = admin ? "" : " " + Loc.T("(exige administrador)");
+        yield return new CleanItem { Label = Loc.T("Download de atualizações do Windows") + suffix, Paths = [Path.Combine(win, @"SoftwareDistribution\Download")], Selected = false, IgnoreAge = true, CanClean = admin };
+        yield return new CleanItem { Label = Loc.T("Cache de Otimização de Entrega") + suffix, Paths = [Path.Combine(win, @"ServiceProfiles\NetworkService\AppData\Local\Microsoft\Windows\DeliveryOptimization\Cache")], Selected = false, IgnoreAge = true, CanClean = admin };
     }
 
     private static IEnumerable<FileInfo> Files(CleanItem item, int days) =>
@@ -189,7 +189,7 @@ public static class Cleaner
             if (Native.SHQueryRecycleBinW(root, ref info) != 0 || info.i64NumItems == 0) continue;
             yield return new CleanItem
             {
-                Label = $"Lixeira de {root.TrimEnd('\\')} (apaga definitivamente)", IsRecycleBin = true, RecycleRoot = root,
+                Label = Loc.F("Lixeira de {0} (apaga definitivamente)", root.TrimEnd('\\')), IsRecycleBin = true, RecycleRoot = root,
                 Selected = false, Bytes = info.i64Size, Files = (int)info.i64NumItems,
             };
         }

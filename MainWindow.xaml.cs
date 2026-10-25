@@ -102,18 +102,18 @@ public partial class MainWindow : Window
     {
         if (ProcessTools.IsProtected(name))
         {
-            ShowSnack("Processo do sistema", $"\"{name}\" faz parte do Windows e não pode ser encerrado por aqui.");
+            ShowSnack("Processo do sistema", Loc.F("\"{0}\" faz parte do Windows e não pode ser encerrado por aqui.", name));
             return;
         }
         var about = ProcessKnowledge.Describe(name);
-        if (Simulate($"Encerrar {name}", $"Fecharia {Pt.N(count, "processo", "processos")} de {name} ({memMB:N0} MB). Trabalho não salvo nele seria perdido.")) return;
+        if (Simulate(Loc.F("Encerrar {0}", name), Loc.F("Fecharia {0} de {1} ({2:N0} MB). Trabalho não salvo nele seria perdido.", Pt.N(count, "processo", "processos"), name, memMB))) return;
         if (!Dialogs.Confirm(this, "Encerrar programa?",
-                $"Encerrar \"{name}\" ({Pt.N(count, "processo", "processos")}, {memMB:N0} MB)?\n\nO que é: {about.Description}.\nSeguro encerrar: {about.SafetyText}.\n\nTrabalho não salvo nesse programa será perdido.",
+                Loc.F("Encerrar \"{0}\" ({1}, {2:N0} MB)?", name, Pt.N(count, "processo", "processos"), memMB) + "\n\n" + Loc.F("O que é: {0}.", about.Description) + "\n" + Loc.F("Seguro encerrar: {0}.", about.SafetyText) + "\n\n" + Loc.T("Trabalho não salvo nesse programa será perdido."),
                 "Encerrar", danger: true)) return;
         int n = ProcessActions.Kill(name);
-        string done = n == 1 ? $"1 processo de {name} encerrado." : $"{n} processos de {name} encerrados.";
-        ProcMsg.Text = n > 0 ? done : "Não foi possível encerrar: falta permissão ou o programa já fechou.";
-        if (n > 0) { ActionLog.Add("Programa encerrado", $"{name} ({Pt.N(n, "processo", "processos")}, {memMB:N0} MB)"); ShowSnack(done, $"{memMB:N0} MB de memória liberados."); }
+        string done = n == 1 ? Loc.F("1 processo de {0} encerrado.", name) : Loc.F("{0} processos de {1} encerrados.", n, name);
+        ProcMsg.Text = n > 0 ? done : Loc.T("Não foi possível encerrar: falta permissão ou o programa já fechou.");
+        if (n > 0) { ActionLog.Add("Programa encerrado", $"{name} ({Pt.N(n, "processo", "processos")}, {memMB:N0} MB)"); ShowSnack(done, Loc.F("{0:N0} MB de memória liberados.", memMB)); }
         RefreshHeavyBanner();
     }
 
@@ -128,6 +128,8 @@ public partial class MainWindow : Window
     /// <summary>Mostra o resultado de uma ação sem bloquear a tela. Some sozinho; Esc ou o X fecham antes.</summary>
     private void ShowSnack(string title, string text, string? actionLabel = null, Action? action = null, int seconds = 10)
     {
+        // U1: o aviso já está carregado, então a tradução automática da janela não o alcança; textos montados chegam prontos (Loc.F)
+        (title, text, actionLabel) = (Loc.T(title), Loc.T(text), actionLabel is null ? null : Loc.T(actionLabel));
         SnackTitle.Text = title;
         SnackText.Text = text;
         SnackText.Visibility = text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
@@ -264,7 +266,7 @@ public partial class MainWindow : Window
     internal bool Simulate(string action, string details)
     {
         if (!Host.Settings.SimulationMode) return false;
-        ShowSnack($"Simulação: {action}", details + " Nada foi alterado.", "Desligar simulação", () => SetSimulation(false), seconds: 15);
+        ShowSnack(Loc.F("Simulação: {0}", Loc.T(action)), Loc.T(details) + " " + Loc.T("Nada foi alterado."), "Desligar simulação", () => SetSimulation(false), seconds: 15);
         return true;
     }
 
