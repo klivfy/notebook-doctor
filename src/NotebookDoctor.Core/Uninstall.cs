@@ -280,4 +280,15 @@ public static class Paths
     }
 
     public static string Join(string dir, string name) => Clean(dir) + "\\" + name;
+
+    /// <summary>
+    /// O caminho que o GetFinalPathNameByHandle devolve, no formato comum: "\\?\C:\x" vira "C:\x" e
+    /// "\\?\UNC\srv\share\x" vira "\\srv\share\x". Qualquer outro formato volta como veio.
+    /// </summary>
+    public static string FromFinalPath(string path)
+    {
+        if (path.StartsWith(@"\\?\UNC\", StringComparison.OrdinalIgnoreCase)) return @"\\" + path[8..];
+        if (path.StartsWith(@"\\?\", StringComparison.Ordinal)) return path[4..];
+        return path;
+    }
 }

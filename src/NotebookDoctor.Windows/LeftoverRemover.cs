@@ -151,20 +151,24 @@ public static class LeftoverRemover
             : new RemovalResult(l, true, pending, "");
     }
 
+    /// <summary>
+    /// Manda para a Lixeira. Se o item não couber nela (cota cheia, unidade sem Lixeira), o Windows pergunta antes de
+    /// apagar de vez (FOF_WANTNUKEWARNING); sem esse aviso ele apagaria em silêncio e o app diria que está na Lixeira.
+    /// </summary>
     internal static bool Recycle(string path)
     {
         var op = new ShFileOp
         {
             wFunc = FoDelete,
             pFrom = path + "\0\0",
-            fFlags = FofAllowUndo | FofNoConfirmation | FofSilent | FofNoErrorUi,
+            fFlags = FofAllowUndo | FofNoConfirmation | FofSilent | FofNoErrorUi | FofWantNukeWarning,
         };
         return SHFileOperation(ref op) == 0 && !op.fAnyOperationsAborted;
     }
 
     private const int DelayUntilReboot = 0x4;
     private const uint FoDelete = 3;
-    private const ushort FofSilent = 0x4, FofNoConfirmation = 0x10, FofAllowUndo = 0x40, FofNoErrorUi = 0x400;
+    private const ushort FofSilent = 0x4, FofNoConfirmation = 0x10, FofAllowUndo = 0x40, FofNoErrorUi = 0x400, FofWantNukeWarning = 0x4000;
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern bool MoveFileEx(string existing, string? newName, int flags);

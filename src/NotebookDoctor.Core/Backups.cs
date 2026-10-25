@@ -5,7 +5,7 @@ namespace NotebookDoctor.Services;
 
 public enum BackupKind { File, Folder, RegistryKey, RegistryValue, Service, Task, Recycled }
 
-/// <summary>Um item guardado antes de apagar. <see cref="Archive"/> é o arquivo .reg/.xml da sessão; arquivos e pastas vão para o files.zip.</summary>
+/// <summary>Um item guardado antes de apagar. <see cref="Archive"/> é o arquivo .reg/.xml da sessão ou o nome dentro do zip; arquivos e pastas vão cada um para o seu <see cref="Zip"/>.</summary>
 public sealed class BackupItem
 {
     public BackupKind Kind { get; set; }
@@ -16,6 +16,8 @@ public sealed class BackupItem
     /// <summary>Dados do valor em texto: números em decimal, binário em base64, várias linhas separadas por \0.</summary>
     public string ValueData { get; set; } = "";
     public string Archive { get; set; } = "";
+    /// <summary>Zip do item (arquivos e pastas), um por item; vazio nos backups antigos, que guardavam tudo em files.zip.</summary>
+    public string Zip { get; set; } = "";
     public long Bytes { get; set; }
 }
 

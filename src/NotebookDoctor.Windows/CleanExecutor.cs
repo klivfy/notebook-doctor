@@ -93,6 +93,7 @@ public static class CleanExecutor
         int files = 0, skipped = 0;
         if (!CleanSafety.DirAllowed(t.Dir, t.Recurse, t.RemoveSelf, t.Patterns, places) || !Directory.Exists(t.Dir)) return (0, 0, 0);
         if (new DirectoryInfo(t.Dir).Attributes.HasFlag(FileAttributes.ReparsePoint)) return (0, 0, 1); // a pasta é um link: o destino não é dela
+        if (SafeDelete.Root(t.Dir) is not { } root) return (0, 0, 1);
         var options = t.Recurse ? new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint } : Walk;
         foreach (var f in new DirectoryInfo(t.Dir).EnumerateFiles("*", options))
         {
@@ -101,30 +102,30 @@ public static class CleanExecutor
             {
                 if (!CleanEngine.Matches(t, f.FullName, () => f.LastWriteTime)) continue;
                 long len = f.Length;
-                f.Attributes = FileAttributes.Normal;
-                f.Delete();
+                // Pelo identificador: uma subpasta trocada por junção depois da lista não leva a exclusão para fora da regra
+                if (!SafeDelete.File(f.FullName, root, ignoreReadOnly: true)) { skipped++; continue; }
                 bytes += len;
                 files++;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { skipped++; } // em uso ou sem permissão
         }
-        if (t.Recurse && t.Patterns.Any(p => p is "*" or "*.*")) RemoveEmptyDirs(t.Dir, t);
+        if (t.Recurse && t.Patterns.Any(p => p is "*" or "*.*")) RemoveEmptyDirs(t.Dir, root, t);
         if (t.RemoveSelf)
         {
-            try { Directory.Delete(t.Dir, recursive: false); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            try { SafeDelete.Directory(t.Dir, root); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
         return (bytes, files, skipped);
     }
 
     /// <summary>Subpastas que ficaram vazias; a pasta da regra só sai com REMOVESELF, e as poupadas pela regra ficam.</summary>
-    private static void RemoveEmptyDirs(string root, FileTarget t)
+    private static void RemoveEmptyDirs(string dir, string root, FileTarget t)
     {
         try
         {
-            foreach (var d in new DirectoryInfo(root).EnumerateDirectories("*", Walk.WithRecurse()).OrderByDescending(d => d.FullName.Length))
+            foreach (var d in new DirectoryInfo(dir).EnumerateDirectories("*", Walk.WithRecurse()).OrderByDescending(d => d.FullName.Length))
             {
                 if (t.ExcludedPaths.Any(x => Paths.IsUnder(d.FullName, x) || Paths.IsUnder(x, d.FullName))) continue;
-                try { if (!d.EnumerateFileSystemInfos().Any()) d.Delete(); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                try { if (!d.EnumerateFileSystemInfos().Any()) SafeDelete.Directory(d.FullName, root); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }

@@ -146,16 +146,18 @@ public static class Cleaner
         yield return new CleanItem { Label = "Cache de Otimização de Entrega" + suffix, Paths = [Path.Combine(win, @"ServiceProfiles\NetworkService\AppData\Local\Microsoft\Windows\DeliveryOptimization\Cache")], Selected = false, IgnoreAge = true, CanClean = admin };
     }
 
-    private static IEnumerable<FileInfo> Files(CleanItem item, int days)
+    private static IEnumerable<FileInfo> Files(CleanItem item, int days) =>
+        item.Paths.Where(Directory.Exists).SelectMany(dir => Files(item, dir, days));
+
+    private static IEnumerable<FileInfo> Files(CleanItem item, string dir, int days)
     {
         var cutoff = DateTime.Now.AddDays(-days);
-        foreach (var dir in item.Paths.Where(Directory.Exists))
-            foreach (var f in new DirectoryInfo(dir).EnumerateFiles(item.Pattern, Opts))
-            {
-                bool ok;
-                try { ok = item.IgnoreAge || f.LastWriteTime < cutoff; } catch { ok = false; }
-                if (ok) yield return f;
-            }
+        foreach (var f in new DirectoryInfo(dir).EnumerateFiles(item.Pattern, Opts))
+        {
+            bool ok;
+            try { ok = item.IgnoreAge || f.LastWriteTime < cutoff; } catch { ok = false; }
+            if (ok) yield return f;
+        }
     }
 
     /// <summary>B35: os arquivos que a limpeza apagaria neste local (sem apagar nada).</summary>
@@ -240,23 +242,28 @@ public static class Cleaner
                     freed += item.Bytes;
                 continue;
             }
-            foreach (var f in Files(item, days).ToList())
+            foreach (var dir in item.Paths.Where(Directory.Exists))
             {
-                try { long len = f.Length; f.Delete(); freed += len; } catch { /* em uso ou sem permissão */ }
+                // Apaga pelo identificador e confere a pasta de verdade: uma subpasta trocada por junção não leva para fora
+                if (SafeDelete.Root(dir) is not { } root) continue;
+                foreach (var f in Files(item, dir, days).ToList())
+                {
+                    try { long len = f.Length; if (SafeDelete.File(f.FullName, root, ignoreReadOnly: false)) freed += len; }
+                    catch { /* em uso ou sem permissão */ }
+                }
+                if (item.Pattern == "*") RemoveEmptyDirs(dir, root);
             }
-            if (item.Pattern == "*") foreach (var dir in item.Paths) RemoveEmptyDirs(dir);
         }
         return freed;
     }
 
-    private static void RemoveEmptyDirs(string root)
+    private static void RemoveEmptyDirs(string dir, string root)
     {
         try
         {
-            if (!Directory.Exists(root)) return;
-            foreach (var d in new DirectoryInfo(root).EnumerateDirectories("*", Opts).OrderByDescending(d => d.FullName.Length))
+            foreach (var d in new DirectoryInfo(dir).EnumerateDirectories("*", Opts).OrderByDescending(d => d.FullName.Length))
             {
-                try { if (!d.EnumerateFileSystemInfos().Any()) d.Delete(); } catch { }
+                try { if (!d.EnumerateFileSystemInfos().Any()) SafeDelete.Directory(d.FullName, root); } catch { }
             }
         }
         catch { }

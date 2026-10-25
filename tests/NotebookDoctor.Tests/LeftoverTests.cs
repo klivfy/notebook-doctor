@@ -328,6 +328,21 @@ public class LeftoverScannerTests
     }
 
     [Fact]
+    public void Tipos_do_Windows_e_protocolos_tomados_pelo_programa_nao_saem_inteiros()
+    {
+        var pc = Pc()
+            .Key(@"HKEY_CURRENT_USER\Software\Classes\http\shell\open\command", ("", $@"""{Install}\foo.exe"" ""%1"""))
+            .Key(@"HKEY_CURRENT_USER\Software\Classes\txtfile\shell\open\command", ("", $@"""{Install}\foo.exe"" ""%1"""))
+            .Key(@"HKEY_CURRENT_USER\Software\Classes\foo-link", ("URL Protocol", ""))
+            .Key(@"HKEY_CURRENT_USER\Software\Classes\foo-link\shell\open\command", ("", $@"""{Install}\foo.exe"" ""%1"""));
+        var paths = LeftoverScanner.Scan(Foo(), Ctx(), pc).Select(l => l.Path).ToList();
+        Assert.Contains(ProgId, paths); // o tipo do próprio programa continua saindo
+        Assert.DoesNotContain(paths, p => p.EndsWith(@"\Classes\http", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(paths, p => p.EndsWith(@"\Classes\txtfile", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(paths, p => p.EndsWith(@"\Classes\foo-link", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Marca_seguro_e_moderado_e_deixa_avancado_desmarcado()
     {
         var found = LeftoverScanner.Scan(Foo(), Ctx(), Pc());

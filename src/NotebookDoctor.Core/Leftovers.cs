@@ -224,6 +224,11 @@ public static class LeftoverScanner
     {
         "CLSID", "Interface", "TypeLib", "AppID", "Applications", "SystemFileAssociations", "Directory", "Folder", "Drive", "*",
         "AllFilesystemObjects", "Local Settings", "MIME", "Protocols", "PackagedCom", "ActivatableClasses", "Extensions",
+        // Tipos do próprio Windows que um programa pode ter tomado para si: apagar a chave inteira quebra o tipo para todos
+        "http", "https", "ftp", "mailto", "file", "news", "nntp", "telnet", "ms-settings", "search-ms", "Unknown",
+        "txtfile", "htmlfile", "mhtmlfile", "xmlfile", "inifile", "inffile", "regfile", "batfile", "cmdfile", "comfile", "exefile",
+        "jsfile", "jsefile", "vbsfile", "vbefile", "wsffile", "lnkfile", "piffile", "scrfile", "InternetShortcut", "giffile", "jpegfile",
+        "pngfile", "Paint.Picture", "SoundRec", "WMP11.AssocFile.MP3", "CompressedFolder", "MSEdgeHTM", "MSEdgePDF", "Microsoft.PowerShellScript.1",
     };
 
     /// <summary>Containers que a varredura percorre: nunca podem sair inteiros.</summary>
@@ -318,6 +323,8 @@ public static class LeftoverScanner
                 {
                     ct.ThrowIfCancellationRequested();
                     if (name.StartsWith('.') || SpecialClasses.Contains(name)) continue;
+                    // Protocolo (mailto:, steam:…) tem dono no Windows e em outros programas: não sai como sobra
+                    if (sys.ValueNames($@"{classes}\{name}").Contains("URL Protocol", StringComparer.OrdinalIgnoreCase)) continue;
                     if (Owned(sys.StringValue($@"{classes}\{name}\shell\open\command", null)))
                         Add(LeftoverKind.RegistryKey, $@"{classes}\{name}", LeftoverLevel.Safe, Loc.T("Tipo de arquivo registrado pelo programa"));
                 }

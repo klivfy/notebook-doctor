@@ -321,6 +321,9 @@ public sealed class CleanEngine(ICleanSystem sys, CleanContext ctx)
         if (name.Equals("desktop.ini", StringComparison.OrdinalIgnoreCase)) return false;
         string parent = Paths.Parent(f);
         if (t.Recurse ? !Paths.IsUnder(parent, t.Dir) : !Paths.Same(parent, t.Dir)) return false;
+        // As palavras bloqueadas valem também abaixo da pasta da regra: um RECURSE com * em "User Data\Default" não
+        // pode levar Network\Cookies, Login Data ou Local Storage
+        if (CleanSafety.HasBlockedWord(f[Paths.Clean(t.Dir).Length..])) return false; // começa na barra, para "\local storage\" casar
         if (!Glob.IsMatchAny(t.Patterns, name)) return false;
         if (t.ExcludedPaths.Any(e => Paths.IsUnder(f, e))) return false;
         if (t.ExcludedFiles.Any(x => Paths.IsUnder(parent, x.Dir) && Glob.IsMatchAny(x.Names, name))) return false;

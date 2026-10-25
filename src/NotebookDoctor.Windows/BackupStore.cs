@@ -7,8 +7,9 @@ using Microsoft.Win32;
 namespace NotebookDoctor.Services;
 
 /// <summary>
-/// Fase 5: backups do que a remoção de sobras apaga. Cada sessão é uma pasta com manifest.json, files.zip (arquivos
-/// e pastas), .reg (chaves exportadas pelo reg.exe) e .xml (tarefas). Ficam 30 dias ou até 2 GB.
+/// Fase 5: backups do que a remoção de sobras apaga. Cada sessão é uma pasta com manifest.json, um .zip por arquivo ou
+/// pasta (os backups antigos têm um files.zip só), .reg (chaves exportadas pelo reg.exe) e .xml (tarefas). Ficam 30 dias
+/// ou até 2 GB.
 /// </summary>
 public sealed class BackupStore(string root)
 {
@@ -63,8 +64,20 @@ public sealed class BackupStore(string root)
     {
         if (DirOf(id) is not { } dir || Read(dir) is not { } m)
             return Loc.T("Backup não encontrado: ele pode ter passado de 30 dias e sido apagado.");
-        string zipPath = Path.Combine(dir, "files.zip");
-        using var zip = File.Exists(zipPath) ? ZipFile.OpenRead(zipPath) : null;
+        // Cada zip abre uma vez; um zip estragado (backup interrompido) só faz falhar os itens dele
+        var zips = new Dictionary<string, ZipArchive?>(StringComparer.OrdinalIgnoreCase);
+        ZipArchive Zip(BackupItem item)
+        {
+            string name = item.Zip.Length > 0 ? item.Zip : "files.zip";
+            if (!zips.TryGetValue(name, out var z))
+            {
+                string path = Path.Combine(dir, Path.GetFileName(name));
+                try { z = File.Exists(path) ? ZipFile.OpenRead(path) : null; }
+                catch (InvalidDataException) { z = null; }
+                zips[name] = z;
+            }
+            return z ?? throw new IOException("zip do backup ausente ou estragado");
+        }
         int ok = 0, failed = 0;
         bool services = false, recycled = false;
         foreach (var item in m.Items)
@@ -86,11 +99,12 @@ public sealed class BackupStore(string root)
                         }
                         break;
                     case BackupKind.File:
-                        Extract(zip?.GetEntry(item.Archive) ?? throw new IOException("arquivo fora do backup"), item.OriginalPath);
+                        Extract(Zip(item).GetEntry(item.Archive) ?? throw new IOException("arquivo fora do backup"), item.OriginalPath);
                         break;
                     case BackupKind.Folder:
+                        var folderZip = Zip(item);
                         Directory.CreateDirectory(item.OriginalPath);
-                        foreach (var entry in zip?.Entries.Where(e => e.FullName.StartsWith(item.Archive + "/", StringComparison.Ordinal)) ?? [])
+                        foreach (var entry in folderZip.Entries.Where(e => e.FullName.StartsWith(item.Archive + "/", StringComparison.Ordinal)))
                         {
                             string target = BackupRules.PathOfEntry(entry.FullName);
                             if (entry.FullName.EndsWith('/')) Directory.CreateDirectory(target);
@@ -103,11 +117,12 @@ public sealed class BackupStore(string root)
                 }
                 ok++;
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or ArgumentException or InvalidOperationException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or ArgumentException or InvalidOperationException or InvalidDataException)
             {
                 failed++;
             }
         }
+        foreach (var z in zips.Values) z?.Dispose();
         m.Restored = failed == 0;
         Save(dir, m);
 
@@ -137,12 +152,14 @@ public sealed class BackupStore(string root)
     internal static void Save(string dir, BackupManifest m) => File.WriteAllText(Path.Combine(dir, "manifest.json"), JsonSerializer.Serialize(m, Json));
 }
 
-/// <summary>Uma sessão aberta: cada Add guarda o item antes de quem chamou apagar. Dispose fecha o zip e grava o manifesto.</summary>
+/// <summary>
+/// Uma sessão aberta: cada Add guarda o item, num zip próprio já fechado e gravado no disco, antes de quem chamou
+/// apagar. Se o app cair no meio, tudo o que já saiu continua no backup.
+/// </summary>
 public sealed class BackupSession : IDisposable
 {
     private static readonly EnumerationOptions Recursive = new() { RecurseSubdirectories = true, IgnoreInaccessible = false, AttributesToSkip = FileAttributes.ReparsePoint };
     private readonly string _dir;
-    private ZipArchive? _zip;
     private int _n;
 
     public BackupManifest Manifest { get; }
@@ -156,13 +173,33 @@ public sealed class BackupSession : IDisposable
         BackupStore.Save(_dir, Manifest);
     }
 
-    private ZipArchive Zip => _zip ??= ZipFile.Open(Path.Combine(_dir, "files.zip"), ZipArchiveMode.Create);
+    /// <summary>
+    /// Grava um zip completo para um item: fecha o arquivo e força a gravação no disco antes de voltar. Se algo falhar
+    /// no meio (um arquivo em uso), o zip parcial sai e a exceção segue, para quem chamou não apagar nada.
+    /// </summary>
+    private string WriteZip(Action<ZipArchive> fill)
+    {
+        string name = $"{++_n:000}.zip";
+        string path = Path.Combine(_dir, name);
+        try
+        {
+            using var fs = new FileStream(path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
+            using (var zip = new ZipArchive(fs, ZipArchiveMode.Create, leaveOpen: true)) fill(zip);
+            fs.Flush(flushToDisk: true);
+        }
+        catch
+        {
+            try { File.Delete(path); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            throw;
+        }
+        return name;
+    }
 
     public void AddFile(string path)
     {
         string entry = BackupRules.EntryName(path);
-        Zip.CreateEntryFromFile(path, entry, CompressionLevel.Fastest);
-        Manifest.Items.Add(new BackupItem { Kind = BackupKind.File, OriginalPath = path, Archive = entry, Bytes = new FileInfo(path).Length });
+        string zip = WriteZip(z => z.CreateEntryFromFile(path, entry, CompressionLevel.Fastest));
+        Manifest.Items.Add(new BackupItem { Kind = BackupKind.File, OriginalPath = path, Archive = entry, Zip = zip, Bytes = new FileInfo(path).Length });
         BackupStore.Save(_dir, Manifest);
     }
 
@@ -170,14 +207,17 @@ public sealed class BackupSession : IDisposable
     public void AddFolder(string dir)
     {
         long total = 0;
-        foreach (var f in Directory.EnumerateFiles(dir, "*", Recursive))
+        string zip = WriteZip(z =>
         {
-            Zip.CreateEntryFromFile(f, BackupRules.EntryName(f), CompressionLevel.Fastest);
-            total += new FileInfo(f).Length;
-        }
-        foreach (var d in Directory.EnumerateDirectories(dir, "*", Recursive))
-            if (!Directory.EnumerateFileSystemEntries(d).Any()) Zip.CreateEntry(BackupRules.EntryName(d) + "/");
-        Manifest.Items.Add(new BackupItem { Kind = BackupKind.Folder, OriginalPath = dir, Archive = BackupRules.EntryName(dir), Bytes = total });
+            foreach (var f in Directory.EnumerateFiles(dir, "*", Recursive))
+            {
+                z.CreateEntryFromFile(f, BackupRules.EntryName(f), CompressionLevel.Fastest);
+                total += new FileInfo(f).Length;
+            }
+            foreach (var d in Directory.EnumerateDirectories(dir, "*", Recursive))
+                if (!Directory.EnumerateFileSystemEntries(d).Any()) z.CreateEntry(BackupRules.EntryName(d) + "/");
+        });
+        Manifest.Items.Add(new BackupItem { Kind = BackupKind.Folder, OriginalPath = dir, Archive = BackupRules.EntryName(dir), Zip = zip, Bytes = total });
         BackupStore.Save(_dir, Manifest);
     }
 
@@ -213,12 +253,7 @@ public sealed class BackupSession : IDisposable
         BackupStore.Save(_dir, Manifest);
     }
 
-    public void Dispose()
-    {
-        _zip?.Dispose();
-        _zip = null;
-        BackupStore.Save(_dir, Manifest);
-    }
+    public void Dispose() => BackupStore.Save(_dir, Manifest);
 }
 
 /// <summary>Valores do registro em texto, para o manifesto: números em decimal, binário em base64, várias linhas separadas por \0.</summary>

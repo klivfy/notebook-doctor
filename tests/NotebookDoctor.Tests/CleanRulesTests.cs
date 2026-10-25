@@ -291,6 +291,23 @@ public class CleanEngineTests
     }
 
     [Fact]
+    public void Recurse_com_curinga_nao_leva_cookies_senhas_nem_favoritos_das_subpastas()
+    {
+        var sys = new FakeCleanSystem()
+            .File($@"{Local}\Vivaldi\User Data\Default\Cache\a.bin", 10)
+            .File($@"{Local}\Vivaldi\User Data\Default\Network\Cookies", 99)
+            .File($@"{Local}\Vivaldi\User Data\Default\Login Data", 99)
+            .File($@"{Local}\Vivaldi\User Data\Default\Bookmarks", 99)
+            .File($@"{Local}\Vivaldi\User Data\Default\Local Storage\leveldb\000003.log", 99);
+        var e = Engine(sys).Plan(Rule("[Vivaldi *]\nFileKey1=%LocalAppData%\\Vivaldi\\User Data\\Default|*.*|RECURSE\n"))!;
+        Assert.Equal(1, e.FileCount);
+        Assert.Equal(10, e.Bytes);
+        var target = Assert.Single(e.Files);
+        Assert.False(CleanEngine.Matches(target, $@"{Local}\Vivaldi\User Data\Default\Network\Cookies"));
+        Assert.False(CleanEngine.Matches(target, $@"{Local}\Vivaldi\User Data\Default\Local Storage\leveldb\000003.log"));
+    }
+
+    [Fact]
     public void Pasta_com_curinga_vale_para_cada_perfil()
     {
         var sys = new FakeCleanSystem()
