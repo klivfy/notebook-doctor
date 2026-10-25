@@ -56,6 +56,7 @@ public static class Smoke
                 await Tool(theme, folder, "soneca", () => new SnoozeWindow(main));
                 await Tool(theme, folder, "atualizar-programas", () => new UpdatesWindow(main));
                 await Tool(theme, folder, "ferramentas-do-windows", () => new WindowsToolsWindow(main));
+                await Tool(theme, folder, "verificar-malware", () => new SecurityWindow(main));
                 // Controles em estados que as telas de demonstração não mostram sozinhas
                 await Tool(theme, folder, "controles", () => Controls(main));
                 await Modal(theme, folder, "dialogo-info", () => Dialogs.Info(main, Loc.T("Informação"), Loc.T("Texto de exemplo de um aviso do app, com duas linhas para conferir a quebra.")));

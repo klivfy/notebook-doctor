@@ -1,4 +1,5 @@
 Revisión de seguridad, datos y accesibilidad (nuevo)
+• Buscar malware (Sistema): ejecuta Microsoft Defender (rápido, completo o una carpeta) y la Herramienta de eliminación de software malintencionado (MRT) de Windows, muestra el historial de amenazas y lo registra en Acciones. Quien busca y elimina es Microsoft.
 • La limpieza como administrador elimina cada archivo por su identificador y comprueba dónde está realmente: una carpeta cambiada por un acceso directo del sistema a mitad de la limpieza ya no lleva la eliminación fuera.
 • La copia de seguridad de cada elemento queda escrita y cerrada antes de que salga el original: si el PC se apaga a mitad, Deshacer sigue devolviéndolo todo.
 • Los elementos que no caben en la Papelera de reciclaje ya no desaparecen en silencio: Windows pregunta antes de eliminarlos definitivamente.

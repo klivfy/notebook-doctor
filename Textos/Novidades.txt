@@ -1,4 +1,5 @@
 Revisão de segurança, dados e acessibilidade (novo)
+• Verificar malware (Sistema): roda o Microsoft Defender (rápida, completa ou uma pasta) e a Ferramenta de Remoção de Software Mal-Intencionado (MRT) do Windows, mostra o histórico de ameaças e registra em Ações. Quem procura e remove é a Microsoft.
 • A limpeza como administrador apaga cada arquivo pelo identificador e confere onde ele está de fato: uma pasta trocada por atalho de sistema no meio da limpeza não leva mais a exclusão para fora.
 • O backup de cada item fica gravado e fechado antes de o original sair: se o PC desligar no meio, o Desfazer ainda devolve tudo.
 • Itens que não cabem na Lixeira não somem mais em silêncio: o Windows pergunta antes de apagar de vez.

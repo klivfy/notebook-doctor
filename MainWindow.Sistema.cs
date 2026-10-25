@@ -27,6 +27,9 @@ public partial class MainWindow
 
     private void SysTools_Click(object sender, RoutedEventArgs e) => new WindowsToolsWindow(this).ShowDialog();
 
+    // Verificar malware: Defender e MRT do Windows
+    private void SysSecurity_Click(object sender, RoutedEventArgs e) => new SecurityWindow(this).ShowDialog();
+
     private async void SysRefresh_Click(object sender, RoutedEventArgs e) => await LoadSystemAsync();
 
     private void SysCopy_Click(object sender, RoutedEventArgs e)

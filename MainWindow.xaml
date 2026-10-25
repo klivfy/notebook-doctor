@@ -954,6 +954,8 @@
                                 ToolTip="Copia um resumo curto para colar numa conversa, e-mail ou chamado."/>
                         <Button Content="Exportar…" Style="{StaticResource TextButton}" Click="SysExport_Click" Margin="0,0,8,8"
                                 ToolTip="Salva o retrato completo em TXT, HTML ou PDF. Nada é enviado para a internet."/>
+                        <Button Content="Verificar malware…" Style="{StaticResource TonalButton}" Click="SysSecurity_Click" Margin="0,0,8,8"
+                                ToolTip="Verifica o computador com o Microsoft Defender e a Ferramenta de Remoção de Software Mal-Intencionado (MRT) do Windows."/>
                         <Button Content="Ferramentas do Windows…" Style="{StaticResource TextButton}" Click="SysTools_Click" Margin="0,0,8,8"
                                 ToolTip="Atalhos para o Gerenciador de Dispositivos, Serviços, Agendador de Tarefas e outras ferramentas que o Windows já traz."/>
                         <TextBlock x:Name="SysMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,8" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>

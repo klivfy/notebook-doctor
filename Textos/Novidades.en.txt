@@ -1,4 +1,5 @@
 Security, data and accessibility review (new)
+• Scan for malware (System): runs Microsoft Defender (quick, full or a folder) and the Windows Malicious Software Removal Tool (MRT), shows the threat history and records it in Actions. Microsoft does the searching and removing.
 • Cleanup as administrator deletes each file by its identifier and checks where it really is: a folder swapped for a system shortcut in the middle of a cleanup no longer takes the deletion outside.
 • The backup of each item is written and closed before the original goes: if the PC shuts down halfway, Undo still brings everything back.
 • Items that don't fit in the Recycle Bin no longer vanish silently: Windows asks before deleting them for good.
