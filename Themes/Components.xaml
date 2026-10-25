@@ -32,6 +32,22 @@
     <Style x:Key="Muted" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}"/>
     </Style>
+    <!-- U7: estado vazio de uma tabela. Tag aponta para a tabela; o texto aparece no meio dela enquanto não houver linhas -->
+    <Style x:Key="EmptyState" TargetType="TextBlock" BasedOn="{StaticResource Muted}">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextAlignment" Value="Center"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="MaxWidth" Value="360"/>
+        <Setter Property="Margin" Value="16,48,16,16"/>
+        <Setter Property="IsHitTestVisible" Value="False"/>
+        <Setter Property="Visibility" Value="Collapsed"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Tag.HasItems, RelativeSource={RelativeSource Self}}" Value="False">
+                <Setter Property="Visibility" Value="Visible"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
     <Style x:Key="Value" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
         <Setter Property="FontSize" Value="{DynamicResource FsTitleMedium}"/>

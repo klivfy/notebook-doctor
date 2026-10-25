@@ -346,3 +346,40 @@ public class ProgramTotalsTests
     [Fact]
     public void Sem_busca_e_todos_com_tamanho() => Assert.Equal($"2 itens · {Units.Bytes(3)}", TableTotals.Programs([1, 2], 2));
 }
+
+/// <summary>S2: só a Klivfy, com o nome exato, assina a atualização.</summary>
+public class PublisherSignatureTests
+{
+    private static (string, string)[] Subject(params (string, string)[] parts) => parts;
+
+    [Fact]
+    public void Nome_exato_da_Klivfy_passa()
+    {
+        Assert.True(PublisherSignature.Trusted(Subject(("CN", "Klivfy"), ("O", "Klivfy"), ("C", "BR")), "AB"));
+        Assert.True(PublisherSignature.Trusted(Subject(("2.5.4.3", "Klivfy"), ("2.5.4.10", "Klivfy")), "AB"));
+    }
+
+    [Theory]
+    [InlineData("Klivfy Games Ltda", "Klivfy Games Ltda")]
+    [InlineData("NotKlivfy", "NotKlivfy")]
+    [InlineData("klivfy", "klivfy")]
+    [InlineData("Klivfy", "Outra Empresa")]
+    public void Nome_que_so_contem_Klivfy_nao_passa(string cn, string o) =>
+        Assert.False(PublisherSignature.Trusted(Subject(("CN", cn), ("O", o)), "AB"));
+
+    [Fact]
+    public void Campo_repetido_ou_faltando_nao_passa()
+    {
+        Assert.False(PublisherSignature.Trusted(Subject(("CN", "Klivfy"), ("O", "Klivfy"), ("O", "Outra")), "AB"));
+        Assert.False(PublisherSignature.Trusted(Subject(("CN", "Klivfy")), "AB"));
+    }
+
+    [Fact]
+    public void Com_chave_fixada_so_a_chave_certa_passa()
+    {
+        var pinned = new[] { "aabb" };
+        var subject = Subject(("CN", "Klivfy"), ("O", "Klivfy"));
+        Assert.True(PublisherSignature.Trusted(subject, "AABB", pinned));
+        Assert.False(PublisherSignature.Trusted(subject, "CCDD", pinned));
+    }
+}

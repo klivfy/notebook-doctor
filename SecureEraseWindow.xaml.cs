@@ -160,6 +160,8 @@ public partial class SecureEraseWindow : Window
         if (_paths.Count > 6) preview.Add(Loc.F("…e mais {0}", _paths.Count - 6));
         string text = Loc.F("Apagar de vez {0} ({1})?", Pt.N(plan.Files.Count, Loc.T("arquivo"), Loc.T("arquivos")), Units.Bytes(plan.Bytes)) + "\n\n" + string.Join("\n", preview)
             + "\n\n" + Loc.T("Não vai para a Lixeira e não tem como voltar.") + "\n\n"
+            // C7: com a lista cortada, a pessoa precisa saber que o resto das pastas continua no disco
+            + (plan.Truncated ? Loc.F("A lista foi cortada em {0} arquivos: só essa parte sai agora. O resto continua nas pastas; depois é só apagar de novo.", EraseRules.MaxFiles) + "\n\n" : "")
             + string.Join("\n", EraseRules.Warnings(solid, _special).Select(w => "• " + Loc.T(w)));
         if (_main.Simulate(Loc.T("Apagar de vez"), Loc.F("Apagaria de vez {0}.", Pt.N(plan.Files.Count, Loc.T("arquivo"), Loc.T("arquivos"))))) return;
         if (!Dialogs.Confirm(this, Loc.T("Apagar de vez"), text, Loc.T("Apagar de vez"), danger: true)) return;
@@ -179,6 +181,7 @@ public partial class SecureEraseWindow : Window
         if (result.Skipped > 0) summary.Add(Loc.F("{0} pulados.", result.Skipped));
         if (result.Failed > 0) summary.Add(Loc.F("{0} falharam (em uso ou sem permissão).", result.Failed));
         if (result.Cancelled) summary.Add(Loc.T("Cancelado."));
+        if (plan.Truncated && !result.Cancelled) summary.Add(Loc.T("Ainda há arquivos nas pastas escolhidas: clique em Apagar de vez de novo para continuar."));
         if (result.NeedsFreeSpaceWipe) summary.Add(Loc.T("Havia arquivos comprimidos ou criptografados: limpe também o espaço livre."));
         Msg.Text = string.Join(" ", summary);
         ActionLog.Add(Loc.F("Apagado de vez: {0}", Pt.N(result.Erased, Loc.T("arquivo"), Loc.T("arquivos"))), string.Join(" ", summary.Skip(1)));

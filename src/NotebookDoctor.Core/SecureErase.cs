@@ -41,7 +41,12 @@ public static class EraseRules
         foreach (var root in places.Roots)
             if (Paths.Same(p, root) || Paths.IsUnder(root, p)) return "Pasta importante do seu perfil: escolha o que há dentro dela";
         foreach (var cloud in cloudFolders)
-            if (cloud.Length > 0 && Paths.IsUnder(p, cloud)) return "Pasta do OneDrive: a cópia na nuvem continua e volta para cá";
+        {
+            if (cloud.Length == 0) continue;
+            if (Paths.IsUnder(p, cloud)) return "Pasta do OneDrive: a cópia na nuvem continua e volta para cá";
+            // C5: a pasta-mãe levaria junto os arquivos baixados da biblioteca, e a sincronização apagaria também na nuvem
+            if (Paths.IsUnder(cloud, p)) return "Tem uma pasta do OneDrive ou do SharePoint dentro: escolha o que há fora dela";
+        }
         foreach (var app in appFolders)
             if (app.Length > 0 && (Paths.IsUnder(p, app) || Paths.IsUnder(app, p))) return "É do próprio Notebook Doctor";
         return null;

@@ -56,7 +56,10 @@ public static class OneDriveScan
         return new OneDriveInfo(folder, local, online, partial);
     }
 
-    /// <summary>Pastas do OneDrive deste usuário: contas configuradas no registro e, de reserva, as variáveis de ambiente.</summary>
+    /// <summary>
+    /// Pastas do OneDrive deste usuário: contas configuradas no registro, bibliotecas do SharePoint e do Teams sincronizadas
+    /// (C5: ficam fora da pasta do OneDrive, em "C:\Users\ana\Empresa") e, de reserva, as variáveis de ambiente.
+    /// </summary>
     public static IEnumerable<string> Folders()
     {
         var list = new List<string>();
@@ -67,6 +70,16 @@ public static class OneDriveScan
             {
                 using var k = accounts!.OpenSubKey(name);
                 if (k?.GetValue("UserFolder") is string f && f.Length > 0) list.Add(f);
+                // Cada biblioteca sincronizada aparece como um valor cujo nome é a pasta local
+                using var tenants = k?.OpenSubKey("Tenants");
+                foreach (var tenant in tenants?.GetSubKeyNames() ?? [])
+                {
+                    using var t = tenants!.OpenSubKey(tenant);
+                    list.AddRange((t?.GetValueNames() ?? []).Where(v => Path.IsPathFullyQualified(v)));
+                }
+                using var mounts = k?.OpenSubKey("ScopeIdToMountPointPathCache");
+                foreach (var v in mounts?.GetValueNames() ?? [])
+                    if (mounts!.GetValue(v) is string mount && Path.IsPathFullyQualified(mount)) list.Add(mount);
             }
         }
         catch { }

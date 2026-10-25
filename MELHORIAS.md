@@ -232,4 +232,6 @@ Critérios de impacto
 
 Fases 5 e 6 completas (levas 5.1 a 6.3); Fases 5, 6 e 7 completas (levas 5.1 a 7.4); Fase 8, levas 8.1 (aba Sistema), 8.2 (apagar de vez), 8.3 (recuperar arquivos) e 8.4 (ferramentas do Windows, desfragmentação de HD e build Arm64) prontas, e também a 8.5 (opcional): motor próprio de recuperação NTFS, com prévia e chance de recuperação. O plano das Fases 5 a 8 está completo. O plano completo das Fases 5 a 8 está em `ESTUDO-VIABILIDADE-E-PLANO.md`.
 
+Revisão de 25/10 (artefato "Revisão do Notebook Doctor"): as 9 de prioridade alta (S1, C1–C4, U1, U2, U4, R1) e as médias S2 (assinatura com nome exato e chave fixável em `PublisherSignature.PinnedKeys`, preencher quando o certificado da A50 existir), C5, C6, C7, U3, U5, U6, U7 e U8 (Programas; juntar abas do trilho ficou para decisão) estão feitas. Baixas (S3, C8–C10, U11–U14, R4, R5) e as decisões V-D1 a V-D6 continuam no artefato.
+
 Também pendentes: M13 Multi-idioma, 3ª leva (o que a verificação visual ainda aponta como "parece português", relatórios e textos do Sobre). Dependem da Klivfy: ciclo de release (versao.json e assinatura), B24 termos e política publicada, M18 telemetria, B25 avaliação do app. B05 Efeito ripple só se combinar com o visual do Windows 11.

@@ -61,6 +61,10 @@ public partial class MainWindow : Window
         // O "Tamanho do texto" do Windows pode mudar com o app escondido na bandeja
         IsVisibleChanged += (_, _) => { if (IsVisible) TextScale.Apply(); };
         _snackTimer.Tick += (_, _) => HideSnack();
+        // U6 (WCAG 2.2.1): com o mouse ou o foco no aviso, a contagem para; ao sair, recomeça do início
+        Snack.MouseEnter += (_, _) => _snackTimer.Stop();
+        Snack.MouseLeave += (_, _) => RestartSnackTimer();
+        Snack.IsKeyboardFocusWithinChanged += (_, e) => { if ((bool)e.NewValue) _snackTimer.Stop(); else RestartSnackTimer(); };
 
         // Atalhos: Ctrl+1…9 trocam de aba e Ctrl+0 abre Configurações; F5 atualiza a aba atual
         PreviewKeyDown += (_, e) =>
@@ -142,6 +146,15 @@ public partial class MainWindow : Window
         if (text.Length > 0) LiveRegions.Announce(SnackText);
         _snackTimer.Stop();
         _snackTimer.Interval = TimeSpan.FromSeconds(seconds + text.Length / 25); // tempo de leitura cresce com o texto
+        RestartSnackTimer();
+    }
+
+    /// <summary>U6: aviso com ação (Instalar, Ver em Ações) só sai quando a pessoa fecha ou usa; os outros somem sozinhos.</summary>
+    private void RestartSnackTimer()
+    {
+        _snackTimer.Stop();
+        if (Snack.Visibility != Visibility.Visible || _snackAction is not null || SnackAction.Visibility == Visibility.Visible) return;
+        if (Snack.IsMouseOver || Snack.IsKeyboardFocusWithin) return;
         _snackTimer.Start();
     }
 

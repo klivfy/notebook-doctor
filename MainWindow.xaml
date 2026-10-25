@@ -477,6 +477,7 @@
                         <!-- B33: totais do que está à vista (respeita a busca) -->
                         <DockPanel Grid.Row="2">
                             <TextBlock x:Name="SpaceTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,6,0,0" TextTrimming="CharacterEllipsis"/>
+                            <Grid>
                             <DataGrid x:Name="SpaceGrid" AutomationProperties.Name="Resultado da análise de espaço">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Item" Binding="{Binding Name}" Width="340">
@@ -497,6 +498,9 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
+                            <TextBlock Style="{StaticResource EmptyState}" Tag="{Binding ElementName=SpaceGrid}"
+                                       Text="Escolha o que analisar e onde, e clique em Analisar. As maiores pastas e arquivos aparecem aqui."/>
+                            </Grid>
                         </DockPanel>
                         <WrapPanel Grid.Row="3" Margin="0,14,0,0">
                             <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="SpaceOpen_Click" Margin="0,0,8,6"/>
@@ -581,25 +585,29 @@
                         <WrapPanel Grid.Row="3" Margin="0,14,0,0">
                             <Button Content="Desinstalar…" Click="ProgUninstall_Click" Margin="0,0,8,6"
                                     ToolTip="Abre o desinstalador do próprio programa (Delete na lista)."/>
-                            <Button Content="Abrir pasta" Style="{StaticResource TonalButton}" Click="ProgOpenFolder_Click" Margin="0,0,8,6"/>
-                            <Button Content="Propriedades" Style="{StaticResource TextButton}" Click="ProgProperties_Click" Margin="0,0,8,6"
-                                    ToolTip="Tudo o que o programa registrou: pasta, comando de desinstalação, chave do registro (ou Enter na lista)."/>
-                            <Button Content="Exportar lista…" Style="{StaticResource TextButton}" Click="ProgExport_Click" Margin="0,0,8,6"
-                                    ToolTip="Salva a lista à vista (com a busca e o filtro) em CSV, para planilha, ou em HTML."/>
-                            <Button Content="Procurar sobras…" Style="{StaticResource TextButton}" Click="ProgFindLeftovers_Click" Margin="0,0,8,6"
-                                    ToolTip="De um programa que já saiu da lista, mas deixou pastas e registro."/>
+                            <!-- U8: uma ação principal, duas secundárias e o resto em Mais (antes eram onze botões lado a lado) -->
+                            <Button Content="Atualizar programas…" Style="{StaticResource TonalButton}" Click="ProgUpdates_Click" Margin="0,0,8,6"
+                                    ToolTip="Procura versões novas pelo WinGet e atualiza os que você marcar. Dá para pular uma versão ou pausar um programa."/>
                             <Button Content="Mirar" Style="{StaticResource TextButton}" Margin="0,0,8,6" Click="ProgHunt_Click"
                                     PreviewMouseLeftButtonDown="ProgHunt_Down" PreviewMouseLeftButtonUp="ProgHunt_Up"
                                     ToolTip="Segure, arraste até a janela de um programa e solte: o app mostra de qual programa instalado ela é."/>
-                            <Button Content="Instalar monitorando…" Style="{StaticResource TextButton}" Click="ProgMonitor_Click" Margin="0,0,8,6"
-                                    ToolTip="Anota tudo o que um instalador cria no disco e no registro, para desinstalar exatamente isso depois (administrador)."/>
-                            <Button Content="Instalações monitoradas…" Style="{StaticResource TextButton}" Click="ProgTraces_Click" Margin="0,0,8,6"
-                                    ToolTip="Ver, exportar, importar e desinstalar pelas anotações das instalações."/>
-                            <Button Content="Atualizar programas…" Style="{StaticResource TextButton}" Click="ProgUpdates_Click" Margin="0,0,8,6"
-                                    ToolTip="Procura versões novas pelo WinGet e atualiza os que você marcar. Dá para pular uma versão ou pausar um programa."/>
-                            <Button Content="Backups…" Style="{StaticResource TextButton}" Click="ProgBackups_Click" Margin="0,0,8,6"
-                                    ToolTip="Restaurar ou apagar o que a remoção de sobras guardou (30 dias)."/>
-                            <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ProgRefresh_Click" Margin="0,0,8,6"/>
+                            <Button Content="Mais…" Style="{StaticResource TextButton}" Margin="0,0,8,6" Click="More_Click"
+                                    AutomationProperties.Name="Mais ações de programas">
+                                <Button.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Abrir _pasta" Click="ProgOpenFolder_Click"/>
+                                        <MenuItem Header="P_ropriedades" Click="ProgProperties_Click"/>
+                                        <MenuItem Header="_Exportar lista…" Click="ProgExport_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="Procurar _sobras…" Click="ProgFindLeftovers_Click"/>
+                                        <MenuItem Header="_Instalar monitorando…" Click="ProgMonitor_Click"/>
+                                        <MenuItem Header="Instalações _monitoradas…" Click="ProgTraces_Click"/>
+                                        <MenuItem Header="_Backups…" Click="ProgBackups_Click"/>
+                                        <Separator/>
+                                        <MenuItem Header="_Atualizar a lista" InputGestureText="F5" Click="ProgRefresh_Click"/>
+                                    </ContextMenu>
+                                </Button.ContextMenu>
+                            </Button>
                             <Button x:Name="ProgDoneBtn" Content="O desinstalador terminou" Style="{StaticResource TonalButton}" Click="ProgDone_Click" Margin="0,0,8,6"
                                     Visibility="Collapsed" ToolTip="Use se a janela do desinstalador já fechou e o app continua esperando."/>
                             <TextBlock x:Name="ProgMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
@@ -769,6 +777,8 @@
                                 <DataGridTextColumn Header="Situação" Binding="{Binding Status}" Width="130"/>
                             </DataGrid.Columns>
                         </DataGrid>
+                        <TextBlock Grid.Row="1" Style="{StaticResource EmptyState}" Tag="{Binding ElementName=ActionsGrid}"
+                                   Text="O que o app mudar neste computador aparece aqui, com Desfazer quando der para voltar."/>
                         <WrapPanel Grid.Row="2" Margin="0,14,0,0">
                             <Button Content="Desfazer selecionada" Style="{StaticResource TonalButton}" Click="Undo_Click" Margin="0,0,8,6"/>
                             <TextBlock x:Name="ActionsMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
@@ -1005,9 +1015,9 @@
                         <!-- B37: horários do tema automático -->
                         <WrapPanel Margin="0,0,0,8">
                             <TextBlock Text="No tema por horário: claro a partir das" VerticalAlignment="Center" Margin="0,0,0,6"/>
-                            <TextBox x:Name="CfgThemeLight" Width="70" Margin="8,0,8,6" VerticalAlignment="Center" AutomationProperties.Name="Início do tema claro"/>
+                            <TextBox x:Name="CfgThemeLight" Width="88" Margin="8,0,8,6" VerticalAlignment="Center" AutomationProperties.Name="Início do tema claro"/>
                             <TextBlock Text="e escuro a partir das" VerticalAlignment="Center" Margin="0,0,0,6"/>
-                            <TextBox x:Name="CfgThemeDark" Width="70" Margin="8,0,0,6" VerticalAlignment="Center" AutomationProperties.Name="Início do tema escuro"/>
+                            <TextBox x:Name="CfgThemeDark" Width="88" Margin="8,0,0,6" VerticalAlignment="Center" AutomationProperties.Name="Início do tema escuro"/>
                         </WrapPanel>
                         <!-- B16/B17 -->
                         <Grid Margin="0,0,0,12">
@@ -1095,9 +1105,9 @@
                         <CheckBox x:Name="CfgQuietFull" Content="Sem notificações com app em tela cheia, jogo ou apresentação"/>
                         <WrapPanel>
                             <CheckBox x:Name="CfgQuiet" Content="Horário silencioso, das" VerticalAlignment="Center"/>
-                            <TextBox x:Name="CfgQuietStart" Width="70" Margin="8,0,8,6" VerticalAlignment="Center" AutomationProperties.Name="Início do horário silencioso"/>
+                            <TextBox x:Name="CfgQuietStart" Width="88" Margin="8,0,8,6" VerticalAlignment="Center" AutomationProperties.Name="Início do horário silencioso"/>
                             <TextBlock Text="às" VerticalAlignment="Center" Margin="0,0,0,6"/>
-                            <TextBox x:Name="CfgQuietEnd" Width="70" Margin="8,0,0,6" VerticalAlignment="Center" AutomationProperties.Name="Fim do horário silencioso"/>
+                            <TextBox x:Name="CfgQuietEnd" Width="88" Margin="8,0,0,6" VerticalAlignment="Center" AutomationProperties.Name="Fim do horário silencioso"/>
                         </WrapPanel>
                         <Grid Margin="0,16,0,20">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions>

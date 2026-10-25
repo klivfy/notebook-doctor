@@ -6,6 +6,12 @@ Revisão de segurança, dados e acessibilidade (novo)
 • O leitor de tela (Narrador, NVDA) passa a anunciar avisos e andamento.
 • Janelas de ferramenta se ajustam à tela de notebooks pequenos (1366 × 768 com escala de 125%).
 • Em inglês e espanhol, o Painel, Processos, Limpeza, Inicialização, Ajustes e Histórico não misturam mais frases em português.
+• A atualização automática só aceita instalador assinado exatamente pela Klivfy: um certificado de outra empresa com "Klivfy" no nome não passa mais.
+• Apagar de vez recusa uma pasta que tenha uma biblioteca do OneDrive ou do SharePoint dentro (a sincronização apagaria também na nuvem) e avisa quando a lista foi cortada e parte dos arquivos fica para a próxima vez.
+• Cancelar a limpeza avançada no meio registra em Ações o que já saiu, com Desfazer para o registro.
+• Avisos com uma ação (Instalar, Ver em Ações) só saem quando você fecha ou usa; os outros esperam enquanto o mouse ou o foco estão neles.
+• Programas mostra Desinstalar, Atualizar programas e Mirar; o resto foi para "Mais…". Espaço e Ações dizem o que fazer quando ainda estão vazias.
+• Os campos de hora não cortam mais o texto, e o cabeçalho das tabelas não parte uma palavra no meio.
 
 Visual novo, no estilo do Windows 11 (novo)
 • Cores, fonte (Segoe UI Variable), cantos e botões no padrão do Windows 11, nos temas claro e escuro.

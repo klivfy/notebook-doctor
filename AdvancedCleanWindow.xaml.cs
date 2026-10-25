@@ -317,14 +317,23 @@ public partial class AdvancedCleanWindow : Window
                 return r;
             });
         }
-        catch (OperationCanceledException) { End(); return; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidOperationException)
+        {
+            // C6: um erro inesperado não fecha a janela; o backup do que já saiu fica guardado
+            if (session is not null) ActionLog.Add(Loc.T("Limpeza avançada"), Loc.F("Interrompida: {0}", ex.Message), "leftovers", session);
+            End(Loc.F("Interrompida: {0}", ex.Message));
+            return;
+        }
         // Sem registro mexido, o backup ficaria vazio: não vale guardar
         bool kept = result.Keys > 0 && session is not null;
         if (!kept && session is not null) { try { store.Delete(session); } catch (IOException) { } }
         string summary = Loc.F("{0} liberados · {1}, {2}.", Units.Bytes(result.Bytes),
             Pt.N(result.Files, Loc.T("arquivo"), Loc.T("arquivos")), Pt.N(result.Keys, Loc.T("chave do registro"), Loc.T("chaves do registro")));
         if (result.Skipped > 0) summary += " " + Loc.F("{0} pulados (em uso ou sem permissão).", result.Skipped);
+        // C6: cancelar no meio também registra em Ações, com Desfazer para as chaves que já saíram
+        if (result.Cancelled) summary += " " + Loc.T("Cancelado no meio.");
         ActionLog.Add(Loc.T("Limpeza avançada"), summary + " " + string.Join(", ", chosen.Select(r => r.Name)), kept ? "leftovers" : "", kept ? session! : "");
+        if (result.Cancelled) return; // só cancela quando a janela fecha: não há o que atualizar
         End(summary);
         PlayDone();
         await ScanRulesAsync();
@@ -463,6 +472,8 @@ public partial class AdvancedCleanWindow : Window
         catch (OperationCanceledException) { End(); return; }
         string summary = Loc.F("{0} liberados · {1}.", Units.Bytes(result.Bytes), Pt.N(result.Files, Loc.T("item"), Loc.T("itens")));
         if (result.Skipped > 0) summary += " " + Loc.F("{0} pulados (em uso ou sem permissão).", result.Skipped);
+        // C6: cancelar no meio também registra em Ações, com Desfazer para as chaves que já saíram
+        if (result.Cancelled) summary += " " + Loc.T("Cancelado no meio.");
         ActionLog.Add(Loc.T("Arquivos inúteis"), summary);
         End();
         PlayDone();

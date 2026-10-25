@@ -45,6 +45,17 @@ public class EraseRulesTests
     public void Caminhos_que_podem_ser_apagados_de_vez(string path) => Assert.Null(Blocked(path));
 
     [Fact]
+    public void Pasta_que_contem_uma_biblioteca_da_nuvem_fica_de_fora()
+    {
+        string[] cloud = [@"C:\Users\ana\OneDrive", @"D:\Dados\Empresa\Site - Documentos"];
+        Assert.NotNull(Blocked(@"D:\Dados", cloud));                         // C5: levaria a biblioteca junto
+        Assert.NotNull(Blocked(@"D:\Dados\Empresa", cloud));
+        Assert.NotNull(Blocked(@"D:\Dados\Empresa\Site - Documentos\a.docx", cloud));
+        Assert.Null(Blocked(@"D:\Dados\Outros", cloud));
+        Assert.Null(Blocked(@"D:\Dados\Empresa\Site - Documentos 2", cloud)); // nome parecido não é a biblioteca
+    }
+
+    [Fact]
     public void Plano_junta_arquivos_pastas_e_o_que_ficou_de_fora()
     {
         var sys = new FakeSystem()

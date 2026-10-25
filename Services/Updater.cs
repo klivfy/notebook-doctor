@@ -20,7 +20,6 @@ public static class Updater
 {
     public const string ManifestUrl = "https://klivfy.com/notebookdoctor/versao.json";
     private const string TrustedHost = "klivfy.com";
-    private const string Publisher = "Klivfy";
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 
@@ -77,7 +76,7 @@ public static class Updater
 
     private static void TryDelete(string f) { try { File.Delete(f); } catch { } }
 
-    /// <summary>Assinatura Authenticode íntegra e confiável (WinVerifyTrust) e emitida para a Klivfy.</summary>
+    /// <summary>Assinatura Authenticode íntegra e confiável (WinVerifyTrust), emitida exatamente para a Klivfy (S2).</summary>
     public static bool IsSignedByPublisher(string file)
     {
         if (VerifyTrust(file) != 0) return false;
@@ -86,7 +85,10 @@ public static class Updater
 #pragma warning disable SYSLIB0057 // leitura do certificado do signatário de um arquivo assinado
             using var cert = new X509Certificate2(X509Certificate.CreateFromSignedFile(file));
 #pragma warning restore SYSLIB0057
-            return cert.GetNameInfo(X509NameType.SimpleName, false).Contains(Publisher, StringComparison.OrdinalIgnoreCase);
+            var subject = cert.SubjectName.EnumerateRelativeDistinguishedNames()
+                .Select(r => (r.GetSingleElementType().Value ?? "", r.GetSingleElementValue() ?? ""));
+            string key = Convert.ToHexString(SHA256.HashData(cert.PublicKey.ExportSubjectPublicKeyInfo()));
+            return PublisherSignature.Trusted(subject, key);
         }
         catch { return false; }
     }

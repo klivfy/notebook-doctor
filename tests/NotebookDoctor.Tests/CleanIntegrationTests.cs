@@ -131,6 +131,39 @@ public class CleanIntegrationTests
         }
     }
 
+    /// <summary>C6: cancelar não lança exceção; o executor para e devolve o que já fez, para a sessão entrar em Ações.</summary>
+    [WindowsFact]
+    public void Cancelar_devolve_o_resultado_parcial_sem_excecao()
+    {
+        string tag = "NDCancel" + Guid.NewGuid().ToString("N")[..8];
+        string root = Path.Combine(Path.GetTempPath(), tag);
+        var places = WindowsPlaces.Current();
+        var store = new BackupStore(Path.Combine(Path.GetTempPath(), tag + "-backups"));
+        try
+        {
+            Directory.CreateDirectory(root);
+            File.WriteAllText(Path.Combine(root, "a.bin"), "a");
+            var entry = new CleanPlanEntry
+            {
+                Rule = new CleanRule { Name = "Cancelada" },
+                Files = [new FileTarget(root, ["*.bin"], false, false, 0, [], [])],
+                Selected = true,
+            };
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            using var backup = store.Begin("cancelada");
+            var result = CleanExecutor.Run([entry], places, backup, isAdmin: false, ct: cts.Token);
+            Assert.True(result.Cancelled);
+            Assert.Equal(0, result.Files);
+            Assert.True(File.Exists(Path.Combine(root, "a.bin")));
+        }
+        finally
+        {
+            if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+            if (Directory.Exists(store.Root)) Directory.Delete(store.Root, recursive: true);
+        }
+    }
+
     [WindowsFact]
     public void Arquivos_inuteis_saem_e_o_resto_fica()
     {

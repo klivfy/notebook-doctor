@@ -18,7 +18,8 @@ public sealed class WindowsCleanSystem : WindowsLeftoverSystem, ICleanSystem
     }
 }
 
-public sealed record RuleCleanResult(long Bytes, int Files, int Keys, int Skipped, List<string> Errors);
+/// <param name="Cancelled">C6: a pessoa cancelou no meio; o resultado conta o que já saiu, para entrar em Ações com Desfazer.</param>
+public sealed record RuleCleanResult(long Bytes, int Files, int Keys, int Skipped, List<string> Errors, bool Cancelled = false);
 
 /// <summary>
 /// Leva 6.1: apaga o que o plano do motor mostrou. Antes de cada gravação confere de novo as proteções (a mesma
@@ -31,6 +32,7 @@ public static class CleanExecutor
     private static readonly EnumerationOptions Walk = new() { IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
 
     /// <param name="onAction">Ações que o executor não faz sozinho (a área de transferência precisa da janela do app); devolve se deu certo.</param>
+    /// <param name="ct">Cancelar não lança exceção: para no próximo arquivo ou chave e devolve o que já foi feito, com Cancelled.</param>
     public static RuleCleanResult Run(IEnumerable<CleanPlanEntry> entries, KnownPlaces places, BackupSession backup, bool isAdmin,
         Func<CleanAction, bool>? onAction = null, IProgress<string>? progress = null, CancellationToken ct = default)
     {
@@ -39,7 +41,7 @@ public static class CleanExecutor
         var errors = new List<string>();
         foreach (var e in entries.Where(e => e.Selected))
         {
-            ct.ThrowIfCancellationRequested();
+            if (ct.IsCancellationRequested) break;
             if (e.NeedsAdmin && !isAdmin) { skipped++; continue; }
             progress?.Report(Loc.T(e.Name));
             foreach (var t in e.Files)
@@ -49,6 +51,7 @@ public static class CleanExecutor
             }
             foreach (var r in e.Registry)
             {
+                if (ct.IsCancellationRequested) break;
                 try
                 {
                     if (CleanKey(r, backup)) keys++;
@@ -59,9 +62,10 @@ public static class CleanExecutor
                     errors.Add($"{e.Name}: {ex.Message}");
                 }
             }
+            if (ct.IsCancellationRequested) break;
             if (e.Rule.Action != CleanAction.None && !Act(e.Rule.Action, onAction)) { skipped++; errors.Add(e.Name); }
         }
-        return new RuleCleanResult(bytes, files, keys, skipped, errors);
+        return new RuleCleanResult(bytes, files, keys, skipped, errors, ct.IsCancellationRequested);
     }
 
     private static bool Act(CleanAction action, Func<CleanAction, bool>? onAction)
@@ -97,7 +101,7 @@ public static class CleanExecutor
         var options = t.Recurse ? new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint } : Walk;
         foreach (var f in new DirectoryInfo(t.Dir).EnumerateFiles("*", options))
         {
-            ct.ThrowIfCancellationRequested();
+            if (ct.IsCancellationRequested) return (bytes, files, skipped);
             try
             {
                 if (!CleanEngine.Matches(t, f.FullName, () => f.LastWriteTime)) continue;
