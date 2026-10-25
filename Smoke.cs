@@ -44,25 +44,29 @@ public static class Smoke
                         Save(main, folder, $"{theme}-aba-{tab:00}");
                     });
                 }
-                await Tool(theme, folder, "limpeza-avancada", () => new AdvancedCleanWindow(main));
-                await Tool(theme, folder, "menu-de-contexto", () => new ContextMenuWindow(main));
-                await Tool(theme, folder, "desfragmentar", () => new DefragWindow(main));
-                await Tool(theme, folder, "drivers", () => new DriversWindow(main));
-                await Tool(theme, folder, "duplicados", () => new DuplicatesWindow(main, []));
-                await Tool(theme, folder, "recuperar-ntfs", () => new NtfsRecoveryWindow(main));
-                await Tool(theme, folder, "recuperar", () => new RecoveryWindow(main));
-                await Tool(theme, folder, "registro", () => new RegistryCheckWindow(main));
-                await Tool(theme, folder, "apagar-de-vez", () => new SecureEraseWindow(main));
-                await Tool(theme, folder, "soneca", () => new SnoozeWindow(main));
-                await Tool(theme, folder, "atualizar-programas", () => new UpdatesWindow(main));
-                await Tool(theme, folder, "ferramentas-do-windows", () => new WindowsToolsWindow(main));
-                await Tool(theme, folder, "verificar-malware", () => new SecurityWindow(main));
+                foreach (var (name, create) in Tools(main)) await Tool(theme, folder, name, create);
                 // Controles em estados que as telas de demonstração não mostram sozinhas
                 await Tool(theme, folder, "controles", () => Controls(main));
                 await Modal(theme, folder, "dialogo-info", () => Dialogs.Info(main, Loc.T("Informação"), Loc.T("Texto de exemplo de um aviso do app, com duas linhas para conferir a quebra.")));
                 await Modal(theme, folder, "dialogo-perigo", () => Dialogs.Confirm(main, Loc.T("Apagar"), Loc.T("Confirmação de uma ação que não pode ser desfeita."), Loc.T("Apagar"), danger: true));
                 await Modal(theme, folder, "boas-vindas", () => Dialogs.ShowWelcome(main, App.Current.Settings));
             }
+
+            // B46: notebook 1366 × 768 com escala de 150% (a mais comum nessa tela) deixa cerca de 911 × 480 para as janelas.
+            // Cada aba e cada ferramenta abre nesse tamanho, e botão que fica fora da janela vira aviso.
+            ThemeManager.Apply("light");
+            await Idle(600);
+            Shrink(main);
+            for (int tab = 0; tab <= AppTabs.Settings; tab++)
+            {
+                await Step($"light-aba-{tab:00}-150", async () =>
+                {
+                    main.SelectTab(tab);
+                    await Idle(500);
+                    Save(main, folder, $"light-aba-{tab:00}-150");
+                });
+            }
+            foreach (var (name, create) in Tools(main)) await Tool("light", folder, name + "-150", create, small: true);
         }
         catch (Exception ex) { Errors.Add("Falha geral: " + ex); }
 
@@ -92,6 +96,39 @@ public static class Smoke
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++) Walk(VisualTreeHelper.GetChild(d, i));
         }
         Walk(w);
+    }
+
+    /// <summary>
+    /// B46: botão que ficou fora da área da janela (empurrado por linhas de tamanho fixo quando a janela encolhe) não dá para clicar. O que
+    /// está dentro de uma área com rolagem fica de fora: chega-se a ele rolando.
+    /// </summary>
+    private static void ReportClipped(FrameworkElement root, string name)
+    {
+        var area = new Rect(-1, -1, root.ActualWidth + 2, root.ActualHeight + 2);
+        foreach (var b in Descendants(root).OfType<System.Windows.Controls.Primitives.ButtonBase>())
+        {
+            if (!b.IsVisible || b.ActualWidth < 1 || b.ActualHeight < 1 || InsideScroll(b, root)) continue;
+            var r = b.TransformToAncestor(root).TransformBounds(new Rect(0, 0, b.ActualWidth, b.ActualHeight));
+            if (!area.Contains(r))
+                Log.AppendLine($"aviso [{name}] botão fora da janela: {b.Content as string ?? System.Windows.Automation.AutomationProperties.GetName(b) ?? b.Name}");
+        }
+    }
+
+    private static bool InsideScroll(DependencyObject d, DependencyObject root)
+    {
+        for (var p = VisualTreeHelper.GetParent(d); p is not null && p != root; p = VisualTreeHelper.GetParent(p))
+            if (p is System.Windows.Controls.ScrollViewer) return true;
+        return false;
+    }
+
+    private static IEnumerable<DependencyObject> Descendants(DependencyObject d)
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++)
+        {
+            var c = VisualTreeHelper.GetChild(d, i);
+            yield return c;
+            foreach (var g in Descendants(c)) yield return g;
+        }
     }
 
     private static readonly System.Text.RegularExpressions.Regex Portuguese = new(
@@ -150,12 +187,43 @@ public static class Smoke
         return w;
     }
 
-    private static Task Tool(string theme, string folder, string name, Func<Window> create) => Step($"{theme}-{name}", async () =>
+    private static IEnumerable<(string Name, Func<Window> Create)> Tools(MainWindow main) =>
+    [
+        ("limpeza-avancada", () => new AdvancedCleanWindow(main)),
+        ("menu-de-contexto", () => new ContextMenuWindow(main)),
+        ("desfragmentar", () => new DefragWindow(main)),
+        ("drivers", () => new DriversWindow(main)),
+        ("duplicados", () => new DuplicatesWindow(main, [])),
+        ("recuperar-ntfs", () => new NtfsRecoveryWindow(main)),
+        ("recuperar", () => new RecoveryWindow(main)),
+        ("registro", () => new RegistryCheckWindow(main)),
+        ("apagar-de-vez", () => new SecureEraseWindow(main)),
+        ("soneca", () => new SnoozeWindow(main)),
+        ("atualizar-programas", () => new UpdatesWindow(main)),
+        ("ferramentas-do-windows", () => new WindowsToolsWindow(main)),
+        ("verificar-malware", () => new SecurityWindow(main)),
+    ];
+
+    private const double SmallWidth = 911, SmallHeight = 480;
+
+    /// <summary>Encolhe a janela até a área útil do notebook pequeno, como o WindowFit faz no PC de verdade.</summary>
+    private static void Shrink(Window w)
+    {
+        w.SizeToContent = SizeToContent.Manual;
+        w.MinWidth = Math.Min(w.MinWidth, SmallWidth);
+        w.MinHeight = Math.Min(w.MinHeight, SmallHeight);
+        w.Width = Math.Min(w.ActualWidth > 0 ? w.ActualWidth : w.Width, SmallWidth);
+        w.Height = Math.Min(w.ActualHeight > 0 ? w.ActualHeight : w.Height, SmallHeight);
+    }
+
+    private static Task Tool(string theme, string folder, string name, Func<Window> create, bool small = false) => Step($"{theme}-{name}", async () =>
     {
         var w = create();
         w.ShowActivated = false;
         w.Show();
-        await Idle(900);
+        await Idle(300);
+        if (small) Shrink(w);
+        await Idle(600);
         Save(w, folder, $"{theme}-{name}");
         w.Hide(); // Hide, e não Close: janelas ocupadas recusam fechar, e o processo termina logo depois
     });
@@ -191,7 +259,10 @@ public static class Smoke
     private static void Save(Window w, string folder, string name)
     {
         w.UpdateLayout();
-        if (w.Content is not FrameworkElement root || root.ActualWidth < 1) throw new InvalidOperationException($"{name}: janela sem conteúdo");
+        // A área cliente inteira (o primeiro elemento do modelo da janela), e não só o conteúdo: o conteúdo costuma ter margem, e
+        // desenhá-lo pelo tamanho dele cortava a margem da direita e de baixo da imagem
+        if (w.Content is not FrameworkElement content || content.ActualWidth < 1) throw new InvalidOperationException($"{name}: janela sem conteúdo");
+        var root = VisualTreeHelper.GetChildrenCount(w) > 0 && VisualTreeHelper.GetChild(w, 0) is FrameworkElement client && client.ActualWidth >= 1 ? client : content;
         double dpi = VisualTreeHelper.GetDpi(w).PixelsPerInchX;
         double scale = dpi / 96;
         int width = (int)Math.Ceiling(root.ActualWidth * scale), height = (int)Math.Ceiling(root.ActualHeight * scale);
@@ -211,6 +282,7 @@ public static class Smoke
         var bmp = new RenderTargetBitmap(width, height, dpi, dpi, PixelFormats.Pbgra32);
         bmp.Render(visual);
         ReportUntranslated(w, name);
+        ReportClipped(root, name);
         var png = new PngBitmapEncoder();
         png.Frames.Add(BitmapFrame.Create(bmp));
         using var fs = File.Create(Path.Combine(folder, name + ".png"));
