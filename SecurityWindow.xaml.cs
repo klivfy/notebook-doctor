@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using NotebookDoctor.Services;
 
@@ -26,16 +27,32 @@ public partial class SecurityWindow : Window
         _main = main;
         Owner = main;
         SourceInitialized += (_, _) => ThemeManager.ApplyTitleBar(this);
-        _clock.Tick += (_, _) => Msg.Text = $"{_what}… {Elapsed(DateTime.Now - _since)}";
+        _clock.Tick += (_, _) => Msg.Text = Loc.F("{0}… {1}", _what, Elapsed(DateTime.Now - _since));
+        // A primeira leitura do estado do Defender pode terminar com a janela já aberta
+        Host.HealthUpdated += ShowStatus;
+        Closed += (_, _) => Host.HealthUpdated -= ShowStatus;
         Loaded += async (_, _) =>
         {
-            StatusLine.Text = DefenderRules.StatusLine(Host.Health.Sec);
+            ShowStatus();
             if (!MalwareScanner.MrtAvailable) MrtQuickBtn.IsEnabled = MrtFullBtn.IsEnabled = MrtCleanBtn.IsEnabled = false;
             if (!AppPaths.Demo) await LoadHistoryAsync(quiet: true);
         };
     }
 
-    private static string Elapsed(TimeSpan t) => t.TotalHours >= 1 ? $"{(int)t.TotalHours} h {t.Minutes:00} min" : t.TotalMinutes >= 1 ? $"{(int)t.TotalMinutes} min {t.Seconds:00} s" : $"{t.Seconds} s";
+    private static string Elapsed(TimeSpan t) => t.TotalHours >= 1 ? Loc.F("{0} h {1:00} min", (int)t.TotalHours, t.Minutes)
+        : t.TotalMinutes >= 1 ? Loc.F("{0} min {1:00} s", (int)t.TotalMinutes, t.Seconds) : Loc.F("{0} s", t.Seconds);
+
+    private void ShowStatus() => Dispatcher.InvokeAsync(() =>
+    {
+        var sec = Host.Health.Sec;
+        bool ok = DefenderRules.StatusOk(sec);
+        StatusLine.Text = DefenderRules.StatusLine(sec);
+        StatusGlyph.Text = ok ? "\uE73E" : "\uE7BA";
+        StatusGlyph.SetResourceReference(TextBlock.ForegroundProperty, ok ? "Success" : "Warning");
+        // Tudo certo fica alinhado ao texto de cima; o que pede ação ganha o fundo de atenção
+        if (ok) { StatusBox.ClearValue(Border.BackgroundProperty); StatusBox.Padding = new Thickness(0); }
+        else { StatusBox.SetResourceReference(Border.BackgroundProperty, "WarningContainer"); StatusBox.Padding = new Thickness(8, 4, 8, 4); }
+    });
 
     protected override void OnClosing(CancelEventArgs e)
     {
@@ -64,7 +81,7 @@ public partial class SecurityWindow : Window
         Bar.IsIndeterminate = busy;
         _what = what;
         _since = DateTime.Now;
-        if (busy) { Msg.Text = $"{what}… {Elapsed(TimeSpan.Zero)}"; _clock.Start(); } else _clock.Stop();
+        if (busy) { Msg.Text = Loc.F("{0}… {1}", what, Elapsed(TimeSpan.Zero)); _clock.Start(); } else _clock.Stop();
     }
 
     /// <summary>MRT e Defender verificam o computador inteiro: os dois pedem administrador.</summary>
@@ -103,12 +120,14 @@ public partial class SecurityWindow : Window
         _cts = new CancellationTokenSource();
         SetBusy(true, what);
         (DefenderResult? Result, RecoveryRun Run) outcome;
+        bool userCancelled;
         try { outcome = await Task.Run(() => MalwareScanner.RunDefenderAsync(scan, folder, _cts.Token)); }
+        catch (ArgumentException) { SetBusy(false); Msg.Text = Loc.T("Essa pasta não pode ser verificada pelo Defender. Escolha uma pasta de uma unidade do computador."); return; }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException) { SetBusy(false); Msg.Text = Loc.F("O PowerShell não abriu: {0}", ex.Message); return; }
-        finally { _cts.Dispose(); _cts = null; }
+        finally { userCancelled = _cts?.IsCancellationRequested == true; _cts?.Dispose(); _cts = null; }
         SetBusy(false);
 
-        if (outcome.Run.Cancelled) { Msg.Text = Loc.T("Verificação cancelada."); return; }
+        if (outcome.Run.Cancelled) { Msg.Text = Stopped(userCancelled, MalwareScanner.DefenderLimit); return; }
         if (outcome.Result is not { } r) { Msg.Text = Loc.T("O Defender não respondeu. Abra a Segurança do Windows para ver se ele está ligado."); return; }
         ShowHistory(r);
         if (r.Error is { } err) { Msg.Text = Loc.F("O Defender não fez a verificação: {0}", err); return; }
@@ -116,7 +135,7 @@ public partial class SecurityWindow : Window
         var found = r.FoundNow;
         string summary = found.Count == 0
             ? Loc.T("Nenhuma ameaça encontrada.")
-            : $"{Pt.N(found.Count, Loc.T("ameaça encontrada"), Loc.T("ameaças encontradas"))}: {string.Join(", ", found.Select(f => $"{f.Name} ({f.StatusText})"))}.";
+            : Loc.F("{0}: {1}.", Pt.N(found.Count, "ameaça encontrada", "ameaças encontradas"), string.Join(", ", found.Select(f => Loc.F("{0} ({1})", f.Name, f.StatusText))));
         Msg.Text = summary;
         ActionLog.Add(what, found.Count == 0 ? summary : summary + " " + Loc.T("Para restaurar um arquivo, use o Histórico de proteção da Segurança do Windows."));
         if (found.Any(f => f.NeedsAttention)) Msg.Text += " " + Loc.T("Algumas pedem uma ação sua: abra a Segurança do Windows.");
@@ -128,19 +147,32 @@ public partial class SecurityWindow : Window
     private async Task LoadHistoryAsync(bool quiet)
     {
         if (_busy) return;
+        _cts = new CancellationTokenSource();
         SetBusy(true, Loc.T("Lendo o histórico do Defender"));
         DefenderResult? r = null;
-        try { r = (await Task.Run(() => MalwareScanner.RunDefenderAsync(DefenderScan.HistoryOnly, null, CancellationToken.None))).Result; }
+        bool cancelled = false;
+        try
+        {
+            var outcome = await Task.Run(() => MalwareScanner.RunDefenderAsync(DefenderScan.HistoryOnly, null, _cts.Token));
+            (r, cancelled) = (outcome.Result, outcome.Run.Cancelled);
+        }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException) { }
+        finally { _cts?.Dispose(); _cts = null; }
         SetBusy(false);
+        if (cancelled) { Msg.Text = Loc.T("Leitura do histórico cancelada."); return; }
         if (r is null) { Msg.Text = quiet ? "" : Loc.T("O Defender não respondeu. Abra a Segurança do Windows para ver se ele está ligado."); return; }
         ShowHistory(r);
         // Sem administrador o Windows pode esconder o histórico: avisa uma vez, sem tratar como erro
         Msg.Text = r.Error is not null && !AppInfo.IsAdmin ? Loc.T("Para ver o histórico completo, abra o app como administrador.")
-                 : quiet ? "" : Pt.N(r.Detections.Count, Loc.T("ameaça no histórico"), Loc.T("ameaças no histórico"));
+                 : quiet ? "" : Pt.N(r.Detections.Count, "ameaça no histórico", "ameaças no histórico");
     }
 
     private void ShowHistory(DefenderResult r) => ThreatGrid.ItemsSource = r.Detections;
+
+    /// <summary>O executor encerra pelo Cancelar e também pelo limite de tempo: a mensagem diz qual dos dois foi.</summary>
+    private static string Stopped(bool userCancelled, TimeSpan limit) => userCancelled
+        ? Loc.T("Verificação cancelada.")
+        : Loc.F("A verificação passou de {0} horas e foi interrompida. Tente de novo com o computador ligado na tomada, ou use a Segurança do Windows.", (int)limit.TotalHours);
 
     // ---------- MRT ----------
     private async void MrtQuick_Click(object sender, RoutedEventArgs e) => await RunMrtAsync(MrtMode.QuickDetect);
@@ -165,15 +197,19 @@ public partial class SecurityWindow : Window
             MrtMode.FullDetect => Loc.T("Verificação completa do MRT"),
             _ => Loc.T("Verificação e remoção do MRT"),
         };
+        // O resumo da execução anterior sai antes de começar: o que ficar na caixa é sempre desta verificação
+        MrtOutput.Text = "";
+        MrtOutput.Visibility = Visibility.Collapsed;
         _cts = new CancellationTokenSource();
         SetBusy(true, what);
         (MrtResult? Result, RecoveryRun Run) outcome;
+        bool userCancelled;
         try { outcome = await Task.Run(() => MalwareScanner.RunMrtAsync(mode, _cts.Token)); }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException) { SetBusy(false); Msg.Text = Loc.F("O MRT não abriu: {0}", ex.Message); return; }
-        finally { _cts.Dispose(); _cts = null; }
+        finally { userCancelled = _cts?.IsCancellationRequested == true; _cts?.Dispose(); _cts = null; }
         SetBusy(false);
 
-        if (outcome.Run.Cancelled) { Msg.Text = Loc.T("Verificação cancelada."); return; }
+        if (outcome.Run.Cancelled) { Msg.Text = Stopped(userCancelled, MalwareScanner.MrtLimit); return; }
         if (outcome.Result is not { } r) { Msg.Text = Loc.F("O MRT terminou com o código {0}, mas não registrou o resultado no mrt.log.", outcome.Run.ExitCode); return; }
 
         // O resumo é o texto do próprio MRT, em inglês: aparece como veio

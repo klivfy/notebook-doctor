@@ -12,7 +12,14 @@
         <StackPanel Grid.Row="1" Margin="0,4,0,12">
             <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap"
                        Text="Usa as ferramentas de segurança que já vêm no Windows: o Microsoft Defender e a Ferramenta de Remoção de Software Mal-Intencionado (MRT). Quem procura e remove é a Microsoft; o app mostra o resultado e registra em Ações."/>
-            <TextBlock x:Name="StatusLine" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+            <!-- Quem protege o PC agora: neutro quando está tudo certo, com fundo de atenção quando algo pede ação antes de verificar -->
+            <Border x:Name="StatusBox" CornerRadius="{StaticResource RadiusControl}" Padding="8,4" Margin="0,8,0,0" HorizontalAlignment="Left">
+                <DockPanel>
+                    <TextBlock x:Name="StatusGlyph" DockPanel.Dock="Left" Text="&#xE73E;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIcon}"
+                               Foreground="{DynamicResource Success}" VerticalAlignment="Top" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="StatusLine" Style="{StaticResource Label}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                </DockPanel>
+            </Border>
         </StackPanel>
 
         <!-- As duas ferramentas lado a lado, cada uma com o que faz e o que acontece com o que achar -->
@@ -41,7 +48,7 @@
                                 ToolTip="Verificação rápida que só aponta o que achar, sem remover."/>
                         <Button x:Name="MrtFullBtn" Content="Completa (só apontar)" Style="{StaticResource TextButton}" Click="MrtFull_Click" Margin="0,0,8,8"
                                 ToolTip="Verificação completa que só aponta. Pode levar horas."/>
-                        <Button x:Name="MrtCleanBtn" Content="Verificar e remover…" Style="{StaticResource TextButton}" Click="MrtClean_Click" Margin="0,0,8,8"
+                        <Button x:Name="MrtCleanBtn" Content="Verificar e remover…" Style="{StaticResource DangerButton}" Click="MrtClean_Click" Margin="0,0,8,8"
                                 ToolTip="Verificação completa em que o MRT remove o que achar."/>
                     </WrapPanel>
                 </StackPanel>
