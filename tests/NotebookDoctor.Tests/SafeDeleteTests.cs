@@ -160,6 +160,7 @@ public class BackupDurabilityTests : IDisposable
     {
         var store = new BackupStore(Path.Combine(_dir, "backups"));
         string a = Path.Combine(_dir, "a.txt"), b = Path.Combine(_dir, "b.txt");
+        Directory.CreateDirectory(_dir);
         File.WriteAllText(a, "a");
         File.WriteAllText(b, "b");
         string id;
