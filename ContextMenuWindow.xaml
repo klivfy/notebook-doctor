@@ -8,8 +8,8 @@
         AutomationProperties.Name="Menu de contexto">
     <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Menu de contexto" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
-        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
+        <TextBlock Text="Menu de contexto" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
                    Text="O que aparece ao clicar com o botão direito em arquivos, pastas e unidades. Desativar um verbo só o esconde do menu. Desativar um manipulador guarda um backup da chave e a apaga; reativar devolve tudo. O que é do Windows não pode ser desativado aqui. Os itens do menu novo do Windows 11 que vêm de apps da Store não ficam no registro e não aparecem."/>
         <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Itens do menu de contexto" SelectionMode="Single" MouseDoubleClick="Reveal_Click">
             <DataGrid.Columns>
@@ -23,14 +23,14 @@
             </DataGrid.Columns>
         </DataGrid>
         <TextBlock x:Name="Info" Grid.Row="3" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
-        <WrapPanel Grid.Row="4" Margin="0,10,0,0">
-            <Button x:Name="DisableBtn" Content="Desativar" Click="Disable_Click" Margin="0,0,8,6"/>
-            <Button x:Name="EnableBtn" Content="Reativar" Style="{StaticResource TonalButton}" Click="Enable_Click" Margin="0,0,8,6"/>
-            <Button Content="Mostrar na pasta" Style="{StaticResource TextButton}" Click="Reveal_Click" Margin="0,0,8,6"/>
-            <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="Reload_Click" Margin="0,0,8,6"/>
-            <CheckBox x:Name="ShowWindows" Content="Mostrar itens do Windows" Click="ShowWindows_Click" VerticalAlignment="Center" Margin="8,0,8,6"/>
-            <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,6"/>
-            <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,6" AutomationProperties.LiveSetting="Polite"/>
+        <WrapPanel Grid.Row="4" Margin="0,12,0,0">
+            <Button x:Name="DisableBtn" Content="Desativar" Click="Disable_Click" Margin="0,0,8,8"/>
+            <Button x:Name="EnableBtn" Content="Reativar" Style="{StaticResource TonalButton}" Click="Enable_Click" Margin="0,0,8,8"/>
+            <Button Content="Mostrar na pasta" Style="{StaticResource TextButton}" Click="Reveal_Click" Margin="0,0,8,8"/>
+            <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="Reload_Click" Margin="0,0,8,8"/>
+            <CheckBox x:Name="ShowWindows" Content="Mostrar itens do Windows" Click="ShowWindows_Click" VerticalAlignment="Center" Margin="8,0,8,8"/>
+            <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,8"/>
+            <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
         </WrapPanel>
     </Grid>
 </Window>

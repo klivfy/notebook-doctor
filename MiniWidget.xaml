@@ -8,7 +8,7 @@
         MouseLeftButtonDown="Drag" MouseDoubleClick="Open" KeyDown="Window_KeyDown"
         AutomationProperties.Name="Mini-widget do Notebook Doctor">
     <Border Background="{DynamicResource SurfaceContainer}" BorderBrush="{DynamicResource OutlineVariant}" BorderThickness="1"
-            CornerRadius="{StaticResource RadiusCard}" Padding="14,10,8,12" Margin="8" Width="230">
+            CornerRadius="{StaticResource RadiusCard}" Padding="16,12,8,12" Margin="8" Width="230">
         <!-- Janela flutuante sobre outras: a sombra continua, mais suave, no lugar da elevação do sistema -->
         <Border.Effect><DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.22"/></Border.Effect>
         <Border.ContextMenu>
@@ -18,26 +18,26 @@
             </ContextMenu>
         </Border.ContextMenu>
         <StackPanel>
-            <DockPanel Margin="0,0,0,6">
+            <DockPanel Margin="0,0,0,8">
                 <Button DockPanel.Dock="Right" Content="&#xE711;" Style="{StaticResource IconButton}" Width="28" Height="28"
                         FontSize="{DynamicResource FsCaption}" Margin="0" AutomationProperties.Name="Fechar mini-widget" ToolTip="Fechar (Esc)" Click="Close_Click"/>
                 <TextBlock x:Name="ScoreText" Text="Nota –" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center"
                            ToolTip="Clique duplo abre o painel; arraste para mover"/>
             </DockPanel>
             <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="48"/></Grid.ColumnDefinitions>
                 <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                <TextBlock Text="CPU" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,3,10,3"/>
+                <TextBlock Text="CPU" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,4,12,4"/>
                 <ProgressBar x:Name="CpuBar" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Processador"/>
-                <TextBlock x:Name="CpuText" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <TextBlock Grid.Row="1" Text="Memória" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,3,10,3"/>
+                <TextBlock x:Name="CpuText" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Grid.Row="1" Text="Memória" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,4,12,4"/>
                 <ProgressBar x:Name="RamBar" Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Memória"/>
-                <TextBlock x:Name="RamText" Grid.Row="1" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <TextBlock Grid.Row="2" Text="Disco" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,3,10,3"/>
+                <TextBlock x:Name="RamText" Grid.Row="1" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Grid.Row="2" Text="Disco" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,4,12,4"/>
                 <ProgressBar x:Name="DiskBar" Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Atividade do disco"/>
-                <TextBlock x:Name="DiskText" Grid.Row="2" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock x:Name="DiskText" Grid.Row="2" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,8,0"/>
             </Grid>
-            <TextBlock x:Name="TopText" Style="{StaticResource Muted}" Margin="0,6,6,0" TextTrimming="CharacterEllipsis"/>
+            <TextBlock x:Name="TopText" Style="{StaticResource Muted}" Margin="0,8,8,0" TextTrimming="CharacterEllipsis"/>
         </StackPanel>
     </Border>
 </Window>

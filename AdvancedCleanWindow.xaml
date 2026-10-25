@@ -8,13 +8,13 @@
         AutomationProperties.Name="Limpeza avançada">
     <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Limpeza avançada" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
-        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
+        <TextBlock Text="Limpeza avançada" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
                    Text="Rastros do Windows e do Office, regras de programas, arquivos inúteis e a Limpeza de Disco do Windows. Você vê o que sai antes de apagar; o registro vai para um backup que dá para desfazer em Ações."/>
 
         <Grid Grid.Row="2">
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                 <Button x:Name="TabTraces" Content="Rastros e programas" Click="Section_Click" Tag="0" Margin="0,0,8,0"/>
                 <Button x:Name="TabJunk" Content="Arquivos inúteis" Click="Section_Click" Tag="1" Margin="0,0,8,0"/>
                 <Button x:Name="TabDisk" Content="Limpeza de Disco do Windows" Click="Section_Click" Tag="2" Margin="0,0,8,0"/>
@@ -26,17 +26,17 @@
                 <TabItem Header="Rastros e programas">
                     <DockPanel>
                         <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                            <Button Content="Analisar" Style="{StaticResource TonalButton}" Click="RulesScan_Click" Margin="0,0,8,6"/>
-                            <Button x:Name="RulesCleanBtn" Content="Limpar marcados" Click="RulesClean_Click" Margin="0,0,8,6"/>
-                            <Button Content="Ver o que sai" Style="{StaticResource TonalButton}" Click="RulesDetails_Click" Margin="0,0,8,6"
+                            <Button Content="Analisar" Style="{StaticResource TonalButton}" Click="RulesScan_Click" Margin="0,0,8,8"/>
+                            <Button x:Name="RulesCleanBtn" Content="Limpar marcados" Click="RulesClean_Click" Margin="0,0,8,8"/>
+                            <Button Content="Ver o que sai" Style="{StaticResource TonalButton}" Click="RulesDetails_Click" Margin="0,0,8,8"
                                     ToolTip="Lista os arquivos e as chaves do registro da linha selecionada, sem apagar nada (clique duplo faz o mesmo)."/>
-                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="RulesAll_Click" Margin="0,0,8,6"/>
-                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="RulesNone_Click" Margin="0,0,8,6"/>
-                            <Button Content="Importar regras…" Style="{StaticResource TextButton}" Click="RulesImport_Click" Margin="0,0,8,6"
+                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="RulesAll_Click" Margin="0,0,8,8"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="RulesNone_Click" Margin="0,0,8,8"/>
+                            <Button Content="Importar regras…" Style="{StaticResource TextButton}" Click="RulesImport_Click" Margin="0,0,8,8"
                                     ToolTip="Carrega um arquivo no formato winapp2.ini (regras da comunidade). Só aparecem as regras de programas que existem neste computador, todas desmarcadas."/>
-                            <Button x:Name="RulesRemoveBtn" Content="Remover regras importadas" Style="{StaticResource TextButton}" Click="RulesRemoveImported_Click" Margin="0,0,8,6"/>
+                            <Button x:Name="RulesRemoveBtn" Content="Remover regras importadas" Style="{StaticResource TextButton}" Click="RulesRemoveImported_Click" Margin="0,0,8,8"/>
                         </WrapPanel>
-                        <TextBlock x:Name="RulesInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,6,0,0"
+                        <TextBlock x:Name="RulesInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0"
                                    AutomationProperties.LiveSetting="Polite"/>
                         <DataGrid x:Name="RulesGrid" MouseDoubleClick="RulesDetails_Click" PreviewKeyDown="RulesGrid_KeyDown"
                                   AutomationProperties.Name="Rastros e programas que podem ser limpos">
@@ -64,22 +64,22 @@
                 <TabItem Header="Arquivos inúteis">
                     <DockPanel>
                         <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                            <Button Content="Procurar" Style="{StaticResource TonalButton}" Click="JunkScan_Click" Margin="0,0,8,6"/>
-                            <Button x:Name="JunkCleanBtn" Content="Apagar marcados" Click="JunkClean_Click" Margin="0,0,8,6"/>
-                            <Button Content="Mostrar na pasta" Style="{StaticResource TonalButton}" Click="JunkReveal_Click" Margin="0,0,8,6"/>
-                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="JunkAll_Click" Margin="0,0,8,6"/>
-                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="JunkNone_Click" Margin="0,0,8,6"/>
+                            <Button Content="Procurar" Style="{StaticResource TonalButton}" Click="JunkScan_Click" Margin="0,0,8,8"/>
+                            <Button x:Name="JunkCleanBtn" Content="Apagar marcados" Click="JunkClean_Click" Margin="0,0,8,8"/>
+                            <Button Content="Mostrar na pasta" Style="{StaticResource TonalButton}" Click="JunkReveal_Click" Margin="0,0,8,8"/>
+                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="JunkAll_Click" Margin="0,0,8,8"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="JunkNone_Click" Margin="0,0,8,8"/>
                         </WrapPanel>
-                        <TextBlock x:Name="JunkInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,6,0,0"
+                        <TextBlock x:Name="JunkInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0"
                                    AutomationProperties.LiveSetting="Polite"/>
                         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
                             <WrapPanel>
-                                <ComboBox x:Name="JunkWhere" Width="300" Margin="0,0,12,6" SelectedIndex="0" AutomationProperties.Name="Onde procurar">
+                                <ComboBox x:Name="JunkWhere" Width="300" Margin="0,0,12,8" SelectedIndex="0" AutomationProperties.Name="Onde procurar">
                                     <ComboBoxItem Content="Minha pasta de usuário" Tag="user"/>
                                     <ComboBoxItem Content="Todas as unidades fixas — demora" Tag="drives"/>
                                 </ComboBox>
-                                <Button Content="Ignorar uma pasta…" Style="{StaticResource TextButton}" Click="JunkAddExcluded_Click" Margin="0,0,8,6"/>
-                                <Button x:Name="JunkClearExcludedBtn" Content="Limpar pastas ignoradas" Style="{StaticResource TextButton}" Click="JunkClearExcluded_Click" Margin="0,0,8,6"/>
+                                <Button Content="Ignorar uma pasta…" Style="{StaticResource TextButton}" Click="JunkAddExcluded_Click" Margin="0,0,8,8"/>
+                                <Button x:Name="JunkClearExcludedBtn" Content="Limpar pastas ignoradas" Style="{StaticResource TextButton}" Click="JunkClearExcluded_Click" Margin="0,0,8,8"/>
                             </WrapPanel>
                             <TextBlock x:Name="JunkExcluded" Style="{StaticResource Label}" TextWrapping="Wrap"/>
                             <TextBlock Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,4,0,0"
@@ -109,12 +109,12 @@
                 <TabItem Header="Limpeza de Disco do Windows">
                     <DockPanel>
                         <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                            <Button x:Name="DiskRunBtn" Content="Executar a Limpeza de Disco" Click="DiskRun_Click" Margin="0,0,8,6"/>
-                            <Button Content="Marcar os seguros" Style="{StaticResource TextButton}" Click="DiskSafe_Click" Margin="0,0,8,6"/>
-                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="DiskNone_Click" Margin="0,0,8,6"/>
-                            <Button Content="Atualizar lista" Style="{StaticResource TextButton}" Click="DiskReload_Click" Margin="0,0,8,6"/>
+                            <Button x:Name="DiskRunBtn" Content="Executar a Limpeza de Disco" Click="DiskRun_Click" Margin="0,0,8,8"/>
+                            <Button Content="Marcar os seguros" Style="{StaticResource TextButton}" Click="DiskSafe_Click" Margin="0,0,8,8"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="DiskNone_Click" Margin="0,0,8,8"/>
+                            <Button Content="Atualizar lista" Style="{StaticResource TextButton}" Click="DiskReload_Click" Margin="0,0,8,8"/>
                         </WrapPanel>
-                        <TextBlock x:Name="DiskInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,6,0,0"
+                        <TextBlock x:Name="DiskInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0"
                                    AutomationProperties.LiveSetting="Polite"/>
                         <TextBlock DockPanel.Dock="Top" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,8"
                                    Text="Usa a própria Limpeza de Disco do Windows, que sabe apagar com segurança o que é do sistema (atualizações antigas, Windows.old, pacotes de driver, relatórios de erro). Exige administrador. A Lixeira e a pasta Downloads não entram aqui."/>
@@ -140,17 +140,17 @@
                 <TabItem Header="Navegadores">
                     <DockPanel>
                         <WrapPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                            <Button Content="Analisar" Style="{StaticResource TonalButton}" Click="BrowsersScan_Click" Margin="0,0,8,6"/>
-                            <Button x:Name="BrowsersCleanBtn" Content="Limpar marcados" Click="BrowsersClean_Click" Margin="0,0,8,6"/>
-                            <Button Content="Fechar os marcados" Style="{StaticResource TonalButton}" Click="BrowsersClose_Click" Margin="0,0,8,6"
+                            <Button Content="Analisar" Style="{StaticResource TonalButton}" Click="BrowsersScan_Click" Margin="0,0,8,8"/>
+                            <Button x:Name="BrowsersCleanBtn" Content="Limpar marcados" Click="BrowsersClean_Click" Margin="0,0,8,8"/>
+                            <Button Content="Fechar os marcados" Style="{StaticResource TonalButton}" Click="BrowsersClose_Click" Margin="0,0,8,8"
                                     ToolTip="Pede para fechar as janelas dos navegadores marcados. Nada é encerrado à força: se houver algo sem salvar, o navegador pergunta."/>
-                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="BrowsersAll_Click" Margin="0,0,8,6"/>
-                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="BrowsersNone_Click" Margin="0,0,8,6"/>
+                            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="BrowsersAll_Click" Margin="0,0,8,8"/>
+                            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="BrowsersNone_Click" Margin="0,0,8,8"/>
                         </WrapPanel>
-                        <TextBlock x:Name="BrowsersInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,6,0,0"
+                        <TextBlock x:Name="BrowsersInfo" DockPanel.Dock="Bottom" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0"
                                    AutomationProperties.LiveSetting="Polite"/>
                         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                            <TextBlock Text="O que apagar" Style="{StaticResource TitleMedium}" Margin="0,0,0,4"/>
+                            <TextBlock Text="O que apagar" Style="{StaticResource CardTitle}" Margin="0,0,0,4"/>
                             <WrapPanel>
                                 <CheckBox x:Name="KindHistory" Content="Histórico de navegação" Tag="History" Click="Kind_Click" Margin="0,0,16,4"/>
                                 <CheckBox x:Name="KindCookies" Content="Cookies" Tag="Cookies" Click="Kind_Click" Margin="0,0,16,4"/>
@@ -159,21 +159,21 @@
                             </WrapPanel>
                             <CheckBox x:Name="BrowserOnClose" Content="Limpar sozinho quando o navegador fechar" Click="OnClose_Click" Margin="0,0,0,8"
                                       ToolTip="O app percebe quando o navegador fecha e apaga os tipos marcados acima. Se o navegador mantém processos em segundo plano, só roda quando todos terminam."/>
-                            <TextBlock Text="Sites a manter conectados" Style="{StaticResource TitleMedium}" Margin="0,0,0,4"/>
+                            <TextBlock Text="Sites a manter conectados" Style="{StaticResource CardTitle}" Margin="0,0,0,4"/>
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                 <ListBox x:Name="KeepList" Height="84" SelectionMode="Extended" AutomationProperties.Name="Sites cujos cookies são mantidos"/>
                                 <StackPanel Grid.Column="1" Margin="12,0,0,0" Width="260">
-                                    <DockPanel Margin="0,0,0,6">
-                                        <Button DockPanel.Dock="Right" Content="Adicionar" Style="{StaticResource TonalButton}" Click="KeepAdd_Click" Margin="6,0,0,0"/>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <Button DockPanel.Dock="Right" Content="Adicionar" Style="{StaticResource TonalButton}" Click="KeepAdd_Click" Margin="8,0,0,0"/>
                                         <TextBox x:Name="KeepInput" Tag="site.com" AutomationProperties.Name="Site a manter conectado" KeyDown="KeepInput_KeyDown"/>
                                     </DockPanel>
-                                    <Button Content="Remover o selecionado" Style="{StaticResource TextButton}" Click="KeepRemove_Click" Margin="0,0,0,2" HorizontalAlignment="Left"/>
+                                    <Button Content="Remover o selecionado" Style="{StaticResource TextButton}" Click="KeepRemove_Click" Margin="0,0,0,4" HorizontalAlignment="Left"/>
                                     <Button Content="Escolher entre os sites com cookies…" Style="{StaticResource TextButton}" Click="KeepPick_Click" HorizontalAlignment="Left"
                                             ToolTip="Lê os cookies dos navegadores fechados e deixa você marcar os sites que devem continuar conectados."/>
                                 </StackPanel>
                             </Grid>
-                            <TextBlock Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,6,0,0"
+                            <TextBlock Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,8,0,0"
                                        Text="Senhas salvas, favoritos, extensões e configurações nunca são tocados. O navegador precisa estar fechado. Com a sincronização ligada, o histórico pode voltar da nuvem."/>
                         </StackPanel>
                         <DataGrid x:Name="BrowsersGrid" AutomationProperties.Name="Navegadores e perfis encontrados">

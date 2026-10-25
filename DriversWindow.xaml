@@ -8,8 +8,8 @@
         AutomationProperties.Name="Drivers pelo Windows Update">
     <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Drivers pelo Windows Update" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
-        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
+        <TextBlock Text="Drivers pelo Windows Update" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
                    Text="Só drivers que o próprio Windows Update oferece: nada de sites de terceiros. Só aparece como recomendado o que é mais novo que o instalado. Antes de instalar, o app cria um ponto de restauração e guarda uma cópia do driver atual, para voltar quando precisar. Exige administrador para instalar."/>
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
             <Button x:Name="OffersTab" Content="Drivers disponíveis" Style="{StaticResource TonalButton}" Click="OffersTab_Click" Margin="0,0,8,0"/>
@@ -49,16 +49,16 @@
             </DataGrid>
         </Grid>
         <TextBlock x:Name="Info" Grid.Row="4" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
-        <WrapPanel Grid.Row="5" Margin="0,10,0,0">
-            <Button x:Name="ScanBtn" Content="Procurar drivers" Style="{StaticResource TonalButton}" Click="Scan_Click" Margin="0,0,8,6"/>
-            <Button x:Name="InstallBtn" Content="Instalar o selecionado…" Click="Install_Click" Margin="0,0,8,6"
+        <WrapPanel Grid.Row="5" Margin="0,12,0,0">
+            <Button x:Name="ScanBtn" Content="Procurar drivers" Style="{StaticResource TonalButton}" Click="Scan_Click" Margin="0,0,8,8"/>
+            <Button x:Name="InstallBtn" Content="Instalar o selecionado…" Click="Install_Click" Margin="0,0,8,8"
                     ToolTip="Cria o ponto de restauração, guarda o driver atual e só então instala. Um driver por vez."/>
-            <Button x:Name="RestoreBtn" Content="Voltar a este driver…" Click="Restore_Click" Margin="0,0,8,6" Visibility="Collapsed"/>
-            <Button x:Name="DeleteBtn" Content="Apagar cópia" Style="{StaticResource TextButton}" Click="DeleteCopy_Click" Margin="0,0,8,6" Visibility="Collapsed"/>
-            <Button Content="Atualizações opcionais do Windows" Style="{StaticResource TextButton}" Click="Optional_Click" Margin="0,0,8,6"
+            <Button x:Name="RestoreBtn" Content="Voltar a este driver…" Click="Restore_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+            <Button x:Name="DeleteBtn" Content="Apagar cópia" Style="{StaticResource TextButton}" Click="DeleteCopy_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+            <Button Content="Atualizações opcionais do Windows" Style="{StaticResource TextButton}" Click="Optional_Click" Margin="0,0,8,8"
                     ToolTip="Abre a página do Windows Update onde o próprio Windows lista as atualizações opcionais."/>
-            <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,6"/>
-            <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,6" AutomationProperties.LiveSetting="Polite"/>
+            <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,8"/>
+            <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
         </WrapPanel>
     </Grid>
 </Window>

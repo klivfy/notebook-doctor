@@ -11,7 +11,7 @@ Revisão de segurança, dados e acessibilidade (novo)
 • Cancelar a limpeza avançada no meio registra em Ações o que já saiu, com Desfazer para o registro.
 • Avisos com uma ação (Instalar, Ver em Ações) só saem quando você fecha ou usa; os outros esperam enquanto o mouse ou o foco estão neles.
 • Programas mostra Desinstalar, Atualizar programas e Mirar; o resto foi para "Mais…". Espaço e Ações dizem o que fazer quando ainda estão vazias.
-• Os campos de hora não cortam mais o texto, e o cabeçalho das tabelas não parte uma palavra no meio.
+• Os campos de hora não cortam mais o texto, o cabeçalho das tabelas não parte uma palavra no meio e os espaços entre os elementos ficaram regulares em todas as telas.
 
 Visual novo, no estilo do Windows 11 (novo)
 • Cores, fonte (Segoe UI Variable), cantos e botões no padrão do Windows 11, nos temas claro e escuro.

@@ -102,3 +102,29 @@ public class ThemeContrastTests
         }
     }
 }
+
+/// <summary>
+/// U9: nas telas, margens e preenchimentos ficam na grade de 4 do DESIGN.md. O miolo dos controles (Themes) segue as
+/// medidas do WinUI e fica de fora; 1 e valores negativos são ajustes de traço e de borda.
+/// </summary>
+public class SpacingTests
+{
+    [Fact]
+    public void Margens_das_telas_ficam_na_grade_de_4()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "NotebookDoctor.csproj"))) dir = dir.Parent;
+        Assert.NotNull(dir);
+        var off = new List<string>();
+        foreach (var file in dir!.EnumerateFiles("*.xaml"))
+        {
+            string xaml = File.ReadAllText(file.FullName);
+            foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(xaml,
+                         @"(?:\b(?:Margin|Padding)|Property=""(?:Margin|Padding)""\s+Value)=""([-0-9.,\s]+)"""))
+                foreach (var v in m.Groups[1].Value.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries))
+                    if (double.Parse(v, System.Globalization.CultureInfo.InvariantCulture) is var n && n > 1 && n % 4 != 0)
+                        off.Add($"{file.Name}: {m.Value}");
+        }
+        Assert.True(off.Count == 0, "Fora da grade de 4:\n" + string.Join("\n", off.Distinct()));
+    }
+}

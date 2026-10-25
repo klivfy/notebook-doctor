@@ -7,20 +7,15 @@
         <ResourceDictionary Source="Tokens.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
-    <Style x:Key="Display" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource FontDisplay}"/>
-        <Setter Property="FontSize" Value="{DynamicResource FsDisplay}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
-    </Style>
     <!-- Título de página (28 px semibold, como as telas do Windows 11) -->
-    <Style x:Key="TitleLarge" TargetType="TextBlock">
+    <Style x:Key="PageTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource FontTitle}"/>
         <Setter Property="FontSize" Value="{DynamicResource FsPageTitle}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
     </Style>
-    <Style x:Key="TitleMedium" TargetType="TextBlock">
+    <Style x:Key="CardTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
-        <Setter Property="FontSize" Value="{DynamicResource FsTitleMedium}"/>
+        <Setter Property="FontSize" Value="{DynamicResource FsCardTitle}"/>
         <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
         <Setter Property="Margin" Value="0,0,0,12"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
@@ -50,7 +45,7 @@
     </Style>
     <Style x:Key="Value" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
-        <Setter Property="FontSize" Value="{DynamicResource FsTitleMedium}"/>
+        <Setter Property="FontSize" Value="{DynamicResource FsCardTitle}"/>
         <Setter Property="Margin" Value="0,4,0,0"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>

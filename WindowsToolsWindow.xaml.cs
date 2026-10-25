@@ -29,7 +29,7 @@ public partial class WindowsToolsWindow : Window
         foreach (var group in WindowsTools.Grouped(tools))
         {
             var card = new StackPanel();
-            card.Children.Add(new TextBlock { Text = Loc.T(group.Key), Style = (Style)FindResource("TitleMedium"), Margin = new Thickness(0, 0, 0, 8) });
+            card.Children.Add(new TextBlock { Text = Loc.T(group.Key), Style = (Style)FindResource("CardTitle"), Margin = new Thickness(0, 0, 0, 8) });
             Host.Children.Add(new Border { Style = (Style)FindResource("Card"), Child = card });
             var panel = new WrapPanel();
             card.Children.Add(panel);

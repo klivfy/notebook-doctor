@@ -20,11 +20,9 @@
     <sys:Double x:Key="FsCaption">12</sys:Double>
     <sys:Double x:Key="FsLabel">13</sys:Double>
     <sys:Double x:Key="FsBody">14</sys:Double>
-    <sys:Double x:Key="FsTitleMedium">16</sys:Double>
+    <sys:Double x:Key="FsCardTitle">16</sys:Double>
     <sys:Double x:Key="FsTitle">20</sys:Double>
-    <sys:Double x:Key="FsTitleLarge">22</sys:Double>
     <sys:Double x:Key="FsPageTitle">28</sys:Double>
-    <sys:Double x:Key="FsDisplay">40</sys:Double>
     <sys:Double x:Key="FsHero">56</sys:Double>
 
     <!-- ============ Forma: raio ============ -->

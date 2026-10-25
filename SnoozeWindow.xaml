@@ -8,8 +8,8 @@
         AutomationProperties.Name="Modo soneca">
     <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Modo soneca" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
-        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
+        <TextBlock Text="Modo soneca" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
                    Text="Põe um programa para dormir: desliga a inicialização, deixa os serviços dele em manual, desativa as tarefas agendadas e fecha o que ele deixa em segundo plano. Nada é apagado. Ao abrir o programa, ele acorda; ao fechar, volta a dormir. Antivírus, áudio, vídeo, touchpad, rede e acesso remoto nunca dormem."/>
         <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Programas que rodam sozinhos" SelectionMode="Single">
             <DataGrid.Columns>
@@ -33,15 +33,15 @@
             </DataGrid.Columns>
         </DataGrid>
         <TextBlock x:Name="Info" Grid.Row="3" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
-        <WrapPanel Grid.Row="4" Margin="0,10,0,0">
-            <Button x:Name="SleepBtn" Content="Pôr para dormir…" Click="Sleep_Click" Margin="0,0,8,6"/>
-            <Button x:Name="WakeBtn" Content="Acordar" Style="{StaticResource TonalButton}" Click="Wake_Click" Margin="0,0,8,6"/>
-            <CheckBox x:Name="WakeOnOpen" Content="Acordar quando eu abrir o programa" Click="WakeOnOpen_Click" VerticalAlignment="Center" Margin="8,0,8,6"
+        <WrapPanel Grid.Row="4" Margin="0,12,0,0">
+            <Button x:Name="SleepBtn" Content="Pôr para dormir…" Click="Sleep_Click" Margin="0,0,8,8"/>
+            <Button x:Name="WakeBtn" Content="Acordar" Style="{StaticResource TonalButton}" Click="Wake_Click" Margin="0,0,8,8"/>
+            <CheckBox x:Name="WakeOnOpen" Content="Acordar quando eu abrir o programa" Click="WakeOnOpen_Click" VerticalAlignment="Center" Margin="8,0,8,8"
                       ToolTip="O app olha de poucos em poucos segundos se o programa abriu. Ao abrir, devolve inicialização, serviços e tarefas; ao fechar, volta a dormir."/>
-            <Button x:Name="NeverBtn" Content="Nunca adormecer este" Style="{StaticResource TextButton}" Click="Never_Click" Margin="0,0,8,6"/>
-            <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="Reload_Click" Margin="0,0,8,6"/>
-            <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,6"/>
-            <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,6" AutomationProperties.LiveSetting="Polite"/>
+            <Button x:Name="NeverBtn" Content="Nunca adormecer este" Style="{StaticResource TextButton}" Click="Never_Click" Margin="0,0,8,8"/>
+            <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="Reload_Click" Margin="0,0,8,8"/>
+            <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,8"/>
+            <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
         </WrapPanel>
     </Grid>
 </Window>

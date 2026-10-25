@@ -8,8 +8,8 @@
         AutomationProperties.Name="Arquivos duplicados">
     <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Arquivos duplicados" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
-        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
+        <TextBlock Text="Arquivos duplicados" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
                    Text="Cada grupo tem arquivos idênticos (mesmo conteúdo, conferido byte a byte). Marque as cópias que podem sair: uma cópia de cada grupo sempre fica, e o app confere de novo no disco antes de apagar."/>
         <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Cópias de arquivos idênticos" PreviewKeyDown="Grid_KeyDown" MouseDoubleClick="Reveal_Click">
             <DataGrid.Columns>
@@ -49,18 +49,18 @@
             </DataGrid.Columns>
         </DataGrid>
         <TextBlock x:Name="Info" Grid.Row="3" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
-        <DockPanel Grid.Row="4" Margin="0,10,0,0">
+        <DockPanel Grid.Row="4" Margin="0,12,0,0">
             <Button DockPanel.Dock="Right" Content="Fechar" IsCancel="True" IsDefault="True" Click="Close_Click"/>
             <WrapPanel>
-                <Button Content="Manter a mais antiga" Style="{StaticResource TonalButton}" Click="KeepOldest_Click" Margin="0,0,8,6"
+                <Button Content="Manter a mais antiga" Style="{StaticResource TonalButton}" Click="KeepOldest_Click" Margin="0,0,8,8"
                         ToolTip="Em cada grupo, marca todas as cópias, menos a de data de modificação mais antiga (costuma ser o original)."/>
-                <Button Content="Manter a mais nova" Style="{StaticResource TonalButton}" Click="KeepNewest_Click" Margin="0,0,8,6"/>
-                <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="None_Click" Margin="0,0,8,6"/>
-                <Button x:Name="RecycleBtn" Content="Enviar para a Lixeira" Click="Recycle_Click" Margin="12,0,8,6"/>
-                <Button Content="Apagar de vez" Style="{StaticResource TextButton}" Click="Permanent_Click" Margin="0,0,8,6"
+                <Button Content="Manter a mais nova" Style="{StaticResource TonalButton}" Click="KeepNewest_Click" Margin="0,0,8,8"/>
+                <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="None_Click" Margin="0,0,8,8"/>
+                <Button x:Name="RecycleBtn" Content="Enviar para a Lixeira" Click="Recycle_Click" Margin="12,0,8,8"/>
+                <Button Content="Apagar de vez" Style="{StaticResource TextButton}" Click="Permanent_Click" Margin="0,0,8,8"
                         ToolTip="Não vai para a Lixeira: não dá para desfazer."/>
-                <Button Content="Mostrar na pasta" Style="{StaticResource TextButton}" Click="Reveal_Click" Margin="0,0,8,6"/>
-                <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,6" AutomationProperties.LiveSetting="Polite"/>
+                <Button Content="Mostrar na pasta" Style="{StaticResource TextButton}" Click="Reveal_Click" Margin="0,0,8,8"/>
+                <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
             </WrapPanel>
         </DockPanel>
     </Grid>

@@ -8,10 +8,10 @@
         AutomationProperties.Name="Desfragmentar">
     <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <TextBlock Text="Desfragmentar" Style="{StaticResource TitleLarge}" AutomationProperties.HeadingLevel="Level1"/>
-        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,10"
+        <TextBlock Text="Desfragmentar" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
                    Text="Só para HD: arquivos juntos no disco abrem mais depressa. Em SSD não ajuda e gasta escritas, então o app não desfragmenta; ele só refaz o TRIM. Usa as ferramentas do próprio Windows."/>
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12">
             <Button x:Name="DriveTab" Content="Unidade" Style="{StaticResource TonalButton}" Click="DriveTab_Click" Margin="0,0,8,0"/>
             <Button x:Name="FileTab" Content="Arquivo ou pasta" Style="{StaticResource TextButton}" Click="FileTab_Click"/>
         </StackPanel>
@@ -22,15 +22,15 @@
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <ComboBox x:Name="DriveBox" Width="620" HorizontalAlignment="Left" SelectionChanged="Drive_Changed" AutomationProperties.Name="Unidade"/>
                 <TextBlock x:Name="DriveNote" Grid.Row="1" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0"/>
-                <WrapPanel Grid.Row="2" Margin="0,10,0,10">
-                    <Button x:Name="AnalyzeBtn" Content="Analisar" Style="{StaticResource TonalButton}" Click="Analyze_Click" Margin="0,0,8,6"/>
-                    <Button x:Name="OptimizeBtn" Content="Desfragmentar" Click="Optimize_Click" Margin="0,0,8,6"/>
-                    <Button x:Name="MapBtn" Content="Mostrar o mapa da unidade" Style="{StaticResource TextButton}" Click="Map_Click" Margin="0,0,8,6"
+                <WrapPanel Grid.Row="2" Margin="0,12,0,12">
+                    <Button x:Name="AnalyzeBtn" Content="Analisar" Style="{StaticResource TonalButton}" Click="Analyze_Click" Margin="0,0,8,8"/>
+                    <Button x:Name="OptimizeBtn" Content="Desfragmentar" Click="Optimize_Click" Margin="0,0,8,8"/>
+                    <Button x:Name="MapBtn" Content="Mostrar o mapa da unidade" Style="{StaticResource TextButton}" Click="Map_Click" Margin="0,0,8,8"
                             ToolTip="Mostra onde a unidade está ocupada (escuro) e livre (claro)."/>
                 </WrapPanel>
                 <TextBox x:Name="Output" Grid.Row="3" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontSize="{DynamicResource FsLabel}"
                          AutomationProperties.Name="Resposta do Windows"/>
-                <StackPanel Grid.Row="4" Margin="0,10,0,0">
+                <StackPanel Grid.Row="4" Margin="0,12,0,0">
                     <Image x:Name="MapImage" Height="150" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" Visibility="Collapsed" AutomationProperties.Name="Mapa da unidade"/>
                     <TextBlock x:Name="MapInfo" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                 </StackPanel>
@@ -53,9 +53,9 @@
                     </DataGrid.Columns>
                 </DataGrid>
                 <TextBlock x:Name="FileInfo" Grid.Row="2" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
-                <WrapPanel Grid.Row="3" Margin="0,10,0,0">
-                    <Button x:Name="FileAnalyzeBtn" Content="Analisar" Style="{StaticResource TonalButton}" Click="FileAnalyze_Click" Margin="0,0,8,6"/>
-                    <Button x:Name="FileDefragBtn" Content="Desfragmentar os da lista…" Click="FileDefrag_Click" Margin="0,0,8,6"/>
+                <WrapPanel Grid.Row="3" Margin="0,12,0,0">
+                    <Button x:Name="FileAnalyzeBtn" Content="Analisar" Style="{StaticResource TonalButton}" Click="FileAnalyze_Click" Margin="0,0,8,8"/>
+                    <Button x:Name="FileDefragBtn" Content="Desfragmentar os da lista…" Click="FileDefrag_Click" Margin="0,0,8,8"/>
                 </WrapPanel>
             </Grid>
         </Grid>
@@ -65,7 +65,7 @@
             <Button x:Name="CancelBtn" DockPanel.Dock="Right" Content="Cancelar" Click="Cancel_Click" Style="{StaticResource TonalButton}" Visibility="Collapsed" Margin="8,0,0,0"/>
             <StackPanel>
                 <ProgressBar x:Name="Bar" Height="6" Minimum="0" Maximum="100" Visibility="Collapsed" AutomationProperties.Name="Andamento"/>
-                <TextBlock x:Name="Msg" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite"/>
+                <TextBlock x:Name="Msg" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
             </StackPanel>
         </DockPanel>
     </Grid>
