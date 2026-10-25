@@ -24,14 +24,18 @@ public static class HeaderFit
         {
             if (d is not DataGrid g || e.NewValue is not true) return;
             // O estilo pode entrar antes de o XAML terminar de pôr as colunas: aí mede no Initialized, ainda antes do layout
-            if (g.IsInitialized) Fit(g); else g.Initialized += (_, _) => Fit(g);
+            if (g.IsInitialized) Fit(g, keepDeclared: true); else g.Initialized += (_, _) => Fit(g, keepDeclared: true);
             g.Loaded += (_, _) => Fit(g); // colunas acrescentadas no código, depois de criar a tabela
         }));
 
     public static bool GetAuto(DependencyObject d) => (bool)d.GetValue(AutoProperty);
     public static void SetAuto(DependencyObject d, bool value) => d.SetValue(AutoProperty, value);
 
-    public static void Fit(DataGrid grid)
+    /// <param name="keepDeclared">
+    /// Na criação da tabela, a largura escrita no XAML também vira mínima: sem isso, para caber na área visível, o WPF
+    /// encolhia outras colunas e cortava o conteúdo (a data em "Instalado em"). A tabela rola na horizontal se não couber.
+    /// </param>
+    public static void Fit(DataGrid grid, bool keepDeclared = false)
     {
         // A fonte e o tamanho do estilo do cabeçalho (Themes/Controls.xaml), com o "Tamanho do texto" do Windows
         var family = grid.TryFindResource("FontMedium") as FontFamily ?? grid.FontFamily;
@@ -47,6 +51,7 @@ public static class HeaderFit
                 .Max(w => new FormattedText(w, System.Globalization.CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, typeface, size, Brushes.Black, dip)
                     .WidthIncludingTrailingWhitespace);
             double min = Math.Ceiling(word + Chrome);
+            if (keepDeclared && column.Width.IsAbsolute) min = Math.Max(min, column.Width.Value);
             if (column.MinWidth < min) column.MinWidth = min;
             if (column.Width.IsAbsolute && column.Width.Value < min) column.Width = new DataGridLength(min);
         }
