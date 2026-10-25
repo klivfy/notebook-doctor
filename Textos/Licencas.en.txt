@@ -1,0 +1,19 @@
+Notebook Doctor
+© 2026 Klivfy Tecnologia e Consultoria em TI LTDA. All rights reserved.
+
+Credits
+Developed by Klivfy Tecnologia e Consultoria em TI LTDA, with suggestions from people who use the app through support (klivfy.com/suporte).
+
+Third-party components
+
+Google Sans Flex
+Font embedded in the application. Licensed under the SIL Open Font License 1.1 (scripts.sil.org/OFL).
+
+Segoe Fluent Icons and Segoe UI
+Icons and font from Windows itself, used by the app without being distributed with it. © Microsoft.
+
+winapp2.ini format
+The app reads the winapp2.ini cleanup rules format (https://github.com/MoscaDotTo/Winapp2). No rules from that project ship with the app. If you import a file, the rules belong to the community that wrote them, under the CC BY-SA 4.0 license.
+
+.NET 8, Windows Presentation Foundation (WPF) and Windows Forms
+© .NET Foundation and contributors. MIT license (github.com/dotnet/runtime, github.com/dotnet/wpf and github.com/dotnet/winforms).

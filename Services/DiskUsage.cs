@@ -37,7 +37,7 @@ public static class DiskUsage
             foreach (var f in new DirectoryInfo(root).EnumerateFiles("*", Opts))
             {
                 ct.ThrowIfCancellationRequested();
-                if (++seen % 3000 == 0) onProgress($"{seen:N0} arquivos verificados…");
+                if (++seen % 3000 == 0) onProgress(Loc.F("{0:N0} arquivos verificados…", seen));
                 long len;
                 try { len = f.Length; } catch { continue; }
                 if (len < minBytes) continue;
@@ -190,7 +190,7 @@ public static class DiskUsage
             foreach (var (name, path) in entries)
             {
                 ct.ThrowIfCancellationRequested();
-                onProgress($"Medindo {name} ({++done} de {entries.Count})…");
+                onProgress(Loc.F("Medindo {0} ({1} de {2})…", name, ++done, entries.Count));
                 onItem(new FolderUsage { Name = name, Path = path, Bytes = FolderSize(path, ct) });
             }
             long loose = 0;

@@ -16,6 +16,8 @@ Revisão de segurança, dados e acessibilidade (novo)
 • Ícones e rótulos do gráfico crescem junto com o "Tamanho do texto" do Windows; o sublinhado dos campos continua visível com o campo desligado.
 • "Simulação ligada" virou um chip de estado, "Mirar" virou "Mirar numa janela" e os direitos autorais foram para Configurações › Sobre.
 • Os campos de hora não cortam mais o texto, o cabeçalho das tabelas não parte uma palavra no meio e os espaços entre os elementos ficaram regulares em todas as telas.
+• Em inglês e espanhol, agora também ficam traduzidos: Novidades, Privacidade e Licenças, os relatórios (PDF, HTML e "Copiar resumo"), as notificações do Windows, o registro da aba Ações (com o Desfazer), a linha do tempo do Histórico e as confirmações de Ajustes, Configurações e Processos.
+• A linha do tempo do Histórico voltou a mostrar a coluna "Detalhe", que estava vazia.
 
 Visual novo, no estilo do Windows 11 (novo)
 • Cores, fonte (Segoe UI Variable), cantos e botões no padrão do Windows 11, nos temas claro e escuro.

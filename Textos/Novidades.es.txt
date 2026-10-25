@@ -1,0 +1,173 @@
+Revisión de seguridad, datos y accesibilidad (nuevo)
+• La limpieza como administrador elimina cada archivo por su identificador y comprueba dónde está realmente: una carpeta cambiada por un acceso directo del sistema a mitad de la limpieza ya no lleva la eliminación fuera.
+• La copia de seguridad de cada elemento queda escrita y cerrada antes de que salga el original: si el PC se apaga a mitad, Deshacer sigue devolviéndolo todo.
+• Los elementos que no caben en la Papelera de reciclaje ya no desaparecen en silencio: Windows pregunta antes de eliminarlos definitivamente.
+• Las reglas de limpieza nunca se llevan cookies, contraseñas ni favoritos de las subcarpetas, y la eliminación de restos no borra tipos de Windows (http, mailto, .txt).
+• Los lectores de pantalla (Narrador, NVDA) ahora anuncian avisos y progreso.
+• Las ventanas de herramientas se ajustan a la pantalla de portátiles pequeños (1366 × 768 con escala del 125%).
+• En inglés y español, Panel, Procesos, Limpieza, Inicio, Ajustes e Historial ya no mezclan frases en portugués; la memoria ("11,8 de 16 GB"), los programas activos, la nota de administrador, la desfragmentación y los filtros de la recuperación también se tradujeron.
+• La actualización automática solo acepta un instalador firmado exactamente por Klivfy: un certificado de otra empresa con "Klivfy" en el nombre ya no pasa.
+• Borrar definitivamente rechaza una carpeta que tenga dentro una biblioteca de OneDrive o SharePoint (la sincronización borraría también en la nube) y avisa cuando la lista se cortó y parte de los archivos queda para la próxima vez.
+• Cancelar la limpieza avanzada a mitad registra en Acciones lo que ya salió, con Deshacer para el registro.
+• Los avisos con una acción (Instalar, Ver en Acciones) solo desaparecen cuando los cierras o los usas; los demás esperan mientras el ratón o el foco están sobre ellos.
+• Programas muestra Desinstalar, Actualizar programas y Apuntar a una ventana; el resto pasó a "Más…". Espacio y Acciones dicen qué hacer mientras siguen vacías.
+• Deshacer como administrador ya no acepta una copia de seguridad alterada que intente escribir fuera de la carpeta original o importar otro archivo del registro.
+• Corregir el registro y analizar una instalación supervisada ahora es mucho más rápido con muchos elementos.
+• Los iconos y las etiquetas del gráfico crecen junto con el "Tamaño del texto" de Windows; el subrayado de los campos sigue visible con el campo desactivado.
+• "Simulación activada" pasó a ser un chip de estado, "Apuntar" pasó a "Apuntar a una ventana" y los derechos de autor se movieron a Configuración › Acerca de.
+• Los campos de hora ya no cortan el texto, los encabezados de las tablas ya no parten una palabra por la mitad y los espacios entre elementos quedaron regulares en todas las pantallas.
+• En inglés y español, ahora también están traducidos: Novedades, Privacidad y Licencias, los informes (PDF, HTML y "Copiar resumen"), las notificaciones de Windows, el registro de la pestaña Acciones (con Deshacer), la línea de tiempo del Historial y las confirmaciones de Ajustes, Configuración y Procesos.
+• La línea de tiempo del Historial vuelve a mostrar la columna "Detalle", que estaba vacía.
+
+Aspecto nuevo, al estilo de Windows 11 (nuevo)
+• Colores, fuente (Segoe UI Variable), esquinas y botones al estilo de Windows 11, en los temas claro y oscuro.
+• En Windows 11, el fondo de la ventana acompaña al fondo de pantalla (Mica).
+• Navegación en riel, con icono y nombre corto, y un punto cuando el Panel tiene algo que ver.
+• Panel con la nota de salud destacada, el botón "Optimizar ahora" ancho y accesos directos a Diagnóstico, Procesos, Limpieza e Inicio.
+• Herramientas de Limpieza en tarjetas con descripción; ventanas de herramientas con título grande.
+
+Programas (nuevo)
+• Nueva pestaña con los programas instalados, las aplicaciones de Microsoft Store y las actualizaciones de Windows.
+• Tamaño, fecha de instalación, tipo, para quién se instaló y arquitectura de cada uno; iconos, búsqueda y totales.
+• Desinstalar abre el desinstalador del propio programa (con punto de restauración, como administrador) y espera de verdad a que termine.
+• Abrir la carpeta, ver la clave en el Editor del Registro, buscar en internet y ver todas las propiedades.
+• Exportar la lista en CSV (hoja de cálculo) o HTML.
+• Selecciona varios programas para desinstalar en cola, sin ventanas cuando el desinstalador lo permite.
+• Eliminación forzada y "Buscar restos" para programas con desinstalador roto o ya eliminados.
+• Aplicaciones de la Store: quitar de todas las cuentas y restablecer.
+• "Apuntar a una ventana": arrastra hasta la ventana de un programa (o suelta un acceso directo en la lista) para saber de qué programa instalado es. También en Procesos e Inicio.
+• "Instalar con supervisión…": la app anota todo lo que un instalador crea en el disco y en el registro; después, la desinstalación elimina exactamente eso. Las anotaciones se pueden exportar y llevar a otro PC.
+• Después de desinstalar, la app busca lo que quedó (carpetas, registro, inicio, servicios, tareas y accesos directos) en tres niveles: Seguro, Moderado y Avanzado.
+• Revisas antes de borrar. Todo va a una copia de seguridad de 30 días y se puede deshacer en Acciones o en "Copias de seguridad…".
+
+Limpieza avanzada (nuevo)
+• Botón "Limpieza avanzada…" en la pestaña Limpieza, con tres secciones.
+• Rastros y programas: documentos recientes, Ejecutar, cuadros Abrir y Guardar, Office, caché de DNS, portapapeles, volcados de memoria, registros de Windows. Puedes importar reglas en formato winapp2.ini; aparecen desmarcadas y solo las de programas que existen en el PC.
+• Archivos inútiles: .tmp, .chk, volcados antiguos, bloqueos ~$ de Office y carpetas FOUND. .bak, .old y FOUND empiezan desmarcados y van a la Papelera de reciclaje.
+• Liberador de espacio en disco de Windows: Windows.old, actualizaciones antiguas, paquetes de controladores e informes de errores, con la propia herramienta de Windows (administrador).
+• Ves lo que sale antes de borrar. Contraseñas, cookies, autocompletado, favoritos y datos de juegos nunca entran. El registro va a una copia de seguridad que se puede deshacer en Acciones.
+
+Navegadores (nuevo)
+• En Limpieza › Limpieza avanzada › Navegadores: borra historial, cookies, pestañas de la última sesión e historial de formularios de Chrome, Edge, Brave, Vivaldi, Opera y Firefox, por perfil.
+• Lista de sitios en los que mantener la sesión: sus cookies se quedan. Favoritos, contraseñas y extensiones nunca se tocan.
+• El navegador debe estar cerrado; la app puede pedir que se cierre, pero nunca lo termina a la fuerza.
+• Limpiar automáticamente cuando el navegador se cierre.
+• Limpieza automática al abrir la app, cada día, cada semana o cada mes (Configuración), con la opción de incluir los navegadores.
+• Aviso cuando los temporales superan un límite (de 500 MB a 5 GB).
+
+Espacio (nuevo)
+• "Por tipo de archivo": cuánto ocupan imágenes, vídeos, música, documentos, comprimidos y programas, con las extensiones que más pesan.
+• Duplicados: elige el tamaño mínimo y abre "Revisar duplicados…" para ver los grupos con miniaturas.
+• "Conservar la más antigua" o "la más reciente" con un clic; envía las demás a la Papelera de reciclaje o bórralas definitivamente.
+• Una copia de cada grupo siempre se queda, y la app vuelve a comprobar el contenido antes de borrar.
+
+Programas (nuevo)
+• "Actualizar programas…" busca versiones nuevas con WinGet y actualiza las que marques, en cola.
+• "Omitir esta versión" y "Pausar este programa"; "Ver términos…" muestra la licencia antes de aceptar.
+• Los términos siempre los aceptas tú, en pantalla. Algunos instaladores piden permiso de administrador.
+
+Controladores (nuevo)
+• Configuración › Controladores › "Controladores por Windows Update…": lista los controladores que ofrece Windows Update y recomienda solo los más nuevos que el instalado.
+• Antes de instalar, la app crea un punto de restauración y guarda una copia del controlador actual.
+• "Copias de los controladores anteriores" y la pestaña Acciones permiten volver al controlador anterior.
+
+Inicio (nuevo)
+• "Menú contextual…": mira qué aparece al hacer clic derecho en archivos y carpetas y desactiva lo que no uses; reactivar lo devuelve.
+• "Modo siesta…": duerme un programa (inicio, servicios, tareas y procesos en segundo plano) y lo despierta cuando lo abres.
+• Antivirus, audio, vídeo, touchpad, red y acceso remoto nunca duermen.
+
+Limpieza (nuevo)
+• "Comprobar registro…": señala solo entradas del registro con prueba de estar rotas (el archivo que citan ya no existe) y borra las que marques, con copia de seguridad y deshacer.
+• No toca CLSID, ActiveX, bibliotecas de tipos, MUICache ni el menú Inicio.
+
+Sistema (nuevo)
+• Nueva pestaña "Sistema": sistema operativo, procesador, memoria (con las ranuras vacías), placa base y BIOS, vídeo, discos, dispositivos, red y Wi-Fi.
+• Temperaturas que Windows permite leer: zona térmica, discos y tarjeta NVIDIA.
+• "Exportar…" en TXT, HTML o PDF y "Copiar resumen". No se envía nada a internet.
+
+Borrar definitivamente (nuevo)
+• Limpieza › "Borrar definitivamente…": borra archivos y carpetas sin posibilidad de recuperarlos (sin Papelera, sin deshacer).
+• Limpia el espacio libre de una unidad, para que lo que ya se eliminó no se pueda recuperar.
+• Borra un pendrive, tarjeta o disco duro externo entero, escribiendo la letra y el nombre de la unidad para confirmar.
+• En SSD, pendrive y tarjeta de memoria no hay garantía, y la app lo avisa.
+
+Recuperar archivos (nuevo)
+• Limpieza › "Recuperar archivos…": busca archivos borrados en un pendrive, tarjeta o disco con Windows File Recovery (gratuito, de Microsoft) y guarda lo que encuentre en otra unidad.
+• Elige qué buscar (documentos, fotos, vídeos…) y el modo; la app avisa de lo que reduce las posibilidades, como el SSD.
+
+Recuperar con el motor de la app (nuevo)
+• Recuperar archivos › "Motor de la app (NTFS, con vista previa)…": la propia app lee la lista de archivos de la unidad NTFS y muestra lo que se borró, con la carpeta de origen y la fecha.
+• Cada archivo trae la posibilidad de volver entero (excelente, parcial, mala) y, al seleccionarlo, una vista previa de fotos y textos, sin copiar nada.
+• Los marcados se copian a OTRA unidad, en una carpeta nueva con fecha y hora, manteniendo las carpetas de origen. La unidad de origen solo se lee.
+
+Desfragmentar (nuevo)
+• Limpieza › "Desfragmentar…": analiza y desfragmenta HDD con el propio Windows, con el mapa de la unidad (oscuro: ocupado; claro: libre).
+• En SSD la app no desfragmenta, porque no ayuda y gasta escrituras; solo rehace el TRIM.
+• También muestra los archivos de una carpeta que están en pedazos y une los pedazos de cada uno en el disco (HDD, como administrador).
+
+Herramientas de Windows (nuevo)
+• Sistema › "Herramientas de Windows…": accesos directos al Administrador de dispositivos, Servicios, Programador de tareas, Visor de eventos, Monitor de recursos, Firewall y otras que Windows ya incluye. Solo aparecen las que existen en tu equipo.
+
+Windows en Arm (nuevo)
+• Notebook Doctor también se publica para PC con procesador Arm.
+
+Panel y diagnóstico
+• "Corregir" en todos los problemas encontrados, con explicación de cada uno.
+• Aviso de plan de Alto rendimiento con batería, de más de un antivirus activo y de disco virtual de WSL grande.
+• Aviso cuando OneDrive guarda muchos archivos en el disco, con el camino a "Liberar espacio".
+• Avisos de Windows Update desactivado, actualización que falla o demasiado tiempo sin actualizar.
+• Aviso de controlador de vídeo genérico o con más de 2 años, y de mantenimiento automático de Windows desactivado.
+• La limpieza semanal solo se ejecuta con el equipo parado y enchufado.
+• Con batería, la app consulta el equipo con menos frecuencia cuando está en segundo plano.
+• Sugerencia de plan de energía al enchufar o desenchufar el portátil.
+• Informe en PDF y botón "Copiar resumen" para pegar en una incidencia.
+
+Procesos
+• Seleccionar varios programas y cerrarlos de una vez.
+• Procesos de la misma aplicación en una sola línea (Steam, Acrobat, Teams, Zoom y otros), con opción para separarlos.
+• Menú del botón derecho (Shift+F10 con el teclado), Enter abre el detalle y Supr termina, siempre con confirmación.
+
+Limpieza y espacio
+• Cachés de Discord, Slack, Teams y VS Code, y miniaturas de Windows.
+• Papelera de reciclaje de cada unidad y botones "Marcar todos" y "Desmarcar todos".
+
+Inicio y ajustes
+• Columna con el editor de cada programa y botón "Abrir ubicación".
+• Servicios de otros fabricantes que pueden pasar a modo manual, con "Deshacer".
+• Tareas programadas de otros fabricantes, con "Desactivar" y "Deshacer".
+• Extensiones instaladas en los navegadores, de las más pesadas a las más ligeras.
+• Como administrador: borrar puntos de restauración antiguos (el más reciente se queda) y limpiar registros de eventos grandes.
+
+Historial
+• Tendencias de la semana, previsión de disco lleno y mapa de horarios de lentitud.
+• Línea de tiempo con avisos, acciones y programas instalados.
+
+Avisos
+• Horario silencioso y silencio con una app a pantalla completa o en presentación.
+• Aviso de CPU o memoria altas solo después de varios minutos seguidos.
+
+Barra de tareas y bandeja
+• Distintivo de alerta en el icono de la barra de tareas y accesos directos (Limpieza, Procesos, Historial) con el clic derecho.
+• Uso de CPU en el icono de la bandeja (opcional) y CPU, RAM, disco y nota en su menú.
+
+Gráficos y tablas
+• Zoom en los gráficos del Historial: rueda del ratón, arrastrar y doble clic para volver.
+• Las tablas recuerdan el orden y el ancho de las columnas, y muestran totales en el pie.
+• Clic derecho en el título de una tabla para elegir las columnas visibles.
+
+Juegos y presentaciones
+• Overlay con CPU, RAM y temperatura sobre juegos a pantalla completa (opcional).
+• Modo demostración con datos ficticios (NotebookDoctor.exe --demo).
+
+Configuración
+• Tamaños en GB de Windows, GB de la caja del disco o GiB, y temperatura en °C o °F.
+• Tema claro de día y oscuro de noche, en los horarios que elijas.
+• Empezar minimizado y opción para que la X cierre la app.
+• Modo compacto para pantallas pequeñas: menú solo con iconos y tablas más densas.
+• Acceso directo en el menú Inicio, creado por la propia app.
+• Modo empresa: contraseña para cambiar la configuración, definida en la app o por la directiva de Windows.
+• La ventana se reabre en el mismo lugar y en el mismo monitor.
+• Exportar, importar y restablecer las preferencias.
+• Color de énfasis de Windows, ajustado para mantener la lectura.
+• Modo portátil: con un archivo portatil.txt junto a la app, los datos quedan en la carpeta "dados".
+• Informe de fallos opcional, guardado sin datos personales.

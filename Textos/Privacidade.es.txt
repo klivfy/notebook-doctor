@@ -1,0 +1,18 @@
+Notebook Doctor funciona en tu equipo y no envía tus datos a Klivfy ni a nadie más.
+
+Qué se guarda en el equipo
+• Uso de CPU, memoria y disco cada minuto, con los nombres de los programas más pesados (Historial, hasta 30 días).
+• Tus preferencias, las acciones realizadas por la app (para "Deshacer") y los avisos mostrados.
+• Si alguien define una contraseña para la configuración, solo un código derivado de ella (hash), nunca la contraseña en sí.
+• Errores de la app (erros.log) y, solo si activas la opción, informes de fallos sin nombre de usuario, nombre del equipo ni carpeta personal.
+Todo queda en la carpeta de datos de la app (botón "Abrir carpeta de datos"). Desinstalar la app o borrar la carpeta elimina estos datos.
+
+Cuándo la app usa internet
+• Buscar actualización: consulta klivfy.com una vez al día, si la opción está activada, o cuando lo pides. La consulta no lleva datos tuyos.
+• Prueba de red: solo cuando haces clic, hace ping al router, a 1.1.1.1 y a 8.8.8.8 y consulta el DNS de klivfy.com, github.com y wikipedia.org.
+• Abrir soporte: abre klivfy.com/suporte en tu navegador.
+
+Paquete para el soporte
+El archivo .zip se crea en tu equipo y solo llega a Klivfy si tú mismo lo adjuntas a una solicitud de soporte. Sustituye tu nombre de usuario, el nombre del equipo y la carpeta personal por marcadores. Puedes abrirlo y revisarlo antes de enviarlo.
+
+La app no tiene telemetría, publicidad ni seguimiento.

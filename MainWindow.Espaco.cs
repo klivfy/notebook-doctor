@@ -42,7 +42,7 @@ public partial class MainWindow
             {
                 var items = await DiskUsage.LargestFilesAsync(root, 50L << 20, 100, Progress, ct);
                 Show(items);
-                SpaceMsg.Text = $"{items.Count} maiores arquivos (50 MB ou mais) em {root}. Só leitura.";
+                SpaceMsg.Text = Loc.F("{0} maiores arquivos (50 MB ou mais) em {1}. Só leitura.", items.Count, root);
                 return;
             }
             if (mode == "types")
@@ -81,7 +81,7 @@ public partial class MainWindow
                     ApplySpaceFilter();
                 }),
                 msg => Dispatcher.BeginInvoke(() => SpaceMsg.Text = msg), ct);
-            SpaceMsg.Text = $"Pronto: {_space.Count} itens em {root} · total {Cleaner.FormatBytes(_space.Sum(x => x.Bytes))}. Só leitura: nada foi apagado.";
+            SpaceMsg.Text = Loc.F("Pronto: {0} itens em {1} · total {2}. Só leitura: nada foi apagado.", _space.Count, root, Cleaner.FormatBytes(_space.Sum(x => x.Bytes)));
         }
         catch (OperationCanceledException) { SpaceMsg.Text = Loc.T("Análise cancelada."); }
         finally { SpaceScanBtn.IsEnabled = true; SpaceCancelBtn.IsEnabled = false; }

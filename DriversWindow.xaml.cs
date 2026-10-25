@@ -216,7 +216,7 @@ public partial class DriversWindow : Window
             string restore = await RestorePoint.EnsureAsync(Host.Settings, Loc.T("antes de instalar driver"), force: true);
             bool restoreOk = restore == "criado" || restore.StartsWith("já existe", StringComparison.Ordinal);
             if (!restoreOk && !Dialogs.Confirm(this, Loc.T("Sem ponto de restauração"),
-                    Loc.F("Não consegui criar o ponto de restauração: {0}. Se o driver novo der problema, não haverá esse caminho de volta. Instalar mesmo assim?", restore),
+                    Loc.F("Não consegui criar o ponto de restauração: {0}. Se o driver novo der problema, não haverá esse caminho de volta. Instalar mesmo assim?", Loc.T(restore)),
                     Loc.T("Instalar sem o ponto"), danger: true))
             {
                 Msg.Text = Loc.T("Nada foi instalado.");

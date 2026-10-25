@@ -1,3 +1,4 @@
+using NotebookDoctor.Services;
 using System.Windows;
 using System.Windows.Media;
 
@@ -68,11 +69,11 @@ public sealed class Sparkline : FrameworkElement
 
     /// <summary>Resumo textual do gráfico: o mesmo conteúdo da imagem, para quem não a vê.</summary>
     public string Summary() => _values.Count == 0
-        ? $"{Title}: sem dados ainda"
-        : $"{Title}{ZoomText()}: {(_view.Zoomed ? "último ponto" : "agora")} {_values[^1]:0}{Unit}, média {_values.Average():0}{Unit}, mínimo {_values.Min():0}{Unit}, pico {_values.Max():0}{Unit}";
+        ? Loc.F("{0}: sem dados ainda", Title)
+        : Loc.F("{0}{1}: {2} {3:0}{4}, média {5:0}{4}, mínimo {6:0}{4}, pico {7:0}{4}", Title, ZoomText(), Loc.T(_view.Zoomed ? "último ponto" : "agora"), _values[^1], Unit, _values.Average(), _values.Min(), _values.Max());
 
     private string ZoomText() =>
-        !_view.Zoomed ? "" : _times is { Count: > 0 } t ? $", com zoom de {t[0]:dd/MM HH:mm} a {t[^1]:dd/MM HH:mm}" : ", com zoom";
+        !_view.Zoomed ? "" : _times is { Count: > 0 } t ? Loc.F(", com zoom de {0} a {1}", Loc.Stamp(t[0]), Loc.Stamp(t[^1])) : Loc.T(", com zoom");
 
     protected override System.Windows.Automation.Peers.AutomationPeer OnCreateAutomationPeer() => new SparklinePeer(this);
 
@@ -157,8 +158,8 @@ public sealed class Sparkline : FrameworkElement
         i = Math.Clamp(i, 0, _values.Count - 1);
         if (i == _hover) return;
         _hover = i;
-        _tip.Content = $"{_values[i]:0.#}{Unit}" + (_times is not null ? $" · {_times[i]:dd/MM HH:mm}" : "")
-                       + (!Zoomable ? "" : _view.Zoomed ? "\nClique duplo volta ao período todo" : "\nRoda do mouse aproxima");
+        _tip.Content = $"{_values[i]:0.#}{Unit}" + (_times is not null ? $" · {Loc.Stamp(_times[i])}" : "")
+                       + (!Zoomable ? "" : "\n" + Loc.T(_view.Zoomed ? "Clique duplo volta ao período todo" : "Roda do mouse aproxima"));
         InvalidateVisual();
     }
 

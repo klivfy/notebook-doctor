@@ -18,16 +18,16 @@ public static class NetTest
             .SelectMany(n => n.GetIPProperties().GatewayAddresses).Select(g => g.Address)
             .FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && !a.Equals(IPAddress.Any));
 
-        if (gateway is not null) lines.Add(await PingLine("Roteador", gateway.ToString()));
-        else lines.Add("Roteador: não encontrado (sem rede?)");
-        lines.Add(await PingLine("Internet (Cloudflare 1.1.1.1)", "1.1.1.1"));
-        lines.Add(await PingLine("Internet (Google 8.8.8.8)", "8.8.8.8"));
+        if (gateway is not null) lines.Add(await PingLine(Loc.T("Roteador"), gateway.ToString()));
+        else lines.Add(Loc.T("Roteador: não encontrado (sem rede?)"));
+        lines.Add(await PingLine(Loc.T("Internet (Cloudflare 1.1.1.1)"), "1.1.1.1"));
+        lines.Add(await PingLine(Loc.T("Internet (Google 8.8.8.8)"), "8.8.8.8"));
 
         foreach (var host in new[] { "klivfy.com", "github.com", "wikipedia.org" })
         {
             var sw = Stopwatch.StartNew();
-            try { await Dns.GetHostAddressesAsync(host); lines.Add($"DNS {host}: {sw.ElapsedMilliseconds} ms"); }
-            catch { lines.Add($"DNS {host}: falhou"); }
+            try { await Dns.GetHostAddressesAsync(host); lines.Add(Loc.F("DNS {0}: {1} ms", host, sw.ElapsedMilliseconds)); }
+            catch { lines.Add(Loc.F("DNS {0}: falhou", host)); }
         }
         return lines;
     }
@@ -46,8 +46,8 @@ public static class NetTest
             }
             catch { lost++; }
         }
-        if (times.Count == 0) return $"{label}: sem resposta";
-        string verdict = times.Average() < 30 ? "ótimo" : times.Average() < 80 ? "bom" : times.Average() < 150 ? "lento" : "muito lento";
-        return $"{label}: {times.Average():0} ms (mín {times.Min()} / máx {times.Max()}), perda {lost * 20}% · {verdict}";
+        if (times.Count == 0) return Loc.F("{0}: sem resposta", label);
+        string verdict = Loc.T(times.Average() < 30 ? "ótimo" : times.Average() < 80 ? "bom" : times.Average() < 150 ? "lento" : "muito lento");
+        return Loc.F("{0}: {1:0} ms (mín {2} / máx {3}), perda {4}% · {5}", label, times.Average(), times.Min(), times.Max(), lost * 20, verdict);
     }
 }

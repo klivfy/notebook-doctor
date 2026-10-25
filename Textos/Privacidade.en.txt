@@ -1,0 +1,18 @@
+Notebook Doctor runs on your computer and does not send your data to Klivfy or to anyone else.
+
+What is kept on your computer
+• CPU, memory and disk use every minute, with the names of the heaviest programs (History, up to 30 days).
+• Your preferences, the actions the app performed (for "Undo") and the notices it showed.
+• If someone sets a password for the settings, only a code derived from it (a hash), never the password itself.
+• App errors (erros.log) and, only if you turn the option on, crash reports without your user name, computer name or personal folder.
+Everything stays in the app's data folder ("Open data folder" button). Uninstalling the app or deleting the folder removes this data.
+
+When the app uses the internet
+• Check for updates: contacts klivfy.com once a day, if the option is on, or when you ask. The request carries no data about you.
+• Network test: only when you click, it pings the router, 1.1.1.1 and 8.8.8.8 and queries the DNS of klivfy.com, github.com and wikipedia.org.
+• Open support: opens klivfy.com/suporte in your browser.
+
+Support package
+The .zip file is created on your computer and only goes to Klivfy if you attach it to a support request yourself. It replaces your user name, computer name and personal folder with placeholders. You can open and check it before sending.
+
+The app has no telemetry, advertising or tracking.

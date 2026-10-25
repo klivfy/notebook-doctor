@@ -136,10 +136,10 @@ public static class SecureEraser
     public static string? EraseFile(string path, Random rng, CancellationToken ct, Action<long>? onBytes)
     {
         var attr = File.GetAttributes(path);
-        if (attr.HasFlag(FileAttributes.ReparsePoint) || OneDriveRule.IsOnlineOnly((int)attr)) return "É um link ou um arquivo só na nuvem";
-        if (LinkCount(path) > 1) return "Tem outro nome no disco (link físico): sobrescrever mudaria o outro também";
+        if (attr.HasFlag(FileAttributes.ReparsePoint) || OneDriveRule.IsOnlineOnly((int)attr)) return Loc.T("É um link ou um arquivo só na nuvem");
+        if (LinkCount(path) > 1) return Loc.T("Tem outro nome no disco (link físico): sobrescrever mudaria o outro também");
         // O arquivo tem de estar mesmo onde o plano diz: um link ou atalho de pasta no caminho levaria a escrita para outro lugar
-        if (RealPath.Of(path) is not { } real || !string.Equals(real, Path.GetFullPath(path), StringComparison.OrdinalIgnoreCase)) return "O caminho passa por um link ou atalho de pasta";
+        if (RealPath.Of(path) is not { } real || !string.Equals(real, Path.GetFullPath(path), StringComparison.OrdinalIgnoreCase)) return Loc.T("O caminho passa por um link ou atalho de pasta");
 
         Overwrite(path, ct, onBytes);
 

@@ -291,7 +291,7 @@ public partial class MainWindow : Window
             ShowSnack("Modo demonstração", "Aqui a simulação fica sempre ligada: nenhuma ação altera este computador.");
             return;
         }
-        if (!on && !Host.EnsureUnlocked("desligar o modo simulação")) { SimMode.IsChecked = true; return; } // B38
+        if (!on && !Host.EnsureUnlocked(Loc.T("desligar o modo simulação"))) { SimMode.IsChecked = true; return; } // B38
         Host.Settings.SimulationMode = on;
         Host.Settings.Save();
         SimMode.IsChecked = on;

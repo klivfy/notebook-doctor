@@ -745,13 +745,13 @@
                                 <DataGrid x:Name="AlertsGrid" MaxHeight="320" AutomationProperties.Name="Linha do tempo do período">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Quando" Binding="{Binding TimeText}" Width="110"/>
-                                        <DataGridTextColumn Header="Tipo" Binding="{Binding Kind}" Width="130"/>
-                                        <DataGridTextColumn Header="Evento" Binding="{Binding Title}" Width="200">
+                                        <DataGridTextColumn Header="Tipo" Binding="{Binding KindText}" SortMemberPath="Kind" Width="130"/>
+                                        <DataGridTextColumn Header="Evento" Binding="{Binding TitleText}" Width="200">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Margin" Value="0,8"/></Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>
-                                        <DataGridTextColumn Header="Detalhe" Binding="{Binding Text}" Width="*">
+                                        <DataGridTextColumn Header="Detalhe" Binding="{Binding DetailText}" Width="*">
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Margin" Value="0,8"/></Style>
                                             </DataGridTextColumn.ElementStyle>
@@ -773,9 +773,9 @@
                         <DataGrid x:Name="ActionsGrid" Grid.Row="1" AutomationProperties.Name="Registro de ações">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Quando" Binding="{Binding TimeText}" Width="110"/>
-                                <DataGridTextColumn Header="Ação" Binding="{Binding Title}" Width="240"/>
-                                <DataGridTextColumn Header="Detalhe" Binding="{Binding Detail}" Width="*"/>
-                                <DataGridTextColumn Header="Situação" Binding="{Binding Status}" Width="130"/>
+                                <DataGridTextColumn Header="Ação" Binding="{Binding TitleText}" Width="240"/>
+                                <DataGridTextColumn Header="Detalhe" Binding="{Binding DetailText}" Width="*"/>
+                                <DataGridTextColumn Header="Situação" Binding="{Binding StatusText}" SortMemberPath="Status" Width="130"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock Grid.Row="1" Style="{StaticResource EmptyState}" Tag="{Binding ElementName=ActionsGrid}"

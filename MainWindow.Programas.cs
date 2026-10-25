@@ -192,7 +192,7 @@ public partial class MainWindow
             var fingerprint = ProgramFingerprint.Of(p, Directory.Exists, File.Exists);
             ProgMsg.Text = Loc.T("Preparando…");
             string restore = await EnsureRestorePointAsync("Desinstalar " + p.Name);
-            ActionLog.Add("Desinstalação iniciada", $"{p.Name} · ponto de restauração: {restore}");
+            ActionLog.Add("Desinstalação iniciada", Loc.F("{0} · ponto de restauração: {1}", p.Name, Loc.T(restore)));
             ProgMsg.Text = Loc.F("Desinstalador de {0} aberto. Siga as etapas na janela dele; o app espera ele terminar.", p.Name);
             var (gone, result) = await UninstallOneAsync(p, cmd);
             ProgMsg.Text = result;
@@ -255,7 +255,7 @@ public partial class MainWindow
         try
         {
             string restore = await EnsureRestorePointAsync("Desinstalar varios programas");
-            ActionLog.Add("Fila de desinstalação iniciada", $"{Pt.N(queue.Count, "programa", "programas")} · ponto de restauração: {restore}");
+            ActionLog.Add("Fila de desinstalação iniciada", Loc.F("{0} · ponto de restauração: {1}", Pt.N(queue.Count, "programa", "programas"), Loc.T(restore)));
             for (int i = 0; i < queue.Count; i++)
             {
                 var p = queue[i];
@@ -368,7 +368,7 @@ public partial class MainWindow
         });
         int ok = results.Count(r => r.Ok), pending = results.Count(r => r.PendingReboot);
         var failed = results.Where(r => !r.Ok).ToList();
-        ActionLog.Add("Sobras removidas", $"{program}: {ok} de {results.Count}", "leftovers", id);
+        ActionLog.Add("Sobras removidas", Loc.F("{0}: {1} de {2}", program, ok, results.Count), "leftovers", id);
         string msg = Loc.F("{0} de {1} sobras apagadas, com backup.", ok, results.Count)
             + (pending > 0 ? " " + Loc.F("{0} saem no próximo reinício.", pending) : "")
             + (failed.Count > 0 ? " " + Loc.F("{0} não saíram: {1}", failed.Count, failed[0].Error) : "");
@@ -426,7 +426,7 @@ public partial class MainWindow
                 return TraceRules.Build(installer, started, DateTime.Now, changes, usn.Changes(), places, AppPaths.Dir, RegistrySnapshotter.DisplayName);
             });
             TraceStore.Save(trace);
-            ActionLog.Add("Instalação monitorada", $"{trace.Name}: {trace.Count} itens");
+            ActionLog.Add("Instalação monitorada", Loc.F("{0}: {1} itens", trace.Name, trace.Count));
             _progKeys = await Task.Run(ProgramInventory.ReadUninstallKeys);
             if (trace.UninstallKey.Length > 0) _progReveal = trace.UninstallKey;
             ShowPrograms();
@@ -467,7 +467,7 @@ public partial class MainWindow
             {
                 fp = ProgramFingerprint.Of(program, Directory.Exists, File.Exists);
                 string restore = await EnsureRestorePointAsync("Desinstalar " + program.Name);
-                ActionLog.Add("Desinstalação iniciada", $"{program.Name} · ponto de restauração: {restore}");
+                ActionLog.Add("Desinstalação iniciada", Loc.F("{0} · ponto de restauração: {1}", program.Name, Loc.T(restore)));
                 var (gone, result) = await UninstallOneAsync(program, cmd);
                 ProgMsg.Text = result;
                 if (!gone) return;

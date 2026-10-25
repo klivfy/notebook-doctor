@@ -108,7 +108,7 @@ public partial class App : Application
         _tray.StartWithWindowsToggled += v =>
         {
             if (v == Settings.StartWithWindows) return; // eco da própria desmarcação abaixo
-            if (!EnsureUnlocked("mudar \"Iniciar com o Windows\"")) { _tray.SyncStartWithWindows(Settings.StartWithWindows); return; }
+            if (!EnsureUnlocked(Loc.T("mudar \"Iniciar com o Windows\""))) { _tray.SyncStartWithWindows(Settings.StartWithWindows); return; }
             Settings.StartWithWindows = v; Settings.ApplyStartWithWindows(); Settings.Save();
         };
         _tray.MiniToggled += SetMiniWidget;
@@ -209,7 +209,7 @@ public partial class App : Application
         if (result == UpdateCheck.Available && info is not null)
         {
             PendingUpdate = info;
-            Notify("Nova versão do Notebook Doctor", $"Versão {info.Version} disponível. {info.Notes}".Trim(), ("Ver atualização", "update"));
+            Notify("Nova versão do Notebook Doctor", Loc.F("Versão {0} disponível. {1}", info.Version, info.Notes).Trim(), ("Ver atualização", "update"));
         }
     }
 
@@ -289,6 +289,7 @@ public partial class App : Application
     /// <summary>Aviso de problema: entra no histórico de alertas (M46) e vira notificação.</summary>
     private void Alert(string title, string text, params (string label, string action)[] buttons)
     {
+        (title, text) = (Loc.T(title), Loc.T(text)); // o registro de avisos guarda o texto no idioma em que foi mostrado
         bool quiet = IsQuietNow();
         AlertLog.Add(title, text, silenced: quiet);
         if (!quiet) Notify(title, text, buttons);
@@ -299,6 +300,9 @@ public partial class App : Application
 
     public void Notify(string title, string text, params (string label, string action)[] buttons)
     {
+        // M13: toast do Windows e balão da bandeja no idioma do app (textos montados chegam prontos; Loc.T não muda o que já está traduzido)
+        (title, text) = (Loc.T(title), Loc.T(text));
+        buttons = buttons.Select(b => (Loc.T(b.label), b.action)).ToArray();
         if (Settings.NativeNotifications && !AppPaths.Demo && Toasts.Show(title, text, buttons)) return;
         _tray.Notify(title, text);
     }
@@ -329,7 +333,7 @@ public partial class App : Application
         Settings.Save();
         string what = CrashLog.LatestHeadline();
         Notify("O Notebook Doctor teve um erro", (what.Length > 0 ? what + ". " : "") +
-               "O relatório ficou guardado sem dados pessoais e vai no pacote para o suporte, se você quiser enviar.",
+               Loc.T("O relatório ficou guardado sem dados pessoais e vai no pacote para o suporte, se você quiser enviar."),
                ("Ver em Configurações", Tab(AppTabs.Settings)));
     }
 
@@ -435,7 +439,7 @@ public partial class App : Application
         if (next?.Name == HeavyAlert?.Name) { HeavyAlert = next; return; } // mesmo programa: só atualiza os números
         HeavyAlert = next;
         if (next is not null && Settings.AlertsEnabled)
-            Alert("Programa pesado", $"{next.Name} usa {next.CpuPct:0}% da CPU há mais de 3 minutos.", ("Abrir painel", "heavy"));
+            Alert("Programa pesado", Loc.F("{0} usa {1:0}% da CPU há mais de 3 minutos.", next.Name, next.CpuPct), ("Abrir painel", "heavy"));
         HeavyAlertChanged?.Invoke();
     }
 
@@ -449,12 +453,12 @@ public partial class App : Application
         var last = _recent.Where(x => (s.Time - x.Time).TotalMinutes <= 2).ToList();
         string? msg = null;
         if (last.Count >= 6 && last.All(x => x.TempC >= 90))
-            msg = $"Temperatura em {Units.Temp(s.TempC)} há 2 minutos.";
+            msg = Loc.F("Temperatura em {0} há 2 minutos.", Units.Temp(s.TempC));
         else
         {
             var loaded = _recent.TakeLast(12).Where(x => x.Cpu >= 70 && x.CpuPerf >= 0).ToList();
             if (loaded.Count >= 8 && loaded.Average(x => x.CpuPerf) < 60)
-                msg = $"O processador está rodando a {loaded.Average(x => x.CpuPerf):0}% da velocidade máxima mesmo sob carga — sinal de calor ou limite de energia.";
+                msg = Loc.F("O processador está rodando a {0:0}% da velocidade máxima mesmo sob carga — sinal de calor ou limite de energia.", loaded.Average(x => x.CpuPerf));
         }
         if (msg is null) return;
         _lastHeatAlert = DateTime.Now;
@@ -471,8 +475,8 @@ public partial class App : Application
         if (week.Count < 60) return; // menos de 1 h de dados na semana: não há o que resumir
         var scores = week.Where(w => w.Score >= 0).Select(w => w.Score).ToList();
         var top = week.SelectMany(w => w.Top).GroupBy(n => n).OrderByDescending(g => g.Count()).Take(3).Select(g => g.Key);
-        string text = (scores.Count > 0 ? $"Nota média {scores.Average():0}. " : "") +
-                      $"CPU média {week.Average(w => w.Cpu):0}%, RAM média {week.Average(w => w.Ram):0}%. Mais pesados: {string.Join(", ", top)}.";
+        string text = (scores.Count > 0 ? Loc.F("Nota média {0:0}.", scores.Average()) + " " : "") +
+                      Loc.F("CPU média {0:0}%, RAM média {1:0}%. Mais pesados: {2}.", week.Average(w => w.Cpu), week.Average(w => w.Ram), string.Join(", ", top));
         Notify("Resumo da semana", text, ("Ver relatório", "report"), ("Abrir histórico", Tab(AppTabs.History)));
     }
 
@@ -490,7 +494,7 @@ public partial class App : Application
         if (s.DiskFreePct < 10 && (DateTime.Now - _lastDiskAlert).TotalHours >= 6)
         {
             _lastDiskAlert = DateTime.Now;
-            Alert("Pouco espaço no disco", $"Só {s.DiskFreePct:0}% livre ({Units.Gb(s.DiskFreeGB, "0")}).", ("Abrir Limpeza", Tab(AppTabs.Clean)), ("Ver o que ocupa", Tab(AppTabs.Space)));
+            Alert("Pouco espaço no disco", Loc.F("Só {0:0}% livre ({1}).", s.DiskFreePct, Units.Gb(s.DiskFreeGB, "0")), ("Abrir Limpeza", Tab(AppTabs.Clean)), ("Ver o que ocupa", Tab(AppTabs.Space)));
         }
         string? msg = null;
         int minutes = Settings.AlertMinutes;
@@ -498,13 +502,13 @@ public partial class App : Application
         {
             var top = s.TopByCpu.FirstOrDefault();
             if (top is not null && Settings.IsAlertException(top.Name)) top = null; // carga esperada: não avisa
-            else msg = $"CPU em {s.Cpu:0}% há {Pt.N(minutes, "minuto", "minutos")} ou mais." + (top is null ? "" : $" Maior consumo: {top.Name} ({top.CpuPct:0}%).");
+            else msg = Loc.F("CPU em {0:0}% há {1} ou mais.", s.Cpu, Pt.N(minutes, "minuto", "minutos")) + (top is null ? "" : " " + Loc.F("Maior consumo: {0} ({1:0}%).", top.Name, top.CpuPct));
         }
 
         if (_ramHigh.Update(s.RamPct >= Settings.RamAlertPct, s.Time, minutes) && msg is null)
         {
             var top = s.TopByMem.FirstOrDefault();
-            if (top is null || !Settings.IsAlertException(top.Name)) msg = $"Memória em {s.RamPct:0}%." + (top is null ? "" : $" Maior consumo: {top.Name} ({top.MemMB} MB).");
+            if (top is null || !Settings.IsAlertException(top.Name)) msg = Loc.F("Memória em {0:0}%.", s.RamPct) + (top is null ? "" : " " + Loc.F("Maior consumo: {0} ({1} MB).", top.Name, top.MemMB));
         }
         if (msg is not null && (DateTime.Now - _lastAlert).TotalMinutes >= 30)
         {
@@ -541,7 +545,7 @@ public partial class App : Application
         Settings.LastJunkNotice = now;
         Settings.Save();
         // Link só navega: a pessoa abre a Limpeza e decide
-        Alert("Lixo acumulado", $"Há cerca de {Cleaner.FormatBytes(bytes)} de temporários para limpar.", ("Abrir Limpeza", Tab(AppTabs.Clean)));
+        Alert("Lixo acumulado", Loc.F("Há cerca de {0} de temporários para limpar.", Cleaner.FormatBytes(bytes)), ("Abrir Limpeza", Tab(AppTabs.Clean)));
     }
 
     // ---------- Leva 7.3 (C12): modo soneca, acordar ao abrir ----------
@@ -636,10 +640,10 @@ public partial class App : Application
         });
         if (result is null) return null;
         string detail = Loc.F("{0} liberados em dados de navegadores.", Cleaner.FormatBytes(result.Bytes));
-        if (Settings.SimulationMode) Notify("Simulação de limpeza", $"Seriam liberados até {Cleaner.FormatBytes(result.Bytes)} de dados de navegadores. Nada foi apagado.");
+        if (Settings.SimulationMode) Notify("Simulação de limpeza", Loc.F("Seriam liberados até {0} de dados de navegadores. Nada foi apagado.", Cleaner.FormatBytes(result.Bytes)));
         else
         {
-            ActionLog.Add("Limpeza de navegadores", detail);
+            ActionLog.Add(Loc.T("Limpeza de navegadores"), detail);
             if (!quiet || result.Bytes > 0) Notify("Navegadores limpos", detail, ("Ver ações", Tab(AppTabs.Actions)));
         }
         return result;
@@ -653,13 +657,13 @@ public partial class App : Application
         {
             // A38: só mede; nada é apagado nem registrado
             long would = await Task.Run(() => Cleaner.SafeJunkBytes(days));
-            if (notify) Notify("Simulação de limpeza", $"Seriam liberados cerca de {Cleaner.FormatBytes(would)} de temporários com mais de {days} dias. Nada foi apagado.");
+            if (notify) Notify("Simulação de limpeza", Loc.F("Seriam liberados cerca de {0} de temporários com mais de {1} dias. Nada foi apagado.", Cleaner.FormatBytes(would), days));
             return 0;
         }
         long freed = await Task.Run(() => Cleaner.QuickClean(days));
-        ActionLog.Add("Limpeza de temporários", $"{Cleaner.FormatBytes(freed)} liberados (arquivos com mais de {days} dias)");
+        ActionLog.Add(Loc.T("Limpeza de temporários"), Loc.F("{0} liberados (arquivos com mais de {1} dias)", Cleaner.FormatBytes(freed), days));
         _ = RefreshHealthAsync();
-        if (notify) Notify("Limpeza concluída", $"{Cleaner.FormatBytes(freed)} liberados de temporários antigos.", ("Ver ações", Tab(AppTabs.Actions)));
+        if (notify) Notify("Limpeza concluída", Loc.F("{0} liberados de temporários antigos.", Cleaner.FormatBytes(freed)), ("Ver ações", Tab(AppTabs.Actions)));
         return freed;
     }
 
@@ -778,8 +782,8 @@ public partial class App : Application
             return Lock.TryUnlock(pw, hash, now) switch
             {
                 UnlockResult.Ok => null,
-                UnlockResult.Blocked => $"Muitas tentativas erradas. Espere {Math.Ceiling(Lock.BlockedFor(now).TotalSeconds):0} segundos e tente de novo.",
-                _ => "Senha incorreta.",
+                UnlockResult.Blocked => Loc.F("Muitas tentativas erradas. Espere {0:0} segundos e tente de novo.", Math.Ceiling(Lock.BlockedFor(now).TotalSeconds)),
+                _ => Loc.T("Senha incorreta."),
             };
         });
         if (ok) (MainWindow as NotebookDoctor.MainWindow)?.RefreshLockCard();

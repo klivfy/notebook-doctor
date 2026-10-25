@@ -68,6 +68,64 @@ public class LocTests
         return dir?.FullName ?? throw new DirectoryNotFoundException("Raiz do repositório não encontrada.");
     }
 
+    /// <summary>M13: o registro de Ações, a linha do tempo e as datas curtas saem no idioma do app.</summary>
+    [Theory]
+    [InlineData("en", "Program ended", "Permanent", "Can be undone", "Undone", "App action", "10/25 14:30")]
+    [InlineData("es", "Programa cerrado", "Definitivo", "Se puede deshacer", "Deshecho", "Acción de la app", "25/10 14:30")]
+    public void Registro_de_acoes_e_linha_do_tempo_saem_no_idioma_do_app(string lang, string title, string permanent, string canUndo, string undone, string kind, string stamp)
+    {
+        try
+        {
+            Loc.Use(lang);
+            var fixedEntry = new ActionEntry { Title = "Programa encerrado", Time = new DateTime(2026, 10, 25, 14, 30, 0) };
+            Assert.Equal(title, fixedEntry.TitleText);
+            Assert.Equal(permanent, fixedEntry.StatusText);
+            Assert.Equal(canUndo, new ActionEntry { UndoKind = "power" }.StatusText);
+            Assert.Equal(undone, new ActionEntry { UndoKind = "power", Undone = true }.StatusText);
+            Assert.Equal(stamp, fixedEntry.TimeText);
+            var ev = new TimelineEvent(fixedEntry.Time, "Ação do app", "Programa encerrado", "");
+            Assert.Equal(kind, ev.KindText);
+            Assert.Equal(title, ev.TitleText);
+        }
+        finally { Loc.Use("pt"); }
+        // Em português nada muda
+        Assert.Equal("Definitivo", new ActionEntry().StatusText);
+        Assert.Equal("25/10 14:30", new ActionEntry { Time = new DateTime(2026, 10, 25, 14, 30, 0) }.TimeText);
+    }
+
+    /// <summary>
+    /// M13: Novidades, Privacidade e Licenças existem em inglês e espanhol, com a mesma estrutura do original: as mesmas
+    /// linhas (em branco, título ou item de lista) e os mesmos números em cada linha. Assim, uma tradução não perde nem
+    /// troca um dado (30 dias, 500 MB a 5 GB, 1366 × 768) e uma novidade nova não fica só em português.
+    /// </summary>
+    [Theory]
+    [InlineData("Novidades")]
+    [InlineData("Privacidade")]
+    [InlineData("Licencas")]
+    public void Textos_do_Sobre_tem_versao_em_cada_idioma_com_a_mesma_estrutura(string name)
+    {
+        static List<string> Lines(string text) => text.Replace("\r\n", "\n").TrimEnd('\n').Split('\n').ToList();
+        // Só os dígitos, sem separador decimal ("11,8" e "11.8" valem o mesmo)
+        static List<string> Numbers(string line) => Regex.Matches(Regex.Replace(line, @"(?<=\d)[.,](?=\d)", ""), @"\d+").Select(m => m.Value).ToList();
+
+        string dir = Path.Combine(Root(), "Textos");
+        string source = File.ReadAllText(Path.Combine(dir, name + ".txt"));
+        var pt = Lines(source);
+        foreach (var lang in new[] { "en", "es" })
+        {
+            string translated = File.ReadAllText(Path.Combine(dir, $"{name}.{lang}.txt"));
+            Assert.NotEqual(source, translated);
+            var t = Lines(translated);
+            Assert.True(t.Count == pt.Count, $"{name}.{lang}: {t.Count} linhas, o original tem {pt.Count}");
+            for (int i = 0; i < pt.Count; i++)
+            {
+                Assert.True(pt[i].Length == 0 == (t[i].Length == 0), $"{name}.{lang} linha {i + 1}: linha em branco diferente do original");
+                Assert.True(pt[i].StartsWith("• ") == t[i].StartsWith("• "), $"{name}.{lang} linha {i + 1}: marcador de lista diferente do original");
+                Assert.True(Numbers(pt[i]).SequenceEqual(Numbers(t[i])), $"{name}.{lang} linha {i + 1}: números diferentes do original ({string.Join(", ", Numbers(pt[i]))} × {string.Join(", ", Numbers(t[i]))})");
+            }
+        }
+    }
+
     /// <summary>Todo texto escrito nas telas (XAML) precisa ter tradução, senão aparece em português no meio do inglês.</summary>
     [Fact]
     public void Todo_texto_das_telas_tem_traducao()
@@ -116,9 +174,11 @@ public class LocTests
             string code = File.ReadAllText(f);
             foreach (Match m in Regex.Matches(code, @"Pt\.N\([^,]+,\s*" + Lit + @"\s*,\s*" + Lit)) keys.AddRange([m.Groups[1].Value, m.Groups[2].Value]);
             foreach (Match m in Regex.Matches(code, @"Loc\.[TF]\([^;""]*?\?\s*" + Lit + @"\s*:\s*" + Lit)) keys.AddRange([m.Groups[1].Value, m.Groups[2].Value]);
-            foreach (Match call in Regex.Matches(code, @"(?:ShowSnack|Simulate)\(([^;]*)\);"))
-                foreach (Match m in Regex.Matches(call.Groups[1].Value, @"(?<![$\w]|[=!]= )" + Lit))
-                    if (Regex.IsMatch(m.Groups[1].Value, "[A-Za-zÀ-ú]{3}")) keys.Add(m.Groups[1].Value);
+            // Avisos, simulações, notificações, registro de Ações e diálogos recebem texto fixo e traduzem por dentro (M13).
+            // Só vale texto de gente: com espaço ou começando em maiúscula (ids como "admin-restart" ou "startup" ficam de fora).
+            foreach (Match call in Regex.Matches(code, @"(?:ShowSnack|Simulate|Notify|Alert|ActionLog\.Add|Dialogs\.(?:Confirm|ConfirmOnce|Info|ShowText))\(([^;]*)\);"))
+                foreach (Match m in Regex.Matches(Regex.Replace(call.Groups[1].Value, @"\$""(?:[^""\\{]|\\.|\{[^}]*\})*""", "\"\""), @"(?<![$\w]|[=!]= )" + Lit)) // sem as interpoladas, que desalinham as aspas
+                    if (Regex.IsMatch(m.Groups[1].Value, "[A-Za-zÀ-ú]{3}") && (m.Groups[1].Value.Contains(' ') || char.IsUpper(m.Groups[1].Value[0]))) keys.Add(m.Groups[1].Value);
         }
         var missing = keys.Select(Regex.Unescape).Where(k => !en.ContainsKey(k)).Distinct().ToList();
         Assert.True(missing.Count == 0, "Sem tradução:\n" + string.Join("\n", missing));

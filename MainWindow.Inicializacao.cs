@@ -34,22 +34,22 @@ public partial class MainWindow
         try
         {
             bool before = entry.Enabled;
-            if (Simulate($"{(before ? "Desativar" : "Ativar")} {entry.Name} na inicialização", $"Mudaria o registro StartupApproved de {entry.Name}. O programa não seria apagado.")) return;
+            if (Simulate(Loc.F(before ? "Desativar {0} na inicialização" : "Ativar {0} na inicialização", entry.Name), Loc.F("Mudaria o registro StartupApproved de {0}. O programa não seria apagado.", entry.Name))) return;
             string restore = await EnsureRestorePointAsync("Programas de inicializacao");
             StartupManager.SetEnabled(entry, !before);
             StartupGrid.Items.Refresh();
             StartupMsg.Text = $"{entry.Name}: {entry.StateText.ToLower()}. " + Loc.T("Vale a partir do próximo login (reversível aqui).");
-            ActionLog.Add($"Inicialização: {entry.Name} {(before ? "desativado" : "ativado")}", $"Ponto de restauração: {restore}", "startup", entry.Name, $"{StartupManager.SubKeyOf(entry)}|{before}");
+            ActionLog.Add(Loc.F(before ? "Inicialização: {0} desativado" : "Inicialização: {0} ativado", entry.Name), Loc.F("Ponto de restauração: {0}", Loc.T(restore)), "startup", entry.Name, $"{StartupManager.SubKeyOf(entry)}|{before}");
             _ = Host.RefreshHealthAsync();
         }
-        catch (Exception ex) { StartupMsg.Text = "Falhou: " + ex.Message; }
+        catch (Exception ex) { StartupMsg.Text = Loc.T("Falhou: ") + ex.Message; }
     }
 
     /// <summary>Leva 5.3: abre a aba Programas no programa instalado dono do item.</summary>
     private async void StartupShowProgram_Click(object sender, RoutedEventArgs e)
     {
         if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = Loc.T("Selecione um item na lista."); return; }
-        if (entry.FilePath is not { } path) { StartupMsg.Text = $"{entry.Name}: o arquivo do comando não foi encontrado."; return; }
+        if (entry.FilePath is not { } path) { StartupMsg.Text = Loc.F("{0}: o arquivo do comando não foi encontrado.", entry.Name); return; }
         if (path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
             try { path = StartMenu.ReadTarget(path); }
             catch (System.Runtime.InteropServices.COMException) { }
@@ -60,7 +60,7 @@ public partial class MainWindow
     private void StartupOpen_Click(object sender, RoutedEventArgs e)
     {
         if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = Loc.T("Selecione um item na lista."); return; }
-        if (entry.FilePath is not { } path) { StartupMsg.Text = $"{entry.Name}: o arquivo do comando não foi encontrado."; return; }
+        if (entry.FilePath is not { } path) { StartupMsg.Text = Loc.F("{0}: o arquivo do comando não foi encontrado.", entry.Name); return; }
         // Argumento entre aspas: o Explorador só seleciona o arquivo, não o executa
         try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
     }

@@ -28,9 +28,9 @@ public partial class MainWindow
                 if (Dialogs.Confirm(this, "Encerrar o WSL?", "Todas as distribuições Linux do WSL (e o Docker Desktop, se usar o WSL) serão desligadas e a memória volta para o Windows.\n\nTerminais, servidores e contêineres em execução nelas serão fechados.", "Encerrar", danger: true))
                 {
                     int code = await SystemIntegrity.RunAsync("wsl.exe", "--shutdown", _ => { }, CancellationToken.None);
-                    ActionLog.Add("WSL encerrado", $"wsl --shutdown (código {code})");
+                    ActionLog.Add("WSL encerrado", Loc.F("wsl --shutdown (código {0})", code));
                     ShowSnack(code == 0 ? "WSL encerrado" : "O WSL não respondeu como esperado",
-                              code == 0 ? "A memória volta para o Windows em alguns segundos." : $"O comando terminou com código {code}. Tente de novo ou reinicie o PC.");
+                              code == 0 ? "A memória volta para o Windows em alguns segundos." : Loc.F("O comando terminou com código {0}. Tente de novo ou reinicie o PC.", code));
                 }
                 break;
             case "open-security":
@@ -108,7 +108,7 @@ public partial class MainWindow
                 string msg = await Host.Focus.StartAsync(snap, Host.Health);
                 FocusBtn.Content = Loc.T("Desligar Modo Foco");
                 ActionLog.Add("Modo Foco ligado", msg);
-                ShowSnack("Modo Foco ligado", msg + " Nenhum programa foi fechado; ao desligar, tudo volta ao que era.",
+                ShowSnack("Modo Foco ligado", msg + " " + Loc.T("Nenhum programa foi fechado; ao desligar, tudo volta ao que era."),
                           "Desligar", () => Focus_Click(this, new RoutedEventArgs()));
             }
         }

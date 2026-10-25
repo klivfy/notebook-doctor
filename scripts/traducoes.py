@@ -54,11 +54,14 @@ def code_keys():
         for m in re.finditer(r"Pt\.N\([^,]+,\s*" + LIT + r"\s*,\s*" + LIT, s):
             keys.setdefault(unescape(m.group(1)), rel)
             keys.setdefault(unescape(m.group(2)), rel)
-        for m in re.finditer(r"(?:ShowSnack|Simulate)\(([^;]*)\);", s):
-            # Literais comparados (t.Id == "pagefile") são identificadores, não texto da tela
-            for lm in re.finditer(r"(?<![$\w])(?<![=!]=\s)" + LIT, m.group(1)):
+        # Avisos, simulações, notificações, registro de Ações e diálogos traduzem por dentro o texto fixo que recebem
+        # (o mesmo critério do LocTests). Interpoladas ($"...") saem antes: desalinham as aspas.
+        for m in re.finditer(r"(?:ShowSnack|Simulate|Notify|Alert|ActionLog\.Add|Dialogs\.(?:Confirm|ConfirmOnce|Info|ShowText))\(([^;]*)\);", s):
+            call = re.sub(r'\$"(?:[^"\\{]|\\.|\{[^}]*\})*"', '""', m.group(1))
+            for lm in re.finditer(r"(?<![$\w])(?<![=!]=\s)" + LIT, call):
                 k = unescape(lm.group(1))
-                if re.search(r"[A-Za-zÀ-ú]{3}", k):
+                # Só texto de gente: com espaço ou começando em maiúscula (ids como "admin-restart" ficam de fora)
+                if re.search(r"[A-Za-zÀ-ú]{3}", k) and (" " in k or k[:1].isupper()):
                     keys.setdefault(k, rel)
     return keys
 

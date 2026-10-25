@@ -4,22 +4,6 @@ using System.Text.Json;
 
 namespace NotebookDoctor.Services;
 
-public sealed class ActionEntry
-{
-    public DateTime Time { get; set; } = DateTime.Now;
-    public string Title { get; set; } = "";
-    public string Detail { get; set; } = "";
-    /// <summary>Como desfazer: "power" (volta ao plano anterior), "startup" (reativa/desativa item), "plan-created" (apaga o plano criado), "leftovers" (restaura o backup das sobras). Vazio = não desfazível.</summary>
-    public string UndoKind { get; set; } = "";
-    public string UndoArg1 { get; set; } = "";
-    public string UndoArg2 { get; set; } = "";
-    public bool Undone { get; set; }
-
-    public string TimeText => Time.ToString("dd/MM HH:mm");
-    public bool CanUndo => UndoKind.Length > 0 && !Undone;
-    public string Status => Undone ? "Desfeito" : UndoKind.Length > 0 ? "Pode desfazer" : "Definitivo";
-}
-
 /// <summary>Registro das ações feitas pelo app (últimas 200), com desfazer quando é possível reverter.</summary>
 public static class ActionLog
 {
@@ -45,7 +29,8 @@ public static class ActionLog
         lock (Lock)
         {
             var list = Load();
-            list.Add(new ActionEntry { Title = title, Detail = detail, UndoKind = undoKind, UndoArg1 = arg1, UndoArg2 = arg2 });
+            // M13: textos fixos chegam em português e saem no idioma do app; os montados (Loc.F) já chegam prontos
+            list.Add(new ActionEntry { Title = Loc.T(title), Detail = Loc.T(detail), UndoKind = undoKind, UndoArg1 = arg1, UndoArg2 = arg2 });
             Save(list);
         }
     }
@@ -68,15 +53,15 @@ public static class ActionLog
             case "service":
                 // UndoArg1 = nome do serviço; UndoArg2 = tipo de início anterior (2 = automático)
                 try { ServiceManager.SetStart(entry.UndoArg1, int.Parse(entry.UndoArg2)); }
-                catch (UnauthorizedAccessException) { return "Serviços são do sistema: abra o app como administrador para desfazer."; }
-                catch (Exception ex) { return "Não foi possível desfazer: " + ex.Message; }
+                catch (UnauthorizedAccessException) { return Loc.T("Serviços são do sistema: abra o app como administrador para desfazer."); }
+                catch (Exception ex) { return Loc.T("Não foi possível desfazer: ") + ex.Message; }
                 msg = "O serviço volta a iniciar com o Windows no próximo boot.";
                 break;
             case "task":
                 // UndoArg1 = caminho da tarefa no Agendador
                 try { ScheduledTasks.SetEnabled(entry.UndoArg1, true); }
-                catch (UnauthorizedAccessException) { return "Essa tarefa é de todos os usuários: abra o app como administrador para desfazer."; }
-                catch (Exception ex) { return "Não foi possível desfazer: " + ex.Message; }
+                catch (UnauthorizedAccessException) { return Loc.T("Essa tarefa é de todos os usuários: abra o app como administrador para desfazer."); }
+                catch (Exception ex) { return Loc.T("Não foi possível desfazer: ") + ex.Message; }
                 msg = "A tarefa voltou a ficar ativa.";
                 break;
             case "priority":
@@ -90,8 +75,8 @@ public static class ActionLog
             case "tweak":
                 // UndoArg1 = id do ajuste; UndoArg2 = estado anterior
                 try { msg = WindowsTweaks.Undo(entry.UndoArg1, entry.UndoArg2); }
-                catch (UnauthorizedAccessException) { return "Esse ajuste é do sistema: abra o app como administrador para desfazer."; }
-                catch (Exception ex) { return "Não foi possível desfazer: " + ex.Message; }
+                catch (UnauthorizedAccessException) { return Loc.T("Esse ajuste é do sistema: abra o app como administrador para desfazer."); }
+                catch (Exception ex) { return Loc.T("Não foi possível desfazer: ") + ex.Message; }
                 break;
             case "leftovers":
                 // UndoArg1 = id da sessão de backup; o que precisar de administrador avisa na mensagem
@@ -141,7 +126,7 @@ public static class ActionLog
                 msg = PowerPlans.Delete(entry.UndoArg1) ? "Plano criado foi removido." : "Não foi possível remover (talvez esteja ativo): troque de plano e tente de novo.";
                 break;
             default:
-                return "Esta ação não pode ser desfeita.";
+                return Loc.T("Esta ação não pode ser desfeita.");
         }
         lock (Lock)
         {
@@ -150,6 +135,6 @@ public static class ActionLog
             if (match is not null) { match.Undone = true; Save(list); }
         }
         entry.Undone = true;
-        return msg;
+        return Loc.T(msg);
     }
 }

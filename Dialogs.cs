@@ -574,7 +574,7 @@ public static class Dialogs
         var heading = Heading("Senha das configurações", "FsTitle", new Thickness(0, 0, 0, 8));
         var body = new TextBlock
         {
-            Text = $"Para {what}, digite a senha definida pelo responsável por este computador.",
+            Text = Services.Loc.F("Para {0}, digite a senha definida pelo responsável por este computador.", what),
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
         };
         body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
