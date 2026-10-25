@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:local="clr-namespace:NotebookDoctor">
     <!-- Cada dicionário traz os tokens: o StaticResource só enxerga o próprio dicionário e os que ele inclui -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="Tokens.xaml"/>
@@ -501,6 +502,8 @@
     </Style>
 
     <Style TargetType="DataGrid">
+        <!-- U5: largura mínima de cada coluna pela maior palavra do cabeçalho, antes do primeiro layout -->
+        <Setter Property="local:HeaderFit.Auto" Value="True"/>
         <Setter Property="AutoGenerateColumns" Value="False"/>
         <Setter Property="IsReadOnly" Value="True"/>
         <Setter Property="CanUserAddRows" Value="False"/>

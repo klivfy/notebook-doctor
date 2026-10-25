@@ -682,7 +682,6 @@ public partial class App : Application
         Localizer.Install();
         LiveRegions.Install(); // U4: textos marcados como região viva são lidos pelo leitor de tela quando mudam
         WindowFit.Install(); // U2: janelas maiores que a área útil do monitor encolhem para caber
-        HeaderFit.Install(); // U5: colunas de tabela nunca cortam uma palavra do cabeçalho no meio
     }
 
     /// <summary>Reabre o app (troca de idioma). A instância nova espera esta fechar.</summary>
