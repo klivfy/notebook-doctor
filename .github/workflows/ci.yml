@@ -80,3 +80,62 @@ jobs:
           name: telas
           path: smoke-out
           if-no-files-found: ignore
+
+  instalador:
+    # Constrói o instalador (Inno Setup) com o app x64 e Arm64, instala e desinstala de verdade sem janelas e guarda o arquivo.
+    # O arquivo sai SEM assinatura: a assinatura da Klivfy só entra no release (scripts/release/gerar-release.ps1).
+    runs-on: windows-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publicar x64 e Arm64
+        shell: pwsh
+        run: |
+          foreach ($rid in 'x64', 'arm64') {
+            dotnet publish src/NotebookDoctor/NotebookDoctor.csproj -c Release -r "win-$rid" --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o "publish-inst/$rid"
+            if ($LASTEXITCODE -ne 0) { throw "dotnet publish ($rid) falhou." }
+          }
+
+      - name: Construir o instalador
+        shell: pwsh
+        run: |
+          $versao = ([xml](Get-Content src/NotebookDoctor/NotebookDoctor.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          "Versão: $versao"
+          ./scripts/release/construir-instalador.ps1 -Versao $versao -OrigemX64 publish-inst/x64 -OrigemArm64 publish-inst/arm64 -Saida instalador-out -InstalarInno
+          "VERSAO=$versao" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Instalar e desinstalar sem janelas
+        shell: pwsh
+        run: |
+          $setup = (Resolve-Path "instalador-out/NotebookDoctor-Setup-$env:VERSAO.exe").Path
+          $dir = Join-Path $env:RUNNER_TEMP 'nd-instalado'
+          $p = Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$dir", "/LOG=$env:RUNNER_TEMP\nd-setup.log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content "$env:RUNNER_TEMP\nd-setup.log"; throw "O instalador saiu com código $($p.ExitCode)." }
+          if (-not (Test-Path "$dir/NotebookDoctor.exe")) { throw 'O app não foi instalado.' }
+          if (-not (Test-Path "$dir/unins000.exe")) { throw 'O desinstalador não foi criado.' }
+          $atalho = Join-Path ([Environment]::GetFolderPath('Programs')) 'Notebook Doctor.lnk'
+          if (-not (Test-Path $atalho)) { throw 'O atalho do Menu Iniciar não foi criado com o nome que o app espera.' }
+          $alvo = (New-Object -ComObject WScript.Shell).CreateShortcut($atalho).TargetPath
+          if ($alvo -ne "$dir\NotebookDoctor.exe") { throw "O atalho aponta para $alvo." }
+          $entrada = Get-ChildItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' | Where-Object { $_.PSChildName -like '{E16D6632-EE2D-466E-948C-EB302B091029}*' }
+          if (-not $entrada) { throw 'O app não aparece em Aplicativos instalados.' }
+          "Instalado em $dir, atalho e registro de desinstalação conferidos."
+          $u = Start-Process "$dir/unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
+          # o desinstalador se copia para a pasta temporária e termina o trabalho depois de devolver o controle
+          foreach ($i in 1..30) { if (-not (Test-Path "$dir/NotebookDoctor.exe") -and -not (Test-Path $atalho)) { break }; Start-Sleep -Seconds 1 }
+          if (Test-Path "$dir/NotebookDoctor.exe") { throw 'O desinstalador não removeu o app.' }
+          if (Test-Path $atalho) { throw 'O desinstalador não removeu o atalho.' }
+          "Desinstalado."
+
+      - name: Publicar o instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: instalador
+          path: instalador-out/NotebookDoctor-Setup-*.exe
