@@ -28,7 +28,8 @@ public static class FitScroll
     private static void Fit(ScrollViewer sv)
     {
         if (sv.Content is not Grid grid || sv.ViewportHeight <= 0) return;
-        double starMin = GetStarMin(sv), fixedPart = grid.Margin.Top + grid.Margin.Bottom;
+        // Com o texto maior, as linhas de tamanho fixo (títulos, filtros, botões) crescem, e a lista precisa crescer junto
+        double starMin = GetStarMin(sv) * TextScale.Factor, fixedPart = grid.Margin.Top + grid.Margin.Bottom;
         foreach (var row in grid.RowDefinitions)
             fixedPart += row.Height.IsStar ? Math.Max(starMin, row.MinHeight) : row.ActualHeight;
         double height = Math.Max(sv.ViewportHeight - grid.Margin.Top - grid.Margin.Bottom, fixedPart - grid.Margin.Top - grid.Margin.Bottom);
