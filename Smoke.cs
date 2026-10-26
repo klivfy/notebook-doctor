@@ -193,6 +193,7 @@ public static class Smoke
         ("menu-de-contexto", () => new ContextMenuWindow(main)),
         ("desfragmentar", () => new DefragWindow(main)),
         ("drivers", () => new DriversWindow(main)),
+        ("drivers-fabricante", () => new DriversWindow(main, oem: true)),
         ("duplicados", () => new DuplicatesWindow(main, [])),
         ("recuperar-ntfs", () => new NtfsRecoveryWindow(main)),
         ("recuperar", () => new RecoveryWindow(main)),

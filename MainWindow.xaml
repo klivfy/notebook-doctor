@@ -1214,8 +1214,11 @@
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="Drivers" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
-                        <TextBlock Text="Procura drivers novos só pelo Windows Update e mostra o que é mais novo que o instalado. Antes de instalar, cria um ponto de restauração e guarda uma cópia do driver atual, para voltar quando precisar." Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
-                        <Button Content="Drivers pelo Windows Update…" Style="{StaticResource TonalButton}" HorizontalAlignment="Left" Click="Drivers_Click"/>
+                        <TextBlock Text="Procura drivers novos só pelo Windows Update e mostra o que é mais novo que o instalado. Antes de instalar, cria um ponto de restauração e guarda uma cópia do driver atual, para voltar quando precisar. Em “Do fabricante”, mostra de onde vem cada driver (fabricante do notebook ou da peça) e abre o site oficial." Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                        <WrapPanel>
+                            <Button Content="Drivers pelo Windows Update…" Style="{StaticResource TonalButton}" Click="Drivers_Click" Margin="0,0,8,8"/>
+                            <Button Content="Drivers do fabricante…" Style="{StaticResource TextButton}" Click="DriversOem_Click" Margin="0,0,8,8"/>
+                        </WrapPanel>
                     </StackPanel>
                 </Border>
 

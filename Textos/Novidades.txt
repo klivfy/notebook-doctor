@@ -1,4 +1,5 @@
 Revisão de segurança, dados e acessibilidade (novo)
+• Drivers do fabricante (Configurações › Drivers): lê o computador e mostra de onde vem cada driver. BIOS, chipset, energia e touchpad só do fabricante do notebook; vídeo dedicado da NVIDIA e da AMD pelo aplicativo delas. Abre o site oficial, avisa quando falta ponto de restauração e instala pelo WinGet o aplicativo do fabricante (Dell, Lenovo, HP, Intel).
 • Verificar malware (Sistema): roda o Microsoft Defender (rápida, completa ou uma pasta) e a Ferramenta de Remoção de Software Mal-Intencionado (MRT) do Windows, mostra o histórico de ameaças e registra em Ações. Quem procura e remove é a Microsoft.
 • A limpeza como administrador apaga cada arquivo pelo identificador e confere onde ele está de fato: uma pasta trocada por atalho de sistema no meio da limpeza não leva mais a exclusão para fora.
 • O backup de cada item fica gravado e fechado antes de o original sair: se o PC desligar no meio, o Desfazer ainda devolve tudo.

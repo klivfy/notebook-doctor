@@ -88,4 +88,8 @@ public static class WingetRunner
     /// </summary>
     public static Task<WingetRun> UpgradeAsync(string id, bool sourceTermsAccepted, bool packageTermsAccepted, Action<string>? onLine = null) =>
         RunAsync(WingetCommands.Upgrade(id, sourceTermsAccepted, packageTermsAccepted), TimeSpan.FromMinutes(45), CancellationToken.None, onLine, killOnTimeout: false);
+
+    /// <summary>Instala um pacote. Como na atualização, não há cancelamento no meio e o app deixa de esperar após 45 minutos.</summary>
+    public static Task<WingetRun> InstallAsync(string id, bool sourceTermsAccepted, bool packageTermsAccepted) =>
+        RunAsync(WingetCommands.Install(id, sourceTermsAccepted, packageTermsAccepted), TimeSpan.FromMinutes(45), CancellationToken.None, killOnTimeout: false);
 }

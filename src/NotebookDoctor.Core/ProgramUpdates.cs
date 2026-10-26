@@ -152,6 +152,15 @@ public static class WingetCommands
         return [.. args];
     }
 
+    /// <summary>Instala um pacote novo (os aplicativos de drivers dos fabricantes). Mesmas regras de aceite do <see cref="Upgrade"/>.</summary>
+    public static string[] Install(string id, bool sourceTermsAccepted, bool packageTermsAccepted)
+    {
+        var args = new List<string> { "install", "--id", Checked(id), "--exact", "--source", Source, "--silent", "--disable-interactivity" };
+        if (sourceTermsAccepted) args.Add("--accept-source-agreements");
+        if (packageTermsAccepted) args.Add("--accept-package-agreements");
+        return [.. args];
+    }
+
     private static string[] With(string[] a, string[] b) => [.. a, .. b];
 
     private static string Checked(string id) =>

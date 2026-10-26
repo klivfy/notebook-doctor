@@ -79,6 +79,7 @@ public partial class MainWindow
 
     // Leva 7.2 (C13)
     private void Drivers_Click(object sender, RoutedEventArgs e) => new DriversWindow(this).ShowDialog();
+    private void DriversOem_Click(object sender, RoutedEventArgs e) => new DriversWindow(this, oem: true).ShowDialog();
 
     private async void IntegrityCheck_Click(object sender, RoutedEventArgs e) => await RunIntegrityAsync(repair: false);
     private async void IntegrityRepair_Click(object sender, RoutedEventArgs e) => await RunIntegrityAsync(repair: true);

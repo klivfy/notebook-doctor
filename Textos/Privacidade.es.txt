@@ -12,6 +12,7 @@ Cuándo la app usa internet
 • Prueba de red: solo cuando haces clic, hace ping al router, a 1.1.1.1 y a 8.8.8.8 y consulta el DNS de klivfy.com, github.com y wikipedia.org.
 • Abrir soporte: abre klivfy.com/suporte en tu navegador.
 • Buscar malware: la app no envía nada, pero la MRT de Microsoft, al terminar, envía a Microsoft un informe de lo que encontró, y Microsoft Defender sigue las opciones de protección en la nube y envío de muestras de Seguridad de Windows.
+• Controladores del fabricante: la app lee el modelo y el número de serie del equipo solo para uso local. El número solo va al sitio de Dell o de Lenovo si hace clic en “Página de mi modelo…” y confirma (la app muestra el número antes); para HP, se copia para que usted lo pegue. “Abrir la página oficial” nunca lleva el número.
 
 Paquete para el soporte
 El archivo .zip se crea en tu equipo y solo llega a Klivfy si tú mismo lo adjuntas a una solicitud de soporte. Sustituye tu nombre de usuario, el nombre del equipo y la carpeta personal por marcadores. Puedes abrirlo y revisarlo antes de enviarlo.
