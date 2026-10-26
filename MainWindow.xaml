@@ -37,15 +37,20 @@
         <!-- Camada de conteúdo: um degrau acima da moldura, com o canto superior esquerdo arredondado -->
         <Border x:Name="ContentLayer" Grid.Column="1" Grid.RowSpan="3" Style="{StaticResource ContentLayer}"/>
 
+        <!-- B46: com o texto grande num notebook pequeno, o cabeçalho e as abas rolam juntos em vez de uma esmagar a outra -->
+        <ScrollViewer Grid.Column="1" Grid.RowSpan="3" local:FitScroll.StarMin="400" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
         <!-- Cabeçalho da seção: título de página (28 px), estado do PC e suporte -->
-        <Grid Grid.Column="1" Margin="24,20,20,12">
+        <Grid x:Name="PageHeader" Margin="24,20,20,12" SizeChanged="PageHeader_SizeChanged">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-            <StackPanel VerticalAlignment="Center">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <StackPanel x:Name="HeaderTitle" VerticalAlignment="Center">
                 <TextBlock x:Name="PageTitle" Text="{Binding SelectedItem.Header, ElementName=Tabs}" Style="{StaticResource PageTitle}"
                            AutomationProperties.HeadingLevel="Level1"/>
                 <TextBlock x:Name="SubTitle" Text="Monitor de desempenho" Style="{StaticResource Label}" Margin="0,4,0,0" TextWrapping="Wrap"/>
             </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel x:Name="HeaderChips" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button x:Name="SimChip" Content="Simulação ligada" Style="{StaticResource StatusChipButton}" Visibility="Collapsed" Click="SimChip_Click" VerticalAlignment="Center"
                         AutomationProperties.Name="Simulação ligada: abrir Ajustes para desligar"
                         ToolTip="Nenhuma correção altera o computador enquanto a simulação estiver ligada. Clique para ver em Ajustes."/>
@@ -57,7 +62,7 @@
             </StackPanel>
         </Grid>
 
-        <TabControl x:Name="Tabs" Grid.Column="1" Grid.Row="1" Margin="20,0,16,4" SelectionChanged="Tabs_SelectionChanged">
+        <TabControl x:Name="Tabs" Grid.Row="1" Margin="20,0,16,4" SelectionChanged="Tabs_SelectionChanged">
 
             <!-- PAINEL: nota de saúde primeiro, métricas compactas, diagnóstico com as correções -->
             <TabItem Header="Painel">
@@ -1304,6 +1309,8 @@
               </ScrollViewer>
             </TabItem>
         </TabControl>
+        </Grid>
+        </ScrollViewer>
 
         <!-- Aviso flutuante: cartão com ícone, como o InfoBar do Windows; resultado de ações sem diálogo modal -->
         <Border x:Name="Snack" Grid.Column="1" Grid.Row="1" Visibility="Collapsed" VerticalAlignment="Bottom" HorizontalAlignment="Center"

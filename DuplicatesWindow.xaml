@@ -1,11 +1,13 @@
 <Window x:Class="NotebookDoctor.DuplicatesWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:NotebookDoctor"
         Title="Arquivos duplicados" Width="1020" Height="700" MinWidth="780" MinHeight="520"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Arquivos duplicados">
+    <ScrollViewer local:FitScroll.StarMin="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
     <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <TextBlock Text="Arquivos duplicados" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
@@ -64,4 +66,5 @@
             </WrapPanel>
         </DockPanel>
     </Grid>
+    </ScrollViewer>
 </Window>

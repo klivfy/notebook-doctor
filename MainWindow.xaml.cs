@@ -165,6 +165,20 @@ public partial class MainWindow : Window
     // ---------- Barra lateral compacta em janelas estreitas ----------
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e) => ApplyNavDensity();
 
+    /// <summary>B46: sem espaço para o título e os avisos lado a lado (texto grande, janela estreita), os avisos descem para baixo do título.</summary>
+    private void PageHeader_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        PageTitle.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        HeaderChips.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        bool below = PageHeader.ActualWidth < PageTitle.DesiredSize.Width + HeaderChips.DesiredSize.Width + 16;
+        if ((Grid.GetRow(HeaderChips) == 1) == below) return;
+        Grid.SetRow(HeaderChips, below ? 1 : 0);
+        Grid.SetColumn(HeaderChips, below ? 0 : 1);
+        Grid.SetColumnSpan(HeaderChips, below ? 2 : 1);
+        HeaderChips.Margin = below ? new Thickness(0, 8, 0, 0) : new Thickness(0);
+        HeaderChips.HorizontalAlignment = below ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+    }
+
     /// <summary>Menu só com ícones na janela estreita ou no modo compacto (B15).</summary>
     public void ApplyNavDensity()
     {

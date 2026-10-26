@@ -1,11 +1,13 @@
 <Window x:Class="NotebookDoctor.RegistryCheckWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:NotebookDoctor"
         Title="Verificar registro" Width="1100" Height="720" MinWidth="820" MinHeight="540"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Verificar registro">
+    <ScrollViewer local:FitScroll.StarMin="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
     <Grid Margin="24">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <TextBlock Text="Verificar registro" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
@@ -40,4 +42,5 @@
             <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
         </WrapPanel>
     </Grid>
+    </ScrollViewer>
 </Window>
