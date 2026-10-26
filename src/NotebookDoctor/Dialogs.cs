@@ -36,7 +36,7 @@ public static class Dialogs
                    "O tema segue o Windows; dá para trocar depois em Configurações.",
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 16),
         };
-        intro.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        intro.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
 
         var start = new CheckBox { Content = "Iniciar com o Windows (fica discreto na bandeja)", IsChecked = true };
         var alerts = new CheckBox { Content = "Avisar quando algo pesar demais", IsChecked = s.AlertsEnabled };
@@ -93,7 +93,7 @@ public static class Dialogs
         dlg.ResizeMode = ResizeMode.CanResize;
         var heading = Heading($"{name} · {Services.Pt.N(rows.Count, "processo", "processos")}", "FsTitle", new Thickness(0, 0, 0, 4));
         var sub = new TextBlock { Text = $"{about.Description} · Fechar: {about.SafetyText}", TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
-        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
         var grid = new DataGrid { ItemsSource = rows, AutoGenerateColumns = true };
         var close = new Button { Content = "Fechar", HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 12, 0, 0), IsCancel = true };
         close.Click += (_, _) => dlg.Close();
@@ -124,7 +124,7 @@ public static class Dialogs
             Text = Services.Loc.T("Revise antes de apagar. Tudo vai para um backup por 30 dias e pode ser desfeito na aba Ações."),
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
         };
-        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
 
         var level = new ComboBox { Width = 460, Margin = new Thickness(0, 0, 0, 8), HorizontalAlignment = HorizontalAlignment.Left };
         level.Items.Add(Services.Loc.T("Seguro: só o que aponta para a pasta do programa"));
@@ -139,7 +139,7 @@ public static class Dialogs
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
             Visibility = !isAdmin && items.Any(l => l.NeedsAdmin) ? Visibility.Visible : Visibility.Collapsed,
         };
-        adminNote.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        adminNote.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
 
         var grid = new DataGrid { AutoGenerateColumns = false, CanUserAddRows = false, SelectionMode = DataGridSelectionMode.Single };
         System.Windows.Automation.AutomationProperties.SetName(grid, title);
@@ -222,7 +222,7 @@ public static class Dialogs
                    + (skipped.Count > 0 ? "\n\n" + Services.Loc.F("Ficam de fora (o Windows não deixa remover por aqui): {0}", string.Join(", ", skipped)) : ""),
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
         };
-        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        body.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
         var silent = new CheckBox
         {
             Content = Services.Loc.T("Sem janelas, quando o desinstalador permitir"), IsChecked = true, Margin = new Thickness(0, 0, 0, 8),
@@ -256,7 +256,7 @@ public static class Dialogs
             Text = Services.Loc.T("Para programas que não aparecem mais na lista, mas deixaram pastas e registro. Com a pasta, a busca também acha o que aponta para ela."),
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 16),
         };
-        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        body.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
         var nameLabel = new TextBlock { Text = Services.Loc.T("Nome do programa"), Margin = new Thickness(0, 0, 0, 4) };
         var name = new TextBox { Margin = new Thickness(0, 0, 0, 12) };
         System.Windows.Automation.AutomationProperties.SetName(name, nameLabel.Text);
@@ -305,7 +305,7 @@ public static class Dialogs
             Text = Services.Loc.T("O que cada instalação criou no disco e no registro. \"Desinstalar\" usa essa anotação e a busca de sobras; você revisa antes de apagar."),
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
         };
-        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
         var list = new ListBox { Height = 260, Margin = new Thickness(0, 0, 0, 8) };
         System.Windows.Automation.AutomationProperties.SetName(list, title);
         var msg = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
@@ -392,7 +392,7 @@ public static class Dialogs
             Text = Services.Loc.T("Cada remoção de sobras guarda o que apagou por 30 dias (até 2 GB no total). Restaurar devolve tudo ao lugar."),
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
         };
-        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
         var list = new ListBox { Height = 260, Margin = new Thickness(0, 0, 0, 8) };
         System.Windows.Automation.AutomationProperties.SetName(list, title);
         var msg = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
@@ -448,8 +448,8 @@ public static class Dialogs
     /// <summary>Cores, fonte e tamanho de texto do tema (segue o "Tamanho do texto" do Windows).</summary>
     private static void Theme(Window dlg)
     {
-        dlg.SetResourceReference(Control.BackgroundProperty, "SurfaceContainer");
-        dlg.SetResourceReference(TextBlock.ForegroundProperty, "OnSurface");
+        dlg.SetResourceReference(Control.BackgroundProperty, "CardFill");
+        dlg.SetResourceReference(TextBlock.ForegroundProperty, "TextPrimary");
         dlg.SetResourceReference(Control.FontFamilyProperty, "FontBody");
         dlg.SetResourceReference(Control.FontSizeProperty, "FsBody");
         dlg.Language = System.Windows.Markup.XmlLanguage.GetLanguage(Services.Loc.Culture.IetfLanguageTag);
@@ -476,7 +476,7 @@ public static class Dialogs
             Text = Services.Loc.T("Marque os sites que devem continuar conectados depois da limpeza. Os mais usados vêm primeiro."),
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10),
         };
-        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
         var keptSet = new HashSet<string>(kept, StringComparer.OrdinalIgnoreCase);
         var list = new ListBox { Height = 300, SelectionMode = SelectionMode.Multiple, Margin = new Thickness(0, 0, 0, 12) };
         System.Windows.Automation.AutomationProperties.SetName(list, title);
@@ -553,7 +553,7 @@ public static class Dialogs
             Text = text, TextWrapping = TextWrapping.Wrap, IsReadOnly = true, BorderThickness = new Thickness(0),
             Background = System.Windows.Media.Brushes.Transparent, Padding = new Thickness(0),
         };
-        body.SetResourceReference(Control.ForegroundProperty, "OnSurfaceVariant");
+        body.SetResourceReference(Control.ForegroundProperty, "TextSecondary");
         System.Windows.Automation.AutomationProperties.SetName(body, title);
         var scroll = new ScrollViewer { Content = body, MaxHeight = 440, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(0, 0, 0, 16) };
         var ok = new Button { Content = "Fechar", HorizontalAlignment = HorizontalAlignment.Right, IsDefault = true, IsCancel = true };
@@ -577,7 +577,7 @@ public static class Dialogs
             Text = Services.Loc.F("Para {0}, digite a senha definida pelo responsável por este computador.", what),
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
         };
-        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        body.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
         var box = new PasswordBox { Margin = new Thickness(0, 0, 0, 8) };
         System.Windows.Automation.AutomationProperties.SetName(box, "Senha");
         var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
@@ -623,7 +623,7 @@ public static class Dialogs
 
         var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
         var body = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 24) };
-        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        body.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
 
         bool result = false;
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };

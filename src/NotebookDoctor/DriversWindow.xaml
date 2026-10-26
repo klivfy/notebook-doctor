@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:NotebookDoctor"
         Title="Drivers" Width="1060" Height="720" MinWidth="820" MinHeight="540"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource WindowBackdrop}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Drivers">
     <ScrollViewer local:FitScroll.StarMin="160" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
@@ -33,7 +33,7 @@
                                 <Setter Property="TextWrapping" Value="Wrap"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Recommended}" Value="True">
-                                        <Setter Property="Foreground" Value="{DynamicResource Primary}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
                                         <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -56,7 +56,7 @@
                 <TextBlock x:Name="OemComputer" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,4"/>
                 <TextBlock x:Name="OemTools" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"/>
                 <Border x:Name="OemRestoreBox" Style="{StaticResource InfoBarWarning}" Visibility="Collapsed">
-                    <TextBlock x:Name="OemRestore" TextWrapping="Wrap" Foreground="{DynamicResource OnSurface}" AutomationProperties.LiveSetting="Polite"/>
+                    <TextBlock x:Name="OemRestore" TextWrapping="Wrap" Foreground="{DynamicResource TextPrimary}" AutomationProperties.LiveSetting="Polite"/>
                 </Border>
                 <DataGrid x:Name="OemGrid" AutomationProperties.Name="Drivers do fabricante" SelectionMode="Single" SelectionChanged="OemGrid_SelectionChanged"
                           VerticalScrollBarVisibility="Disabled" PreviewMouseWheel="OemGrid_PreviewMouseWheel">
@@ -72,7 +72,7 @@
                                 <Style TargetType="TextBlock">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Serious}" Value="True">
-                                            <Setter Property="Foreground" Value="{DynamicResource Warning}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource Caution}"/>
                                             <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
                                         </DataTrigger>
                                     </Style.Triggers>

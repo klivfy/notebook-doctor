@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:NotebookDoctor"
         Title="Atualizar programas" Width="1020" Height="720" MinWidth="780" MinHeight="540"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource WindowBackdrop}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Atualizar programas">
     <ScrollViewer local:FitScroll.StarMin="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">

@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:NotebookDoctor"
         Title="Verificar malware" Width="980" Height="780" MinWidth="780" MinHeight="560"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource WindowBackdrop}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Verificar malware">
     <ScrollViewer local:FitScroll.StarMin="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">

@@ -19,20 +19,20 @@ Cada dicionário de `Controls` e `Components` inclui `Tokens.xaml`, porque o `St
 
 ## Cor
 
-Três planos: **moldura** (`Surface`, Mica quando o Windows permite) → **camada de conteúdo** (`LayerFill`, canto superior esquerdo de 8 px) → **cartão** (`SurfaceContainer` com contorno `CardBorder`). Sem sombras, exceto em menus, no aviso flutuante e no mini-widget, que ficam por cima de outras coisas.
+Três planos: **moldura** (`WindowBackdrop`, Mica quando o Windows permite) → **camada de conteúdo** (`LayerFill`, canto superior esquerdo de 8 px) → **cartão** (`CardFill` com contorno `CardStroke`). Sem sombras, exceto em menus, no aviso flutuante e no mini-widget, que ficam por cima de outras coisas.
 
 | Papel | Chaves | Regra |
 |---|---|---|
-| Texto | `OnSurface`, `OnSurfaceVariant` | 4,5:1 sobre moldura, camada e cartão |
-| Ação e seleção | `Primary` / `OnPrimary` | Só a ação principal de cada área é preenchida; indicador da navegação |
+| Texto | `TextPrimary`, `TextSecondary` | 4,5:1 sobre moldura, camada e cartão |
+| Ação e seleção | `Accent` / `OnAccent` | Só a ação principal de cada área é preenchida; indicador da navegação |
 | Valor clicável | `AccentText` | Números e links que levam a outro lugar |
 | Controles neutros | `ControlFill`, `ControlFillHover`, `ControlStroke`, `SecondaryContainer` | Botão padrão, campos, combo, item selecionado |
-| Estados | `Error`/`Warning`/`Success` + `On…` + `…Container` | Cor só para estado; sempre com texto ou ícone junto (a cor nunca é o único sinal) |
+| Estados | `Critical`/`Caution`/`Success` + `On…` + `…Container` | Cor só para estado; sempre com texto ou ícone junto (a cor nunca é o único sinal) |
 | Gráficos | `ChartCpu`, `ChartRam`, `ChartDisk`, `Level*` | Nunca a cor de ação nem as de estado nos gráficos; 3:1 sobre o cartão |
 
-Os nomes das cores vêm do primeiro sistema do app e descrevem o papel, não a aparência: `Surface…` são as camadas do Windows 11 (fundo, camada, cartão), `On…` é o texto sobre elas e `…Container` é o fundo suave de um estado ou destaque. As chaves novas usam nomes do Fluent (`ControlFill`, `LayerFill`, `ControlStroke`); renomear as antigas fica para quando o app for para `src/` (R4), porque mexe em todas as telas.
+Os nomes descrevem o papel, não a aparência, e seguem o Fluent: `WindowBackdrop`, `LayerFill` e `CardFill` são as camadas (fundo, camada, cartão), `CardStroke` é o contorno do cartão, `TextPrimary` e `TextSecondary` são os textos, `Accent` é a cor de ação, `Caution`, `Critical` e `Success` são os estados, `On…` é o texto sobre a cor (`OnAccent`, `OnCritical`…) e `…Container` é o fundo suave de um estado ou destaque (`CautionContainer`). Até a R4 (outubro de 2026) a cor de fundo se chamava `Surface`, o texto `OnSurface`, a ação `Primary`, e os estados `Error`/`Warning`; o `ResourceKeysTests` falha se uma tela voltar a usar um desses nomes ou uma chave que nenhum tema declara.
 
-Com "Usar a cor de destaque do Windows", `Primary`, `AccentText` e os contêineres de destaque vêm do Windows, ajustados até 4,5:1. No Alto Contraste, todas as chaves viram cores do sistema.
+Com "Usar a cor de destaque do Windows", `Accent`, `AccentText` e os contêineres de destaque vêm do Windows, ajustados até 4,5:1. No Alto Contraste, todas as chaves viram cores do sistema.
 
 ## Texto
 

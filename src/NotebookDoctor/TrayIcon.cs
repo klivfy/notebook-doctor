@@ -51,8 +51,8 @@ public sealed class TrayIcon : IDisposable
 
     public void ApplyTheme()
     {
-        var bg = ToDrawing(ThemeManager.Get("SurfaceContainer"));
-        var fg = ToDrawing(ThemeManager.Get("OnSurface"));
+        var bg = ToDrawing(ThemeManager.Get("CardFill"));
+        var fg = ToDrawing(ThemeManager.Get("TextPrimary"));
         _menu.Renderer = new WinForms.ToolStripProfessionalRenderer(new MenuColors(bg, ToDrawing(ThemeManager.Get("SurfaceVariant"))));
         _menu.BackColor = bg;
         _menu.ForeColor = fg;

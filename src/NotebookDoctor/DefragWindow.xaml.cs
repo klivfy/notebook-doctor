@@ -188,7 +188,7 @@ public partial class DefragWindow : Window
     private BitmapSource Render(double[] cells, int cols, int rows)
     {
         Color free = (TryFindResource("SurfaceVariant") as SolidColorBrush)?.Color ?? Colors.LightGray;
-        Color used = (TryFindResource("Primary") as SolidColorBrush)?.Color ?? Colors.Blue;
+        Color used = (TryFindResource("Accent") as SolidColorBrush)?.Color ?? Colors.Blue;
         var pixels = new byte[cols * rows * 4];
         for (int i = 0; i < cells.Length; i++)
         {

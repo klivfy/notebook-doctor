@@ -143,10 +143,10 @@ public partial class MainWindow
         ScoreText.Text = sc.Score > 0 ? sc.Score.ToString() : "–";
         ScoreLabel.Text = Loc.T(sc.Label);
         // Cor só para estado: o número fica na cor do texto (contraste alto) e o estado vai num chip (texto preto/branco sobre a cor)
-        string scoreKey = sc.Score <= 0 ? "SurfaceVariant" : sc.Score >= 75 ? "Success" : sc.Score >= 55 ? "Warning" : "Error";
+        string scoreKey = sc.Score <= 0 ? "SurfaceVariant" : sc.Score >= 75 ? "Success" : sc.Score >= 55 ? "Caution" : "Critical";
         // Redesign: fundo suave do estado e texto na cor do estado (contraste conferido por ThemeContrastTests)
         ScoreChip.SetResourceReference(Border.BackgroundProperty, sc.Score <= 0 ? scoreKey : scoreKey + "Container");
-        ScoreLabel.SetResourceReference(TextBlock.ForegroundProperty, sc.Score <= 0 ? "OnSurface" : scoreKey);
+        ScoreLabel.SetResourceReference(TextBlock.ForegroundProperty, sc.Score <= 0 ? "TextPrimary" : scoreKey);
         if (sc.Score <= 0) ScoreLabel.Text = Loc.T("Calculando…");
         System.Windows.Automation.AutomationProperties.SetName(ScoreText, sc.Score > 0 ? Loc.F("Nota de saúde {0} de 100, {1}", sc.Score, Loc.T(sc.Label)) : Loc.T("Nota de saúde ainda sendo calculada"));
         FeedScorePulse(sc.Score);
@@ -338,8 +338,8 @@ public partial class MainWindow
         _badgeLevel = badge.Level;
         TaskbarItemInfo.Overlay = badge.Level switch
         {
-            BadgeLevel.Problem => BadgeDot("Error", "!"),
-            BadgeLevel.Attention => BadgeDot("Warning", "!"),
+            BadgeLevel.Problem => BadgeDot("Critical", "!"),
+            BadgeLevel.Attention => BadgeDot("Caution", "!"),
             _ => null,
         };
     }
@@ -390,8 +390,8 @@ public partial class MainWindow
     {
         int problems = findings.Count(f => f.Level == "PROBLEMA"), warns = findings.Count(f => f.Level == "ATENCAO");
         // Redesign: chip no fundo suave do estado com o texto na cor do estado (como o InfoBar do Windows)
-        (string bg, string fg, string text) = problems > 0 ? ("ErrorContainer", "Error", Pt.N(problems, "problema", "problemas"))
-                                            : warns > 0 ? ("WarningContainer", "Warning", Pt.N(warns, "ponto de atenção", "pontos de atenção"))
+        (string bg, string fg, string text) = problems > 0 ? ("CriticalContainer", "Critical", Pt.N(problems, "problema", "problemas"))
+                                            : warns > 0 ? ("CautionContainer", "Caution", Pt.N(warns, "ponto de atenção", "pontos de atenção"))
                                             : ("SuccessContainer", "Success", Loc.T("Tudo certo"));
         StatusChip.SetResourceReference(Border.BackgroundProperty, bg);
         StatusText.SetResourceReference(TextBlock.ForegroundProperty, fg);

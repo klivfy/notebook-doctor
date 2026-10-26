@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Ferramentas do Windows" Width="900" Height="680" MinWidth="620" MinHeight="460"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource WindowBackdrop}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Ferramentas do Windows">
     <Grid Margin="24">

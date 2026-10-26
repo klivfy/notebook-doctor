@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:NotebookDoctor"
         Title="Modo soneca" Width="1060" Height="720" MinWidth="820" MinHeight="540"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource WindowBackdrop}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Modo soneca">
     <ScrollViewer local:FitScroll.StarMin="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
@@ -25,7 +25,7 @@
                             <Setter Property="TextWrapping" Value="Wrap"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Asleep}" Value="True">
-                                    <Setter Property="Foreground" Value="{DynamicResource Primary}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
                                     <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
                                 </DataTrigger>
                             </Style.Triggers>

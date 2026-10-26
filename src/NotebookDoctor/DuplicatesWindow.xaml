@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:NotebookDoctor"
         Title="Arquivos duplicados" Width="1020" Height="700" MinWidth="780" MinHeight="520"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource WindowBackdrop}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
         AutomationProperties.Name="Arquivos duplicados">
     <ScrollViewer local:FitScroll.StarMin="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
@@ -39,10 +39,10 @@
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Odd}" Value="True">
-                                    <Setter Property="Foreground" Value="{DynamicResource Primary}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>

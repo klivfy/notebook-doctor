@@ -69,18 +69,18 @@ public static class ThemeManager
     {
         static Rgb ToRgb(Color c) => new(c.R, c.G, c.B);
         void Set(string key, Rgb c) => d[key] = new SolidColorBrush(Color.FromRgb(c.R, c.G, c.B));
-        if (d["Surface"] is not SolidColorBrush surfaceBrush) return;
+        if (d["WindowBackdrop"] is not SolidColorBrush surfaceBrush) return;
         var surface = ToRgb(surfaceBrush.Color);
         var primary = ColorMath.Readable(accent, surface);
         var container = ColorMath.Mix(accent, surface, dark ? 0.75 : 0.85);
         var onContainer = ColorMath.Readable(accent, container);
         // Valores clicáveis ficam sobre os cartões: o contraste é medido contra o cartão
-        var card = d["SurfaceContainer"] is SolidColorBrush cardBrush ? ToRgb(cardBrush.Color) : surface;
-        Set("Primary", primary);
-        Set("OnPrimary", ColorMath.OnColor(primary));
+        var card = d["CardFill"] is SolidColorBrush cardBrush ? ToRgb(cardBrush.Color) : surface;
+        Set("Accent", primary);
+        Set("OnAccent", ColorMath.OnColor(primary));
         Set("AccentText", ColorMath.Readable(accent, card));
-        Set("PrimaryContainer", container);
-        Set("OnPrimaryContainer", onContainer);
+        Set("AccentContainer", container);
+        Set("OnAccentContainer", onContainer);
         Set("InfoContainer", container);
         // SecondaryContainer é o preenchimento neutro dos controles no Fluent: não leva a cor de destaque
     }
@@ -92,15 +92,15 @@ public static class ThemeManager
         void Set(string key, Color c) => d[key] = new SolidColorBrush(c);
         Color win = SystemColors.WindowColor, text = SystemColors.WindowTextColor, hi = SystemColors.HighlightColor,
               hiText = SystemColors.HighlightTextColor;
-        foreach (var k in new[] { "Surface", "SurfaceContainer", "SurfaceVariant", "PrimaryContainer", "LayerFill", "ControlFill", "ControlFillHover",
-                                  "ErrorContainer", "WarningContainer", "SuccessContainer", "InfoContainer" }) Set(k, win);
-        foreach (var k in new[] { "OnSurface", "OnSurfaceVariant", "Outline", "OutlineVariant", "CardBorder", "OnPrimaryContainer", "LayerStroke",
+        foreach (var k in new[] { "WindowBackdrop", "CardFill", "SurfaceVariant", "AccentContainer", "LayerFill", "ControlFill", "ControlFillHover",
+                                  "CriticalContainer", "CautionContainer", "SuccessContainer", "InfoContainer" }) Set(k, win);
+        foreach (var k in new[] { "TextPrimary", "TextSecondary", "Outline", "OutlineVariant", "CardStroke", "OnAccentContainer", "LayerStroke",
                                   "ControlStroke", "FocusStroke", "AccentText", "ChartCpu", "ChartRam", "ChartDisk" }) Set(k, text);
         Set("StateHover", Color.FromArgb(0x30, hi.R, hi.G, hi.B));
         Set("StatePressed", Color.FromArgb(0x50, hi.R, hi.G, hi.B));
-        foreach (var k in new[] { "Primary", "SecondaryContainer", "Error", "Warning", "Success",
+        foreach (var k in new[] { "Accent", "SecondaryContainer", "Critical", "Caution", "Success",
                                   "LevelLow", "LevelMid", "LevelHigh", "LevelCrit" }) Set(k, hi);
-        foreach (var k in new[] { "OnPrimary", "OnSecondaryContainer", "OnError", "OnWarning", "OnSuccess" }) Set(k, hiText);
+        foreach (var k in new[] { "OnAccent", "OnSecondaryContainer", "OnCritical", "OnCaution", "OnSuccess" }) Set(k, hiText);
         Set("InverseSurface", text); Set("InverseOnSurface", win); Set("InversePrimary", win);
         return d;
     }
@@ -168,8 +168,8 @@ public static class ThemeManager
             DwmSetWindowAttribute(hwnd, 38, ref none, 4);
             var zero = new Margins();
             DwmExtendFrameIntoClientArea(hwnd, ref zero);
-            if (HwndSource.FromHwnd(hwnd)?.CompositionTarget is { } target) target.BackgroundColor = Get("Surface");
-            w.SetResourceReference(Control.BackgroundProperty, "Surface");
+            if (HwndSource.FromHwnd(hwnd)?.CompositionTarget is { } target) target.BackgroundColor = Get("WindowBackdrop");
+            w.SetResourceReference(Control.BackgroundProperty, "WindowBackdrop");
         }
         if (HighContrast)
         {
@@ -178,8 +178,8 @@ public static class ThemeManager
             DwmSetWindowAttribute(hwnd, 36, ref def, 4);
             return;
         }
-        int caption = ToColorRef(Get("Surface"));
-        int text = ToColorRef(Get("OnSurface"));
+        int caption = ToColorRef(Get("WindowBackdrop"));
+        int text = ToColorRef(Get("TextPrimary"));
         DwmSetWindowAttribute(hwnd, 35, ref caption, 4); // DWMWA_CAPTION_COLOR (Windows 11)
         DwmSetWindowAttribute(hwnd, 36, ref text, 4);    // DWMWA_TEXT_COLOR
     }

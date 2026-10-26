@@ -211,7 +211,7 @@ public sealed class Sparkline : FrameworkElement
         {
             var p = pts[_hover];
             dc.DrawLine(new Pen(GridBrush, 1), new Point(p.X, 0), new Point(p.X, h));
-            dc.DrawEllipse(Stroke, new Pen(TryFindResource("SurfaceContainer") as Brush ?? Brushes.White, 1.5), p, 4, 4);
+            dc.DrawEllipse(Stroke, new Pen(TryFindResource("CardFill") as Brush ?? Brushes.White, 1.5), p, 4, 4);
         }
     }
 }

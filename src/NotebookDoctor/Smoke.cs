@@ -191,10 +191,10 @@ public static class Smoke
     private static Window Controls(Window owner)
     {
         var w = new Window { Owner = owner, Title = "Controles", Width = 720, Height = 520, ShowInTaskbar = false };
-        w.SetResourceReference(Window.BackgroundProperty, "Surface");
+        w.SetResourceReference(Window.BackgroundProperty, "WindowBackdrop");
         w.SetResourceReference(Window.FontFamilyProperty, "FontBody");
         w.SetResourceReference(Window.FontSizeProperty, "FsBody");
-        w.SetResourceReference(Window.ForegroundProperty, "OnSurface");
+        w.SetResourceReference(Window.ForegroundProperty, "TextPrimary");
         var panel = new System.Windows.Controls.StackPanel { Margin = new Thickness(24) };
         System.Windows.Controls.WrapPanel Row(params UIElement[] items)
         {
@@ -302,7 +302,7 @@ public static class Smoke
         var visual = new DrawingVisual();
         using (var dc = visual.RenderOpen())
         {
-            var bg = Application.Current.TryFindResource("Surface") as Brush ?? Brushes.White;
+            var bg = Application.Current.TryFindResource("WindowBackdrop") as Brush ?? Brushes.White;
             dc.DrawRectangle(bg, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
             // Sem esticar: o pincel mostra a área do conteúdo em tamanho real, a partir do canto
             var brush = new VisualBrush(root)

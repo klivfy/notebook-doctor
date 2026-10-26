@@ -4,10 +4,10 @@
         Title="Notebook Doctor · mini" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsLabel}"
-        Foreground="{DynamicResource OnSurface}" UseLayoutRounding="True"
+        Foreground="{DynamicResource TextPrimary}" UseLayoutRounding="True"
         MouseLeftButtonDown="Drag" MouseDoubleClick="Open" KeyDown="Window_KeyDown"
         AutomationProperties.Name="Mini-widget do Notebook Doctor">
-    <Border Background="{DynamicResource SurfaceContainer}" BorderBrush="{DynamicResource OutlineVariant}" BorderThickness="1"
+    <Border Background="{DynamicResource CardFill}" BorderBrush="{DynamicResource OutlineVariant}" BorderThickness="1"
             CornerRadius="{StaticResource RadiusCard}" Padding="16,12,8,12" Margin="8" Width="230">
         <!-- Janela flutuante sobre outras: a sombra continua, mais suave, no lugar da elevação do sistema -->
         <Border.Effect><DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.22"/></Border.Effect>

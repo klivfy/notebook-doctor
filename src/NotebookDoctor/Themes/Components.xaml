@@ -11,21 +11,21 @@
     <Style x:Key="PageTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource FontTitle}"/>
         <Setter Property="FontSize" Value="{DynamicResource FsPageTitle}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
     <Style x:Key="CardTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
         <Setter Property="FontSize" Value="{DynamicResource FsCardTitle}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Margin" Value="0,0,0,12"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
     <Style x:Key="Label" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{DynamicResource FsLabel}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
     </Style>
     <Style x:Key="Muted" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource OnSurfaceVariant}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
     </Style>
     <!-- U7: estado vazio de uma tabela. Tag aponta para a tabela; o texto aparece no meio dela enquanto não houver linhas -->
     <Style x:Key="EmptyState" TargetType="TextBlock" BasedOn="{StaticResource Muted}">
@@ -59,10 +59,10 @@
         <Setter Property="Margin" Value="0,0,0,8"/>
     </Style>
     <Style x:Key="InfoBarWarning" TargetType="Border" BasedOn="{StaticResource InfoBar}">
-        <Setter Property="Background" Value="{DynamicResource WarningContainer}"/>
+        <Setter Property="Background" Value="{DynamicResource CautionContainer}"/>
     </Style>
     <Style x:Key="InfoBarError" TargetType="Border" BasedOn="{StaticResource InfoBar}">
-        <Setter Property="Background" Value="{DynamicResource ErrorContainer}"/>
+        <Setter Property="Background" Value="{DynamicResource CriticalContainer}"/>
     </Style>
     <Style x:Key="InfoBarSuccess" TargetType="Border" BasedOn="{StaticResource InfoBar}">
         <Setter Property="Background" Value="{DynamicResource SuccessContainer}"/>
@@ -75,8 +75,8 @@
     <sys:Double x:Key="RowMin">40</sys:Double>
 
     <Style x:Key="Card" TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource SurfaceContainer}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
+        <Setter Property="Background" Value="{DynamicResource CardFill}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStroke}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusCard}"/>
         <Setter Property="Padding" Value="{DynamicResource CardPad}"/>
@@ -92,7 +92,7 @@
     <Style x:Key="NavItem" TargetType="ListBoxItem">
         <Setter Property="DockPanel.Dock" Value="Top"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingPill}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Margin" Value="0,2"/>
@@ -103,13 +103,13 @@
                         <Border x:Name="Pill" CornerRadius="{StaticResource RadiusControl}" Background="Transparent"/>
                         <Border x:Name="Hover" CornerRadius="{StaticResource RadiusControl}" Background="{DynamicResource StateHover}" Opacity="0"/>
                         <Border x:Name="Bar" Width="3" Height="16" CornerRadius="2" HorizontalAlignment="Left" Margin="0,0,0,0"
-                                Background="{DynamicResource Primary}" Visibility="Collapsed"/>
+                                Background="{DynamicResource Accent}" Visibility="Collapsed"/>
                         <!-- Largo e compacto: ícone ao lado do texto -->
                         <StackPanel x:Name="Wide" Orientation="Horizontal" Margin="14,8,16,8" VerticalAlignment="Center">
                             <Grid>
                                 <TextBlock x:Name="Glyph" Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIcon}"
                                            VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
-                                <Ellipse x:Name="DotWide" Width="7" Height="7" Fill="{DynamicResource Warning}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                <Ellipse x:Name="DotWide" Width="7" Height="7" Fill="{DynamicResource Caution}" HorizontalAlignment="Right" VerticalAlignment="Top"
                                          Margin="0,-3,-5,0" Visibility="Collapsed"/>
                             </Grid>
                             <ContentPresenter x:Name="Text" Margin="14,0,0,0" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}"/>
@@ -119,7 +119,7 @@
                             <Grid HorizontalAlignment="Center">
                                 <TextBlock x:Name="GlyphTall" Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}"
                                            HorizontalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
-                                <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource Warning}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource Caution}" HorizontalAlignment="Right" VerticalAlignment="Top"
                                          Margin="0,-2,-6,0" Visibility="Collapsed"/>
                             </Grid>
                             <TextBlock x:Name="ShortText" Text="{Binding (local:NavLabel.Short), RelativeSource={RelativeSource TemplatedParent}}"
@@ -177,9 +177,9 @@
 
     <!-- ============ Ladrilho (Painel): cartão inteiro clicável, com título, ícone no canto, rótulo e valor em destaque ============ -->
     <Style x:Key="TileButton" TargetType="Button">
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
-        <Setter Property="Background" Value="{DynamicResource SurfaceContainer}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Background" Value="{DynamicResource CardFill}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStroke}"/>
         <Setter Property="Padding" Value="16,14"/>
         <Setter Property="Margin" Value="{DynamicResource CardGap}"/>
         <Setter Property="MinHeight" Value="112"/>
@@ -210,9 +210,9 @@
          Ícone no Tag, título no Content, descrição no ToolTip (mostrada no cartão, sem balão) e a seta de "abre outra tela". O cartão
          inteiro é o botão: teclado e Narrador o tratam como um. -->
     <Style x:Key="ActionRow" TargetType="Button">
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
-        <Setter Property="Background" Value="{DynamicResource SurfaceContainer}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Background" Value="{DynamicResource CardFill}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStroke}"/>
         <Setter Property="Padding" Value="14,12"/>
         <Setter Property="Margin" Value="{DynamicResource CardGap}"/>
         <Setter Property="MinHeight" Value="64"/>
@@ -234,10 +234,10 @@
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <ContentPresenter TextElement.FontFamily="{StaticResource FontSemi}"/>
                                 <TextBlock Text="{Binding ToolTip, RelativeSource={RelativeSource TemplatedParent}}" FontSize="{DynamicResource FsLabel}"
-                                           Foreground="{DynamicResource OnSurfaceVariant}" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
                             </StackPanel>
                             <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="{StaticResource FontIcons}" FontSize="12" VerticalAlignment="Center" Margin="12,0,2,0"
-                                       Foreground="{DynamicResource OnSurfaceVariant}"/>
+                                       Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -254,7 +254,7 @@
     <Style x:Key="GroupTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource FontSemi}"/>
         <Setter Property="FontSize" Value="{DynamicResource FsBody}"/>
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Margin" Value="6,14,0,4"/>
     </Style>
 
@@ -271,10 +271,10 @@
          TabControl usa para expor o conteúdo da aba ao Narrador e à UI Automation. -->
     <!-- O conteúdo de cada seção herda a cor do TabItem (pai lógico): sem isso vem o preto do sistema e some no tema escuro -->
     <Style TargetType="TabItem">
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
     </Style>
     <Style TargetType="TabControl">
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Template">

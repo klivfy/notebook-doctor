@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:NotebookDoctor"
         Title="Notebook Doctor" Icon="app.ico" Width="1160" Height="740" MinWidth="720" MinHeight="560"
-        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
+        Background="{DynamicResource WindowBackdrop}" Foreground="{DynamicResource TextPrimary}"
         FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         WindowStartupLocation="CenterScreen" SourceInitialized="Window_SourceInitialized" SizeChanged="Window_SizeChanged">
@@ -56,7 +56,7 @@
                         ToolTip="Nenhuma correção altera o computador enquanto a simulação estiver ligada. Clique para ver em Ajustes."/>
                 <Button Content="Suporte" Style="{StaticResource TextButton}" Click="Support_Click" ToolTip="Abrir klivfy.com/suporte"/>
                 <Border x:Name="StatusChip" CornerRadius="{StaticResource RadiusPill}" Padding="12,4" Background="{DynamicResource SurfaceVariant}" VerticalAlignment="Center">
-                    <TextBlock x:Name="StatusText" Text="Analisando…" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}" Foreground="{DynamicResource OnSurface}"
+                    <TextBlock x:Name="StatusText" Text="Analisando…" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}" Foreground="{DynamicResource TextPrimary}"
                                AutomationProperties.LiveSetting="Polite"/>
                 </Border>
             </StackPanel>
@@ -122,7 +122,7 @@
                                         <TextBlock x:Name="BottleneckName" Style="{StaticResource Value}"/>
                                         <TextBlock x:Name="BottleneckText" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                         <local:Sparkline x:Name="ScoreSpark" Height="40" Margin="0,12,0,0" Unit="" Title="Nota de saúde, última hora"
-                                                         Stroke="{DynamicResource OnSurfaceVariant}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                                         Stroke="{DynamicResource TextSecondary}" GridBrush="{DynamicResource OutlineVariant}"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -159,7 +159,7 @@
                         <UniformGrid x:Name="Tiles" Columns="2">
                             <Button Style="{StaticResource TileButton}" Click="TileDiagnosis_Click" AutomationProperties.Name="Diagnóstico">
                                 <Grid>
-                                    <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
+                                    <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource TextSecondary}"/>
                                     <StackPanel>
                                         <TextBlock Text="Diagnóstico" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsCardTitle}"/>
                                         <TextBlock Text="O que foi encontrado" Style="{StaticResource Label}" Margin="0,12,0,0"/>
@@ -169,7 +169,7 @@
                             </Button>
                             <Button Style="{StaticResource TileButton}" Click="TileProcesses_Click" AutomationProperties.Name="Processos">
                                 <Grid>
-                                    <TextBlock Text="&#xE8FD;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
+                                    <TextBlock Text="&#xE8FD;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource TextSecondary}"/>
                                     <StackPanel>
                                         <TextBlock Text="Processos" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsCardTitle}"/>
                                         <TextBlock Text="Em execução" Style="{StaticResource Label}" Margin="0,12,0,0"/>
@@ -179,7 +179,7 @@
                             </Button>
                             <Button Style="{StaticResource TileButton}" Click="TileClean_Click" AutomationProperties.Name="Limpeza">
                                 <Grid>
-                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
+                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource TextSecondary}"/>
                                     <StackPanel>
                                         <TextBlock Text="Limpeza" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsCardTitle}"/>
                                         <TextBlock x:Name="TileDiskLabel" Text="Espaço livre" Style="{StaticResource Label}" Margin="0,12,0,0"/>
@@ -189,7 +189,7 @@
                             </Button>
                             <Button Style="{StaticResource TileButton}" Click="TileStartup_Click" AutomationProperties.Name="Inicialização">
                                 <Grid>
-                                    <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource OnSurfaceVariant}"/>
+                                    <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource TextSecondary}"/>
                                     <StackPanel>
                                         <TextBlock Text="Inicialização" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsCardTitle}"/>
                                         <TextBlock Text="Programas que abrem com o Windows" Style="{StaticResource Label}" Margin="0,12,0,0" TextTrimming="CharacterEllipsis"/>
@@ -269,16 +269,16 @@
                                             </Grid>
                                             <DataTemplate.Triggers>
                                                 <DataTrigger Binding="{Binding Level}" Value="PROBLEMA">
-                                                    <Setter TargetName="Chip" Property="Background" Value="{DynamicResource ErrorContainer}"/>
+                                                    <Setter TargetName="Chip" Property="Background" Value="{DynamicResource CriticalContainer}"/>
                                                     <Setter TargetName="ChipGlyph" Property="Text" Value="&#xE783;"/>
-                                                    <Setter TargetName="ChipGlyph" Property="Foreground" Value="{DynamicResource Error}"/>
-                                                    <Setter TargetName="ChipText" Property="Foreground" Value="{DynamicResource Error}"/>
+                                                    <Setter TargetName="ChipGlyph" Property="Foreground" Value="{DynamicResource Critical}"/>
+                                                    <Setter TargetName="ChipText" Property="Foreground" Value="{DynamicResource Critical}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Level}" Value="ATENCAO">
-                                                    <Setter TargetName="Chip" Property="Background" Value="{DynamicResource WarningContainer}"/>
+                                                    <Setter TargetName="Chip" Property="Background" Value="{DynamicResource CautionContainer}"/>
                                                     <Setter TargetName="ChipGlyph" Property="Text" Value="&#xE7BA;"/>
-                                                    <Setter TargetName="ChipGlyph" Property="Foreground" Value="{DynamicResource Warning}"/>
-                                                    <Setter TargetName="ChipText" Property="Foreground" Value="{DynamicResource Warning}"/>
+                                                    <Setter TargetName="ChipGlyph" Property="Foreground" Value="{DynamicResource Caution}"/>
+                                                    <Setter TargetName="ChipText" Property="Foreground" Value="{DynamicResource Caution}"/>
                                                 </DataTrigger>
                                             </DataTemplate.Triggers>
                                         </DataTemplate>
@@ -339,14 +339,14 @@
                                                             <Style TargetType="Border">
                                                                 <Setter Property="Background" Value="Transparent"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Severity}" Value="high"><Setter Property="Background" Value="{DynamicResource Error}"/></DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Severity}" Value="mid"><Setter Property="Background" Value="{DynamicResource Warning}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Severity}" Value="high"><Setter Property="Background" Value="{DynamicResource Critical}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Severity}" Value="mid"><Setter Property="Background" Value="{DynamicResource Caution}"/></DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Border.Style>
                                                     </Border>
                                                     <Grid Grid.Column="1" Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
-                                                        <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource OnSurfaceVariant}"
+                                                        <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource TextSecondary}"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         <Image Source="{Binding Icon}" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"
                                                                Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
@@ -568,7 +568,7 @@
                                                 <Grid Margin="0,8" ToolTip="{Binding Subtitle}">
                                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                                     <Grid Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center">
-                                                        <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource OnSurfaceVariant}"
+                                                        <TextBlock Text="&#xE7AC;" FontFamily="{StaticResource FontIcons}" Foreground="{DynamicResource TextSecondary}"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         <Image Source="{Binding Icon}" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality"
                                                                Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
@@ -703,7 +703,7 @@
                                 <TextBlock x:Name="HDiskLabel" Text="Espaço livre no disco" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
                                 <local:Sparkline x:Name="HFree" Zoomable="True" Height="70" Title="Espaço livre no disco no período" Stroke="{DynamicResource ChartDisk}" GridBrush="{DynamicResource OutlineVariant}"/>
                                 <TextBlock x:Name="HScoreLabel" Text="Nota de saúde" Margin="0,20,0,4" FontFamily="{StaticResource FontMedium}"/>
-                                <local:Sparkline x:Name="HScore" Zoomable="True" Height="70" Unit="" Title="Nota de saúde no período" Stroke="{DynamicResource OnSurfaceVariant}" GridBrush="{DynamicResource OutlineVariant}"/>
+                                <local:Sparkline x:Name="HScore" Zoomable="True" Height="70" Unit="" Title="Nota de saúde no período" Stroke="{DynamicResource TextSecondary}" GridBrush="{DynamicResource OutlineVariant}"/>
                             </StackPanel>
                         </Border>
                         <!-- M48 e M50: comparação com a semana passada e previsão do disco -->
@@ -1322,16 +1322,16 @@
         <!-- Aviso flutuante: cartão com ícone, como o InfoBar do Windows; resultado de ações sem diálogo modal -->
         <Border x:Name="Snack" Grid.Column="1" Grid.Row="1" Visibility="Collapsed" VerticalAlignment="Bottom" HorizontalAlignment="Center"
                 Margin="24,0,24,16" MaxWidth="640" CornerRadius="{StaticResource RadiusCard}" Padding="16,12,8,12"
-                Background="{DynamicResource SurfaceContainer}" BorderBrush="{DynamicResource OutlineVariant}" BorderThickness="1">
+                Background="{DynamicResource CardFill}" BorderBrush="{DynamicResource OutlineVariant}" BorderThickness="1">
             <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.22"/></Border.Effect>
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <TextBlock Text="&#xE946;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIcon}" Foreground="{DynamicResource AccentText}"
                            VerticalAlignment="Top" Margin="0,4,12,0" AutomationProperties.Name="Informação"/>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock x:Name="SnackTitle" FontFamily="{StaticResource FontSemi}" Foreground="{DynamicResource OnSurface}" TextWrapping="Wrap"
+                    <TextBlock x:Name="SnackTitle" FontFamily="{StaticResource FontSemi}" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"
                                AutomationProperties.LiveSetting="Assertive"/>
-                    <TextBlock x:Name="SnackText" Foreground="{DynamicResource OnSurfaceVariant}" TextWrapping="Wrap" Margin="0,4,0,0"
+                    <TextBlock x:Name="SnackText" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,4,0,0"
                                AutomationProperties.LiveSetting="Polite"/>
                 </StackPanel>
                 <Button x:Name="SnackAction" Grid.Column="2" Style="{StaticResource TonalButton}"

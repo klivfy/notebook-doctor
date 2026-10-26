@@ -48,10 +48,10 @@ public partial class SecurityWindow : Window
         bool ok = DefenderRules.StatusOk(sec);
         StatusLine.Text = DefenderRules.StatusLine(sec);
         StatusGlyph.Text = ok ? "\uE73E" : "\uE7BA";
-        StatusGlyph.SetResourceReference(TextBlock.ForegroundProperty, ok ? "Success" : "Warning");
+        StatusGlyph.SetResourceReference(TextBlock.ForegroundProperty, ok ? "Success" : "Caution");
         // Tudo certo fica alinhado ao texto de cima; o que pede ação ganha o fundo de atenção
         if (ok) { StatusBox.ClearValue(Border.BackgroundProperty); StatusBox.Padding = new Thickness(0); }
-        else { StatusBox.SetResourceReference(Border.BackgroundProperty, "WarningContainer"); StatusBox.Padding = new Thickness(8, 4, 8, 4); }
+        else { StatusBox.SetResourceReference(Border.BackgroundProperty, "CautionContainer"); StatusBox.Padding = new Thickness(8, 4, 8, 4); }
     });
 
     protected override void OnClosing(CancelEventArgs e)
