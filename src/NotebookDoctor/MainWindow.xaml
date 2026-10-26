@@ -20,7 +20,7 @@
         <Border x:Name="NavPane" Grid.RowSpan="3" Padding="4,8,4,8">
             <ListBox x:Name="Nav" Style="{StaticResource NavList}" AutomationProperties.Name="Seções" Tag="rail"
                      SelectedIndex="{Binding SelectedIndex, ElementName=Tabs, Mode=TwoWay}">
-                <ListBoxItem Tag="&#xE80F;" Content="Painel" local:NavLabel.Short="Painel"/>
+                <ListBoxItem Tag="&#xE80F;" Content="Início" local:NavLabel.Short="Início"/>
                 <ListBoxItem Tag="&#xE8FD;" Content="Processos" local:NavLabel.Short="Processos"/>
                 <ListBoxItem Tag="&#xE74D;" Content="Limpeza" local:NavLabel.Short="Limpeza"/>
                 <ListBoxItem Tag="&#xEDA2;" Content="Espaço" local:NavLabel.Short="Espaço"/>
@@ -65,7 +65,7 @@
         <TabControl x:Name="Tabs" Grid.Row="1" Margin="20,0,16,4" SelectionChanged="Tabs_SelectionChanged">
 
             <!-- PAINEL: nota de saúde primeiro, métricas compactas, diagnóstico com as correções -->
-            <TabItem Header="Painel">
+            <TabItem Header="Início">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
                     <StackPanel x:Name="PainelContent">
                         <!-- Alerta de programa pesado (A41) -->
@@ -1009,6 +1009,15 @@
                                 <ComboBoxItem Content="Claro" Tag="light"/>
                                 <ComboBoxItem Content="Escuro" Tag="dark"/>
                                 <ComboBoxItem Content="Claro de dia, escuro à noite" Tag="schedule"/>
+                            </ComboBox>
+                        </Grid>
+                        <!-- V-D4: o trilho compacto é o padrão; o menu largo (ícone e nome) é escolha da pessoa -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Menu de seções" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CfgNavStyle" Grid.Column="1" AutomationProperties.Name="Menu de seções">
+                                <ComboBoxItem Content="Compacto (ícone sobre o nome)" Tag="rail"/>
+                                <ComboBoxItem Content="Largo (ícone e nome)" Tag="expanded"/>
                             </ComboBox>
                         </Grid>
                         <!-- M13: idioma (vale ao reabrir) -->

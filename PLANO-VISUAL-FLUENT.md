@@ -217,6 +217,9 @@ Cada leva segue o ritmo de sempre: implementar, build sem avisos, testes, captur
 
 ## 7. Decisões que são suas
 
+> **Fechadas em 26/10/2026**, todas na recomendação: V-D1 (b), V-D2 (a), V-D3 (b com padrão a), V-D4 (c com padrão a: Configurações › Menu de seções), V-D5 "Início" e V-D6 (b: PR próprio, depois do klivfy/notebook-doctor#4).
+
+
 | # | Decisão | Opções | Recomendação |
 |---|---|---|---|
 | V-D1 | Fonte | (a) Segoe UI Variable em tudo · (b) Segoe UI Variable + Google Sans Flex só na nota de saúde · (c) manter Google Sans Flex | **(b)**: nativo no Windows 11 e a nota mantém a marca |

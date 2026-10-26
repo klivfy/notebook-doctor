@@ -1,4 +1,5 @@
 Security, data and accessibility review (new)
+• The first section of the menu is now called "Home" (it was "Dashboard"). The "--tab=painel" command still works, and so does "--tab=inicio".
 • About: buttons for the terms of use and privacy policy on the Klivfy website (they only open when you click).
 • Manufacturer drivers (Settings › Drivers): reads the computer and shows where each driver should come from. BIOS, chipset, power and touchpad only from the laptop maker; NVIDIA and AMD dedicated graphics through their own apps. Opens the official site, warns when a restore point is missing and installs the maker's app with WinGet (Dell, Lenovo, HP, Intel).
 • Small laptop at 150%: menu sections scroll instead of disappearing, and the lists in Scan for malware, Recover files, Defragment and Drivers are no longer squeezed.

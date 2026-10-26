@@ -25,14 +25,14 @@ public class LocTests
         try
         {
             Loc.Use("en");
-            Assert.Equal("Dashboard", Loc.T("Painel"));
+            Assert.Equal("Home", Loc.T("Início"));
             Assert.Equal("Texto sem tradução", Loc.T("Texto sem tradução")); // nunca some
             Assert.False(Loc.IsSource);
             Assert.Equal("en-US", Loc.Culture.Name);
             Loc.Use("es");
-            Assert.Equal("Panel", Loc.T("Painel"));
+            Assert.Equal("Inicio", Loc.T("Início"));
             Loc.Use("xx");
-            Assert.Equal("Painel", Loc.T("Painel"));
+            Assert.Equal("Início", Loc.T("Início"));
             Assert.True(Loc.IsSource);
         }
         finally { Loc.Use("pt"); }

@@ -15,7 +15,11 @@ public static class NavLabel
     public static void SetShort(DependencyObject o, string? value) => o.SetValue(ShortProperty, value);
 
     public static readonly DependencyProperty BadgeProperty =
-        DependencyProperty.RegisterAttached("Badge", typeof(bool), typeof(NavLabel), new PropertyMetadata(false));
+        DependencyProperty.RegisterAttached("Badge", typeof(bool), typeof(NavLabel), new PropertyMetadata(false, OnBadgeChanged));
+
+    // O ponto é só visual: o leitor de tela fala o estado do item ("Início, tem algo para ver")
+    private static void OnBadgeChanged(DependencyObject o, DependencyPropertyChangedEventArgs e) =>
+        System.Windows.Automation.AutomationProperties.SetItemStatus(o, (bool)e.NewValue ? Services.Loc.T("Tem algo para ver") : "");
 
     public static bool GetBadge(DependencyObject o) => (bool)o.GetValue(BadgeProperty);
     public static void SetBadge(DependencyObject o, bool value) => o.SetValue(BadgeProperty, value);

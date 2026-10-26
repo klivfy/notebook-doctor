@@ -1,4 +1,5 @@
 Revisión de seguridad, datos y accesibilidad (nuevo)
+• La primera sección del menú pasa a llamarse "Inicio" (antes, "Panel"). El comando "--tab=painel" sigue funcionando, y "--tab=inicio" también.
 • Acerca de: botones para los términos de uso y la política de privacidad en el sitio de Klivfy (solo se abren cuando haces clic).
 • Controladores del fabricante (Configuración › Controladores): lee el equipo y muestra de dónde viene cada controlador. BIOS, chipset, energía y touchpad solo del fabricante del portátil; gráficos dedicados de NVIDIA y AMD con su propia aplicación. Abre el sitio oficial, avisa cuando falta un punto de restauración e instala con WinGet la aplicación del fabricante (Dell, Lenovo, HP, Intel).
 • Portátil pequeño al 150%: las secciones del menú se desplazan en vez de desaparecer, y las listas de Buscar malware, Recuperar archivos, Desfragmentar y Controladores ya no quedan aplastadas.

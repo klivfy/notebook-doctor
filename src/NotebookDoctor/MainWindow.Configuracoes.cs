@@ -292,6 +292,7 @@ public partial class MainWindow
     {
         var s = Host.Settings;
         SelectByTag(CfgTheme, s.ThemeMode);
+        SelectByTag(CfgNavStyle, s.NavStyle);
         SelectByTag(CfgLanguage, s.Language);
         CfgThemeLight.Text = s.ThemeLightAt;
         CfgThemeDark.Text = s.ThemeDarkAt;
@@ -338,6 +339,8 @@ public partial class MainWindow
         if (!Host.EnsureUnlocked(Loc.T("salvar as preferências"))) { LoadSettingsIntoForm(); CfgMsg.Text = Loc.T("Não salvo: as preferências voltaram ao que estava."); return; } // B38
         var s = Host.Settings;
         s.ThemeMode = (CfgTheme.SelectedItem as ComboBoxItem)?.Tag as string ?? "system";
+        s.NavStyle = (CfgNavStyle.SelectedItem as ComboBoxItem)?.Tag as string ?? "rail";
+        ApplyNavDensity();
         string oldLanguage = s.Language;
         s.Language = (CfgLanguage.SelectedItem as ComboBoxItem)?.Tag as string ?? Loc.Auto;
         s.StartWithWindows = CfgStart.IsChecked == true;

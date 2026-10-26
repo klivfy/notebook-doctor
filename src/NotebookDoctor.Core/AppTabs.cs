@@ -21,6 +21,7 @@ public static class AppTabs
         string t = Plain(text ?? "");
         if (t.Length == 0) return null;
         if (int.TryParse(t, NumberStyles.None, CultureInfo.InvariantCulture, out int n)) return n < Names.Length ? n : null;
+        if (t == "inicio") return Panel; // o nome da primeira aba é "Início" (V-D5); "painel" continua valendo
         int i = Array.IndexOf(Names, t);
         return i >= 0 ? i : null;
     }

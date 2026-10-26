@@ -87,6 +87,25 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 
 Não há estilo de interruptor: as opções do app são caixas de seleção. Se um dia uma opção precisar de liga/desliga, o estilo entra junto com ela.
 
+## Decisões visuais (fechadas em 26/10/2026)
+
+| # | Decisão |
+|---|---|
+| V-D1 | Segoe UI Variable em todo o texto; Google Sans Flex com tamanhos óticos só na nota de saúde e nos números grandes |
+| V-D2 | Mica no Windows 11 22H2 ou mais novo, com "Efeitos de transparência" ligado e fora do Alto Contraste; cor sólida nos outros casos |
+| V-D3 | Azul do Windows (`#60CDFF` no escuro, `#005FB8` no claro) por padrão; "Usar a cor de destaque do Windows" herda a cor do sistema, ajustada até 4,5:1 |
+| V-D4 | Trilho compacto (88 px, ícone sobre rótulo curto) por padrão; Configurações › Menu de seções troca para o menu largo (ícone e nome) |
+| V-D5 | A primeira seção se chama "Início" (inglês "Home", espanhol "Inicio"). No espanhol, a seção Inicialização passou a se chamar "Arranque" para não repetir o nome. `--tab=painel` e `--tab=inicio` abrem a mesma seção |
+| V-D6 | Mudanças visuais e estruturais em PR próprio, depois do klivfy/notebook-doctor#4 |
+
+## Estado para o leitor de tela
+
+- **Nota de saúde:** o número (`ScoreText`) tem o nome "Nota de saúde N de 100, estado". Ele não é lido a cada atualização; o leitor de tela só é avisado quando o estado muda (Bom, Regular, Ruim…).
+- **Chip do cabeçalho:** o nome é "Estado do computador: …" e o texto é uma região viva (`LiveSetting="Polite"`), lida quando muda.
+- **Ponto de pendência da navegação:** o ponto é só visual; o item também diz "Tem algo para ver" (`ItemStatus`).
+- **Gráficos:** `SparklinePeer` com resumo (agora, média, pico).
+- Nenhum estado depende só de cor: o chip e o aviso sempre trazem texto.
+
 ## Movimento
 
 `Motion.Fast` (167 ms) e `Motion.Normal` (250 ms), curva que desacelera no fim. Nada essencial depende de animação; com "Efeitos de animação" desligado ou Alto Contraste, tudo muda na hora.

@@ -56,7 +56,7 @@ public partial class MainWindow : Window
         {
             // B26: deixa claro, na janela e na barra de tarefas, que os números não são deste computador
             Title += " · demonstração";
-            Loaded += (_, _) => ShowSnack("Modo demonstração", "Painel, Processos e Histórico mostram dados fictícios. A simulação está ligada: nenhuma ação altera este computador.", seconds: 20);
+            Loaded += (_, _) => ShowSnack("Modo demonstração", "Início, Processos e Histórico mostram dados fictícios. A simulação está ligada: nenhuma ação altera este computador.", seconds: 20);
         }
         // O "Tamanho do texto" do Windows pode mudar com o app escondido na bandeja
         IsVisibleChanged += (_, _) => { if (IsVisible) TextScale.Apply(); };

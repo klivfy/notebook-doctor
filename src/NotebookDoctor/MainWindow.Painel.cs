@@ -150,6 +150,11 @@ public partial class MainWindow
         if (sc.Score <= 0) ScoreLabel.Text = Loc.T("Calculando…");
         System.Windows.Automation.AutomationProperties.SetName(ScoreText, sc.Score > 0 ? Loc.F("Nota de saúde {0} de 100, {1}", sc.Score, Loc.T(sc.Label)) : Loc.T("Nota de saúde ainda sendo calculada"));
         FeedScorePulse(sc.Score);
+        // O número muda a cada atualização e não é falado sozinho; o leitor de tela só é avisado quando o estado muda
+        // (Bom, Regular, Ruim…), para o Narrador dizer "Nota de saúde 62 de 100, Atenção" sem repetir a cada segundo
+        string scoreState = sc.Score > 0 ? sc.Label : "";
+        if (scoreState != _lastScoreState && _lastScoreState is not null && scoreState.Length > 0) LiveRegions.Announce(ScoreText);
+        _lastScoreState = scoreState;
 
         if (h.HasDisk)
         {
@@ -204,6 +209,8 @@ public partial class MainWindow
         foreach (var d in data.Where(d => d.Score >= 0)) { _scorePulse.Add(d.Score); _scoreTimes.Add(d.T); }
         if (_scorePulse.Count > 0) _lastPulse = _scoreTimes[^1];
     }
+
+    private string? _lastScoreState;
 
     private void FeedScorePulse(int score)
     {
@@ -395,6 +402,8 @@ public partial class MainWindow
                                             : ("SuccessContainer", "Success", Loc.T("Tudo certo"));
         StatusChip.SetResourceReference(Border.BackgroundProperty, bg);
         StatusText.SetResourceReference(TextBlock.ForegroundProperty, fg);
+        // O nome vem antes do texto: é ele que o leitor de tela fala quando o estado muda ("Estado do computador: 2 problemas")
+        System.Windows.Automation.AutomationProperties.SetName(StatusText, Loc.F("Estado do computador: {0}", text));
         StatusText.Text = text;
         // Ponto de pendência no item do Painel da navegação
         if (Nav.Items[AppTabs.Panel] is ListBoxItem panelItem) NavLabel.SetBadge(panelItem, problems + warns > 0);
