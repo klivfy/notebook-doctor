@@ -81,6 +81,41 @@ jobs:
           path: smoke-out
           if-no-files-found: ignore
 
+  capturas:
+    # Capturas de divulgação em português do Brasil (o Windows do executor é em inglês). Só roda quando o título do PR tem [capturas].
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[capturas]')
+    runs-on: windows-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+      NOTEBOOKDOCTOR_DEMO_LANG: pt
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compilar o app
+        run: dotnet build src/NotebookDoctor/NotebookDoctor.csproj -c Release
+
+      - name: Abrir as telas em português (modo demonstração)
+        shell: pwsh
+        run: |
+          $out = Join-Path $PWD 'capturas-out'
+          $p = Start-Process -FilePath 'src/NotebookDoctor/bin/Release/net8.0-windows10.0.22000.0/NotebookDoctor.exe' -ArgumentList '--demo', "--smoke=$out" -PassThru
+          $null = $p.Handle
+          if (-not $p.WaitForExit(600000)) { $p.Kill(); Write-Error 'Passou de 10 minutos.'; exit 1 }
+          exit $p.ExitCode
+
+      - name: Publicar as capturas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-pt
+          path: capturas-out
+          if-no-files-found: ignore
+
   instalador:
     # Constrói o instalador (Inno Setup) com o app x64 e Arm64, instala e desinstala de verdade sem janelas e guarda o arquivo.
     # O arquivo sai SEM assinatura: a assinatura da Klivfy só entra no release (scripts/release/gerar-release.ps1).

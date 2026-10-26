@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using NotebookDoctor.Services;
 
@@ -686,7 +686,9 @@ public partial class App : Application
     /// <summary>Idioma, formato de números e datas e tradução das telas. Roda uma vez, antes de abrir qualquer janela.</summary>
     private void ApplyLanguage()
     {
-        Loc.Use(Loc.Resolve(Settings.Language, System.Globalization.CultureInfo.InstalledUICulture.Name));
+        // Só no modo demonstração: as capturas de tela de divulgação saem no idioma pedido, e não no do Windows da máquina
+        string? forcado = AppPaths.Demo ? Environment.GetEnvironmentVariable("NOTEBOOKDOCTOR_DEMO_LANG") : null;
+        Loc.Use(Loc.Resolve(string.IsNullOrEmpty(forcado) ? Settings.Language : forcado, System.Globalization.CultureInfo.InstalledUICulture.Name));
         var culture = Loc.Culture;
         System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
         System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.CurrentUICulture = culture;
