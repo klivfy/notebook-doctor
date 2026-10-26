@@ -25,14 +25,14 @@ public class LocTests
         try
         {
             Loc.Use("en");
-            Assert.Equal("Dashboard", Loc.T("Painel"));
+            Assert.Equal("Home", Loc.T("Início"));
             Assert.Equal("Texto sem tradução", Loc.T("Texto sem tradução")); // nunca some
             Assert.False(Loc.IsSource);
             Assert.Equal("en-US", Loc.Culture.Name);
             Loc.Use("es");
-            Assert.Equal("Panel", Loc.T("Painel"));
+            Assert.Equal("Inicio", Loc.T("Início"));
             Loc.Use("xx");
-            Assert.Equal("Painel", Loc.T("Painel"));
+            Assert.Equal("Início", Loc.T("Início"));
             Assert.True(Loc.IsSource);
         }
         finally { Loc.Use("pt"); }
@@ -59,13 +59,6 @@ public class LocTests
                 // "_Detalhes" → "_Details": a letra sublinhada do menu precisa continuar existindo
                 Assert.True(pt.Count(c => c == '_') == t.Count(c => c == '_'), $"{lang}: tecla de acesso em \"{pt}\"");
             }
-    }
-
-    private static string Root()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "NotebookDoctor.csproj"))) dir = dir.Parent;
-        return dir?.FullName ?? throw new DirectoryNotFoundException("Raiz do repositório não encontrada.");
     }
 
     /// <summary>M13: o registro de Ações, a linha do tempo e as datas curtas saem no idioma do app.</summary>
@@ -108,7 +101,7 @@ public class LocTests
         // Só os dígitos, sem separador decimal ("11,8" e "11.8" valem o mesmo)
         static List<string> Numbers(string line) => Regex.Matches(Regex.Replace(line, @"(?<=\d)[.,](?=\d)", ""), @"\d+").Select(m => m.Value).ToList();
 
-        string dir = Path.Combine(Root(), "Textos");
+        string dir = Path.Combine(RepoPaths.App, "Textos");
         string source = File.ReadAllText(Path.Combine(dir, name + ".txt"));
         var pt = Lines(source);
         foreach (var lang in new[] { "en", "es" })
@@ -134,7 +127,7 @@ public class LocTests
         var missing = new List<string>();
         foreach (var file in new[] { "MainWindow.xaml", "MiniWidget.xaml", "AdvancedCleanWindow.xaml", "DuplicatesWindow.xaml", "UpdatesWindow.xaml", "DriversWindow.xaml", "ContextMenuWindow.xaml", "SnoozeWindow.xaml", "RegistryCheckWindow.xaml", "SecureEraseWindow.xaml", "RecoveryWindow.xaml", "DefragWindow.xaml", "NtfsRecoveryWindow.xaml", "WindowsToolsWindow.xaml", "SecurityWindow.xaml" })
         {
-            string xaml = File.ReadAllText(Path.Combine(Root(), file));
+            string xaml = File.ReadAllText(Path.Combine(RepoPaths.App, file));
             foreach (Match m in Regex.Matches(xaml, @"\b(Content|Text|Header|ToolTip|AutomationProperties\.Name|AutomationProperties\.HelpText|Title)=""([^""]*)"""))
             {
                 string v = WebUtility.HtmlDecode(m.Groups[2].Value);
@@ -149,7 +142,7 @@ public class LocTests
     public void Todo_Loc_T_do_codigo_tem_traducao()
     {
         var en = Loc.Load("en");
-        var missing = Directory.EnumerateFiles(Root(), "*.cs", SearchOption.AllDirectories)
+        var missing = Directory.EnumerateFiles(RepoPaths.Root, "*.cs", SearchOption.AllDirectories)
             .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !f.Contains("Tests"))
             .SelectMany(f => Regex.Matches(File.ReadAllText(f), @"Loc\.[TF]\(""((?:[^""\\]|\\.)*)""").Select(m => Regex.Unescape(m.Groups[1].Value)))
             .Where(k => !en.ContainsKey(k))
@@ -168,7 +161,7 @@ public class LocTests
         var en = Loc.Load("en");
         const string Lit = @"""((?:[^""\\]|\\.)*)""";
         var keys = new List<string>();
-        foreach (var f in Directory.EnumerateFiles(Root(), "*.cs", SearchOption.AllDirectories)
+        foreach (var f in Directory.EnumerateFiles(RepoPaths.Root, "*.cs", SearchOption.AllDirectories)
                      .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") && !f.Contains("Tests")))
         {
             string code = File.ReadAllText(f);

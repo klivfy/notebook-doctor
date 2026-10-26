@@ -1,0 +1,67 @@
+<Window x:Class="NotebookDoctor.SecureEraseWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:NotebookDoctor"
+        Title="Apagar de vez" Width="960" Height="720" MinWidth="760" MinHeight="560"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource WindowBackdrop}" Foreground="{DynamicResource TextPrimary}"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
+        AutomationProperties.Name="Apagar de vez">
+    <ScrollViewer local:FitScroll.StarMin="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+    <Grid Margin="24">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <TextBlock Text="Apagar de vez" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
+                   Text="Para dados que não podem ser recuperados depois. Nada daqui vai para a Lixeira e não tem desfazer. Em SSD, pen drive e cartão de memória não há garantia: o disco decide onde grava."/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12">
+            <Button x:Name="FilesTab" Content="Arquivos e pastas" Style="{StaticResource TonalButton}" Click="FilesTab_Click" Margin="0,0,8,0"/>
+            <Button x:Name="WipeTab" Content="Espaço livre" Style="{StaticResource TextButton}" Click="WipeTab_Click" Margin="0,0,8,0"/>
+            <Button x:Name="DriveTab" Content="Unidade externa inteira" Style="{StaticResource TextButton}" Click="DriveTab_Click"/>
+        </StackPanel>
+
+        <Grid Grid.Row="3">
+            <!-- Arquivos e pastas (R21) -->
+            <Grid x:Name="FilesPanel">
+                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <ListBox x:Name="FilesList" AllowDrop="True" Drop="Files_Drop" SelectionMode="Extended" AutomationProperties.Name="Arquivos e pastas a apagar de vez"
+                         AutomationProperties.HelpText="Solte arquivos e pastas aqui, ou use os botões abaixo."/>
+                <TextBlock x:Name="FilesInfo" Grid.Row="1" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+                <WrapPanel Grid.Row="2" Margin="0,12,0,0">
+                    <Button Content="Adicionar arquivos…" Style="{StaticResource TonalButton}" Click="AddFiles_Click" Margin="0,0,8,8"/>
+                    <Button Content="Adicionar pasta…" Style="{StaticResource TonalButton}" Click="AddFolder_Click" Margin="0,0,8,8"/>
+                    <Button Content="Tirar da lista" Style="{StaticResource TextButton}" Click="RemoveFromList_Click" Margin="0,0,8,8"/>
+                    <Button Content="Limpar a lista" Style="{StaticResource TextButton}" Click="ClearList_Click" Margin="0,0,8,8"/>
+                    <Button x:Name="EraseBtn" Content="Apagar de vez…" Style="{StaticResource DangerButton}" Click="Erase_Click" Margin="12,0,8,8"/>
+                </WrapPanel>
+            </Grid>
+
+            <!-- Espaço livre (R20) -->
+            <StackPanel x:Name="WipePanel" Visibility="Collapsed">
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"
+                           Text="Enche o espaço livre da unidade com arquivos temporários de dados aleatórios, em uma passada, e apaga tudo no fim. Serve para que arquivos já excluídos não possam ser recuperados. Seus arquivos não são tocados."/>
+                <ComboBox x:Name="WipeDrive" Width="520" HorizontalAlignment="Left" SelectionChanged="WipeDrive_Changed" AutomationProperties.Name="Unidade para limpar o espaço livre"/>
+                <TextBlock x:Name="WipeInfo" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,12,0,0"/>
+                <Button x:Name="WipeBtn" Content="Limpar o espaço livre…" Click="Wipe_Click" HorizontalAlignment="Left" Margin="0,16,0,0"/>
+            </StackPanel>
+
+            <!-- Unidade externa inteira (C11) -->
+            <StackPanel x:Name="DrivePanel" Visibility="Collapsed">
+                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"
+                           Text="Formata a unidade inteira com uma passada de zeros em todos os setores. Só aparecem pen drives, cartões e HDs externos que não são o disco do Windows nem o do Notebook Doctor. Precisa de administrador."/>
+                <ComboBox x:Name="FormatDrive" Width="520" HorizontalAlignment="Left" SelectionChanged="FormatDrive_Changed" AutomationProperties.Name="Unidade externa para apagar"/>
+                <TextBlock x:Name="FormatInfo" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,12,0,0"/>
+                <Button x:Name="FormatBtn" Content="Apagar a unidade inteira…" Style="{StaticResource DangerButton}" Click="Format_Click" HorizontalAlignment="Left" Margin="0,16,0,0"/>
+            </StackPanel>
+        </Grid>
+
+        <DockPanel Grid.Row="4" Margin="0,12,0,0">
+            <Button DockPanel.Dock="Right" Content="Fechar" IsCancel="True" Click="Close_Click" Style="{StaticResource TextButton}" Margin="8,0,0,0"/>
+            <Button x:Name="CancelBtn" DockPanel.Dock="Right" Content="Cancelar" Click="Cancel_Click" Style="{StaticResource TonalButton}" Visibility="Collapsed" Margin="8,0,0,0"/>
+            <StackPanel>
+                <ProgressBar x:Name="Bar" Height="6" Minimum="0" Maximum="100" Visibility="Collapsed" AutomationProperties.Name="Andamento"/>
+                <TextBlock x:Name="Msg" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+    </ScrollViewer>
+</Window>

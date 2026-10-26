@@ -19,20 +19,20 @@ Cada dicionário de `Controls` e `Components` inclui `Tokens.xaml`, porque o `St
 
 ## Cor
 
-Três planos: **moldura** (`Surface`, Mica quando o Windows permite) → **camada de conteúdo** (`LayerFill`, canto superior esquerdo de 8 px) → **cartão** (`SurfaceContainer` com contorno `CardBorder`). Sem sombras, exceto em menus, no aviso flutuante e no mini-widget, que ficam por cima de outras coisas.
+Três planos: **moldura** (`WindowBackdrop`, Mica quando o Windows permite) → **camada de conteúdo** (`LayerFill`, canto superior esquerdo de 8 px) → **cartão** (`CardFill` com contorno `CardStroke`). Sem sombras, exceto em menus, no aviso flutuante e no mini-widget, que ficam por cima de outras coisas.
 
 | Papel | Chaves | Regra |
 |---|---|---|
-| Texto | `OnSurface`, `OnSurfaceVariant` | 4,5:1 sobre moldura, camada e cartão |
-| Ação e seleção | `Primary` / `OnPrimary` | Só a ação principal de cada área é preenchida; indicador da navegação |
+| Texto | `TextPrimary`, `TextSecondary` | 4,5:1 sobre moldura, camada e cartão |
+| Ação e seleção | `Accent` / `OnAccent` | Só a ação principal de cada área é preenchida; indicador da navegação |
 | Valor clicável | `AccentText` | Números e links que levam a outro lugar |
 | Controles neutros | `ControlFill`, `ControlFillHover`, `ControlStroke`, `SecondaryContainer` | Botão padrão, campos, combo, item selecionado |
-| Estados | `Error`/`Warning`/`Success` + `On…` + `…Container` | Cor só para estado; sempre com texto ou ícone junto (a cor nunca é o único sinal) |
+| Estados | `Critical`/`Caution`/`Success` + `On…` + `…Container` | Cor só para estado; sempre com texto ou ícone junto (a cor nunca é o único sinal) |
 | Gráficos | `ChartCpu`, `ChartRam`, `ChartDisk`, `Level*` | Nunca a cor de ação nem as de estado nos gráficos; 3:1 sobre o cartão |
 
-Os nomes das cores vêm do primeiro sistema do app e descrevem o papel, não a aparência: `Surface…` são as camadas do Windows 11 (fundo, camada, cartão), `On…` é o texto sobre elas e `…Container` é o fundo suave de um estado ou destaque. As chaves novas usam nomes do Fluent (`ControlFill`, `LayerFill`, `ControlStroke`); renomear as antigas fica para quando o app for para `src/` (R4), porque mexe em todas as telas.
+Os nomes descrevem o papel, não a aparência, e seguem o Fluent: `WindowBackdrop`, `LayerFill` e `CardFill` são as camadas (fundo, camada, cartão), `CardStroke` é o contorno do cartão, `TextPrimary` e `TextSecondary` são os textos, `Accent` é a cor de ação, `Caution`, `Critical` e `Success` são os estados, `On…` é o texto sobre a cor (`OnAccent`, `OnCritical`…) e `…Container` é o fundo suave de um estado ou destaque (`CautionContainer`). Até a R4 (outubro de 2026) a cor de fundo se chamava `Surface`, o texto `OnSurface`, a ação `Primary`, e os estados `Error`/`Warning`; o `ResourceKeysTests` falha se uma tela voltar a usar um desses nomes ou uma chave que nenhum tema declara.
 
-Com "Usar a cor de destaque do Windows", `Primary`, `AccentText` e os contêineres de destaque vêm do Windows, ajustados até 4,5:1. No Alto Contraste, todas as chaves viram cores do sistema.
+Com "Usar a cor de destaque do Windows", `Accent`, `AccentText` e os contêineres de destaque vêm do Windows, ajustados até 4,5:1. No Alto Contraste, todas as chaves viram cores do sistema.
 
 ## Texto
 
@@ -52,7 +52,7 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 ## Forma e espaço
 
 - Raios: `RadiusControl` 4 (botões, campos, caixas, linhas de tabela), `RadiusCard` 8 (cartões, menus, camada), `RadiusPill` (chips de estado).
-- Espaço em múltiplos de 4: `Space4`…`Space32`, `CardPad` 16 (12 no modo compacto), `CardGap` 4 (2 no compacto). Nas telas (os `*.xaml` da raiz), toda margem e preenchimento fica na grade de 4; o `SpacingTests` falha se não ficar. O miolo dos controles em `Themes/` segue as medidas do WinUI (botão 11,5, campo 10,5), e 1 ou valores negativos são ajustes de traço.
+- Espaço em múltiplos de 4: `Space4`…`Space32`, `CardPad` 16 (12 no modo compacto), `CardGap` 4 (2 no compacto). Nas telas (os `*.xaml` de `src/NotebookDoctor`), toda margem e preenchimento fica na grade de 4; o `SpacingTests` falha se não ficar. O miolo dos controles em `Themes/` segue as medidas do WinUI (botão 11,5, campo 10,5), e 1 ou valores negativos são ajustes de traço.
 - Alvos de clique: botões com 32 px de altura mínima (40 nas ações principais), linhas de navegação de 40 px (56 no trilho).
 
 ## Componentes
@@ -86,6 +86,25 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 | `RowMin` | Altura mínima de linha de tabela (40; 32 no modo compacto) |
 
 Não há estilo de interruptor: as opções do app são caixas de seleção. Se um dia uma opção precisar de liga/desliga, o estilo entra junto com ela.
+
+## Decisões visuais (fechadas em 26/10/2026)
+
+| # | Decisão |
+|---|---|
+| V-D1 | Segoe UI Variable em todo o texto; Google Sans Flex com tamanhos óticos só na nota de saúde e nos números grandes |
+| V-D2 | Mica no Windows 11 22H2 ou mais novo, com "Efeitos de transparência" ligado e fora do Alto Contraste; cor sólida nos outros casos |
+| V-D3 | Azul do Windows (`#60CDFF` no escuro, `#005FB8` no claro) por padrão; "Usar a cor de destaque do Windows" herda a cor do sistema, ajustada até 4,5:1 |
+| V-D4 | Trilho compacto (88 px, ícone sobre rótulo curto) por padrão; Configurações › Menu de seções troca para o menu largo (ícone e nome) |
+| V-D5 | A primeira seção se chama "Início" (inglês "Home", espanhol "Inicio"). No espanhol, a seção Inicialização passou a se chamar "Arranque" para não repetir o nome. `--tab=painel` e `--tab=inicio` abrem a mesma seção |
+| V-D6 | Mudanças visuais e estruturais em PR próprio, depois do klivfy/notebook-doctor#4 |
+
+## Estado para o leitor de tela
+
+- **Nota de saúde:** o número (`ScoreText`) tem o nome "Nota de saúde N de 100, estado". Ele não é lido a cada atualização; o leitor de tela só é avisado quando o estado muda (Bom, Regular, Ruim…).
+- **Chip do cabeçalho:** o nome é "Estado do computador: …" e o texto é uma região viva (`LiveSetting="Polite"`), lida quando muda.
+- **Ponto de pendência da navegação:** o ponto é só visual; o item também diz "Tem algo para ver" (`ItemStatus`).
+- **Gráficos:** `SparklinePeer` com resumo (agora, média, pico).
+- Nenhum estado depende só de cor: o chip e o aviso sempre trazem texto.
 
 ## Movimento
 

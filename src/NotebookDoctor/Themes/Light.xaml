@@ -1,0 +1,65 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Fluent · tema claro.
+         Valores dos recursos de tema públicos do WinUI (Fluent, licença MIT), convertidos para cores sólidas. Os nomes são os papéis
+         (WindowBackdrop, Accent, Critical…); os contrastes são conferidos por ThemeContrastTests. -->
+
+    <!-- Planos: moldura (Mica; sólido sem ela) → camada de conteúdo → cartão -->
+    <SolidColorBrush x:Key="WindowBackdrop" Color="#F3F3F3"/>
+    <SolidColorBrush x:Key="LayerFill" Color="#F9F9F9"/>
+    <SolidColorBrush x:Key="LayerStroke" Color="#E5E5E5"/>
+    <SolidColorBrush x:Key="CardFill" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="CardStroke" Color="#E5E5E5"/>
+    <SolidColorBrush x:Key="SurfaceVariant" Color="#F0F0F0"/>
+
+    <!-- Texto e contornos -->
+    <SolidColorBrush x:Key="TextPrimary" Color="#1A1A1A"/>
+    <SolidColorBrush x:Key="TextSecondary" Color="#5D5D5D"/>
+    <SolidColorBrush x:Key="Outline" Color="#8A8A8A"/>
+    <SolidColorBrush x:Key="OutlineVariant" Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="FocusStroke" Color="#1A1A1A"/>
+
+    <!-- Preenchimentos de controle e camadas de estado -->
+    <SolidColorBrush x:Key="StateHover" Color="#0A000000"/>
+    <SolidColorBrush x:Key="StatePressed" Color="#06000000"/>
+    <SolidColorBrush x:Key="ControlFill" Color="#FBFBFB"/>
+    <SolidColorBrush x:Key="ControlFillHover" Color="#F5F5F5"/>
+    <SolidColorBrush x:Key="ControlStroke" Color="#D6D6D6"/>
+
+    <!-- Destaque (ação, seleção) e texto de destaque (valores clicáveis) -->
+    <SolidColorBrush x:Key="Accent" Color="#005FB8"/>
+    <SolidColorBrush x:Key="OnAccent" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="AccentText" Color="#003E92"/>
+    <SolidColorBrush x:Key="AccentContainer" Color="#EAF3FB"/>
+    <SolidColorBrush x:Key="OnAccentContainer" Color="#003E92"/>
+    <SolidColorBrush x:Key="SecondaryContainer" Color="#EAEAEA"/>
+    <SolidColorBrush x:Key="OnSecondaryContainer" Color="#1A1A1A"/>
+
+    <!-- Estados: cor do texto/ícone, texto sobre ela e fundo suave (como o InfoBar do Windows) -->
+    <SolidColorBrush x:Key="Critical" Color="#C42B1C"/>
+    <SolidColorBrush x:Key="OnCritical" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="CriticalContainer" Color="#FDE7E9"/>
+    <SolidColorBrush x:Key="Caution" Color="#9D5D00"/>
+    <SolidColorBrush x:Key="OnCaution" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="CautionContainer" Color="#FFF4CE"/>
+    <SolidColorBrush x:Key="Success" Color="#0F7B0F"/>
+    <SolidColorBrush x:Key="OnSuccess" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SuccessContainer" Color="#DFF6DD"/>
+    <SolidColorBrush x:Key="InfoContainer" Color="#EAF3FB"/>
+
+    <!-- Superfície inversa (aviso flutuante) -->
+    <SolidColorBrush x:Key="InverseSurface" Color="#1A1A1A"/>
+    <SolidColorBrush x:Key="InverseOnSurface" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="InversePrimary" Color="#60CDFF"/>
+
+    <!-- Séries dos gráficos: nenhuma usa o destaque nem as cores de estado -->
+    <SolidColorBrush x:Key="ChartCpu" Color="#6B4BC8"/>
+    <SolidColorBrush x:Key="ChartRam" Color="#C2185B"/>
+    <SolidColorBrush x:Key="ChartDisk" Color="#6E6E6E"/>
+
+    <!-- Escala de carga das barras (livre → crítico). No claro, amarelo some no fundo: usa verde e o tom escuro de atenção. -->
+    <SolidColorBrush x:Key="LevelLow" Color="#0F7B0F"/>
+    <SolidColorBrush x:Key="LevelMid" Color="#0F7B0F"/>
+    <SolidColorBrush x:Key="LevelHigh" Color="#9D5D00"/>
+    <SolidColorBrush x:Key="LevelCrit" Color="#C42B1C"/>
+</ResourceDictionary>

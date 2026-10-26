@@ -12,8 +12,7 @@ public class ThemeContrastTests
 {
     private static Dictionary<string, string> Theme(string name)
     {
-        string dir = AppContext.BaseDirectory;
-        while (!File.Exists(Path.Combine(dir, "Themes", name + ".xaml"))) dir = Path.GetDirectoryName(dir) ?? throw new FileNotFoundException(name);
+        string dir = RepoPaths.App;
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
         return XDocument.Load(Path.Combine(dir, "Themes", name + ".xaml")).Root!.Elements()
             .Where(e => e.Name.LocalName == "SolidColorBrush")
@@ -44,35 +43,35 @@ public class ThemeContrastTests
         foreach (var theme in new[] { "Light", "Dark" })
         {
             void Add(string fg, string bg, double min) => data.Add(theme, fg, bg, min);
-            foreach (var bg in new[] { "Surface", "LayerFill", "SurfaceContainer" })
+            foreach (var bg in new[] { "WindowBackdrop", "LayerFill", "CardFill" })
             {
-                Add("OnSurface", bg, 4.5);
-                Add("OnSurfaceVariant", bg, 4.5);
+                Add("TextPrimary", bg, 4.5);
+                Add("TextSecondary", bg, 4.5);
                 Add("AccentText", bg, 4.5);
             }
-            Add("OnPrimary", "Primary", 4.5);
-            Add("OnPrimaryContainer", "PrimaryContainer", 4.5);
+            Add("OnAccent", "Accent", 4.5);
+            Add("OnAccentContainer", "AccentContainer", 4.5);
             Add("OnSecondaryContainer", "SecondaryContainer", 4.5);
-            Add("OnSurface", "ControlFill", 4.5);
-            Add("OnSurface", "SurfaceVariant", 4.5);
-            foreach (var state in new[] { "Error", "Warning", "Success" })
+            Add("TextPrimary", "ControlFill", 4.5);
+            Add("TextPrimary", "SurfaceVariant", 4.5);
+            foreach (var state in new[] { "Critical", "Caution", "Success" })
             {
                 Add("On" + state, state, 4.5);
-                Add(state, "SurfaceContainer", 4.5);
+                Add(state, "CardFill", 4.5);
                 Add(state, state + "Container", 4.5);
-                Add("OnSurface", state + "Container", 4.5);
+                Add("TextPrimary", state + "Container", 4.5);
             }
-            Add("OnSurface", "InfoContainer", 4.5);
-            Add("Outline", "SurfaceContainer", 3);
+            Add("TextPrimary", "InfoContainer", 4.5);
+            Add("Outline", "CardFill", 3);
             // U14: o sublinhado do campo é o que o identifica (a borda fica abaixo de 3:1), sobre o fundo do próprio campo
             Add("Outline", "ControlFill", 3);
             Add("Outline", "ControlFillHover", 3);
-            Add("Primary", "SurfaceContainer", 3);
-            Add("FocusStroke", "Surface", 3);
+            Add("Accent", "CardFill", 3);
+            Add("FocusStroke", "WindowBackdrop", 3);
             Add("InverseOnSurface", "InverseSurface", 4.5);
             Add("InversePrimary", "InverseSurface", 4.5);
             foreach (var series in new[] { "ChartCpu", "ChartRam", "ChartDisk", "LevelLow", "LevelMid", "LevelHigh", "LevelCrit" })
-                Add(series, "SurfaceContainer", 3);
+                Add(series, "CardFill", 3);
         }
         return data;
     }
@@ -101,7 +100,7 @@ public class ThemeContrastTests
         {
             var t = Theme(theme);
             foreach (var series in new[] { "ChartCpu", "ChartRam", "ChartDisk" })
-                Assert.NotEqual(t["Primary"], t[series]);
+                Assert.NotEqual(t["Accent"], t[series]);
         }
     }
 }
@@ -115,11 +114,9 @@ public class SpacingTests
     [Fact]
     public void Margens_das_telas_ficam_na_grade_de_4()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "NotebookDoctor.csproj"))) dir = dir.Parent;
-        Assert.NotNull(dir);
+        var dir = new DirectoryInfo(RepoPaths.App);
         var off = new List<string>();
-        foreach (var file in dir!.EnumerateFiles("*.xaml"))
+        foreach (var file in dir.EnumerateFiles("*.xaml"))
         {
             string xaml = File.ReadAllText(file.FullName);
             foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(xaml,
