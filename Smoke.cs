@@ -112,7 +112,24 @@ public static class Smoke
             if (!area.Contains(r))
                 Log.AppendLine($"aviso [{name}] botão fora da janela: {b.Content as string ?? System.Windows.Automation.AutomationProperties.GetName(b) ?? b.Name}");
         }
+        // B46: item de lista (como as seções do trilho) cortado pela janela, sem rolagem que o alcance
+        foreach (var item in Descendants(root).OfType<System.Windows.Controls.ListBoxItem>())
+        {
+            if (!item.IsVisible || item.ActualHeight < 1 || InsideScroll(item, root)) continue;
+            var r = item.TransformToAncestor(root).TransformBounds(new Rect(0, 0, item.ActualWidth, item.ActualHeight));
+            if (!area.Contains(r)) Log.AppendLine($"aviso [{name}] item fora da janela: {item.Content as string ?? item.Name}");
+        }
+        // Lista espremida pelo resto da janela: aparece, mas não mostra nem uma linha
+        foreach (var list in Descendants(root).OfType<System.Windows.Controls.Primitives.Selector>()
+                     .Where(l => l is System.Windows.Controls.DataGrid or System.Windows.Controls.ListBox))
+        {
+            if (list.IsVisible && list.ActualHeight < MinListHeight)
+                Log.AppendLine($"aviso [{name}] lista com {list.ActualHeight:0} px: {System.Windows.Automation.AutomationProperties.GetName(list) ?? list.Name}");
+        }
     }
+
+    /// <summary>Cabeçalho mais uma linha de tabela.</summary>
+    private const double MinListHeight = 48;
 
     private static bool InsideScroll(DependencyObject d, DependencyObject root)
     {

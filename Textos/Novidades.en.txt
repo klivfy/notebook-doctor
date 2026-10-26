@@ -1,5 +1,6 @@
 Security, data and accessibility review (new)
 • Manufacturer drivers (Settings › Drivers): reads the computer and shows where each driver should come from. BIOS, chipset, power and touchpad only from the laptop maker; NVIDIA and AMD dedicated graphics through their own apps. Opens the official site, warns when a restore point is missing and installs the maker's app with WinGet (Dell, Lenovo, HP, Intel).
+• Small laptop at 150%: menu sections scroll instead of disappearing, and the lists in Scan for malware, Recover files, Defragment and Drivers are no longer squeezed.
 • Scan for malware (System): runs Microsoft Defender (quick, full or a folder) and the Windows Malicious Software Removal Tool (MRT), shows the threat history and records it in Actions. Microsoft does the searching and removing.
 • Cleanup as administrator deletes each file by its identifier and checks where it really is: a folder swapped for a system shortcut in the middle of a cleanup no longer takes the deletion outside.
 • The backup of each item is written and closed before the original goes: if the PC shuts down halfway, Undo still brings everything back.

@@ -33,7 +33,7 @@
                  Visibility="Collapsed" AutomationProperties.Name="Andamento da atualização"/>
         <TextBlock x:Name="Info" Grid.Row="4" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
         <DockPanel Grid.Row="5" Margin="0,12,0,0">
-            <Button DockPanel.Dock="Right" Content="Fechar" IsCancel="True" IsDefault="True" Click="Close_Click"/>
+            <Button DockPanel.Dock="Right" Content="Fechar" Style="{StaticResource TextButton}" VerticalAlignment="Bottom" Margin="0,0,0,8" IsCancel="True" Click="Close_Click"/>
             <WrapPanel>
                 <Button x:Name="ScanBtn" Content="Procurar atualizações" Style="{StaticResource TonalButton}" Click="Scan_Click" Margin="0,0,8,8"/>
                 <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="All_Click" Margin="0,0,8,8"/>

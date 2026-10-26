@@ -147,8 +147,11 @@
         </Setter>
         <Setter Property="Template">
             <Setter.Value>
+                <!-- B46: em janela baixa (notebook a 150%), as seções que não cabem rolam em vez de sumir -->
                 <ControlTemplate TargetType="ListBox">
-                    <ItemsPresenter/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False" Padding="0">
+                        <ItemsPresenter/>
+                    </ScrollViewer>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
