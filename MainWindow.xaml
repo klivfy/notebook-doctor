@@ -388,6 +388,8 @@
 
             <!-- LIMPEZA -->
             <TabItem Header="Limpeza">
+              <!-- B46: em janela baixa, "Mais ferramentas" não espreme a lista de locais até sumir; a aba rola -->
+              <ScrollViewer local:FitScroll.StarMin="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
               <Grid>
                 <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <Border Style="{StaticResource Card}">
@@ -442,6 +444,7 @@
                     </UniformGrid>
                 </StackPanel>
               </Grid>
+              </ScrollViewer>
             </TabItem>
 
             <!-- ESPAÇO (mapa de uso do disco) -->

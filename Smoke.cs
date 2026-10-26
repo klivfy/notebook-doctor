@@ -123,7 +123,8 @@ public static class Smoke
         foreach (var list in Descendants(root).OfType<System.Windows.Controls.Primitives.Selector>()
                      .Where(l => l is System.Windows.Controls.DataGrid or System.Windows.Controls.ListBox))
         {
-            if (list.IsVisible && list.ActualHeight < MinListHeight)
+            // Lista vazia só com o cabeçalho (≈ 40 px) é estado normal; lista com itens e sem espaço para um deles, não
+            if (list.IsVisible && list.ActualHeight < MinListHeight && (list.Items.Count > 0 || list.ActualHeight < 24))
                 Log.AppendLine($"aviso [{name}] lista com {list.ActualHeight:0} px: {System.Windows.Automation.AutomationProperties.GetName(list) ?? list.Name}");
         }
     }
