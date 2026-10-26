@@ -316,6 +316,7 @@ public partial class MainWindow
         GroupByAppBox.IsChecked = s.GroupByApp; // M22: a opção fica na aba Processos
         RefreshStartMenu();
         RefreshLockCard();
+        LoadRatingAndPrivacy();
         SelectByTag(CfgSizeUnit, s.SizeUnit);
         SelectByTag(CfgTempUnit, s.TempUnit);
         SelectByTag(CfgOverlay, s.OverlayMode);

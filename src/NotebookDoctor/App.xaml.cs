@@ -153,6 +153,8 @@ public partial class App : Application
         };
         _ = RunLoopAsync(_cts.Token);
         _ = CheckUpdatesLaterAsync(_cts.Token);
+        _ = SendUsageLaterAsync(_cts.Token);
+        UsageStats.WatchWindows();
         _ = SnoozeWatchAsync(_cts.Token);
     }
 
@@ -211,6 +213,13 @@ public partial class App : Application
             PendingUpdate = info;
             Notify("Nova versão do Notebook Doctor", Loc.F("Versão {0} disponível. {1}", info.Version, info.Notes).Trim(), ("Ver atualização", "update"));
         }
+    }
+
+    /// <summary>M18: com a opção ligada, dois minutos depois de abrir e no máximo uma vez por semana. Desligada, nunca sai nada.</summary>
+    private async Task SendUsageLaterAsync(CancellationToken ct)
+    {
+        try { await Task.Delay(TimeSpan.FromMinutes(2), ct); } catch (OperationCanceledException) { return; }
+        await UsageStats.SendIfDueAsync();
     }
 
     public void SetPendingUpdate(UpdateInfo? info) => PendingUpdate = info;
@@ -813,5 +822,6 @@ public partial class App : Application
     private static void LogError(Exception ex)
     {
         try { File.AppendAllText(Path.Combine(AppPaths.Dir, "erros.log"), $"{DateTime.Now:s} {ex}\n\n"); } catch { }
+        UsageStats.Failure(); // M18: só a contagem, se a pessoa ligou as estatísticas; o texto do erro nunca sai do computador
     }
 }

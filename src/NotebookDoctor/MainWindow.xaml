@@ -1315,6 +1315,21 @@
                     </StackPanel>
                 </Border>
 
+                <!-- M18: as estatísticas anônimas são opcionais e nascem desligadas; o que o app guarda e envia está em Seus dados e privacidade -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Privacidade" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="O Notebook Doctor não envia nada por conta própria. Se quiser ajudar a melhorar o app, ligue as estatísticas de uso anônimas: o app conta quantas vezes cada ferramenta foi aberta e quantas falhas aconteceram, e manda só essa contagem para klivfy.com, no máximo uma vez por semana. Não vai nome, arquivo, programa, endereço, número de série nem qualquer identificador seu ou do computador."/>
+                        <CheckBox x:Name="CfgTelemetry" Content="Enviar estatísticas de uso anônimas (desligado por padrão)" Click="Telemetry_Click"/>
+                        <WrapPanel Margin="0,8,0,0">
+                            <Button Content="Ver o que seria enviado" Style="{StaticResource TextButton}" Click="TelemetryPreview_Click" Margin="0,0,8,8"/>
+                            <Button Content="Apagar a contagem" Style="{StaticResource TextButton}" Click="TelemetryClear_Click" Margin="0,0,8,8"/>
+                        </WrapPanel>
+                        <TextBlock x:Name="TelemetryMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Sobre -->
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
@@ -1323,6 +1338,31 @@
                         <!-- U12: os direitos autorais ficam aqui, não no rodapé de todas as telas -->
                         <TextBlock x:Name="AboutCopyright" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,4"/>
                         <TextBlock Text="Fonte Google Sans Flex, licença SIL Open Font License 1.1." Style="{StaticResource Label}" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- B25: avaliação dentro do app. Fica guardada no computador; só vai à Klivfy em "Enviar avaliação", depois de mostrar o que será enviado -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Avaliar o Notebook Doctor" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
+                        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Sua nota e seu comentário ficam só no seu computador. Eles só vão para a Klivfy se você clicar em “Enviar avaliação”, e antes o app mostra exatamente o que será enviado."/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <RadioButton x:Name="Star1" GroupName="Nota" Style="{StaticResource StarRadio}" Content="&#xE734;" Tag="1" AutomationProperties.Name="1 estrela" Click="Star_Click"/>
+                            <RadioButton x:Name="Star2" GroupName="Nota" Style="{StaticResource StarRadio}" Content="&#xE734;" Tag="2" AutomationProperties.Name="2 estrelas" Click="Star_Click"/>
+                            <RadioButton x:Name="Star3" GroupName="Nota" Style="{StaticResource StarRadio}" Content="&#xE734;" Tag="3" AutomationProperties.Name="3 estrelas" Click="Star_Click"/>
+                            <RadioButton x:Name="Star4" GroupName="Nota" Style="{StaticResource StarRadio}" Content="&#xE734;" Tag="4" AutomationProperties.Name="4 estrelas" Click="Star_Click"/>
+                            <RadioButton x:Name="Star5" GroupName="Nota" Style="{StaticResource StarRadio}" Content="&#xE734;" Tag="5" AutomationProperties.Name="5 estrelas" Click="Star_Click"/>
+                        </StackPanel>
+                        <TextBlock x:Name="RatingLabel" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+                        <TextBox x:Name="RatingComment" MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" MaxHeight="160" VerticalScrollBarVisibility="Auto"
+                                 AutomationProperties.Name="Comentário (opcional)" ToolTip="Comentário opcional, em texto simples. Nome de usuário, e-mails, endereços e caminhos de arquivo são trocados por marcadores."
+                                 LostFocus="RatingComment_LostFocus"/>
+                        <WrapPanel Margin="0,8,0,0">
+                            <Button x:Name="RatingSendBtn" Content="Enviar avaliação" Style="{StaticResource TonalButton}" Click="RatingSend_Click" Margin="0,0,8,8"/>
+                            <Button Content="Limpar avaliação" Style="{StaticResource TextButton}" Click="RatingClear_Click" Margin="0,0,8,8"/>
+                        </WrapPanel>
+                        <TextBlock x:Name="RatingMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
                     </StackPanel>
                 </Border>
 

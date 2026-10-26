@@ -320,6 +320,9 @@ public partial class MainWindow : Window
     {
         if (e.Source != Tabs) return; // ignora seleções de DataGrid/ComboBox internos
         Motion.EnterContent((Tabs.SelectedItem as TabItem)?.Content as FrameworkElement);
+        if (Tabs.SelectedIndex == TabClean) UsageStats.Use("limpeza"); // M18: só conta, e só com a opção ligada
+        else if (Tabs.SelectedIndex == TabPrograms) UsageStats.Use("programas");
+        else if (Tabs.SelectedIndex == TabStartup) UsageStats.Use("inicializacao");
         switch (Tabs.SelectedIndex)
         {
             case TabProcs when Host.Latest is { } s: RefreshProcesses(s); break;

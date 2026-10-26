@@ -14,6 +14,8 @@ public static class SettingsTransfer
     private static readonly HashSet<string> MachineOnly = new(StringComparer.OrdinalIgnoreCase)
     {
         "MiniLeft", "MiniTop", "LastTab", "FirstRunDone", "LastWeeklySummary", "LastRestorePoint", "LastWeeklyRun", "LastJunkNotice", "WingetSourceTerms", "LastUpdateCheck", "LastCrashSeen",
+        // M18: ligar as estatísticas é decisão de cada computador; a contagem e o último envio também ficam onde nasceram. B25: o envio da avaliação idem
+        "TelemetryEnabled", "TelemetryUses", "TelemetryFailures", "LastTelemetrySend", "RatingSentAt",
         "WinLeft", "WinTop", "WinWidth", "WinHeight", "WinMaximized", "Grids", "TrayHintShown",
         // B38: a senha não viaja na exportação nem cai ao importar ou redefinir; só sai por "Remover senha"
         "SettingsLock",

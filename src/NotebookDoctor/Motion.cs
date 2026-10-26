@@ -12,10 +12,10 @@ namespace NotebookDoctor;
 /// </summary>
 public static class Motion
 {
-    public static bool Enabled => SystemParameters.ClientAreaAnimation && !SystemParameters.HighContrast;
+    public static bool Enabled => Services.ClickEffect.Allowed(SystemParameters.ClientAreaAnimation, SystemParameters.HighContrast);
 
     // Redesign V6: tempos e curva do Windows 11 (rápido 167 ms, normal 250 ms, desacelerando no fim)
-    public static readonly TimeSpan Fast = TimeSpan.FromMilliseconds(167), Normal = TimeSpan.FromMilliseconds(250);
+    public static readonly TimeSpan Fast = TimeSpan.FromMilliseconds(Services.ClickEffect.FastMs), Normal = TimeSpan.FromMilliseconds(Services.ClickEffect.NormalMs);
     private static readonly IEasingFunction Ease = new CubicEase { EasingMode = EasingMode.EaseOut };
 
     /// <summary>B04: o medidor desliza até o valor novo em vez de pular.</summary>

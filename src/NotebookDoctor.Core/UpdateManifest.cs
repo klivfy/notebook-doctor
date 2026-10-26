@@ -15,6 +15,9 @@ public static class KlivfyUrls
     public const string Terms = "https://klivfy.com/termos";
     public const string Privacy = "https://klivfy.com/privacidade";
     public const string Manifest = "https://klivfy.com/notebookdoctor/versao.json";
+    /// <summary>B25 e M18: recebem o que a pessoa mandar ("Enviar avaliação") e as estatísticas anônimas, se ela ligar a opção.</summary>
+    public const string Rating = "https://klivfy.com/notebookdoctor/avaliacao";
+    public const string Usage = "https://klivfy.com/notebookdoctor/estatisticas";
 
     /// <summary>Só https, no domínio da Klivfy ou num subdomínio dele, sem usuário e senha no endereço.</summary>
     public static bool IsTrusted(string? url) =>

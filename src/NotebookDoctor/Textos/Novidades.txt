@@ -1,4 +1,5 @@
 Revisão de segurança, dados e acessibilidade (novo)
+• Atualizar programas agora consulta o WinGet pela interface oficial do Windows (com a linha de comando como reserva), os botões ganham um brilho suave ao clicar (desligado se você desativou as animações do Windows ou usa Alto Contraste) e, em Configurações, dá para avaliar o app com 1 a 5 estrelas (só é enviada se você clicar em “Enviar avaliação”, vendo antes o texto exato) e ligar, se quiser, estatísticas de uso anônimas, que vêm desligadas.
 • Início em monitor largo (1200 px ou mais): a nota de saúde, as métricas e os atalhos ficam à esquerda e o Diagnóstico, com os botões Corrigir, numa coluna ao lado. Em janela menor, nada muda. Ajustes, Sistema, Espaço e Configurações trazem as ferramentas e os links como cartões-linha: ícone, título, descrição e uma seta (› abre outra tela, ↗ abre fora do app), e a linha inteira funciona com Enter e Espaço.
 • A primeira seção do menu passa a se chamar "Início" (antes, "Painel"). O comando "--tab=painel" continua valendo, e "--tab=inicio" também.
 • Sobre: botões para os termos de uso e a política de privacidade no site da Klivfy (só abrem quando você clica).
