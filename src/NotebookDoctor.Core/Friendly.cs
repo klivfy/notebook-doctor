@@ -28,7 +28,7 @@ public static class Friendly
         "Não sobrou nada para apagar: os arquivos estavam em uso ou já tinham saído.",
     ];
 
-    /// <summary>Uma frase da lista, a mesma durante o dia inteiro.</summary>
+    /// <summary>Uma frase da lista, a mesma durante o dia inteiro, no idioma em uso.</summary>
     public static string Pick(IReadOnlyList<string> options, DateTime day) =>
-        options.Count == 0 ? "" : options[day.Date.DayOfYear % options.Count];
+        options.Count == 0 ? "" : Loc.T(options[day.Date.DayOfYear % options.Count]);
 }

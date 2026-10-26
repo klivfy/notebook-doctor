@@ -11,8 +11,8 @@ public static class TextScale
 {
     private static readonly (string Key, double Px)[] Sizes =
     [
-        ("FsLabel", 13), ("FsBody", 14), ("FsTitleMedium", 16), ("FsTitle", 20),
-        ("FsTitleLarge", 22), ("FsDisplay", 40), ("FsHero", 56),
+        ("FsCaption", 12), ("FsLabel", 13), ("FsBody", 14), ("FsCardTitle", 16), ("FsTitle", 20),
+        ("FsPageTitle", 28), ("FsHero", 56), ("FsIcon", 16), ("FsIconLarge", 20),
     ];
 
     public static double Factor { get; private set; } = 1;
@@ -33,9 +33,17 @@ public static class TextScale
     {
         double f = ReadFactor();
         bool changed = Math.Abs(f - Factor) > 0.001;
+        Set(f);
+        return changed;
+    }
+
+    /// <summary>Verificação visual da CI (B46): aplica um fator sem mexer no Windows.</summary>
+    public static void Force(double factor) => Set(factor);
+
+    private static void Set(double f)
+    {
         Factor = f;
         var res = Application.Current.Resources;
         foreach (var (key, px) in Sizes) res[key] = Math.Round(px * f, 1);
-        return changed;
     }
 }

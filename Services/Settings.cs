@@ -22,6 +22,8 @@ public static class AppPaths
     public static string Settings => Path.Combine(Dir, "settings.json");
     public static string History => Path.Combine(Dir, "history.jsonl");
     public static string Reports => Path.Combine(Dir, "relatorios");
+    /// <summary>Fase 5: backups da remoção de sobras (30 dias ou 2 GB).</summary>
+    public static string Backups => Path.Combine(Dir, "backups");
     static AppPaths() => Directory.CreateDirectory(Dir);
 
     /// <summary>
@@ -62,6 +64,32 @@ public sealed class AppSettings
     public bool AlertsEnabled { get; set; } = true;
     public bool WeeklyCleanup { get; set; }
     public int TempDays { get; set; } = 7;
+    /// <summary>Leva 6.2: frequência da limpeza automática ("start", "daily", "weekly", "monthly"); só vale com <see cref="WeeklyCleanup"/> ligado.</summary>
+    public string ScheduleKind { get; set; } = "weekly";
+    /// <summary>A limpeza automática também limpa os navegadores (os tipos escolhidos em <see cref="BrowserKinds"/>).</summary>
+    public bool ScheduleBrowser { get; set; }
+    /// <summary>Tipos de dado de navegador que a limpeza apaga (nomes de BrowserDataKind). Vazio = nenhum.</summary>
+    public List<string> BrowserKinds { get; set; } = new();
+    /// <summary>Sites cujos cookies a limpeza mantém.</summary>
+    public List<string> BrowserKeepSites { get; set; } = new();
+    /// <summary>Limpa os dados escolhidos quando o navegador fecha.</summary>
+    public bool BrowserCleanOnClose { get; set; }
+    /// <summary>Avisa quando os temporários passam do limite (uma vez por dia).</summary>
+    public bool JunkMonitor { get; set; }
+    public int JunkMonitorLimitMb { get; set; } = 1024;
+    public DateTime LastJunkNotice { get; set; } = DateTime.MinValue;
+    /// <summary>Leva 6.1: pastas que a busca de arquivos inúteis nunca olha.</summary>
+    public List<string> JunkExcluded { get; set; } = new();
+    /// <summary>Leva 7.1: versões que a pessoa dispensou, no formato "id|versão". Uma versão mais nova volta a aparecer.</summary>
+    public List<string> UpdateSkipped { get; set; } = new();
+    /// <summary>Leva 7.1: programas cujas atualizações a pessoa pausou (ids do WinGet).</summary>
+    public List<string> UpdatePaused { get; set; } = new();
+    /// <summary>Leva 7.1: a pessoa leu e aceitou os termos da fonte do WinGet (nunca é aceito pelo app em nome dela).</summary>
+    public bool WingetSourceTerms { get; set; }
+    /// <summary>Leva 7.3: aplicativos que o modo soneca nunca adormece (chave = nome sem símbolos, minúsculo).</summary>
+    public List<string> SnoozeNever { get; set; } = new();
+    /// <summary>Leva 7.3: ao pôr um aplicativo para dormir, o padrão é acordá-lo quando a pessoa abrir.</summary>
+    public bool SnoozeWakeOnOpen { get; set; } = true;
     public int CpuAlertPct { get; set; } = 80;
     public int RamAlertPct { get; set; } = 90;
     public DateTime LastWeeklyRun { get; set; } = DateTime.MinValue;
@@ -117,6 +145,8 @@ public sealed class AppSettings
     public bool CloseExits { get; set; }
     /// <summary>B15: menu só com ícones, tabelas e cartões mais densos.</summary>
     public bool Compact { get; set; }
+    /// <summary>Redesign V3: "rail" (trilho com ícone sobre o rótulo, padrão do Windows 11) ou "expanded" (lateral larga com ícone e texto).</summary>
+    public string NavStyle { get; set; } = "rail";
     /// <summary>B29/B30/B31: ordenação, colunas ocultas e larguras de coluna de cada tabela.</summary>
     public Dictionary<string, GridLayout> Grids { get; set; } = new();
     /// <summary>B01: número da CPU no ícone da bandeja.</summary>

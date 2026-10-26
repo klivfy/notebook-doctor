@@ -4,13 +4,13 @@ public enum Safety { Safe, Careful, Never, Unknown }
 
 public sealed record ProcessAbout(string Description, Safety Safety)
 {
-    public string SafetyText => Safety switch
+    public string SafetyText => Loc.T(Safety switch
     {
         Safety.Safe => "Sim, pode fechar",
         Safety.Careful => "Com cuidado",
         Safety.Never => "Não encerrar",
         _ => "Desconhecido",
-    };
+    });
 }
 
 /// <summary>Descrição em português dos processos mais comuns e se é seguro encerrá-los.</summary>
@@ -81,9 +81,10 @@ public static class ProcessKnowledge
         ["notebookdoctor"] = new("Este aplicativo", Safety.Never),
     };
 
+    /// <summary>A descrição já vem no idioma em uso.</summary>
     public static ProcessAbout Describe(string name) =>
-        ProcessTools.IsUserProtected(name) ? new((Known.TryGetValue(name, out var k) ? k.Description + ". " : "") + "Protegido por você em Configurações", Safety.Never)
-        : Known.TryGetValue(name, out var a) ? a
-        : ProcessTools.IsSystem(name) ? new("Componente do sistema", Safety.Never)
-        : new("Sem descrição na base do app. Pesquise o nome antes de encerrar", Safety.Unknown);
+        ProcessTools.IsUserProtected(name) ? new((Known.TryGetValue(name, out var k) ? Loc.T(k.Description) + ". " : "") + Loc.T("Protegido por você em Configurações"), Safety.Never)
+        : Known.TryGetValue(name, out var a) ? a with { Description = Loc.T(a.Description) }
+        : ProcessTools.IsSystem(name) ? new(Loc.T("Componente do sistema"), Safety.Never)
+        : new(Loc.T("Sem descrição na base do app. Pesquise o nome antes de encerrar"), Safety.Unknown);
 }

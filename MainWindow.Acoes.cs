@@ -12,11 +12,11 @@ public partial class MainWindow
 
     private void Undo_Click(object sender, RoutedEventArgs e)
     {
-        if (ActionsGrid.SelectedItem is not ActionEntry entry) { ActionsMsg.Text = "Selecione uma ação na lista."; return; }
-        if (!entry.CanUndo) { ActionsMsg.Text = entry.Undone ? "Essa ação já foi desfeita." : "Essa ação é definitiva e não pode ser desfeita."; return; }
-        if (Simulate($"Desfazer: {entry.Title}", entry.Detail)) return;
+        if (ActionsGrid.SelectedItem is not ActionEntry entry) { ActionsMsg.Text = Loc.T("Selecione uma ação na lista."); return; }
+        if (!entry.CanUndo) { ActionsMsg.Text = Loc.T(entry.Undone ? "Essa ação já foi desfeita." : "Essa ação é definitiva e não pode ser desfeita."); return; }
+        if (Simulate(Loc.F("Desfazer: {0}", entry.TitleText), entry.DetailText)) return;
         ActionsMsg.Text = ActionLog.Undo(entry);
-        ActionLog.Add($"Desfeito: {entry.Title}", entry.Detail);
+        ActionLog.Add(Loc.F("Desfeito: {0}", entry.TitleText), entry.DetailText);
         RefreshStartup();
         LoadActions();
         _ = Host.RefreshHealthAsync();

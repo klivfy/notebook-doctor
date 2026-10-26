@@ -1,0 +1,46 @@
+<Window x:Class="NotebookDoctor.RegistryCheckWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:NotebookDoctor"
+        Title="Verificar registro" Width="1100" Height="720" MinWidth="820" MinHeight="540"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
+        AutomationProperties.Name="Verificar registro">
+    <ScrollViewer local:FitScroll.StarMin="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+    <Grid Margin="24">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <TextBlock Text="Verificar registro" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
+                   Text="Aponta só entradas do registro com prova de estarem quebradas: o arquivo que elas citam não existe mais, numa unidade que está presente. Não mexe em CLSID, ActiveX, bibliotecas de tipos, MUICache nem no Menu Iniciar. Cada item vai para um backup antes de sair, e dá para desfazer em Ações. Registro limpo não deixa o PC mais rápido: use para tirar lixo, não como ajuste de desempenho."/>
+        <DataGrid x:Name="Grid" Grid.Row="2" AutomationProperties.Name="Entradas do registro com prova de estarem quebradas" PreviewKeyDown="Grid_KeyDown">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Apagar" Width="Auto" MinWidth="88">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox Style="{StaticResource GridCheck}" IsEnabled="{Binding CanFix}"
+                                      IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      AutomationProperties.Name="{Binding Label}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Categoria" Binding="{Binding Category}" Width="1.3*"/>
+                <DataGridTextColumn Header="Item" Binding="{Binding Label}" Width="1.5*"/>
+                <DataGridTextColumn Header="Prova" Binding="{Binding Evidence}" Width="2.5*"/>
+                <DataGridTextColumn Header="Vale para" Binding="{Binding Scope}" Width="90"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock x:Name="Info" Grid.Row="3" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+        <WrapPanel Grid.Row="4" Margin="0,12,0,0">
+            <Button x:Name="ScanBtn" Content="Verificar agora" Style="{StaticResource TonalButton}" Click="Scan_Click" Margin="0,0,8,8"/>
+            <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="All_Click" Margin="0,0,8,8"/>
+            <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="None_Click" Margin="0,0,8,8"/>
+            <Button x:Name="FixBtn" Content="Apagar os marcados…" Click="Fix_Click" Margin="12,0,8,8"/>
+            <Button Content="Backups…" Style="{StaticResource TextButton}" Click="Backups_Click" Margin="0,0,8,8"
+                    ToolTip="Restaurar ou apagar o que as limpezas guardaram (30 dias)."/>
+            <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,8"/>
+            <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+        </WrapPanel>
+    </Grid>
+    </ScrollViewer>
+</Window>

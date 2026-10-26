@@ -1,0 +1,177 @@
+Security, data and accessibility review (new)
+• About: buttons for the terms of use and privacy policy on the Klivfy website (they only open when you click).
+• Manufacturer drivers (Settings › Drivers): reads the computer and shows where each driver should come from. BIOS, chipset, power and touchpad only from the laptop maker; NVIDIA and AMD dedicated graphics through their own apps. Opens the official site, warns when a restore point is missing and installs the maker's app with WinGet (Dell, Lenovo, HP, Intel).
+• Small laptop at 150%: menu sections scroll instead of disappearing, and the lists in Scan for malware, Recover files, Defragment and Drivers are no longer squeezed.
+• Scan for malware (System): runs Microsoft Defender (quick, full or a folder) and the Windows Malicious Software Removal Tool (MRT), shows the threat history and records it in Actions. Microsoft does the searching and removing.
+• Cleanup as administrator deletes each file by its identifier and checks where it really is: a folder swapped for a system shortcut in the middle of a cleanup no longer takes the deletion outside.
+• The backup of each item is written and closed before the original goes: if the PC shuts down halfway, Undo still brings everything back.
+• Items that don't fit in the Recycle Bin no longer vanish silently: Windows asks before deleting them for good.
+• Cleanup rules never take cookies, passwords or bookmarks from subfolders, and leftover removal doesn't delete Windows file types (http, mailto, .txt).
+• Screen readers (Narrator, NVDA) now announce notices and progress.
+• Tool windows fit the screen of small notebooks (1366 × 768 at 125% scale).
+• In English and Spanish, Dashboard, Processes, Cleanup, Startup, Tweaks and History no longer mix in Portuguese phrases; memory ("11.8 of 16 GB"), active programs, the administrator note, defragmentation and the recovery filters were also translated.
+• Automatic update only accepts an installer signed exactly by Klivfy: a certificate from another company with "Klivfy" in its name no longer passes.
+• Erase for good refuses a folder that has a OneDrive or SharePoint library inside (sync would delete in the cloud too) and warns when the list was cut and part of the files is left for next time.
+• Cancelling advanced cleanup halfway records in Actions what already went, with Undo for the registry.
+• Notices with an action (Install, See in Actions) only go away when you close or use them; the others wait while the mouse or focus is on them.
+• Programs shows Uninstall, Update programs and Point at a window; the rest moved to "More…". Space and Actions say what to do while they are still empty.
+• Undo as administrator no longer accepts a tampered backup that tries to write outside the original folder or import another registry file.
+• Fixing the registry and analyzing a monitored installation became much faster with many items.
+• Icons and chart labels grow along with the Windows "Text size"; the underline of fields stays visible when the field is disabled.
+• "Simulation on" became a status chip, "Target" became "Point at a window" and the copyright moved to Settings › About.
+• Time fields no longer cut off the text, table headers no longer break a word in the middle and the spacing between elements is now even on every screen.
+• In English and Spanish, these are now translated too: What's new, Privacy and Licenses, the reports (PDF, HTML and "Copy summary"), Windows notifications, the Actions tab log (with Undo), the History timeline and the confirmations in Tweaks, Settings and Processes.
+• The History timeline shows the "Detail" column again; it was empty.
+
+New look, in the style of Windows 11 (new)
+• Colors, font (Segoe UI Variable), corners and buttons in the Windows 11 style, in light and dark themes.
+• On Windows 11, the window background follows the wallpaper (Mica).
+• Rail navigation, with an icon and a short name, and a dot when the Dashboard has something to see.
+• Dashboard with the health score in focus, a wide "Optimize now" button and shortcuts to Diagnosis, Processes, Cleanup and Startup.
+• Cleanup tools in cards with descriptions; tool windows with a large title.
+
+Programs (new)
+• New tab with installed programs, Microsoft Store apps and Windows updates.
+• Size, install date, type, who it was installed for and architecture of each one; icons, search and totals.
+• Uninstall opens the program's own uninstaller (with a restore point, as administrator) and really waits for it to finish.
+• Open the folder, see the key in the Registry Editor, search the internet and see all properties.
+• Export the list as CSV (spreadsheet) or HTML.
+• Select several programs to uninstall in a queue, with no windows when the uninstaller allows.
+• Forced removal and "Find leftovers" for programs with a broken uninstaller or already removed.
+• Store apps: remove from all accounts and reset.
+• "Point at a window": drag onto a program's window (or drop a shortcut on the list) to learn which installed program it belongs to. Also in Processes and Startup.
+• "Install with monitoring…": the app records everything an installer creates on disk and in the registry; later, uninstalling removes exactly that. The records can be exported and taken to another PC.
+• After uninstalling, the app looks for what was left behind (folders, registry, startup, services, tasks and shortcuts) in three levels: Safe, Moderate and Advanced.
+• You review before deleting. Everything goes to a 30-day backup and can be undone in Actions or in "Backups…".
+
+Advanced cleaning (new)
+• "Advanced cleaning…" button in the Cleanup tab, with three sections.
+• Traces and programs: recent documents, Run, Open and Save boxes, Office, DNS cache, clipboard, memory dumps, Windows logs. You can import rules in the winapp2.ini format; they show up unchecked and only for programs that exist on the PC.
+• Useless files: .tmp, .chk, old dumps, Office ~$ locks and FOUND folders. .bak, .old and FOUND start unchecked and go to the Recycle Bin.
+• Windows Disk Cleanup: Windows.old, old updates, driver packages and error reports, through Windows' own tool (administrator).
+• You see what goes before deleting. Passwords, cookies, autofill, bookmarks and game data are never included. The registry goes to a backup you can undo in Actions.
+
+Browsers (new)
+• In Cleanup › Advanced cleaning › Browsers: delete history, cookies, last-session tabs and form history from Chrome, Edge, Brave, Vivaldi, Opera and Firefox, per profile.
+• List of sites to stay signed in to: their cookies stay. Bookmarks, passwords and extensions are never touched.
+• The browser must be closed; the app can ask it to close, but never ends it by force.
+• Clean automatically when the browser closes.
+• Automatic cleanup when opening the app, every day, week or month (Settings), with the option to include browsers.
+• Notice when temporary files pass a limit (500 MB to 5 GB).
+
+Space (new)
+• "By file type": how much images, videos, music, documents, archives and programs take, with the extensions that weigh the most.
+• Duplicates: choose the minimum size and open "Review duplicates…" to see the groups with thumbnails.
+• "Keep the oldest" or "the newest" in one click; send the others to the Recycle Bin or delete them for good.
+• One copy of each group always stays, and the app checks the content again before deleting.
+
+Programs (new)
+• "Update programs…" looks for new versions through WinGet and updates the ones you check, in a queue.
+• "Skip this version" and "Pause this program"; "See terms…" shows the license before you accept.
+• The terms are always accepted by you, on screen. Some installers ask for administrator permission.
+
+Drivers (new)
+• Settings › Drivers › "Drivers through Windows Update…": lists the drivers Windows Update offers and recommends only those newer than the installed one.
+• Before installing, the app creates a restore point and keeps a copy of the current driver.
+• "Copies of previous drivers" and the Actions tab let you go back to the previous driver.
+
+Startup (new)
+• "Context menu…": see what appears when you right-click files and folders and turn off what you don't use; turning it on again brings it back.
+• "Snooze mode…": puts a program to sleep (startup, services, tasks and background processes) and wakes it when you open it.
+• Antivirus, audio, video, touchpad, network and remote access never sleep.
+
+Cleanup (new)
+• "Check registry…": points out only registry entries with proof of being broken (the file they cite no longer exists) and deletes the ones you check, with backup and undo.
+• Doesn't touch CLSID, ActiveX, type libraries, MUICache or the Start Menu.
+
+System (new)
+• New "System" tab: operating system, processor, memory (with the empty slots), motherboard and BIOS, video, disks, devices, network and Wi-Fi.
+• Temperatures that Windows lets you read: thermal zone, disks and NVIDIA card.
+• "Export…" to TXT, HTML or PDF and "Copy summary". Nothing is sent to the internet.
+
+Erase for good (new)
+• Cleanup › "Erase for good…": deletes files and folders with no chance of recovery (no Recycle Bin, no undo).
+• Wipes the free space of a drive, so that what was already deleted can't be recovered.
+• Erases a whole flash drive, card or external HD, typing the drive letter and name to confirm.
+• On SSDs, flash drives and memory cards there is no guarantee, and the app warns you.
+
+Recover files (new)
+• Cleanup › "Recover files…": looks for deleted files on a flash drive, card or disk through Windows File Recovery (free, from Microsoft) and saves what it finds on another drive.
+• Choose what to look for (documents, photos, videos…) and the mode; the app warns about what lowers the chances, such as SSDs.
+
+Recover with the app's engine (new)
+• Recover files › "App engine (NTFS, with preview)…": the app itself reads the file list of the NTFS drive and shows what was deleted, with the original folder and date.
+• Each file shows the chance of coming back whole (excellent, partial, poor) and, when selected, a preview of photos and text, without copying anything.
+• The ones you check are copied to ANOTHER drive, in a new folder with date and time, keeping the original folders. The source drive is only read.
+
+Defragment (new)
+• Cleanup › "Defragment…": analyzes and defragments HDs through Windows itself, with the drive map (dark: used; light: free).
+• On SSDs the app doesn't defragment, because it doesn't help and wears the drive; it only redoes TRIM.
+• It also shows the files in a folder that are in pieces and joins each one's pieces on the disk (HD, as administrator).
+
+Windows tools (new)
+• System › "Windows tools…": shortcuts to Device Manager, Services, Task Scheduler, Event Viewer, Resource Monitor, Firewall and others that Windows already includes. Only the ones that exist on your computer appear.
+
+Windows on Arm (new)
+• Notebook Doctor is also published for PCs with an Arm processor.
+
+Dashboard and diagnosis
+• "Fix" on every problem found, with an explanation of each one.
+• Warning for the High performance plan on battery, for more than one active antivirus and for a large WSL virtual disk.
+• Warning when OneDrive keeps many files on the disk, with the path to "Free up space".
+• Warnings for Windows Update turned off, update failing or too long without updating.
+• Warning for a generic or over-2-year-old video driver, and for Windows automatic maintenance turned off.
+• The weekly cleanup only runs with the computer idle and plugged in.
+• On battery, the app queries the computer less often when in the background.
+• Power plan suggestion when you plug in or unplug the notebook.
+• PDF report and "Copy summary" button to paste into a ticket.
+
+Processes
+• Select several programs and end them at once.
+• Processes of the same application on a single line (Steam, Acrobat, Teams, Zoom and others), with an option to split them.
+• Right-click menu (Shift+F10 on the keyboard), Enter opens the detail and Delete ends, always with confirmation.
+
+Cleanup and space
+• Discord, Slack, Teams and VS Code caches, and Windows thumbnails.
+• The Recycle Bin of each drive and "Select all" and "Clear all" buttons.
+
+Startup and tweaks
+• Column with each program's publisher and an "Open location" button.
+• Third-party services that can be set to manual mode, with "Undo".
+• Third-party scheduled tasks, with "Disable" and "Undo".
+• Extensions installed in browsers, from the heaviest to the lightest.
+• As administrator: delete old restore points (the most recent stays) and clear large event logs.
+
+History
+• Weekly trends, full-disk forecast and a map of slowdown times.
+• Timeline with notices, actions and installed programs.
+
+Notices
+• Quiet hours and silence when an app is full screen or presenting.
+• High CPU or memory notice only after a few minutes in a row.
+
+Taskbar and tray
+• Alert badge on the taskbar icon and shortcuts (Cleanup, Processes, History) on right-click.
+• CPU use on the tray icon (optional) and CPU, RAM, disk and score in its menu.
+
+Charts and tables
+• Zoom on the History charts: mouse wheel, drag and double-click to go back.
+• Tables remember the sort order and column widths, and show totals in the footer.
+• Right-click a table's title to choose the visible columns.
+
+Games and presentations
+• Overlay with CPU, RAM and temperature on top of full-screen games (optional).
+• Demo mode with made-up data (NotebookDoctor.exe --demo).
+
+Settings
+• Sizes in Windows GB, disk-box GB or GiB, and temperature in °C or °F.
+• Light theme by day and dark at night, at the times you choose.
+• Start minimized and an option for the X to quit the app.
+• Compact mode for small screens: icon-only menu and denser tables.
+• Start Menu shortcut, created by the app itself.
+• Business mode: a password to change settings, set in the app or by Windows policy.
+• The window reopens in the same place and on the same monitor.
+• Export, import and reset the preferences.
+• Windows accent color, adjusted to keep it readable.
+• Portable mode: with a portatil.txt file next to the app, data stays in the "dados" folder.
+• Optional crash report, kept without personal data.

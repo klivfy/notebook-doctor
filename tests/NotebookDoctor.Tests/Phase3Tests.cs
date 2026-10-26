@@ -152,6 +152,31 @@ public class ReportContentTests
         Assert.Contains("chrome", text);
     }
 
+    /// <summary>M13: o relatório (PDF, HTML) e o resumo para colar saem no idioma do app, inclusive o texto dos achados.</summary>
+    [Theory]
+    [InlineData("en", "Diagnosis", "Report generated on", "Health score: 62 (", "Nota de saúde")]
+    [InlineData("es", "Diagnóstico", "Informe generado el", "Nota de salud: 62 (", "Nota de saúde")]
+    public void Relatorio_e_resumo_saem_no_idioma_do_app(string lang, string heading, string generated, string score, string notPortuguese)
+    {
+        try
+        {
+            Loc.Use(lang);
+            var s = Make.Snap(cpu: 75, ram: 88, groups: [new ProcGroup("chrome", 10, 40, 2000)]);
+            var findings = Diagnosis.Evaluate(Make.Minute(s), Make.Health(), uptime: Make.FreshBoot);
+            var lines = ReportContent.Lines(s, findings, [], "PC", "1.2.0", "support");
+            Assert.Contains(lines, l => l.Style == PdfStyle.Heading && l.Text == heading);
+            Assert.Contains(lines, l => l.Text.StartsWith(generated));
+            // O achado de RAM aparece com a tag e o título do idioma, nunca com a chave em português
+            Assert.Contains(lines, l => l.Text.StartsWith("[") && !l.Text.Contains("Memória RAM quase cheia") && l.Text.Contains(Loc.T("Memória RAM quase cheia")));
+            Assert.DoesNotContain(lines, l => l.Text.Contains("[ATENÇÃO]")); // "PROBLEMA" é a mesma palavra em espanhol
+            if (lang == "en") Assert.DoesNotContain(lines, l => l.Text.Contains("[PROBLEMA]"));
+            string summary = ReportContent.Summary(s, new HealthScoreResult(62, "Regular"), new BottleneckResult("Processador", ""), findings);
+            Assert.Contains(score, summary);
+            Assert.DoesNotContain(notPortuguese, summary);
+        }
+        finally { Loc.Use("pt"); }
+    }
+
     [Fact]
     public void Relatorio_tem_secoes_principais()
     {

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Fase 5: o que lê e muda o registro e os arquivos do Windows sem precisar de WPF (sobras do desinstalador e
+    backups). Fica fora do app para os testes de integração rodarem na CI do Windows; as regras continuam no Core.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>NotebookDoctor</RootNamespace>
+    <AssemblyName>NotebookDoctor.Windows</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../NotebookDoctor.Core/NotebookDoctor.Core.csproj" />
+  </ItemGroup>
+
+</Project>

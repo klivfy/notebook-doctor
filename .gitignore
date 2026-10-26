@@ -5,3 +5,18 @@ publish/
 .vs/
 *.zip
 *.exe
+
+# Ajustes do Claude Code por pessoa (ganchos locais não vão para quem clona)
+.claude/settings.local.json
+smoke-out/
+
+# R5: certificados e chaves (assinatura do instalador, A50) e segredos locais nunca vão para o git
+*.pfx
+*.p12
+*.pem
+*.key
+*.snk
+.env
+.env.*
+# Saída do graphify (grafo local do código)
+graphify-out/

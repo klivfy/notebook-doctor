@@ -12,9 +12,10 @@ public static class RestorePoint
 {
     public const string ProtectionOff = "não criado (Proteção do Sistema desativada?)";
 
-    public static async Task<string> EnsureAsync(AppSettings settings, string reason)
+    /// <param name="force">Driver não pode ser instalado sem ponto de restauração: ignora a preferência "antes de alterações".</param>
+    public static async Task<string> EnsureAsync(AppSettings settings, string reason, bool force = false)
     {
-        if (!settings.RestorePointBeforeChanges) return "desativado nas configurações";
+        if (!force && !settings.RestorePointBeforeChanges) return "desativado nas configurações";
         if (!AppInfo.IsAdmin) return "não criado (exige administrador)";
         if ((DateTime.Now - settings.LastRestorePoint).TotalHours < 24) return "já existe um ponto recente (< 24 h)";
 

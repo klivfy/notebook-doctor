@@ -1,0 +1,110 @@
+<Window x:Class="NotebookDoctor.DriversWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:NotebookDoctor"
+        Title="Drivers" Width="1060" Height="720" MinWidth="820" MinHeight="540"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource Surface}" Foreground="{DynamicResource OnSurface}"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
+        AutomationProperties.Name="Drivers">
+    <ScrollViewer local:FitScroll.StarMin="160" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+    <Grid Margin="24">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <TextBlock Text="Drivers" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock x:Name="Intro" Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
+                   Text="Só drivers que o próprio Windows Update oferece: nada de sites de terceiros. Só aparece como recomendado o que é mais novo que o instalado. Antes de instalar, o app cria um ponto de restauração e guarda uma cópia do driver atual, para voltar quando precisar. Exige administrador para instalar."/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button x:Name="OffersTab" Content="Drivers disponíveis" Style="{StaticResource TonalButton}" Click="OffersTab_Click" Margin="0,0,8,0"/>
+            <Button x:Name="CopiesTab" Content="Cópias dos drivers anteriores" Style="{StaticResource TextButton}" Click="CopiesTab_Click" Margin="0,0,8,0"/>
+            <Button x:Name="OemTab" Content="Do fabricante" Style="{StaticResource TextButton}" Click="OemTab_Click"/>
+        </StackPanel>
+        <Grid Grid.Row="3">
+            <DataGrid x:Name="OffersGrid" AutomationProperties.Name="Drivers que o Windows Update oferece" SelectionMode="Single">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Driver" Binding="{Binding Title}" Width="2*"/>
+                    <DataGridTextColumn Header="Classe" Binding="{Binding DeviceClass}" Width="110"/>
+                    <DataGridTextColumn Header="Instalado" Binding="{Binding CurrentText}" Width="1.2*"/>
+                    <DataGridTextColumn Header="Oferecido" Binding="{Binding OfferedText}" Width="1.2*"/>
+                    <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="90"/>
+                    <DataGridTextColumn Header="Tipo" Binding="{Binding KindText}" Width="90"/>
+                    <DataGridTextColumn Header="Situação" Binding="{Binding VerdictText}" Width="1.4*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Recommended}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource Primary}"/>
+                                        <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            <DataGrid x:Name="CopiesGrid" Visibility="Collapsed" AutomationProperties.Name="Cópias dos drivers anteriores" SelectionMode="Single">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Dispositivo" Binding="{Binding DeviceName}" Width="2*"/>
+                    <DataGridTextColumn Header="Versão guardada" Binding="{Binding VersionText}" Width="1.3*"/>
+                    <DataGridTextColumn Header="Cópia feita em" Binding="{Binding CreatedText}" Width="130"/>
+                    <DataGridTextColumn Header="Foi trocado por" Binding="{Binding Replaced}" Width="2*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <!-- Textos e lista rolam juntos: num notebook pequeno a 150%, a lista não some debaixo do cabeçalho -->
+            <ScrollViewer x:Name="OemPanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+              <StackPanel>
+                <TextBlock x:Name="OemComputer" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                <TextBlock x:Name="OemTools" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                <Border x:Name="OemRestoreBox" Style="{StaticResource InfoBarWarning}" Visibility="Collapsed">
+                    <TextBlock x:Name="OemRestore" TextWrapping="Wrap" Foreground="{DynamicResource OnSurface}" AutomationProperties.LiveSetting="Polite"/>
+                </Border>
+                <DataGrid x:Name="OemGrid" AutomationProperties.Name="Drivers do fabricante" SelectionMode="Single" SelectionChanged="OemGrid_SelectionChanged"
+                          VerticalScrollBarVisibility="Disabled" PreviewMouseWheel="OemGrid_PreviewMouseWheel">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Componente" Binding="{Binding Name}" Width="1.6*">
+                            <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="De onde" Binding="{Binding SourceText}" Width="1.3*">
+                            <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Risco" Binding="{Binding RiskText}" Width="90">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Serious}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource Warning}"/>
+                                            <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Orientação" Binding="{Binding Notes}" Width="3*">
+                            <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+              </StackPanel>
+            </ScrollViewer>
+        </Grid>
+        <TextBlock x:Name="Info" Grid.Row="4" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="4,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+        <WrapPanel Grid.Row="5" Margin="0,12,0,0">
+            <Button x:Name="ScanBtn" Content="Procurar drivers" Style="{StaticResource TonalButton}" Click="Scan_Click" Margin="0,0,8,8"/>
+            <Button x:Name="InstallBtn" Content="Instalar o selecionado…" Click="Install_Click" Margin="0,0,8,8"
+                    ToolTip="Cria o ponto de restauração, guarda o driver atual e só então instala. Um driver por vez."/>
+            <Button x:Name="RestoreBtn" Content="Voltar a este driver…" Click="Restore_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+            <Button x:Name="OemScanBtn" Content="Ler este computador" Style="{StaticResource TonalButton}" Click="OemScan_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+            <Button x:Name="OemOpenBtn" Content="Abrir a página oficial" Click="OemOpen_Click" Margin="0,0,8,8" Visibility="Collapsed"
+                    ToolTip="Abre no navegador o site oficial de onde este driver deve vir. Nada é baixado nem instalado pelo app."/>
+            <Button x:Name="OemModelBtn" Content="Página do meu modelo…" Style="{StaticResource TextButton}" Click="OemModel_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+            <Button x:Name="OemToolBtn" Style="{StaticResource TextButton}" Click="OemTool_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+            <Button x:Name="OemRestoreBtn" Content="Criar ponto de restauração" Style="{StaticResource TextButton}" Click="OemRestore_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+            <Button x:Name="DeleteBtn" Content="Apagar cópia" Style="{StaticResource TextButton}" Click="DeleteCopy_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+            <Button Content="Atualizações opcionais do Windows" Style="{StaticResource TextButton}" Click="Optional_Click" Margin="0,0,8,8"
+                    ToolTip="Abre a página do Windows Update onde o próprio Windows lista as atualizações opcionais."/>
+            <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,8"/>
+            <TextBlock x:Name="Msg" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+        </WrapPanel>
+    </Grid>
+    </ScrollViewer>
+</Window>

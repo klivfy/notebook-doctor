@@ -5,7 +5,7 @@ namespace NotebookDoctor.Services;
 
 public sealed record AlertEntry(DateTime Time, string Title, string Text, bool Silenced = false)
 {
-    [System.Text.Json.Serialization.JsonIgnore] public string TimeText => Time.ToString("dd/MM HH:mm");
+    [System.Text.Json.Serialization.JsonIgnore] public string TimeText => Loc.Stamp(Time);
 }
 
 /// <summary>M46: cada aviso disparado (programa pesado, CPU/RAM, disco, calor), guardado por 30 dias em JSON Lines.</summary>

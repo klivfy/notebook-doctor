@@ -3,14 +3,8 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.Json;
 
 namespace NotebookDoctor.Services;
-
-/// <summary>Manifesto publicado pela Klivfy: {"version":"1.2.0","url":"https://…/setup.exe","sha256":"…","notes":"…"}.</summary>
-public sealed record UpdateInfo(string Version, string Url, string Sha256, string Notes);
-
-public enum UpdateCheck { UpToDate, Available, NotPublished, Offline }
 
 /// <summary>
 /// A50: atualização assinada. Só HTTPS no domínio klivfy.com; o instalador só roda se o SHA-256 bater com o manifesto,
@@ -18,9 +12,7 @@ public enum UpdateCheck { UpToDate, Available, NotPublished, Offline }
 /// </summary>
 public static class Updater
 {
-    public const string ManifestUrl = "https://klivfy.com/notebookdoctor/versao.json";
-    private const string TrustedHost = "klivfy.com";
-    private const string Publisher = "Klivfy";
+    public const string ManifestUrl = KlivfyUrls.Manifest;
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 
@@ -30,24 +22,16 @@ public static class Updater
         {
             using var resp = await Http.GetAsync(ManifestUrl);
             if (!resp.IsSuccessStatusCode) return (UpdateCheck.NotPublished, null);
-            var info = JsonSerializer.Deserialize<UpdateInfo>(await resp.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (info is null || !Version.TryParse(info.Version, out var remote) || !IsTrustedUrl(info.Url) || info.Sha256.Length != 64)
-                return (UpdateCheck.NotPublished, null);
             var local = Version.TryParse(AppInfo.Version, out var v) ? v : new Version(0, 0);
-            return remote > local ? (UpdateCheck.Available, info) : (UpdateCheck.UpToDate, info);
+            return UpdateManifest.Evaluate(await resp.Content.ReadAsStringAsync(), local);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException) { return (UpdateCheck.Offline, null); }
-        catch (JsonException) { return (UpdateCheck.NotPublished, null); }
     }
-
-    private static bool IsTrustedUrl(string url) =>
-        Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps &&
-        (u.Host.Equals(TrustedHost, StringComparison.OrdinalIgnoreCase) || u.Host.EndsWith("." + TrustedHost, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Baixa e confere o instalador. Retorna o caminho do arquivo verificado ou lança com o motivo em português.</summary>
     public static async Task<string> DownloadAndVerifyAsync(UpdateInfo info, IProgress<int>? progress = null)
     {
-        if (!IsTrustedUrl(info.Url)) throw new InvalidOperationException("O endereço do instalador não é da Klivfy.");
+        if (!KlivfyUrls.IsTrusted(info.Url)) throw new InvalidOperationException("O endereço do instalador não é da Klivfy.");
         string dir = Path.Combine(Path.GetTempPath(), "NotebookDoctor-update");
         Directory.CreateDirectory(dir);
         string file = Path.Combine(dir, $"NotebookDoctor-{info.Version}-setup.exe");
@@ -77,7 +61,7 @@ public static class Updater
 
     private static void TryDelete(string f) { try { File.Delete(f); } catch { } }
 
-    /// <summary>Assinatura Authenticode íntegra e confiável (WinVerifyTrust) e emitida para a Klivfy.</summary>
+    /// <summary>Assinatura Authenticode íntegra e confiável (WinVerifyTrust), emitida exatamente para a Klivfy (S2).</summary>
     public static bool IsSignedByPublisher(string file)
     {
         if (VerifyTrust(file) != 0) return false;
@@ -86,7 +70,10 @@ public static class Updater
 #pragma warning disable SYSLIB0057 // leitura do certificado do signatário de um arquivo assinado
             using var cert = new X509Certificate2(X509Certificate.CreateFromSignedFile(file));
 #pragma warning restore SYSLIB0057
-            return cert.GetNameInfo(X509NameType.SimpleName, false).Contains(Publisher, StringComparison.OrdinalIgnoreCase);
+            var subject = cert.SubjectName.EnumerateRelativeDistinguishedNames()
+                .Select(r => (r.GetSingleElementType().Value ?? "", r.GetSingleElementValue() ?? ""));
+            string key = Convert.ToHexString(SHA256.HashData(cert.PublicKey.ExportSubjectPublicKeyInfo()));
+            return PublisherSignature.Trusted(subject, key);
         }
         catch { return false; }
     }

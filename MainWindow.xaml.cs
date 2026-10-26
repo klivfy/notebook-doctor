@@ -23,20 +23,24 @@ public partial class MainWindow : Window
 {
     private static App Host => App.Current;
 
-    private const int TabProcs = 1, TabClean = 2, TabSpace = 3, TabStartup = 4, TabHistory = 5, TabActions = 6, TabTweaks = 7, TabSettings = 8;
+    private const int TabProcs = AppTabs.Processes, TabClean = AppTabs.Clean, TabSpace = AppTabs.Space, TabPrograms = AppTabs.Programs,
+        TabStartup = AppTabs.Startup, TabHistory = AppTabs.History, TabActions = AppTabs.Actions, TabTweaks = AppTabs.Tweaks, TabSystem = AppTabs.System, TabSettings = AppTabs.Settings;
 
     public MainWindow()
     {
         InitializeComponent();
         Localizer.ApplyTree(this); // M13: antes de o GridMemory ler os títulos das colunas
+        // Rótulos curtos do trilho de navegação: propriedade própria, fora da tradução automática
+        foreach (var item in Nav.Items.OfType<ListBoxItem>())
+            if (NavLabel.GetShort(item) is { } shortLabel) NavLabel.SetShort(item, Loc.T(shortLabel));
         RestorePlacement();
         foreach (var grid in Grids()) GridMemory.Attach(grid, Host.Settings, grid == CleanGrid ? 2 : 1); // Limpeza: a caixa de marcar e o local
         // B33: a lista muda (dados novos, busca, ordenação) e o rodapé acompanha
-        foreach (var grid in new[] { ProcGrid, SpaceGrid, StartupGrid })
+        foreach (var grid in new[] { ProcGrid, SpaceGrid, ProgGrid, StartupGrid })
             ((System.Collections.Specialized.INotifyCollectionChanged)grid.Items).CollectionChanged += (_, _) => UpdateTotals(grid);
-        FooterText.Text = AppInfo.Copyright;
-        AboutText.Text = $"Notebook Doctor {AppInfo.Version}\nSuporte: klivfy.com/suporte"
-                         + (AppPaths.Portable ? $"\nModo portátil: dados em {AppPaths.Dir}" : "");
+        AboutCopyright.Text = AppInfo.Copyright;
+        AboutText.Text = Loc.F("Notebook Doctor {0}\nSuporte: klivfy.com/suporte", AppInfo.Version)
+                         + (AppPaths.Portable ? "\n" + Loc.F("Modo portátil: dados em {0}", AppPaths.Dir) : "");
         RefreshAdminCard();
         LoadSettingsIntoForm();
         RefreshProfileCard();
@@ -57,22 +61,27 @@ public partial class MainWindow : Window
         // O "Tamanho do texto" do Windows pode mudar com o app escondido na bandeja
         IsVisibleChanged += (_, _) => { if (IsVisible) TextScale.Apply(); };
         _snackTimer.Tick += (_, _) => HideSnack();
+        // U6 (WCAG 2.2.1): com o mouse ou o foco no aviso, a contagem para; ao sair, recomeça do início
+        Snack.MouseEnter += (_, _) => _snackTimer.Stop();
+        Snack.MouseLeave += (_, _) => RestartSnackTimer();
+        Snack.IsKeyboardFocusWithinChanged += (_, e) => { if ((bool)e.NewValue) _snackTimer.Stop(); else RestartSnackTimer(); };
 
-        // Atalhos: Ctrl+1…8 trocam de aba; F5 atualiza a aba atual
+        // Atalhos: Ctrl+1…9 trocam de aba e Ctrl+0 abre Configurações; F5 atualiza a aba atual
         PreviewKeyDown += (_, e) =>
         {
-            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is >= Key.D1 and <= Key.D9) { Tabs.SelectedIndex = e.Key - Key.D1; e.Handled = true; }
+            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is >= Key.D0 and <= Key.D9) { Tabs.SelectedIndex = e.Key == Key.D0 ? TabSettings : e.Key - Key.D1; e.Handled = true; }
             else if (e.Key == Key.F5) { RefreshCurrentTab(); e.Handled = true; }
             else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.F && SearchBoxOfCurrentTab() is { } box) { box.Focus(); box.SelectAll(); e.Handled = true; }
             else if (e.Key == Key.Escape && Snack.IsVisible) { HideSnack(); e.Handled = true; }
         };
     }
 
-    /// <summary>M12: Ctrl+F vai para a busca da aba atual (Processos, Espaço e Inicialização têm uma).</summary>
+    /// <summary>M12: Ctrl+F vai para a busca da aba atual (Processos, Espaço, Programas e Inicialização têm uma).</summary>
     private TextBox? SearchBoxOfCurrentTab() => Tabs.SelectedIndex switch
     {
         TabProcs => ProcSearch,
         TabSpace => SpaceSearch,
+        TabPrograms => ProgSearch,
         TabStartup => StartupSearch,
         _ => null,
     };
@@ -83,6 +92,7 @@ public partial class MainWindow : Window
         {
             case 0: _ = Host.RefreshHealthAsync(); break;
             case TabClean: Scan_Click(this, new RoutedEventArgs()); break;
+            case TabPrograms: _ = LoadProgramsAsync(); break;
             case TabStartup: RefreshStartup(); break;
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
@@ -96,18 +106,18 @@ public partial class MainWindow : Window
     {
         if (ProcessTools.IsProtected(name))
         {
-            ShowSnack("Processo do sistema", $"\"{name}\" faz parte do Windows e não pode ser encerrado por aqui.");
+            ShowSnack("Processo do sistema", Loc.F("\"{0}\" faz parte do Windows e não pode ser encerrado por aqui.", name));
             return;
         }
         var about = ProcessKnowledge.Describe(name);
-        if (Simulate($"Encerrar {name}", $"Fecharia {Pt.N(count, "processo", "processos")} de {name} ({memMB:N0} MB). Trabalho não salvo nele seria perdido.")) return;
+        if (Simulate(Loc.F("Encerrar {0}", name), Loc.F("Fecharia {0} de {1} ({2:N0} MB). Trabalho não salvo nele seria perdido.", Pt.N(count, "processo", "processos"), name, memMB))) return;
         if (!Dialogs.Confirm(this, "Encerrar programa?",
-                $"Encerrar \"{name}\" ({Pt.N(count, "processo", "processos")}, {memMB:N0} MB)?\n\nO que é: {about.Description}.\nSeguro encerrar: {about.SafetyText}.\n\nTrabalho não salvo nesse programa será perdido.",
+                Loc.F("Encerrar \"{0}\" ({1}, {2:N0} MB)?", name, Pt.N(count, "processo", "processos"), memMB) + "\n\n" + Loc.F("O que é: {0}.", about.Description) + "\n" + Loc.F("Seguro encerrar: {0}.", about.SafetyText) + "\n\n" + Loc.T("Trabalho não salvo nesse programa será perdido."),
                 "Encerrar", danger: true)) return;
         int n = ProcessActions.Kill(name);
-        string done = n == 1 ? $"1 processo de {name} encerrado." : $"{n} processos de {name} encerrados.";
-        ProcMsg.Text = n > 0 ? done : "Não foi possível encerrar: falta permissão ou o programa já fechou.";
-        if (n > 0) { ActionLog.Add("Programa encerrado", $"{name} ({Pt.N(n, "processo", "processos")}, {memMB:N0} MB)"); ShowSnack(done, $"{memMB:N0} MB de memória liberados."); }
+        string done = n == 1 ? Loc.F("1 processo de {0} encerrado.", name) : Loc.F("{0} processos de {1} encerrados.", n, name);
+        ProcMsg.Text = n > 0 ? done : Loc.T("Não foi possível encerrar: falta permissão ou o programa já fechou.");
+        if (n > 0) { ActionLog.Add("Programa encerrado", $"{name} ({Pt.N(n, "processo", "processos")}, {memMB:N0} MB)"); ShowSnack(done, Loc.F("{0:N0} MB de memória liberados.", memMB)); }
         RefreshHeavyBanner();
     }
 
@@ -122,6 +132,8 @@ public partial class MainWindow : Window
     /// <summary>Mostra o resultado de uma ação sem bloquear a tela. Some sozinho; Esc ou o X fecham antes.</summary>
     private void ShowSnack(string title, string text, string? actionLabel = null, Action? action = null, int seconds = 10)
     {
+        // U1: o aviso já está carregado, então a tradução automática da janela não o alcança; textos montados chegam prontos (Loc.F)
+        (title, text, actionLabel) = (Loc.T(title), Loc.T(text), actionLabel is null ? null : Loc.T(actionLabel));
         SnackTitle.Text = title;
         SnackText.Text = text;
         SnackText.Visibility = text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
@@ -129,8 +141,20 @@ public partial class MainWindow : Window
         SnackAction.Content = actionLabel;
         SnackAction.Visibility = actionLabel is null ? Visibility.Collapsed : Visibility.Visible;
         Snack.Visibility = Visibility.Visible;
+        // O texto pode ser o mesmo do aviso anterior: pede a leitura de novo, agora que está na tela
+        LiveRegions.Announce(SnackTitle);
+        if (text.Length > 0) LiveRegions.Announce(SnackText);
         _snackTimer.Stop();
         _snackTimer.Interval = TimeSpan.FromSeconds(seconds + text.Length / 25); // tempo de leitura cresce com o texto
+        RestartSnackTimer();
+    }
+
+    /// <summary>U6: aviso com ação (Instalar, Ver em Ações) só sai quando a pessoa fecha ou usa; os outros somem sozinhos.</summary>
+    private void RestartSnackTimer()
+    {
+        _snackTimer.Stop();
+        if (Snack.Visibility != Visibility.Visible || _snackAction is not null || SnackAction.Visibility == Visibility.Visible) return;
+        if (Snack.IsMouseOver || Snack.IsKeyboardFocusWithin) return;
         _snackTimer.Start();
     }
 
@@ -141,12 +165,29 @@ public partial class MainWindow : Window
     // ---------- Barra lateral compacta em janelas estreitas ----------
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e) => ApplyNavDensity();
 
+    /// <summary>B46: sem espaço para o título e os avisos lado a lado (texto grande, janela estreita), os avisos descem para baixo do título.</summary>
+    private void PageHeader_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        PageTitle.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        HeaderChips.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        bool below = PageHeader.ActualWidth < PageTitle.DesiredSize.Width + HeaderChips.DesiredSize.Width + 16;
+        if ((Grid.GetRow(HeaderChips) == 1) == below) return;
+        Grid.SetRow(HeaderChips, below ? 1 : 0);
+        Grid.SetColumn(HeaderChips, below ? 0 : 1);
+        Grid.SetColumnSpan(HeaderChips, below ? 2 : 1);
+        HeaderChips.Margin = below ? new Thickness(0, 8, 0, 0) : new Thickness(0);
+        HeaderChips.HorizontalAlignment = below ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+    }
+
     /// <summary>Menu só com ícones na janela estreita ou no modo compacto (B15).</summary>
     public void ApplyNavDensity()
     {
-        bool icons = Density.NavIconsOnly(ActualWidth, TextScale.Factor, Host.Settings.Compact);
-        Nav.Tag = icons ? "compact" : null;
-        NavPane.MinWidth = icons ? 0 : 200;
+        // Redesign V3: trilho (ícone sobre o rótulo) é o padrão; o modo largo encolhe para só ícones em janela estreita
+        bool rail = Host.Settings.NavStyle != "expanded";
+        bool icons = !rail && Density.NavIconsOnly(ActualWidth, TextScale.Factor, Host.Settings.Compact);
+        Nav.Tag = rail ? "rail" : icons ? "compact" : null;
+        NavPane.Width = rail ? 88 * Math.Max(1, TextScale.Factor * 0.9) : double.NaN;
+        NavPane.MinWidth = rail || icons ? 0 : 220;
     }
 
     // ---------- Busca nas tabelas (M24) ----------
@@ -184,21 +225,12 @@ public partial class MainWindow : Window
     {
         var s = Host.Settings;
         if (s.WinLeft is not { } x || s.WinTop is not { } y || s.WinWidth is not { } w || s.WinHeight is not { } h) return;
-        if (WindowPlacement.Fit(new Box(x, y, w, h), WorkAreas(), MinWidth, MinHeight) is not { } fit) return; // monitor sumiu: centraliza
+        if (WindowPlacement.Fit(new Box(x, y, w, h), WindowFit.WorkAreas(), MinWidth, MinHeight) is not { } fit) return; // monitor sumiu: centraliza
         WindowStartupLocation = WindowStartupLocation.Manual;
         (Left, Top, Width, Height) = (fit.X, fit.Y, fit.Width, fit.Height);
         if (s.WinMaximized) WindowState = WindowState.Maximized;
     }
 
-    /// <summary>Área útil de cada monitor (sem a barra de tarefas), convertida para as unidades do WPF.</summary>
-    private static List<Box> WorkAreas()
-    {
-        var primary = System.Windows.Forms.Screen.PrimaryScreen;
-        double scale = primary is null || SystemParameters.PrimaryScreenWidth <= 0 ? 1 : primary.Bounds.Width / SystemParameters.PrimaryScreenWidth;
-        return System.Windows.Forms.Screen.AllScreens
-            .Select(sc => new Box(sc.WorkingArea.X / scale, sc.WorkingArea.Y / scale, sc.WorkingArea.Width / scale, sc.WorkingArea.Height / scale))
-            .ToList();
-    }
 
     private void UpdateTotals(DataGrid grid)
     {
@@ -207,6 +239,9 @@ public partial class MainWindow : Window
             ProcTotal.Text = total == 0 ? "" : TableTotals.Processes(ProcGrid.Items.OfType<ProcRow>().Select(r => (r.Count, r.CpuPct, r.MemMB)).ToList(), total);
         else if (grid == SpaceGrid)
             SpaceTotal.Text = total == 0 ? "" : TableTotals.Space(SpaceGrid.Items.OfType<FolderUsage>().Select(f => f.Bytes).ToList(), total);
+        else if (grid == ProgGrid)
+            ProgTotal.Text = total == 0 ? "" : TableTotals.Programs(ProgGrid.Items.OfType<ProgramRow>()
+                .Select(r => r.Program.SizeSource == SizeSource.None ? (long?)null : r.Bytes).ToList(), total);
         else if (grid == StartupGrid)
         {
             var visible = StartupGrid.Items.OfType<StartupEntry>().ToList();
@@ -220,7 +255,7 @@ public partial class MainWindow : Window
         if (Host.Settings.PlaySounds) System.Media.SystemSounds.Asterisk.Play();
     }
 
-    private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid, TasksGrid, ExtensionsGrid, EventLogsGrid];
+    private DataGrid[] Grids() => [ProcGrid, CleanGrid, SpaceGrid, ProgGrid, StartupGrid, AlertsGrid, ActionsGrid, ServicesGrid, TasksGrid, ExtensionsGrid, EventLogsGrid];
 
     public void SavePlacement()
     {
@@ -255,10 +290,10 @@ public partial class MainWindow : Window
 
     // ---------- A38: modo simulação ----------
     /// <summary>Com a simulação ligada, mostra o que seria feito e devolve true (quem chamou não faz nada).</summary>
-    private bool Simulate(string action, string details)
+    internal bool Simulate(string action, string details)
     {
         if (!Host.Settings.SimulationMode) return false;
-        ShowSnack($"Simulação: {action}", details + " Nada foi alterado.", "Desligar simulação", () => SetSimulation(false), seconds: 15);
+        ShowSnack(Loc.F("Simulação: {0}", Loc.T(action)), Loc.T(details) + " " + Loc.T("Nada foi alterado."), "Desligar simulação", () => SetSimulation(false), seconds: 15);
         return true;
     }
 
@@ -270,7 +305,7 @@ public partial class MainWindow : Window
             ShowSnack("Modo demonstração", "Aqui a simulação fica sempre ligada: nenhuma ação altera este computador.");
             return;
         }
-        if (!on && !Host.EnsureUnlocked("desligar o modo simulação")) { SimMode.IsChecked = true; return; } // B38
+        if (!on && !Host.EnsureUnlocked(Loc.T("desligar o modo simulação"))) { SimMode.IsChecked = true; return; } // B38
         Host.Settings.SimulationMode = on;
         Host.Settings.Save();
         SimMode.IsChecked = on;
@@ -289,9 +324,11 @@ public partial class MainWindow : Window
         {
             case TabProcs when Host.Latest is { } s: RefreshProcesses(s); break;
             case TabClean when CleanGrid.ItemsSource is null: Scan_Click(this, new RoutedEventArgs()); break; // a análise só lê, então roda ao abrir
+            case TabPrograms when !_progLoaded: _ = LoadProgramsAsync(); break;
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
             case TabTweaks: LoadTweaks(); break;
+            case TabSystem when _sysSections is null: _ = LoadSystemAsync(); break;
             case TabSettings: CfgMsg.Text = ""; LoadPlans(); RefreshLockCard(); break;
         }
         Host.Settings.LastTab = Tabs.SelectedIndex;

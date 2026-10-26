@@ -5,7 +5,11 @@ namespace NotebookDoctor.Services;
 /// <param name="Kind">"Ação", "Aviso", "Instalação" ou "Pico"</param>
 public sealed record TimelineEvent(DateTime Time, string Kind, string Title, string Detail)
 {
-    public string TimeText => Time.ToString("dd/MM HH:mm");
+    public string TimeText => Loc.Stamp(Time);
+    // M13: a grade mostra estes (o registro de Ações e de avisos guarda o texto no idioma em que foi gravado)
+    public string KindText => Loc.T(Kind);
+    public string TitleText => Loc.T(Title);
+    public string DetailText => Loc.T(Detail);
 }
 
 /// <summary>M47: junta numa linha do tempo o que aconteceu no período (ações, avisos, instalações e picos de uso).</summary>
@@ -31,9 +35,9 @@ public static class Timeline
                 var top = run.SelectMany(r => r.Top).GroupBy(n => n, StringComparer.OrdinalIgnoreCase)
                     .OrderByDescending(g => g.Count()).Take(3).Select(g => g.Key).ToList();
                 int minutes = (int)Math.Round((run[^1].T - run[0].T).TotalMinutes);
-                string what = cpu ? $"CPU média de {run.Average(r => r.Cpu):0}%" : $"memória média de {run.Average(r => r.Ram):0}%";
+                string what = cpu ? Loc.F("CPU média de {0:0}%", run.Average(r => r.Cpu)) : Loc.F("memória média de {0:0}%", run.Average(r => r.Ram));
                 events.Add(new(run[0].T, "Pico", cpu ? "CPU alta" : "Memória alta",
-                               $"{what} por {Pt.N(minutes, "minuto", "minutos")}" + (top.Count > 0 ? $". Mais pesados: {string.Join(", ", top)}" : "")));
+                               Loc.F("{0} por {1}", what, Pt.N(minutes, "minuto", "minutos")) + (top.Count > 0 ? ". " + Loc.F("Mais pesados: {0}", string.Join(", ", top)) : "")));
             }
             run.Clear();
         }

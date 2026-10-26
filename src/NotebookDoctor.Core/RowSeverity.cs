@@ -30,10 +30,10 @@ public static class CleanOutcome
         if (freed >= CelebrateBytes)
         {
             long photos = freed / (3L << 20); // foto de celular ≈ 3 MB
-            return ($"Ótimo: {Units.Bytes(freed)} liberados!", $"Espaço para cerca de {photos:N0} fotos de celular. {Friendly.Pick(Friendly.Freed, d)}", true);
+            return (Loc.F("Ótimo: {0} liberados!", Units.Bytes(freed)), Loc.F("Espaço para cerca de {0:N0} fotos de celular.", photos) + " " + Friendly.Pick(Friendly.Freed, d), true);
         }
         return freed > 0
-            ? ($"{Units.Bytes(freed)} liberados", Friendly.Pick(Friendly.Freed, d), false)
-            : ("Nada para liberar", Friendly.Pick(Friendly.NothingFreed, d), false);
+            ? (Loc.F("{0} liberados", Units.Bytes(freed)), Friendly.Pick(Friendly.Freed, d), false)
+            : (Loc.T("Nada para liberar"), Friendly.Pick(Friendly.NothingFreed, d), false);
     }
 }

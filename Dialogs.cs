@@ -28,7 +28,7 @@ public static class Dialogs
     public static void ShowWelcome(Window owner, Services.AppSettings s)
     {
         var dlg = NewWindow(owner, "Bem-vindo ao Notebook Doctor", 520);
-        var heading = Heading("Bem-vindo ao Notebook Doctor", "FsTitleLarge", new Thickness(0, 0, 0, 8));
+        var heading = Heading("Bem-vindo ao Notebook Doctor", "FsTitle", new Thickness(0, 0, 0, 8));
         var intro = new TextBlock
         {
             Text = "O app acompanha CPU, memória e disco, explica o que deixa o notebook lento e corrige com segurança. " +
@@ -104,6 +104,336 @@ public static class Dialogs
         dlg.ShowDialog();
     }
 
+    /// <summary>
+    /// Fase 5: revisão das sobras antes de apagar. O nível escolhido decide o que aparece (Seguro, Moderado ou
+    /// Avançado); só o que está à vista e marcado é devolvido. Sem administrador, o que exige administrador fica de fora.
+    /// Devolve null quando a pessoa pula.
+    /// </summary>
+    public static List<Services.Leftover>? ReviewLeftovers(Window owner, string program, IReadOnlyList<Services.Leftover> items, bool isAdmin)
+    {
+        if (!isAdmin) foreach (var l in items.Where(l => l.NeedsAdmin)) l.Selected = false;
+        string title = Services.Loc.F("Sobras de {0}", program);
+        var dlg = NewWindow(owner, title, 980);
+        dlg.SizeToContent = SizeToContent.Manual;
+        dlg.Height = 620;
+        dlg.ResizeMode = ResizeMode.CanResize;
+
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 4));
+        var sub = new TextBlock
+        {
+            Text = Services.Loc.T("Revise antes de apagar. Tudo vai para um backup por 30 dias e pode ser desfeito na aba Ações."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+
+        var level = new ComboBox { Width = 460, Margin = new Thickness(0, 0, 0, 8), HorizontalAlignment = HorizontalAlignment.Left };
+        level.Items.Add(Services.Loc.T("Seguro: só o que aponta para a pasta do programa"));
+        level.Items.Add(Services.Loc.T("Moderado: também pastas e chaves com o nome dele"));
+        level.Items.Add(Services.Loc.T("Avançado: também nomes parecidos (confira um por um)"));
+        level.SelectedIndex = 1;
+        System.Windows.Automation.AutomationProperties.SetName(level, Services.Loc.T("Nível da busca"));
+
+        var adminNote = new TextBlock
+        {
+            Text = Services.Loc.T("Itens com \"Exige administrador\" só saem com o app aberto como administrador (Ajustes › Reabrir como administrador)."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
+            Visibility = !isAdmin && items.Any(l => l.NeedsAdmin) ? Visibility.Visible : Visibility.Collapsed,
+        };
+        adminNote.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+
+        var grid = new DataGrid { AutoGenerateColumns = false, CanUserAddRows = false, SelectionMode = DataGridSelectionMode.Single };
+        System.Windows.Automation.AutomationProperties.SetName(grid, title);
+        // Marcar com um clique só (a coluna de caixa padrão do DataGrid pede dois)
+        var check = new FrameworkElementFactory(typeof(CheckBox));
+        check.SetBinding(System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty,
+            new System.Windows.Data.Binding(nameof(Services.Leftover.Selected)) { Mode = System.Windows.Data.BindingMode.TwoWay, UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.PropertyChanged });
+        check.SetBinding(System.Windows.Automation.AutomationProperties.NameProperty, new System.Windows.Data.Binding(nameof(Services.Leftover.Display)));
+        check.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+        grid.Columns.Add(new DataGridTemplateColumn { Header = Services.Loc.T("Apagar"), CellTemplate = new DataTemplate { VisualTree = check }, Width = 70 });
+        DataGridTextColumn Text(string header, string path, DataGridLength width) =>
+            new() { Header = header, Binding = new System.Windows.Data.Binding(path), Width = width, IsReadOnly = true };
+        grid.Columns.Add(Text(Services.Loc.T("Nível"), nameof(Services.Leftover.LevelText), 90));
+        grid.Columns.Add(Text(Services.Loc.T("Tipo"), nameof(Services.Leftover.KindText), 130));
+        grid.Columns.Add(Text(Services.Loc.T("Local"), nameof(Services.Leftover.Display), new DataGridLength(1, DataGridLengthUnitType.Star)));
+        grid.Columns.Add(Text(Services.Loc.T("Motivo"), nameof(Services.Leftover.Reason), 230));
+        grid.Columns.Add(Text(Services.Loc.T("Tamanho"), nameof(Services.Leftover.SizeText), 90));
+        grid.Columns.Add(Text(Services.Loc.T("Atenção"), nameof(Services.Leftover.Notes), 170));
+
+        List<Services.Leftover> Visible() => Services.LeftoverScanner.UpTo(items, (Services.LeftoverLevel)level.SelectedIndex).ToList();
+        void Refresh() { grid.ItemsSource = Visible(); }
+        level.SelectionChanged += (_, _) => Refresh();
+        Refresh();
+
+        List<Services.Leftover>? result = null;
+        var buttons = new DockPanel { Margin = new Thickness(0, 12, 0, 0), LastChildFill = false };
+        Button Btn(string text, string style)
+        {
+            var b = new Button { Content = text, Margin = new Thickness(8, 0, 0, 0) };
+            b.SetResourceReference(FrameworkElement.StyleProperty, style);
+            return b;
+        }
+        var all = Btn(Services.Loc.T("Marcar todos"), "TextButton");
+        var none = Btn(Services.Loc.T("Desmarcar todos"), "TextButton");
+        all.Margin = new Thickness(0);
+        void Mark(bool on)
+        {
+            foreach (var l in Visible()) l.Selected = on && (isAdmin || !l.NeedsAdmin);
+            grid.Items.Refresh();
+        }
+        all.Click += (_, _) => Mark(true);
+        none.Click += (_, _) => Mark(false);
+        var skip = Btn(Services.Loc.T("Pular"), "TextButton");
+        skip.IsCancel = true;
+        skip.Click += (_, _) => dlg.Close();
+        var delete = Btn(Services.Loc.T("Apagar selecionados"), "DangerButton");
+        delete.Click += (_, _) =>
+        {
+            result = Visible().Where(l => l.Selected && (isAdmin || !l.NeedsAdmin)).ToList();
+            dlg.Close();
+        };
+        DockPanel.SetDock(all, Dock.Left); DockPanel.SetDock(none, Dock.Left);
+        DockPanel.SetDock(delete, Dock.Right); DockPanel.SetDock(skip, Dock.Right);
+        buttons.Children.Add(all); buttons.Children.Add(none); buttons.Children.Add(delete); buttons.Children.Add(skip);
+
+        var root = new DockPanel { Margin = new Thickness(24) };
+        foreach (var top in new FrameworkElement[] { heading, sub, level, adminNote }) { DockPanel.SetDock(top, Dock.Top); root.Children.Add(top); }
+        DockPanel.SetDock(buttons, Dock.Bottom);
+        root.Children.Add(buttons);
+        root.Children.Add(grid);
+        dlg.Content = root;
+        dlg.ShowDialog();
+        return result;
+    }
+
+    /// <summary>Leva 5.3: escolhas da fila de desinstalação.</summary>
+    public sealed record QueueChoice(bool Silent, bool AutoLeftovers);
+
+    /// <summary>Leva 5.3: confirma a fila, com modo silencioso (padrão) e "apagar as sobras sem perguntar" (desligado).</summary>
+    public static QueueChoice? ConfirmQueue(Window owner, IReadOnlyList<string> programs, IReadOnlyList<string> skipped)
+    {
+        string title = Services.Loc.F("Desinstalar {0}?", Services.Pt.N(programs.Count, Services.Loc.T("programa"), Services.Loc.T("programas")));
+        var dlg = NewWindow(owner, title, 520);
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
+        var list = new ListBox { ItemsSource = programs, MaxHeight = 200, Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetName(list, title);
+        var body = new TextBlock
+        {
+            Text = Services.Loc.T("Um de cada vez, com um ponto de restauração antes. Se um falhar, os outros continuam.")
+                   + (skipped.Count > 0 ? "\n\n" + Services.Loc.F("Ficam de fora (o Windows não deixa remover por aqui): {0}", string.Join(", ", skipped)) : ""),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var silent = new CheckBox
+        {
+            Content = Services.Loc.T("Sem janelas, quando o desinstalador permitir"), IsChecked = true, Margin = new Thickness(0, 0, 0, 8),
+            ToolTip = Services.Loc.T("Pacotes MSI, Inno Setup, NSIS e outros conhecidos desinstalam sem perguntar nada. Os outros abrem a janela de sempre."),
+        };
+        var auto = new CheckBox
+        {
+            Content = Services.Loc.T("Apagar as sobras sem perguntar (nível Moderado, com backup)"), IsChecked = false, Margin = new Thickness(0, 0, 0, 20),
+            ToolTip = Services.Loc.T("Desmarcado, o app mostra as sobras de cada programa para você revisar no fim da fila."),
+        };
+        QueueChoice? result = null;
+        var cancel = new Button { Content = Services.Loc.T("Cancelar"), IsCancel = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        var ok = new Button { Content = Services.Loc.T("Desinstalar") };
+        ok.SetResourceReference(FrameworkElement.StyleProperty, "DangerButton");
+        ok.Click += (_, _) => { result = new QueueChoice(silent.IsChecked == true, auto.IsChecked == true); dlg.Close(); };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, ok } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, list, body, silent, auto, buttons } };
+        dlg.ShowDialog();
+        return result;
+    }
+
+    /// <summary>Leva 5.3: nome e, se a pessoa souber, a pasta de um programa que já saiu da lista, para procurar as sobras.</summary>
+    public static (string Name, string? Folder)? AskLeftoverTarget(Window owner)
+    {
+        string title = Services.Loc.T("Procurar sobras de um programa já removido");
+        var dlg = NewWindow(owner, title, 520);
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
+        var body = new TextBlock
+        {
+            Text = Services.Loc.T("Para programas que não aparecem mais na lista, mas deixaram pastas e registro. Com a pasta, a busca também acha o que aponta para ela."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 16),
+        };
+        body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var nameLabel = new TextBlock { Text = Services.Loc.T("Nome do programa"), Margin = new Thickness(0, 0, 0, 4) };
+        var name = new TextBox { Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetName(name, nameLabel.Text);
+        var folderLabel = new TextBlock { Text = Services.Loc.T("Pasta onde ele estava (opcional)"), Margin = new Thickness(0, 0, 0, 4) };
+        var folder = new TextBox { Margin = new Thickness(0, 0, 8, 0) };
+        System.Windows.Automation.AutomationProperties.SetName(folder, folderLabel.Text);
+        var browse = new Button { Content = Services.Loc.T("Escolher…") };
+        browse.SetResourceReference(FrameworkElement.StyleProperty, "TonalButton");
+        browse.Click += (_, _) =>
+        {
+            var pick = new Microsoft.Win32.OpenFolderDialog { Title = folderLabel.Text };
+            if (pick.ShowDialog(dlg) == true) folder.Text = pick.FolderName;
+        };
+        var folderRow = new DockPanel { Margin = new Thickness(0, 0, 0, 20) };
+        DockPanel.SetDock(browse, Dock.Right);
+        folderRow.Children.Add(browse);
+        folderRow.Children.Add(folder);
+        (string, string?)? result = null;
+        var cancel = new Button { Content = Services.Loc.T("Cancelar"), IsCancel = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        var ok = new Button { Content = Services.Loc.T("Procurar"), IsDefault = true };
+        ok.Click += (_, _) =>
+        {
+            if (name.Text.Trim().Length == 0) { name.Focus(); return; }
+            result = (name.Text.Trim(), folder.Text.Trim().Length > 0 ? folder.Text.Trim() : null);
+            dlg.Close();
+        };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { cancel, ok } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, body, nameLabel, name, folderLabel, folderRow, buttons } };
+        dlg.Loaded += (_, _) => name.Focus();
+        dlg.ShowDialog();
+        return result;
+    }
+
+    /// <summary>
+    /// Leva 5.4: instalações monitoradas, com detalhes, exportar, importar e apagar. Devolve a que a pessoa pediu para
+    /// desinstalar (quem chamou cuida disso), ou null.
+    /// </summary>
+    public static Services.InstallTrace? ShowTraces(Window owner)
+    {
+        string title = Services.Loc.T("Instalações monitoradas");
+        var dlg = NewWindow(owner, title, 760);
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 4));
+        var sub = new TextBlock
+        {
+            Text = Services.Loc.T("O que cada instalação criou no disco e no registro. \"Desinstalar\" usa essa anotação e a busca de sobras; você revisa antes de apagar."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var list = new ListBox { Height = 260, Margin = new Thickness(0, 0, 0, 8) };
+        System.Windows.Automation.AutomationProperties.SetName(list, title);
+        var msg = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetLiveSetting(msg, System.Windows.Automation.AutomationLiveSetting.Polite);
+        Services.InstallTrace? result = null;
+
+        void Load()
+        {
+            var traces = Services.TraceStore.List();
+            list.ItemsSource = traces.Select(t => new ListBoxItem
+            {
+                Tag = t,
+                Content = $"{t.Name} · {t.Started.ToString("g", Services.Loc.Culture)} · {Services.Pt.N(t.Count, Services.Loc.T("item"), Services.Loc.T("itens"))}"
+                          + (t.Imported ? $" · {Services.Loc.T("importada")}" : ""),
+            }).ToList();
+            if (traces.Count == 0) msg.Text = Services.Loc.T("Nenhuma instalação monitorada ainda. Use \"Instalar monitorando…\" na aba Programas.");
+        }
+        Services.InstallTrace? Selected()
+        {
+            if ((list.SelectedItem as ListBoxItem)?.Tag is Services.InstallTrace t) return t;
+            msg.Text = Services.Loc.T("Selecione uma instalação na lista.");
+            return null;
+        }
+        Button Btn(string text, string? style = "TextButton")
+        {
+            var b = new Button { Content = text, Margin = new Thickness(0, 0, 8, 0) };
+            if (style is not null) b.SetResourceReference(FrameworkElement.StyleProperty, style);
+            return b;
+        }
+
+        var uninstall = Btn(Services.Loc.T("Desinstalar…"), null);
+        uninstall.Click += (_, _) => { if (Selected() is { } t) { result = t; dlg.Close(); } };
+        var details = Btn(Services.Loc.T("Ver detalhes"), "TonalButton");
+        details.Click += (_, _) => { if (Selected() is { } t) ShowText(dlg, t.Name, Services.TraceRules.Report(t)); };
+        var export = Btn(Services.Loc.T("Exportar…"));
+        export.Click += (_, _) =>
+        {
+            if (Selected() is not { } t) return;
+            var save = new Microsoft.Win32.SaveFileDialog
+            {
+                FileName = t.Name,
+                Filter = $"{Services.Loc.T("Para importar em outro PC (JSON)")}|*.json|{Services.Loc.T("Texto")}|*.txt|{Services.Loc.T("Página (HTML)")}|*.html",
+            };
+            if (save.ShowDialog(dlg) != true) return;
+            try { Services.TraceStore.Export(t, save.FileName); msg.Text = Services.Loc.F("Salvo: {0}", save.FileName); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { msg.Text = ex.Message; }
+        };
+        var import = Btn(Services.Loc.T("Importar…"));
+        import.Click += (_, _) =>
+        {
+            var open = new Microsoft.Win32.OpenFileDialog { Filter = $"{Services.Loc.T("Instalação monitorada (JSON)")}|*.json" };
+            if (open.ShowDialog(dlg) != true) return;
+            msg.Text = Services.TraceStore.Import(open.FileName) is { } t
+                ? Services.Loc.F("{0} importada. Os itens dela entram como Moderado: confira na revisão.", t.Name)
+                : Services.Loc.T("O arquivo não é uma instalação monitorada.");
+            Load();
+        };
+        var delete = Btn(Services.Loc.T("Apagar"));
+        delete.Click += (_, _) =>
+        {
+            if (Selected() is not { } t) return;
+            if (!Confirm(dlg, Services.Loc.T("Apagar a anotação?"), Services.Loc.T("O programa continua instalado; só a anotação da instalação sai."), Services.Loc.T("Apagar"))) return;
+            Services.TraceStore.Delete(t.Id);
+            Load();
+        };
+        var close = Btn(Services.Loc.T("Fechar"));
+        close.IsCancel = true;
+        close.Click += (_, _) => dlg.Close();
+        var buttons = new WrapPanel { Children = { uninstall, details, export, import, delete, close } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, sub, list, msg, buttons } };
+        Load();
+        dlg.ShowDialog();
+        return result;
+    }
+
+    /// <summary>Fase 5: backups da remoção de sobras, com restaurar e apagar.</summary>
+    public static void ShowBackups(Window owner, Services.BackupStore store)
+    {
+        string title = Services.Loc.T("Backups das sobras removidas");
+        var dlg = NewWindow(owner, title, 720);
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 4));
+        var sub = new TextBlock
+        {
+            Text = Services.Loc.T("Cada remoção de sobras guarda o que apagou por 30 dias (até 2 GB no total). Restaurar devolve tudo ao lugar."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
+        };
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var list = new ListBox { Height = 260, Margin = new Thickness(0, 0, 0, 8) };
+        System.Windows.Automation.AutomationProperties.SetName(list, title);
+        var msg = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetLiveSetting(msg, System.Windows.Automation.AutomationLiveSetting.Polite);
+
+        void Load()
+        {
+            var sessions = store.List();
+            list.ItemsSource = sessions.Select(m => new ListBoxItem { Content = Services.BackupRules.Describe(m), Tag = m.Id }).ToList();
+            if (sessions.Count == 0) msg.Text = Services.Loc.T("Nenhum backup guardado.");
+        }
+        string? Selected() => (list.SelectedItem as ListBoxItem)?.Tag as string;
+
+        var restore = new Button { Content = Services.Loc.T("Restaurar"), Margin = new Thickness(0, 0, 8, 0) };
+        restore.Click += (_, _) =>
+        {
+            if (Selected() is not { } id) { msg.Text = Services.Loc.T("Selecione um backup na lista."); return; }
+            if (!Confirm(dlg, Services.Loc.T("Restaurar backup?"), Services.Loc.T("Os arquivos, chaves e tarefas guardados voltam para onde estavam."), Services.Loc.T("Restaurar"))) return;
+            msg.Text = store.Restore(id);
+            Services.ActionLog.Add("Backup de sobras restaurado", id);
+            Load();
+        };
+        var delete = new Button { Content = Services.Loc.T("Apagar backup"), Margin = new Thickness(0, 0, 8, 0) };
+        delete.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        delete.Click += (_, _) =>
+        {
+            if (Selected() is not { } id) { msg.Text = Services.Loc.T("Selecione um backup na lista."); return; }
+            if (!Confirm(dlg, Services.Loc.T("Apagar backup?"), Services.Loc.T("Depois disso, essa remoção de sobras não pode mais ser desfeita."), Services.Loc.T("Apagar"), danger: true)) return;
+            try { store.Delete(id); msg.Text = Services.Loc.T("Backup apagado."); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { msg.Text = ex.Message; }
+            Load();
+        };
+        var close = new Button { Content = Services.Loc.T("Fechar"), IsCancel = true };
+        close.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        close.Click += (_, _) => dlg.Close();
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { restore, delete, close } };
+        dlg.Content = new StackPanel { Margin = new Thickness(24), Children = { heading, sub, list, msg, buttons } };
+        Load();
+        dlg.ShowDialog();
+    }
+
     private static Window NewWindow(Window owner, string title, double width)
     {
         var dlg = new Window
@@ -129,17 +459,95 @@ public static class Dialogs
     private static TextBlock Heading(string text, string sizeKey, Thickness margin)
     {
         var t = new TextBlock { Text = text, Margin = margin, TextWrapping = TextWrapping.Wrap };
-        t.SetResourceReference(TextBlock.FontFamilyProperty, "FontMedium");
+        t.SetResourceReference(TextBlock.FontFamilyProperty, "FontTitle");
         t.SetResourceReference(TextBlock.FontSizeProperty, sizeKey);
         System.Windows.Automation.AutomationProperties.SetHeadingLevel(t, System.Windows.Automation.AutomationHeadingLevel.Level1);
         return t;
+    }
+
+    /// <summary>Leva 6.2: escolher, entre os sites que têm cookies, os que devem continuar conectados. Devolve a lista nova, ou null se cancelou.</summary>
+    public static List<string>? PickSites(Window owner, IReadOnlyList<(string Site, int Count)> sites, IEnumerable<string> kept)
+    {
+        string title = Services.Loc.T("Sites a manter conectados");
+        var dlg = NewWindow(owner, title, 520);
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 4));
+        var sub = new TextBlock
+        {
+            Text = Services.Loc.T("Marque os sites que devem continuar conectados depois da limpeza. Os mais usados vêm primeiro."),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 10),
+        };
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
+        var keptSet = new HashSet<string>(kept, StringComparer.OrdinalIgnoreCase);
+        var list = new ListBox { Height = 300, SelectionMode = SelectionMode.Multiple, Margin = new Thickness(0, 0, 0, 12) };
+        System.Windows.Automation.AutomationProperties.SetName(list, title);
+        // Os já mantidos entram na lista mesmo sem cookies agora, para a escolha anterior não se perder
+        var all = sites.Select(s => (s.Site, s.Count)).Concat(keptSet.Where(k => sites.All(s => !s.Site.Equals(k, StringComparison.OrdinalIgnoreCase))).Select(k => (k, 0))).ToList();
+        foreach (var (site, count) in all)
+        {
+            var item = new ListBoxItem { Tag = site, Content = count > 0 ? $"{site} · {Services.Pt.N(count, Services.Loc.T("cookie"), Services.Loc.T("cookies"))}" : site };
+            list.Items.Add(item);
+            if (keptSet.Contains(site)) list.SelectedItems.Add(item);
+        }
+        List<string>? result = null;
+        var ok = new Button { Content = Services.Loc.T("Salvar"), IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
+        ok.Click += (_, _) => { result = list.SelectedItems.OfType<ListBoxItem>().Select(i => (string)i.Tag).ToList(); dlg.Close(); };
+        var cancel = new Button { Content = Services.Loc.T("Cancelar"), IsCancel = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        cancel.Click += (_, _) => dlg.Close();
+        dlg.Content = new StackPanel
+        {
+            Margin = new Thickness(24),
+            Children = { heading, sub, list, new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { ok, cancel } } },
+        };
+        dlg.ShowDialog();
+        return result;
+    }
+
+    /// <summary>
+    /// Leva 8.2 (C11): confirmação de apagar uma unidade inteira. Só segue se a pessoa digitar a letra da unidade e, quando ela tem nome,
+    /// o nome. Clicar não basta.
+    /// </summary>
+    public static bool ConfirmDriveWipe(Window owner, Services.DriveFacts drive, string message)
+    {
+        string title = Services.Loc.T("Apagar a unidade inteira");
+        var dlg = NewWindow(owner, title, 560);
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
+        var body = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 14) };
+        var (letter, label) = Services.DriveWipeRules.Confirmation(drive);
+        var letterLabel = new TextBlock { Text = Services.Loc.F("Digite a letra da unidade ({0}:) para confirmar", letter), Margin = new Thickness(0, 0, 0, 4) };
+        var typedLetter = new TextBox { Margin = new Thickness(0, 0, 0, 12), MaxLength = 3 };
+        System.Windows.Automation.AutomationProperties.SetName(typedLetter, letterLabel.Text);
+        var panel = new StackPanel { Margin = new Thickness(24), Children = { heading, body, letterLabel, typedLetter } };
+        TextBox? typedLabel = null;
+        if (label is not null)
+        {
+            var nameLabel = new TextBlock { Text = Services.Loc.F("Digite o nome da unidade ({0}) para confirmar", label), Margin = new Thickness(0, 0, 0, 4) };
+            typedLabel = new TextBox { Margin = new Thickness(0, 0, 0, 12) };
+            System.Windows.Automation.AutomationProperties.SetName(typedLabel, nameLabel.Text);
+            panel.Children.Add(nameLabel);
+            panel.Children.Add(typedLabel);
+        }
+        bool result = false;
+        var cancel = new Button { Content = Services.Loc.T("Cancelar"), IsCancel = true, IsDefault = true };
+        cancel.SetResourceReference(FrameworkElement.StyleProperty, "TextButton");
+        var ok = new Button { Content = Services.Loc.T("Apagar tudo"), IsEnabled = false };
+        ok.SetResourceReference(FrameworkElement.StyleProperty, "DangerButton");
+        void Check() => ok.IsEnabled = Services.DriveWipeRules.Confirmed(drive, typedLetter.Text, typedLabel?.Text ?? "");
+        typedLetter.TextChanged += (_, _) => Check();
+        if (typedLabel is not null) typedLabel.TextChanged += (_, _) => Check();
+        ok.Click += (_, _) => { result = true; dlg.Close(); };
+        panel.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 8, 0, 0), Children = { cancel, ok } });
+        dlg.Content = panel;
+        dlg.Loaded += (_, _) => typedLetter.Focus();
+        dlg.ShowDialog();
+        return result;
     }
 
     /// <summary>B23/B24: texto longo (novidades, licenças, privacidade) com rolagem.</summary>
     public static void ShowText(Window owner, string title, string text)
     {
         var dlg = NewWindow(owner, title, 600);
-        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
         var body = new TextBox
         {
             Text = text, TextWrapping = TextWrapping.Wrap, IsReadOnly = true, BorderThickness = new Thickness(0),
@@ -163,10 +571,10 @@ public static class Dialogs
     {
         var dlg = NewWindow(owner!, "Senha das configurações", 420);
         if (owner is null) dlg.WindowStartupLocation = WindowStartupLocation.CenterScreen; // janela principal escondida (bandeja)
-        var heading = Heading("Senha das configurações", "FsTitleLarge", new Thickness(0, 0, 0, 8));
+        var heading = Heading("Senha das configurações", "FsTitle", new Thickness(0, 0, 0, 8));
         var body = new TextBlock
         {
-            Text = $"Para {what}, digite a senha definida pelo responsável por este computador.",
+            Text = Services.Loc.F("Para {0}, digite a senha definida pelo responsável por este computador.", what),
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12),
         };
         body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
@@ -213,7 +621,7 @@ public static class Dialogs
         };
         Theme(dlg);
 
-        var heading = Heading(title, "FsTitleLarge", new Thickness(0, 0, 0, 12));
+        var heading = Heading(title, "FsTitle", new Thickness(0, 0, 0, 12));
         var body = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 24) };
         body.SetResourceReference(TextBlock.ForegroundProperty, "OnSurfaceVariant");
 

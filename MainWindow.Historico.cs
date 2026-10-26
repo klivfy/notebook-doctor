@@ -20,29 +20,29 @@ public partial class MainWindow
         FillProcTimeline(data);
         if (data.Count < 2)
         {
-            HistInfo.Text = "Ainda sem dados suficientes: o app grava uma amostra por minuto.";
+            HistInfo.Text = Loc.T("Ainda sem dados suficientes: o app grava uma amostra por minuto.");
             HCpu.SetValues(Array.Empty<double>()); HRam.SetValues(Array.Empty<double>()); HFree.SetValues(Array.Empty<double>()); HScore.SetValues(Array.Empty<double>());
             HOffenders.Text = "–";
             return;
         }
-        HistInfo.Text = $"{data.Count} amostras";
+        HistInfo.Text = Pt.N(data.Count, "amostra", "amostras");
         var times = HistoryStore.DownsampleTimes(data.Select(d => d.T).ToList(), 300);
         HCpu.SetValues(HistoryStore.Downsample(data.Select(d => d.Cpu).ToList(), 300), times);
         HRam.SetValues(HistoryStore.Downsample(data.Select(d => d.Ram).ToList(), 300), times);
         HFree.SetValues(HistoryStore.Downsample(data.Select(d => d.FreePct).ToList(), 300), times);
-        HCpuLabel.Text = $"CPU · média {data.Average(d => d.Cpu):0}% · pico {data.Max(d => d.Cpu):0}%";
-        HRamLabel.Text = $"RAM · média {data.Average(d => d.Ram):0}% · pico {data.Max(d => d.Ram):0}%";
-        HDiskLabel.Text = $"Espaço livre no disco · agora {data[^1].FreePct:0}%";
+        HCpuLabel.Text = Loc.F("CPU · média {0:0}% · pico {1:0}%", data.Average(d => d.Cpu), data.Max(d => d.Cpu));
+        HRamLabel.Text = Loc.F("RAM · média {0:0}% · pico {1:0}%", data.Average(d => d.Ram), data.Max(d => d.Ram));
+        HDiskLabel.Text = Loc.F("Espaço livre no disco · agora {0:0}%", data[^1].FreePct);
         var scores = data.Where(d => d.Score >= 0).Select(d => (double)d.Score).ToList();
         HScore.SetValues(HistoryStore.Downsample(scores, 300));
-        HScoreLabel.Text = scores.Count > 1 ? $"Nota de saúde · média {scores.Average():0} · mínima {scores.Min():0}" : "Nota de saúde · coletando dados";
+        HScoreLabel.Text = scores.Count > 1 ? Loc.F("Nota de saúde · média {0:0} · mínima {1:0}", scores.Average(), scores.Min()) : Loc.T("Nota de saúde · coletando dados");
 
         var heavy = data.Where(d => d.Cpu >= 50 || d.Ram >= 80).ToList();
         var basis = heavy.Count >= 5 ? heavy : data;
         var ranking = basis.SelectMany(d => d.Top).GroupBy(n => n)
             .Select(g => (Name: g.Key, Pct: g.Count() * 100.0 / basis.Count)).OrderByDescending(x => x.Pct).Take(6);
-        string head = heavy.Count >= 5 ? $"Nos {heavy.Count} momentos de carga alta (CPU ≥ 50% ou RAM ≥ 80%):\n" : "Nenhum período de carga alta registrado; ranking geral:\n";
-        HOffenders.Text = head + string.Join("\n", ranking.Select(r => $"• {r.Name} — entre os 3 maiores em {r.Pct:0}% das amostras"));
+        string head = (heavy.Count >= 5 ? Loc.F("Nos {0} momentos de carga alta (CPU ≥ 50% ou RAM ≥ 80%):", heavy.Count) : Loc.T("Nenhum período de carga alta registrado; ranking geral:")) + "\n";
+        HOffenders.Text = head + string.Join("\n", ranking.Select(r => "• " + Loc.F("{0} — entre os 3 maiores em {1:0}% das amostras", r.Name, r.Pct)));
     }
 
     // ---------- Tendências: hoje × semana passada (M48) e previsão do disco (M50) ----------
@@ -52,17 +52,17 @@ public partial class MainWindow
         if (HistoryInsights.CompareWithLastWeek(month, now) is { } c)
         {
             static string Diff(double today, double last, string unit) =>
-                Math.Abs(today - last) < 2 ? $"igual ({today:0}{unit})" : $"{today:0}{unit} contra {last:0}{unit} {(today > last ? "▲" : "▼")}";
-            HCompare.Text = "Últimas 24 h comparadas com o mesmo horário da semana passada:\n"
-                + $"• CPU média: {Diff(c.Today.Cpu, c.LastWeek.Cpu, "%")}\n"
-                + $"• RAM média: {Diff(c.Today.Ram, c.LastWeek.Ram, "%")}"
-                + (c.Today.Score is { } a && c.LastWeek.Score is { } b ? $"\n• Nota de saúde: {Diff(a, b, "")}" : "");
+                Math.Abs(today - last) < 2 ? Loc.F("igual ({0})", $"{today:0}{unit}") : Loc.F("{0} contra {1}", $"{today:0}{unit}", $"{last:0}{unit}") + (today > last ? " ▲" : " ▼");
+            HCompare.Text = Loc.T("Últimas 24 h comparadas com o mesmo horário da semana passada:") + "\n"
+                + "• " + Loc.F("CPU média: {0}", Diff(c.Today.Cpu, c.LastWeek.Cpu, "%")) + "\n"
+                + "• " + Loc.F("RAM média: {0}", Diff(c.Today.Ram, c.LastWeek.Ram, "%"))
+                + (c.Today.Score is { } a && c.LastWeek.Score is { } b ? "\n• " + Loc.F("Nota de saúde: {0}", Diff(a, b, "")) : "");
         }
-        else HCompare.Text = "Comparação com a semana passada: aparece quando houver uso registrado hoje e no mesmo dia da semana passada.";
+        else HCompare.Text = Loc.T("Comparação com a semana passada: aparece quando houver uso registrado hoje e no mesmo dia da semana passada.");
 
         HDiskForecast.Text = HistoryInsights.DiskFull(month, now) is { } f
-            ? $"Disco: o espaço livre cai cerca de {f.PctPerDay:0.0}% do disco por dia. Nesse ritmo, ele enche por volta de {f.When:dd/MM/yyyy}."
-            : "Disco: sem tendência de encher nos dados do último mês.";
+            ? Loc.F("Disco: o espaço livre cai cerca de {0:0.0}% do disco por dia. Nesse ritmo, ele enche por volta de {1:d}.", f.PctPerDay, f.When)
+            : Loc.T("Disco: sem tendência de encher nos dados do último mês.");
         ShowHeatmap(month);
     }
 
@@ -81,12 +81,18 @@ public partial class MainWindow
         for (int r = 0; r < 8; r++) HeatGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(18) });
 
         void Place(UIElement e, int row, int col) { Grid.SetRow(e, row); Grid.SetColumn(e, col); HeatGrid.Children.Add(e); }
-        TextBlock Label(string text) => new() { Text = text, FontSize = 10, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
+        // U11: rótulos com o menor token de texto (12 px), que cresce com o "Tamanho do texto" do Windows
+        TextBlock Label(string text)
+        {
+            var label = new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
+            label.SetResourceReference(TextBlock.FontSizeProperty, "FsCaption");
+            return label;
+        }
 
         for (int h = 0; h < 24; h += 3) Place(Label($"{h}h"), 0, h + 1);
         for (int d = 0; d < 7; d++)
         {
-            Place(Label(DayNames[d]), d + 1, 0);
+            Place(Label(Loc.T(DayNames[d])), d + 1, 0);
             for (int h = 0; h < 24; h++)
             {
                 double v = map[d, h];
@@ -94,14 +100,14 @@ public partial class MainWindow
                 if (double.IsNaN(v))
                 {
                     cell.SetResourceReference(Border.BackgroundProperty, "SurfaceVariant");
-                    cell.ToolTip = $"{DayNamesLong[d]}, {h}h: sem dados";
+                    cell.ToolTip = Loc.F("{0}, {1}h: sem dados", Loc.T(DayNamesLong[d]), h);
                 }
                 else
                 {
                     // Cor de carga do tema; a intensidade mostra a fração do tempo sob carga
                     cell.SetResourceReference(Border.BackgroundProperty, "LevelCrit");
                     cell.Opacity = 0.12 + 0.88 * v;
-                    cell.ToolTip = $"{DayNamesLong[d]}, {h}h: sob carga em {v:P0} do tempo";
+                    cell.ToolTip = Loc.F("{0}, {1}h: sob carga em {2:P0} do tempo", Loc.T(DayNamesLong[d]), h, v);
                 }
                 System.Windows.Automation.AutomationProperties.SetName(cell, cell.ToolTip as string);
                 Place(cell, d + 1, h + 1);
@@ -109,8 +115,8 @@ public partial class MainWindow
         }
 
         HHeatInfo.Text = HistoryInsights.Worst(map) is { } w
-            ? $"Pior horário: {DayNamesLong[(int)w.Day]} por volta das {w.Hour}h, com CPU ou RAM no limite em {w.Share:P0} do tempo. Quanto mais forte a cor, mais tempo sob carga."
-            : "Nenhum horário com carga frequente no último mês. Quanto mais forte a cor, mais tempo sob carga; cinza é horário sem dados.";
+            ? Loc.F("Pior horário: {0} por volta das {1}h, com CPU ou RAM no limite em {2:P0} do tempo. Quanto mais forte a cor, mais tempo sob carga.", Loc.T(DayNamesLong[(int)w.Day]), w.Hour, w.Share)
+            : Loc.T("Nenhum horário com carga frequente no último mês. Quanto mais forte a cor, mais tempo sob carga; cinza é horário sem dados.");
     }
 
     // ---------- Histórico: CSV (M06), linha do tempo por programa (M05) e avisos (M46) ----------
@@ -120,12 +126,12 @@ public partial class MainWindow
 
     private void ExportCsv_Click(object sender, RoutedEventArgs e)
     {
-        if (_histData.Count == 0) { HistInfo.Text = "Ainda não há dados no período para exportar."; return; }
+        if (_histData.Count == 0) { HistInfo.Text = Loc.T("Ainda não há dados no período para exportar."); return; }
         try
         {
             string file = HistoryCsv.Export(_histData, PeriodLabel);
             System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{file}\"");
-            ShowSnack("Histórico exportado", $"{Pt.N(_histData.Count, "amostra", "amostras")} em {System.IO.Path.GetFileName(file)}. O Explorador abriu na pasta do arquivo.");
+            ShowSnack("Histórico exportado", Loc.F("{0} em {1}. O Explorador abriu na pasta do arquivo.", Pt.N(_histData.Count, "amostra", "amostras"), System.IO.Path.GetFileName(file)));
         }
         catch (Exception ex) { ShowSnack("Não foi possível exportar", ex.Message); }
     }
@@ -157,7 +163,7 @@ public partial class MainWindow
         ProcTimelineBox.ItemsSource = names;
         if (names.Count == 0)
         {
-            ProcTimelineInfo.Text = "Os dados por programa começam a ser gravados nesta versão (uma amostra por minuto).";
+            ProcTimelineInfo.Text = Loc.T("Os dados por programa começam a ser gravados nesta versão (uma amostra por minuto).");
             PCpu.SetValues(Array.Empty<double>()); PRam.SetValues(Array.Empty<double>());
             return;
         }
@@ -177,9 +183,9 @@ public partial class MainWindow
         PRam.Max = Math.Max(100, ram.DefaultIfEmpty(0).Max() * 1.1);
         PRam.SetValues(HistoryStore.Downsample(ram, 300), times);
         int present = rows.Count(d => d.P!.ContainsKey(name));
-        PCpuLabel.Text = $"CPU · média {cpu.DefaultIfEmpty(0).Average():0.0}% · pico {cpu.DefaultIfEmpty(0).Max():0}%";
-        PRamLabel.Text = $"Memória · pico {ram.DefaultIfEmpty(0).Max():N0} MB";
-        ProcTimelineInfo.Text = rows.Count == 0 ? "" : $"Entre os mais pesados em {present * 100.0 / rows.Count:0}% das amostras";
+        PCpuLabel.Text = Loc.F("CPU · média {0:0.0}% · pico {1:0}%", cpu.DefaultIfEmpty(0).Average(), cpu.DefaultIfEmpty(0).Max());
+        PRamLabel.Text = Loc.F("Memória · pico {0:N0} MB", ram.DefaultIfEmpty(0).Max());
+        ProcTimelineInfo.Text = rows.Count == 0 ? "" : Loc.F("Entre os mais pesados em {0:0}% das amostras", present * 100.0 / rows.Count);
     }
 
     private void Period_Changed(object sender, SelectionChangedEventArgs e)

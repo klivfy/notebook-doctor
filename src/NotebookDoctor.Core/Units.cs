@@ -37,7 +37,7 @@ public static class Units
     public static string GbOf(double usedGib, double totalGib)
     {
         double f = Size == SizeUnit.Decimal ? 1.073741824 : 1;
-        return $"{usedGib * f:0.0} de {totalGib * f:0.0} {Prefix('G')}";
+        return Loc.F("{0:0.0} de {1:0.0} {2}", usedGib * f, totalGib * f, Prefix('G'));
     }
 
     /// <summary>"64 °C" ou "147 °F".</summary>

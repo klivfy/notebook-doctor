@@ -15,7 +15,7 @@ public static class Density
     /// <summary>Altura mínima das linhas das tabelas. 32 px ainda é alvo de clique confortável.</summary>
     public static double RowHeight(bool compact) => compact ? 32 : 40;
 
-    public static double CardPadding(bool compact) => compact ? 14 : 20;
+    public static double CardPadding(bool compact) => compact ? 12 : 16;
 
-    public static double CardMargin(bool compact) => compact ? 4 : 6;
+    public static double CardMargin(bool compact) => compact ? 2 : 4;
 }

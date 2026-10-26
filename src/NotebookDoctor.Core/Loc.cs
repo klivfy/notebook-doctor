@@ -54,6 +54,9 @@ public static class Loc
     }
 
     /// <summary>Texto com valores ("{0} processos"). A tradução mantém os mesmos {0}, {1}…</summary>
+    /// <summary>Data e hora curtas para listas ("25/10 14:30"; em inglês "10/25 14:30"), sem o ano.</summary>
+    public static string Stamp(DateTime t) => t.ToString(Language == "en" ? "MM/dd HH:mm" : "dd/MM HH:mm", CultureInfo.InvariantCulture);
+
     public static string F(string ptFormat, params object?[] args) => string.Format(CultureInfo.CurrentCulture, T(ptFormat), args);
 
     public static Dictionary<string, string> Load(string language)

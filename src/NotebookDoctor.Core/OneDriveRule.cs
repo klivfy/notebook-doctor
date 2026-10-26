@@ -24,10 +24,13 @@ public static class OneDriveRule
     public static Finding? Evaluate(OneDriveInfo? o, double diskFreePct)
     {
         if (o is null || !ShouldWarn(o, diskFreePct)) return null;
-        string online = o.OnlineBytes > 0 ? $"; {Pt.Bytes(o.OnlineBytes)} já estão só online" : "";
+        string online = o.OnlineBytes > 0 ? "; " + Loc.F("{0} já estão só online", Pt.Bytes(o.OnlineBytes)) : "";
         return new Finding("ATENCAO", $"OneDrive ocupa {Pt.Bytes(o.LocalBytes)}{(o.Partial ? " ou mais" : "")} neste computador",
             $"{o.Folder}{online}",
             "Ative \"Arquivos sob Demanda\" nas configurações do OneDrive e, na pasta, use clique direito › \"Liberar espaço\" no que não precisa offline. Os arquivos continuam na nuvem e aparecem na pasta.",
-            "open-folder", "Abrir pasta do OneDrive", o.Folder);
+            "open-folder", "Abrir pasta do OneDrive", o.Folder)
+        {
+            TitleShown = Loc.F(o.Partial ? "OneDrive ocupa {0} ou mais neste computador" : "OneDrive ocupa {0} neste computador", Pt.Bytes(o.LocalBytes)),
+        };
     }
 }

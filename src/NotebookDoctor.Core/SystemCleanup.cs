@@ -60,10 +60,10 @@ public static class RestorePointRules
 
     public static string Describe(IReadOnlyList<RestorePointInfo> points, long usedBytes)
     {
-        string used = usedBytes > 0 ? $" Ocupam {Pt.Bytes(usedBytes)} no disco." : "";
-        if (points.Count == 0) return "Nenhum ponto de restauração neste computador." + used;
+        string used = usedBytes > 0 ? " " + Loc.F("Ocupam {0} no disco.", Pt.Bytes(usedBytes)) : "";
+        if (points.Count == 0) return Loc.T("Nenhum ponto de restauração neste computador.") + used;
         var newest = points.MaxBy(p => p.Created)!;
-        string when = newest.Created == DateTime.MinValue ? "" : $" O mais recente é de {newest.Created:dd/MM/yyyy HH:mm}";
+        string when = newest.Created == DateTime.MinValue ? "" : " " + Loc.F("O mais recente é de {0:dd/MM/yyyy HH:mm}", newest.Created);
         string what = newest.Description.Length > 0 ? $" ({newest.Description})." : when.Length > 0 ? "." : "";
         return $"{Pt.N(points.Count, "ponto de restauração", "pontos de restauração")}.{when}{what}{used}";
     }

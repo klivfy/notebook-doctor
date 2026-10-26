@@ -11,7 +11,7 @@ public partial class MainWindow
     private void RefreshProfileCard()
     {
         var p = Profile.All.FirstOrDefault(x => x.Id == Host.Settings.ActiveProfile) ?? Profile.All[0];
-        ProfileDesc.Text = $"Ativo: {p.Name}. {p.Description}";
+        ProfileDesc.Text = Loc.F("Ativo: {0}. {1}", Loc.T(p.Name), Loc.T(p.Description));
         foreach (var b in new[] { ProfWork, ProfMeeting, ProfBattery, ProfPerf })
             b.SetResourceReference(StyleProperty, (string)b.Tag == p.Id ? typeof(Button) : "TonalButton");
     }
@@ -19,8 +19,8 @@ public partial class MainWindow
     private async void Profile_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as Button)?.Tag is not string id || Profile.All.FirstOrDefault(x => x.Id == id) is not { } prof) return;
-        if (!Host.EnsureUnlocked($"ativar o perfil {prof.Name}")) return; // B38
-        if (Simulate($"Ativar o perfil {prof.Name}", $"{prof.Description} Trocaria o plano de energia, os avisos e o Modo Foco conforme o perfil.")) return;
+        if (!Host.EnsureUnlocked(Loc.F("ativar o perfil {0}", Loc.T(prof.Name)))) return; // B38
+        if (Simulate(Loc.F("Ativar o perfil {0}", Loc.T(prof.Name)), Loc.T(prof.Description) + " " + Loc.T("Trocaria o plano de energia, os avisos e o Modo Foco conforme o perfil."))) return;
         var notes = new List<string>();
 
         var plans = await Task.Run(PowerPlans.List);
@@ -33,14 +33,14 @@ public partial class MainWindow
 
         if (prof.Focus && !Host.Focus.Active && Host.Latest is { } snap) notes.Add(await Host.Focus.StartAsync(snap, Host.Health));
         else if (!prof.Focus && Host.Focus.Active) notes.Add(await Host.Focus.StopAsync());
-        FocusBtn.Content = Host.Focus.Active ? "Desligar Modo Foco" : "Modo Foco";
+        FocusBtn.Content = Loc.T(Host.Focus.Active ? "Desligar Modo Foco" : "Modo Foco");
 
         Host.Settings.ActiveProfile = prof.Id;
         Host.Settings.Save();
         LoadSettingsIntoForm();
         RefreshProfileCard();
-        ActionLog.Add($"Perfil: {prof.Name}", string.Join(" ", notes));
-        ShowSnack($"Perfil {prof.Name} ativo", (target is { } t ? $"Plano de energia: {t.Name}. " : "") + string.Join(" ", notes),
+        ActionLog.Add(Loc.F("Perfil: {0}", Loc.T(prof.Name)), string.Join(" ", notes.Select(Loc.T)));
+        ShowSnack(Loc.F("Perfil {0} ativo", Loc.T(prof.Name)), (target is { } t ? Loc.F("Plano de energia: {0}.", t.Name) + " " : "") + string.Join(" ", notes.Select(Loc.T)),
                   "Ver em Ações", () => Tabs.SelectedIndex = TabActions);
     }
 
@@ -51,12 +51,12 @@ public partial class MainWindow
     {
         if (!AppInfo.IsAdmin)
         {
-            if (Dialogs.ConfirmOnce(this, Host.Settings, "admin-restart", "Precisa de administrador", "SFC e DISM só funcionam com privilégios elevados. Reiniciar o Notebook Doctor como administrador agora?", "Reiniciar"))
+            if (Dialogs.ConfirmOnce(this, Host.Settings, "admin-restart", Loc.T("Precisa de administrador"), Loc.T("SFC e DISM só funcionam com privilégios elevados. Reiniciar o Notebook Doctor como administrador agora?"), Loc.T("Reiniciar")))
                 Host.RestartAsAdmin();
             return;
         }
-        if (repair && Simulate("Reparar arquivos do Windows", "Executaria \"sfc /scannow\" e \"DISM /Online /Cleanup-Image /RestoreHealth\".")) return;
-        if (repair && !Dialogs.Confirm(this, "Reparar arquivos do Windows?", "O Windows vai verificar e corrigir arquivos do sistema (sfc /scannow e DISM /RestoreHealth). Pode levar de 10 a 30 minutos e usa bastante disco e CPU. Não desligue o computador durante o processo.", "Reparar")) return;
+        if (repair && Simulate(Loc.T("Reparar arquivos do Windows"), Loc.T("Executaria \"sfc /scannow\" e \"DISM /Online /Cleanup-Image /RestoreHealth\"."))) return;
+        if (repair && !Dialogs.Confirm(this, Loc.T("Reparar arquivos do Windows?"), Loc.T("O Windows vai verificar e corrigir arquivos do sistema (sfc /scannow e DISM /RestoreHealth). Pode levar de 10 a 30 minutos e usa bastante disco e CPU. Não desligue o computador durante o processo."), Loc.T("Reparar"))) return;
 
         _integrityCts = new CancellationTokenSource();
         var ct = _integrityCts.Token;
@@ -67,15 +67,19 @@ public partial class MainWindow
         {
             Log(repair ? "== SFC /scannow ==" : "== SFC /verifyonly ==");
             int sfc = await SystemIntegrity.Sfc(repair, Log, ct);
-            Log($"SFC terminou (código {sfc}).");
+            Log(Loc.F("SFC terminou (código {0}).", sfc));
             Log(repair ? "== DISM /RestoreHealth ==" : "== DISM /ScanHealth ==");
             int dism = await SystemIntegrity.Dism(repair, Log, ct);
-            Log($"DISM terminou (código {dism}).");
-            ActionLog.Add(repair ? "Reparo de integridade (SFC+DISM)" : "Verificação de integridade (SFC+DISM)", $"SFC={sfc}, DISM={dism}");
+            Log(Loc.F("DISM terminou (código {0}).", dism));
+            ActionLog.Add(Loc.T(repair ? "Reparo de integridade (SFC+DISM)" : "Verificação de integridade (SFC+DISM)"), $"SFC={sfc}, DISM={dism}");
         }
-        catch (OperationCanceledException) { Log("Cancelado."); }
+        catch (OperationCanceledException) { Log(Loc.T("Cancelado.")); }
         finally { IntegrityCheckBtn.IsEnabled = IntegrityRepairBtn.IsEnabled = true; IntegrityCancelBtn.IsEnabled = false; }
     }
+
+    // Leva 7.2 (C13)
+    private void Drivers_Click(object sender, RoutedEventArgs e) => new DriversWindow(this).ShowDialog();
+    private void DriversOem_Click(object sender, RoutedEventArgs e) => new DriversWindow(this, oem: true).ShowDialog();
 
     private async void IntegrityCheck_Click(object sender, RoutedEventArgs e) => await RunIntegrityAsync(repair: false);
     private async void IntegrityRepair_Click(object sender, RoutedEventArgs e) => await RunIntegrityAsync(repair: true);
@@ -88,12 +92,12 @@ public partial class MainWindow
         var previous = plans.FirstOrDefault(p => p.Active);
         var target = plans.FirstOrDefault(p => p.Guid.Equals(guid, StringComparison.OrdinalIgnoreCase));
         if (target is null || previous is null || previous.Guid == target.Guid) return false;
-        if (Simulate("Trocar o plano de energia", $"Trocaria o plano \"{previous.Name}\" por \"{target.Name}\" (powercfg /setactive).")) return false;
+        if (Simulate(Loc.T("Trocar o plano de energia"), Loc.F("Trocaria o plano \"{0}\" por \"{1}\" (powercfg /setactive).", previous.Name, target.Name))) return false;
 
         string restore = await EnsureRestorePointAsync("Plano de energia");
         bool ok = await Task.Run(() => PowerPlans.SetActive(target.Guid));
-        PlanMsg.Text = ok ? $"Plano ativo: {target.Name}" : "Não foi possível trocar o plano.";
-        if (ok) ActionLog.Add("Plano de energia alterado", $"{previous.Name} → {target.Name}. Ponto de restauração: {restore}", "power", previous.Guid);
+        PlanMsg.Text = ok ? Loc.F("Plano ativo: {0}", target.Name) : Loc.T("Não foi possível trocar o plano.");
+        if (ok) ActionLog.Add(Loc.T("Plano de energia alterado"), Loc.F("{0} → {1}. Ponto de restauração: {2}", previous.Name, target.Name, Loc.T(restore)), "power", previous.Guid);
         _ = Host.RefreshHealthAsync();
         LoadPlans();
         return ok;
@@ -101,16 +105,16 @@ public partial class MainWindow
 
     /// <summary>A02: sugestão ao ligar ou tirar da tomada, com a troca a um clique.</summary>
     public void ShowPowerSuggestion(PowerSuggestion s) =>
-        ShowSnack(s.Title, s.Reason, $"Usar {s.Plan.Name}", async () =>
+        ShowSnack(s.Title, s.Reason, Loc.F("Usar {0}", s.Plan.Name), async () =>
         {
-            if (await ActivatePlanAsync(s.Plan.Guid)) ShowSnack($"Plano ativo: {s.Plan.Name}", "Dá para desfazer na aba Ações.");
+            if (await ActivatePlanAsync(s.Plan.Guid)) ShowSnack(Loc.F("Plano ativo: {0}", s.Plan.Name), "Dá para desfazer na aba Ações.");
         }, seconds: 20);
 
     // ---------- Teste de conexão (A46) ----------
     private async void NetTest_Click(object sender, RoutedEventArgs e)
     {
         NetTestBtn.IsEnabled = false;
-        NetTestResult.Text = "Testando… (uns 10 segundos)";
+        NetTestResult.Text = Loc.T("Testando… (uns 10 segundos)");
         try { NetTestResult.Text = string.Join("\n", await NetTest.RunAsync()); }
         finally { NetTestBtn.IsEnabled = true; }
     }
@@ -140,7 +144,7 @@ public partial class MainWindow
         if (Simulate("Criar plano Alto desempenho", "Executaria \"powercfg /duplicatescheme\" a partir do modelo oficial. O plano não seria ativado.")) return;
         if (!Dialogs.ConfirmOnce(this, Host.Settings, "create-plan", "Criar plano Alto desempenho?", "O Windows ganhará um novo plano de energia (cópia do modelo oficial Alto desempenho). Ele não é ativado automaticamente. Pode consumir mais bateria.", "Criar")) return;
         var plan = await Task.Run(PowerPlans.CreateHighPerformance);
-        PlanMsg.Text = plan is null ? "O Windows não permitiu criar o plano neste computador." : $"Plano \"{plan.Name}\" criado.";
+        PlanMsg.Text = plan is null ? Loc.T("O Windows não permitiu criar o plano neste computador.") : Loc.F("Plano \"{0}\" criado.", plan.Name);
         if (plan is not null) ActionLog.Add("Plano de energia criado", plan.Name, "plan-created", plan.Guid);
         _ = Host.RefreshHealthAsync();
         LoadPlans();
@@ -150,8 +154,8 @@ public partial class MainWindow
     {
         bool admin = AppInfo.IsAdmin;
         AdminText.Text = admin
-            ? "O app está com permissão de administrador: a limpeza inclui as pastas temporárias do Windows e a otimização do SSD (TRIM, que avisa o disco sobre o espaço livre)."
-            : "O app roda sem privilégios elevados, por segurança. Para limpar também as pastas temporárias do Windows e otimizar o SSD (TRIM, que avisa o disco sobre o espaço livre), reinicie como administrador. O Windows pedirá sua confirmação.";
+            ? Loc.T("O app está com permissão de administrador: a limpeza inclui as pastas temporárias do Windows e a otimização do SSD (TRIM, que avisa o disco sobre o espaço livre).")
+            : Loc.T("O app roda sem privilégios elevados, por segurança. Para limpar também as pastas temporárias do Windows e otimizar o SSD (TRIM, que avisa o disco sobre o espaço livre), reinicie como administrador. O Windows pedirá sua confirmação.");
         AdminBtn.Visibility = admin ? Visibility.Collapsed : Visibility.Visible;
     }
 
@@ -182,11 +186,19 @@ public partial class MainWindow
     }
 
     // ---------- Sobre: novidades, privacidade e licenças (B23/B24) ----------
+    // Só os endereços fixos do XAML chegam aqui; AppInfo.OpenKlivfy ainda confere https e o domínio da Klivfy
+    private void KlivfyPage_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string url }) AppInfo.OpenKlivfy(url);
+    }
+
     private void AboutText_Click(object sender, RoutedEventArgs e)
     {
         var btn = (Button)sender;
         string name = (string)btn.Tag;
-        using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream($"Textos.{name}.txt");
+        // M13: Novidades.en.txt, Novidades.es.txt…; sem a versão do idioma, o texto em português
+        var assembly = typeof(MainWindow).Assembly;
+        using var stream = assembly.GetManifestResourceStream($"Textos.{name}.{Loc.Language}.txt") ?? assembly.GetManifestResourceStream($"Textos.{name}.txt");
         if (stream is null) return;
         using var reader = new System.IO.StreamReader(stream);
         Dialogs.ShowText(this, (string)btn.Content, reader.ReadToEnd());
@@ -216,7 +228,7 @@ public partial class MainWindow
             string file = System.IO.Path.Combine(AppPaths.ExportDir(), $"log-diagnostico-{DateTime.Now:yyyy-MM-dd_HHmm}.txt");
             System.IO.File.WriteAllText(file, SupportPackage.Redact(text), new System.Text.UTF8Encoding(true));
             AppInfo.OpenShell(file);
-            ShowSnack("Log de diagnóstico salvo", $"{System.IO.Path.GetFileName(file)}, em {System.IO.Path.GetDirectoryName(file)}. Sem nome de usuário nem do computador.");
+            ShowSnack("Log de diagnóstico salvo", Loc.F("{0}, em {1}. Sem nome de usuário nem do computador.", System.IO.Path.GetFileName(file), System.IO.Path.GetDirectoryName(file)));
         }
         catch (Exception ex) { ShowSnack("Não foi possível salvar o log", ex.Message); }
     }
@@ -225,7 +237,7 @@ public partial class MainWindow
     private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
     {
         UpdateBtn.IsEnabled = false;
-        UpdateMsg.Text = "Procurando…";
+        UpdateMsg.Text = Loc.T("Procurando…");
         try
         {
             var (result, info) = await Updater.CheckAsync();
@@ -234,9 +246,9 @@ public partial class MainWindow
             Host.SetPendingUpdate(result == UpdateCheck.Available ? info : null);
             UpdateMsg.Text = result switch
             {
-                UpdateCheck.UpToDate => $"Você já tem a versão mais recente ({AppInfo.Version}).",
-                UpdateCheck.NotPublished => "Nenhuma atualização publicada pela Klivfy no momento.",
-                UpdateCheck.Offline => "Sem conexão com klivfy.com. Tente de novo mais tarde.",
+                UpdateCheck.UpToDate => Loc.F("Você já tem a versão mais recente ({0}).", AppInfo.Version),
+                UpdateCheck.NotPublished => Loc.T("Nenhuma atualização publicada pela Klivfy no momento."),
+                UpdateCheck.Offline => Loc.T("Sem conexão com klivfy.com. Tente de novo mais tarde."),
                 _ => "",
             };
             if (result == UpdateCheck.Available) OfferUpdate();
@@ -248,28 +260,28 @@ public partial class MainWindow
     public void OfferUpdate()
     {
         if (Host.PendingUpdate is not { } info) return;
-        UpdateMsg.Text = $"Versão {info.Version} disponível. {info.Notes}".Trim();
-        ShowSnack($"Versão {info.Version} disponível", info.Notes, "Instalar", () => _ = InstallUpdateAsync(info), seconds: 20);
+        UpdateMsg.Text = Loc.F("Versão {0} disponível. {1}", info.Version, info.Notes).Trim();
+        ShowSnack(Loc.F("Versão {0} disponível", info.Version), info.Notes, "Instalar", () => _ = InstallUpdateAsync(info), seconds: 20);
     }
 
     private async Task InstallUpdateAsync(UpdateInfo info)
     {
-        if (!Dialogs.Confirm(this, $"Instalar a versão {info.Version}?",
-                "O instalador será baixado de klivfy.com e conferido (hash e assinatura digital da Klivfy). Depois, o Notebook Doctor fecha e o instalador abre. Suas configurações e o histórico são mantidos.",
-                "Baixar e instalar")) return;
+        if (!Dialogs.Confirm(this, Loc.F("Instalar a versão {0}?", info.Version),
+                Loc.T("O instalador será baixado de klivfy.com e conferido (hash e assinatura digital da Klivfy). Depois, o Notebook Doctor fecha e o instalador abre. Suas configurações e o histórico são mantidos."),
+                Loc.T("Baixar e instalar"))) return;
         UpdateBtn.IsEnabled = false;
         try
         {
-            var progress = new Progress<int>(p => UpdateMsg.Text = $"Baixando… {p}%");
+            var progress = new Progress<int>(p => UpdateMsg.Text = Loc.F("Baixando… {0}%", p));
             string file = await Updater.DownloadAndVerifyAsync(info, progress);
-            UpdateMsg.Text = "Instalador conferido. Abrindo…";
-            ActionLog.Add($"Atualização para {info.Version}", "Instalador verificado (SHA-256 e assinatura Klivfy).");
+            UpdateMsg.Text = Loc.T("Instalador conferido. Abrindo…");
+            ActionLog.Add(Loc.F("Atualização para {0}", info.Version), Loc.T("Instalador verificado (SHA-256 e assinatura Klivfy)."));
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(file) { UseShellExecute = true });
             Host.QuitForUpdate();
         }
         catch (Exception ex)
         {
-            UpdateMsg.Text = "Atualização cancelada: " + ex.Message;
+            UpdateMsg.Text = Loc.F("Atualização cancelada: {0}", ex.Message);
             ShowSnack("Atualização não instalada", ex.Message);
         }
         finally { UpdateBtn.IsEnabled = true; }
@@ -289,6 +301,10 @@ public partial class MainWindow
         CfgAlerts.IsChecked = s.AlertsEnabled;
         CfgToasts.IsChecked = s.NativeNotifications;
         CfgWeekly.IsChecked = s.WeeklyCleanup;
+        SelectByTag(CfgSchedule, ScheduleRules.Key(ScheduleRules.Parse(s.ScheduleKind)));
+        CfgScheduleBrowser.IsChecked = s.ScheduleBrowser;
+        CfgJunkMonitor.IsChecked = s.JunkMonitor;
+        SelectByTag(CfgJunkLimit, s.JunkMonitorLimitMb.ToString());
         CfgRestore.IsChecked = s.RestorePointBeforeChanges;
         CfgMini.IsChecked = s.MiniWidget;
         CfgUpdates.IsChecked = s.CheckUpdates;
@@ -319,7 +335,7 @@ public partial class MainWindow
 
     private void SaveSettings_Click(object sender, RoutedEventArgs e)
     {
-        if (!Host.EnsureUnlocked("salvar as preferências")) { LoadSettingsIntoForm(); CfgMsg.Text = "Não salvo: as preferências voltaram ao que estava."; return; } // B38
+        if (!Host.EnsureUnlocked(Loc.T("salvar as preferências"))) { LoadSettingsIntoForm(); CfgMsg.Text = Loc.T("Não salvo: as preferências voltaram ao que estava."); return; } // B38
         var s = Host.Settings;
         s.ThemeMode = (CfgTheme.SelectedItem as ComboBoxItem)?.Tag as string ?? "system";
         string oldLanguage = s.Language;
@@ -328,6 +344,10 @@ public partial class MainWindow
         s.AlertsEnabled = CfgAlerts.IsChecked == true;
         s.NativeNotifications = CfgToasts.IsChecked == true;
         s.WeeklyCleanup = CfgWeekly.IsChecked == true;
+        s.ScheduleKind = (CfgSchedule.SelectedItem as ComboBoxItem)?.Tag as string ?? "weekly";
+        s.ScheduleBrowser = CfgScheduleBrowser.IsChecked == true;
+        s.JunkMonitor = CfgJunkMonitor.IsChecked == true;
+        s.JunkMonitorLimitMb = int.TryParse((CfgJunkLimit.SelectedItem as ComboBoxItem)?.Tag as string, out int mb) ? mb : 1024;
         s.RestorePointBeforeChanges = CfgRestore.IsChecked == true;
         s.CheckUpdates = CfgUpdates.IsChecked == true;
         s.CrashReports = CfgCrash.IsChecked == true;
@@ -366,9 +386,9 @@ public partial class MainWindow
         // M13: o idioma só troca reabrindo (as telas são traduzidas ao carregar)
         if (s.Language != oldLanguage)
             ShowSnack(Loc.T("Idioma alterado"), Loc.T("Reabra o Notebook Doctor para usar o novo idioma."), Loc.T("Reabrir agora"), Host.Restart, seconds: 20);
-        CfgMsg.Text = (hotkeyOk ? "Salvo." : $"Salvo. O atalho {GlobalHotkey.Label} já é usado por outro programa, então ficou desligado.")
-                      + (clockOk ? "" : " Horário silencioso inválido (use HH:mm, ex.: 22:00): ficou o anterior.")
-                      + (themeClockOk ? "" : " Horário do tema inválido (use HH:mm, ex.: 07:00): ficou o anterior.");
+        CfgMsg.Text = (hotkeyOk ? Loc.T("Salvo.") : Loc.F("Salvo. O atalho {0} já é usado por outro programa, então ficou desligado.", GlobalHotkey.Label))
+                      + (clockOk ? "" : " " + Loc.T("Horário silencioso inválido (use HH:mm, ex.: 22:00): ficou o anterior."))
+                      + (themeClockOk ? "" : " " + Loc.T("Horário do tema inválido (use HH:mm, ex.: 07:00): ficou o anterior."));
     }
 
     // ---------- B21: atalho no Menu Iniciar ----------
@@ -378,7 +398,7 @@ public partial class MainWindow
         {
             // A demonstração não grava nada fora da pasta temporária dela
             StartMenuBtn.IsEnabled = false;
-            StartMenuMsg.Text = "Indisponível no modo demonstração.";
+            StartMenuMsg.Text = Loc.T("Indisponível no modo demonstração.");
             return;
         }
         var state = StartMenu.Current();
@@ -397,7 +417,7 @@ public partial class MainWindow
             ShowSnack(remove ? "Atalho removido do Menu Iniciar" : "Notebook Doctor no Menu Iniciar",
                       remove ? "O app continua no mesmo lugar; só o atalho saiu." : "Procure por \"Notebook Doctor\" no Iniciar.");
         }
-        catch (Exception ex) { StartMenuMsg.Text = "Não foi possível mexer no atalho: " + ex.Message; }
+        catch (Exception ex) { StartMenuMsg.Text = Loc.F("Não foi possível mexer no atalho: {0}", ex.Message); }
     }
 
     // ---------- B38: senha das configurações (modo empresa) ----------
@@ -405,10 +425,10 @@ public partial class MainWindow
     {
         bool demo = AppPaths.Demo, policy = Host.LockFromPolicy, has = Host.LockHash is not null;
         var left = Host.Lock.UnlockedLeft(DateTime.Now);
-        LockState.Text = demo ? "Indisponível no modo demonstração." : LockSession.Describe(has, policy, left);
+        LockState.Text = demo ? Loc.T("Indisponível no modo demonstração.") : LockSession.Describe(has, policy, left);
         // Senha da política só muda no registro, por um administrador
         LockEdit.Visibility = demo || policy ? Visibility.Collapsed : Visibility.Visible;
-        LockSetBtn.Content = has ? "Trocar senha" : "Definir senha";
+        LockSetBtn.Content = Loc.T(has ? "Trocar senha" : "Definir senha");
         LockRemoveBtn.Visibility = LockCopyBtn.Visibility = has && !policy ? Visibility.Visible : Visibility.Collapsed;
         LockNowBtn.Visibility = has && left > TimeSpan.Zero ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -416,27 +436,27 @@ public partial class MainWindow
     private void LockSet_Click(object sender, RoutedEventArgs e)
     {
         bool had = Host.LockHash is not null;
-        if (had && !Host.EnsureUnlocked("trocar a senha")) return;
+        if (had && !Host.EnsureUnlocked(Loc.T("trocar a senha"))) return;
         if (PasswordHash.CheckNew(LockNew.Password, LockConfirm.Password) is { } problem) { LockMsg.Text = problem; return; }
         Host.Settings.SettingsLock = PasswordHash.Create(LockNew.Password);
         Host.Settings.Save();
         Host.Lock.Grant(DateTime.Now); // quem acabou de definir não precisa digitar de novo
         LockNew.Clear();
         LockConfirm.Clear();
-        ActionLog.Add(had ? "Senha das configurações trocada" : "Senha das configurações definida", "Guardada só como código (hash); a senha em si não fica no computador.");
-        LockMsg.Text = "Senha salva. Se ela for esquecida, apagar as preferências na pasta de dados do app remove a senha (para impedir isso, use a política do Windows).";
+        ActionLog.Add(Loc.T(had ? "Senha das configurações trocada" : "Senha das configurações definida"), Loc.T("Guardada só como código (hash); a senha em si não fica no computador."));
+        LockMsg.Text = Loc.T("Senha salva. Se ela for esquecida, apagar as preferências na pasta de dados do app remove a senha (para impedir isso, use a política do Windows).");
         RefreshLockCard();
     }
 
     private void LockRemove_Click(object sender, RoutedEventArgs e)
     {
-        if (!Host.EnsureUnlocked("remover a senha")) return;
-        if (!Dialogs.Confirm(this, "Remover a senha?", "Qualquer pessoa que use este computador poderá mudar as configurações do Notebook Doctor.", "Remover")) return;
+        if (!Host.EnsureUnlocked(Loc.T("remover a senha"))) return;
+        if (!Dialogs.Confirm(this, Loc.T("Remover a senha?"), Loc.T("Qualquer pessoa que use este computador poderá mudar as configurações do Notebook Doctor."), Loc.T("Remover"))) return;
         Host.Settings.SettingsLock = null;
         Host.Settings.Save();
         Host.Lock.Lock();
-        ActionLog.Add("Senha das configurações removida", "");
-        LockMsg.Text = "Senha removida.";
+        ActionLog.Add(Loc.T("Senha das configurações removida"), "");
+        LockMsg.Text = Loc.T("Senha removida.");
         RefreshLockCard();
     }
 
@@ -446,15 +466,15 @@ public partial class MainWindow
         try
         {
             Clipboard.SetText(code);
-            LockMsg.Text = $@"Código copiado. A TI grava em HKLM\{SettingsLockPolicy.KeyPath}, valor de texto {SettingsLockPolicy.ValueName} (por GPO ou script), e a senha passa a valer para todos os usuários.";
+            LockMsg.Text = Loc.F("Código copiado. A TI grava em HKLM\\{0}, valor de texto {1} (por GPO ou script), e a senha passa a valer para todos os usuários.", SettingsLockPolicy.KeyPath, SettingsLockPolicy.ValueName);
         }
-        catch (System.Runtime.InteropServices.COMException) { LockMsg.Text = "A área de transferência está ocupada por outro programa. Tente de novo."; }
+        catch (System.Runtime.InteropServices.COMException) { LockMsg.Text = Loc.T("A área de transferência está ocupada por outro programa. Tente de novo."); }
     }
 
     private void LockNow_Click(object sender, RoutedEventArgs e)
     {
         Host.Lock.Lock();
-        LockMsg.Text = "Bloqueado: a próxima mudança vai pedir a senha.";
+        LockMsg.Text = Loc.T("Bloqueado: a próxima mudança vai pedir a senha.");
         RefreshLockCard();
     }
 
@@ -462,7 +482,7 @@ public partial class MainWindow
     private void ShowAllColumns_Click(object sender, RoutedEventArgs e)
     {
         GridMemory.ShowAll(Grids(), Host.Settings);
-        BackupMsg.Text = "Todas as colunas voltaram a aparecer.";
+        BackupMsg.Text = Loc.T("Todas as colunas voltaram a aparecer.");
     }
 
     private static void SelectByTag(ComboBox box, string tag) =>
@@ -478,22 +498,22 @@ public partial class MainWindow
     {
         var dlg = new Microsoft.Win32.SaveFileDialog
         {
-            Title = "Exportar preferências", Filter = "Preferências do Notebook Doctor (*.json)|*.json",
+            Title = Loc.T("Exportar preferências"), Filter = Loc.T("Preferências do Notebook Doctor") + " (*.json)|*.json",
             FileName = "notebook-doctor-preferencias.json", InitialDirectory = AppPaths.ExportDir(),
         };
         if (dlg.ShowDialog(this) != true) return;
         try
         {
             System.IO.File.WriteAllText(dlg.FileName, SettingsTransfer.Export(CurrentSettingsJson(), AppInfo.Version));
-            BackupMsg.Text = $"Preferências exportadas para {dlg.FileName}.";
+            BackupMsg.Text = Loc.F("Preferências exportadas para {0}.", dlg.FileName);
         }
-        catch (Exception ex) { BackupMsg.Text = "Não foi possível salvar: " + ex.Message; }
+        catch (Exception ex) { BackupMsg.Text = Loc.F("Não foi possível salvar: {0}", ex.Message); }
     }
 
     private void ImportSettings_Click(object sender, RoutedEventArgs e)
     {
-        if (!Host.EnsureUnlocked("importar preferências")) return; // B38
-        var dlg = new Microsoft.Win32.OpenFileDialog { Title = "Importar preferências", Filter = "Preferências do Notebook Doctor (*.json)|*.json" };
+        if (!Host.EnsureUnlocked(Loc.T("importar preferências"))) return; // B38
+        var dlg = new Microsoft.Win32.OpenFileDialog { Title = Loc.T("Importar preferências"), Filter = Loc.T("Preferências do Notebook Doctor") + " (*.json)|*.json" };
         if (dlg.ShowDialog(this) != true) return;
         string merged;
         try
@@ -503,27 +523,27 @@ public partial class MainWindow
         }
         catch (Exception ex) when (ex is FormatException or System.Text.Json.JsonException or System.IO.IOException)
         {
-            BackupMsg.Text = "Não foi possível importar: " + ex.Message;
+            BackupMsg.Text = Loc.F("Não foi possível importar: {0}", ex.Message);
             return;
         }
         if (!Dialogs.Confirm(this, "Importar preferências?", "As preferências deste computador serão substituídas pelas do arquivo. Histórico e registro de ações não mudam.", "Importar")) return;
-        ApplySettingsJson(merged, "Preferências importadas", dlg.FileName);
+        ApplySettingsJson(merged, Loc.T("Preferências importadas"), dlg.FileName);
     }
 
     private void ResetSettings_Click(object sender, RoutedEventArgs e)
     {
-        if (!Host.EnsureUnlocked("redefinir as preferências")) return; // B38
-        if (!Dialogs.Confirm(this, "Redefinir preferências?", "Tema, avisos, exceções, protegidos e demais escolhas voltam ao padrão. Histórico e registro de ações não mudam.\n\nSe quiser guardar as atuais, exporte antes.", "Redefinir", danger: true)) return;
-        ApplySettingsJson(SettingsTransfer.Reset(CurrentSettingsJson(), System.Text.Json.JsonSerializer.Serialize(new AppSettings())), "Preferências redefinidas", "padrão do app");
+        if (!Host.EnsureUnlocked(Loc.T("redefinir as preferências"))) return; // B38
+        if (!Dialogs.Confirm(this, Loc.T("Redefinir preferências?"), Loc.T("Tema, avisos, exceções, protegidos e demais escolhas voltam ao padrão. Histórico e registro de ações não mudam.\n\nSe quiser guardar as atuais, exporte antes."), Loc.T("Redefinir"), danger: true)) return;
+        ApplySettingsJson(SettingsTransfer.Reset(CurrentSettingsJson(), System.Text.Json.JsonSerializer.Serialize(new AppSettings())), Loc.T("Preferências redefinidas"), Loc.T("padrão do app"));
     }
 
     private void ApplySettingsJson(string json, string title, string detail)
     {
         try { System.IO.File.WriteAllText(AppPaths.Settings, json); }
-        catch (Exception ex) { BackupMsg.Text = "Não foi possível gravar as preferências: " + ex.Message; return; }
+        catch (Exception ex) { BackupMsg.Text = Loc.F("Não foi possível gravar as preferências: {0}", ex.Message); return; }
         Host.ReloadSettingsFromDisk();
         ActionLog.Add(title, detail);
         BackupMsg.Text = $"{title}.";
-        ShowSnack(title, "Já estão valendo.");
+        ShowSnack(title, Loc.T("Já estão valendo."));
     }
 }

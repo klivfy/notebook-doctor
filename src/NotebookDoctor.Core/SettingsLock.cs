@@ -105,12 +105,12 @@ public sealed class LockSession
     /// <summary>Texto do cartão em Configurações.</summary>
     public static string Describe(bool hasPassword, bool fromPolicy, TimeSpan unlockedLeft)
     {
-        if (!hasPassword) return "Sem senha: qualquer pessoa que use este computador pode mudar as configurações.";
-        string who = fromPolicy
+        if (!hasPassword) return Loc.T("Sem senha: qualquer pessoa que use este computador pode mudar as configurações.");
+        string who = Loc.T(fromPolicy
             ? "Senha definida pela política da empresa (registro do Windows). Só um administrador pode trocá-la."
-            : "Configurações protegidas por senha.";
-        if (unlockedLeft <= TimeSpan.Zero) return $"{who} Bloqueado.";
+            : "Configurações protegidas por senha.");
+        if (unlockedLeft <= TimeSpan.Zero) return Loc.F("{0} Bloqueado.", who);
         int min = Math.Max(1, (int)Math.Ceiling(unlockedLeft.TotalMinutes));
-        return $"{who} Liberado por mais {Pt.N(min, "minuto", "minutos")}.";
+        return Loc.F("{0} Liberado por mais {1}.", who, Pt.N(min, "minuto", "minutos"));
     }
 }

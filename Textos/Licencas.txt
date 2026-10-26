@@ -3,6 +3,7 @@ Notebook Doctor
 
 Créditos
 Desenvolvido pela Klivfy Tecnologia e Consultoria em TI LTDA, com sugestões de quem usa o app pelo suporte (klivfy.com/suporte).
+Termos de uso: klivfy.com/termos. Política de privacidade: klivfy.com/privacidade.
 
 Componentes de terceiros
 
@@ -11,6 +12,9 @@ Fonte embutida no aplicativo. Licença SIL Open Font License 1.1 (scripts.sil.or
 
 Segoe Fluent Icons e Segoe UI
 Ícones e fonte do próprio Windows, usados pelo app sem serem distribuídos com ele. © Microsoft.
+
+Formato winapp2.ini
+O app lê o formato de regras de limpeza winapp2.ini (https://github.com/MoscaDotTo/Winapp2). Nenhuma regra desse projeto vem com o app. Se você importar um arquivo, as regras são da comunidade que o escreveu, sob a licença CC BY-SA 4.0.
 
 .NET 8, Windows Presentation Foundation (WPF) e Windows Forms
 © .NET Foundation e colaboradores. Licença MIT (github.com/dotnet/runtime, github.com/dotnet/wpf e github.com/dotnet/winforms).

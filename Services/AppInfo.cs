@@ -6,7 +6,7 @@ namespace NotebookDoctor.Services;
 
 public static class AppInfo
 {
-    public const string SupportUrl = "https://klivfy.com/suporte";
+    public const string SupportUrl = KlivfyUrls.Support;
     public const string Copyright = "© 2026 Klivfy Tecnologia e Consultoria em TI LTDA. Todos os direitos reservados.";
 
     public static string Version =>
@@ -22,6 +22,9 @@ public static class AppInfo
     }
 
     public static void OpenSupport() => OpenShell(SupportUrl);
+
+    /// <summary>Abre uma página do site da Klivfy (termos, privacidade). Endereço que não seja https no domínio da Klivfy não abre.</summary>
+    public static void OpenKlivfy(string url) { if (KlivfyUrls.IsTrusted(url)) OpenShell(url); }
 
     /// <summary>Abre uma URL ou arquivo com o aplicativo padrão do Windows.</summary>
     public static void OpenShell(string target)

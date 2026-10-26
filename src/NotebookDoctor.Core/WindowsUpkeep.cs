@@ -56,7 +56,7 @@ public static partial class UpdateRules
         if (u is null) yield break;
         if (u.ServiceDisabled)
         {
-            yield return new Finding("ATENCAO", "Windows Update desativado", "O serviço de atualização está desligado",
+            yield return new Finding("ATENCAO", "Windows Update desativado", Loc.T("O serviço de atualização está desligado"),
                 "Sem ele, o Windows não recebe correções de segurança. Reative em Serviços (Windows Update › Tipo de inicialização: Manual) ou com o programa que o desligou.",
                 "open-update", "Abrir Windows Update");
             yield break; // com o serviço parado, falhas e atraso são consequência
@@ -66,9 +66,9 @@ public static partial class UpdateRules
         if (stuck.Count > 0)
         {
             var s = stuck[0];
-            string more = stuck.Count > 1 ? $" (e mais {stuck.Count - 1})" : "";
+            string more = stuck.Count > 1 ? " " + Loc.F("(e mais {0})", stuck.Count - 1) : "";
             yield return new Finding("ATENCAO", "Atualização do Windows falhando",
-                $"{s.Title}{more}: {Pt.N(s.Failures, "tentativa", "tentativas")} sem sucesso, a última em {s.Last:dd/MM}",
+                $"{s.Title}{more}: " + Loc.F("{0} sem sucesso, a última em {1:dd/MM}", Pt.N(s.Failures, "tentativa", "tentativas"), s.Last),
                 "Libere espaço no disco, reinicie e tente de novo em Windows Update. Se continuar, use Configurações › Sistema › Solução de problemas › Windows Update.",
                 "open-update", "Abrir Windows Update");
         }
@@ -76,9 +76,9 @@ public static partial class UpdateRules
         bool paused = u.PausedUntil is { } until && until > now;
         var lastOk = u.History.Where(e => e.Succeeded).Select(e => (DateTime?)e.Date).Max();
         if (!paused && lastOk is { } ok && (now - ok).TotalDays >= StaleDays)
-            yield return new Finding("ATENCAO", $"Windows sem atualizar há {(int)(now - ok).TotalDays} dias", $"Última atualização instalada em {ok:dd/MM/yyyy}",
+            yield return new Finding("ATENCAO", $"Windows sem atualizar há {(int)(now - ok).TotalDays} dias", Loc.F("Última atualização instalada em {0:dd/MM/yyyy}", ok),
                 "O Windows costuma receber correções todo mês. Abra o Windows Update e clique em \"Verificar se há atualizações\".",
-                "open-update", "Abrir Windows Update");
+                "open-update", "Abrir Windows Update") { TitleShown = Loc.F("Windows sem atualizar há {0} dias", (int)(now - ok).TotalDays) };
     }
 
     /// <summary>Lê o bloco "wu" do script de saúde: [{"t":título,"d":"2026-10-01T08:30:00","r":2}, …].</summary>
@@ -119,11 +119,11 @@ public static class DriverRules
         foreach (var g in (gpus ?? []).Where(g => !Virtual.Any(v => g.Name.Contains(v, StringComparison.OrdinalIgnoreCase))).Take(2))
         {
             if (IsBasic(g.Name))
-                yield return new Finding("ATENCAO", "Vídeo sem o driver do fabricante", $"{g.Name} (driver genérico do Windows)",
+                yield return new Finding("ATENCAO", "Vídeo sem o driver do fabricante", Loc.F("{0} (driver genérico do Windows)", g.Name),
                     "Instale o driver da placa de vídeo pelo Windows Update › Opções avançadas › Atualizações opcionais, ou pelo site do fabricante do notebook.",
                     "open-optional-updates", "Abrir atualizações opcionais");
             else if (g.Date is { } d && (now - d).TotalDays >= OldDays)
-                yield return new Finding("ATENCAO", "Driver de vídeo antigo", $"{g.Name}: versão {g.Version}, de {d:MM/yyyy}",
+                yield return new Finding("ATENCAO", "Driver de vídeo antigo", Loc.F("{0}: versão {1}, de {2:MM/yyyy}", g.Name, g.Version, d),
                     "Atualize pelo app ou site do fabricante (Intel, AMD ou NVIDIA) ou pelo Windows Update › Atualizações opcionais.",
                     "open-optional-updates", "Abrir atualizações opcionais");
         }
@@ -166,12 +166,12 @@ public static class MaintenanceRules
         {
             bool ssd = diskType.Contains("SSD", StringComparison.OrdinalIgnoreCase);
             yield return new Finding("ATENCAO", "Otimização automática das unidades desligada",
-                ssd ? "O SSD não recebe o TRIM semanal" : "As unidades não são otimizadas toda semana",
+                Loc.T(ssd ? "O SSD não recebe o TRIM semanal" : "As unidades não são otimizadas toda semana"),
                 "Religue em Otimizar Unidades › Alterar configurações › \"Executar de acordo com um agendamento\".",
                 "open-defrag", "Abrir Otimizar Unidades");
         }
         if (m.AutoMaintenanceOff)
-            yield return new Finding("ATENCAO", "Manutenção automática do Windows desativada", "Desligada pelo registro (MaintenanceDisabled)",
+            yield return new Finding("ATENCAO", "Manutenção automática do Windows desativada", Loc.T("Desligada pelo registro (MaintenanceDisabled)"),
                 "Alguém ou algum programa desligou a manutenção que o Windows faz com o PC parado. Para religar, um administrador apaga o valor MaintenanceDisabled em HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Schedule\\Maintenance.",
                 "open-maintenance", "Abrir Segurança e Manutenção");
     }

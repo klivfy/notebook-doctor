@@ -16,11 +16,11 @@ public static class PowerAdvice
 
         if (!onAc && Profile.Matches("high", active.Name) && Find("balanced") is { } balanced)
             return new(balanced, "Notebook na bateria",
-                       $"O plano \"{active.Name}\" gasta a bateria mais rápido e esquenta. O \"{balanced.Name}\" dura bem mais.");
+                       Loc.F("O plano \"{0}\" gasta a bateria mais rápido e esquenta. O \"{1}\" dura bem mais.", active.Name, balanced.Name));
 
         if (onAc && Profile.Matches("saver", active.Name) && (Find("high") ?? Find("balanced")) is { } faster)
             return new(faster, "Notebook na tomada",
-                       $"Na tomada, o plano \"{active.Name}\" só deixa o notebook mais lento. O \"{faster.Name}\" aproveita a energia.");
+                       Loc.F("Na tomada, o plano \"{0}\" só deixa o notebook mais lento. O \"{1}\" aproveita a energia.", active.Name, faster.Name));
 
         return null;
     }

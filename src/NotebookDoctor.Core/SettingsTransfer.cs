@@ -13,7 +13,7 @@ public static class SettingsTransfer
 
     private static readonly HashSet<string> MachineOnly = new(StringComparer.OrdinalIgnoreCase)
     {
-        "MiniLeft", "MiniTop", "LastTab", "FirstRunDone", "LastWeeklySummary", "LastRestorePoint", "LastWeeklyRun", "LastUpdateCheck", "LastCrashSeen",
+        "MiniLeft", "MiniTop", "LastTab", "FirstRunDone", "LastWeeklySummary", "LastRestorePoint", "LastWeeklyRun", "LastJunkNotice", "WingetSourceTerms", "LastUpdateCheck", "LastCrashSeen",
         "WinLeft", "WinTop", "WinWidth", "WinHeight", "WinMaximized", "Grids", "TrayHintShown",
         // B38: a senha não viaja na exportação nem cai ao importar ou redefinir; só sai por "Remover senha"
         "SettingsLock",

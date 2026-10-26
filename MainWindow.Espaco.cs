@@ -4,12 +4,14 @@ using NotebookDoctor.Services;
 
 namespace NotebookDoctor;
 
-/// <summary>Aba Espaço: maiores pastas e arquivos, duplicados e desinstalador assistido.</summary>
+/// <summary>Aba Espaço: maiores pastas e arquivos e duplicados. Os aplicativos instalados ficam na aba Programas.</summary>
 public partial class MainWindow
 {
     // ---------- Espaço em disco (A27) ----------
     private CancellationTokenSource? _spaceCts;
     private readonly List<FolderUsage> _space = new();
+    private List<DuplicateGroup> _dupeGroups = [];
+    private string _dupeRoot = "";
 
     private async void SpaceScan_Click(object sender, RoutedEventArgs e)
     {
@@ -40,23 +42,33 @@ public partial class MainWindow
             {
                 var items = await DiskUsage.LargestFilesAsync(root, 50L << 20, 100, Progress, ct);
                 Show(items);
-                SpaceMsg.Text = $"{items.Count} maiores arquivos (50 MB ou mais) em {root}. Só leitura.";
+                SpaceMsg.Text = Loc.F("{0} maiores arquivos (50 MB ou mais) em {1}. Só leitura.", items.Count, root);
+                return;
+            }
+            if (mode == "types")
+            {
+                var types = await DiskUsage.ByTypeAsync(root, Progress, ct);
+                var items = types.Select(t => new FolderUsage { Name = t.Description, Path = "", Bytes = t.Bytes }).ToList();
+                Show(items);
+                SpaceMsg.Text = Loc.F("{0} em {1}, por tipo de arquivo. Só leitura.", Cleaner.FormatBytes(types.Sum(t => t.Bytes)), root);
                 return;
             }
             if (mode == "dupes")
             {
-                var items = await DiskUsage.DuplicatesAsync(root, 10L << 20, 60, Progress, ct);
-                Show(items);
-                int groups = items.Count(i => i.Name.Contains("(cópia 1 de"));
-                long extra = items.Where(i => !i.Name.Contains("(cópia 1 de")).Sum(i => i.Bytes);
-                SpaceMsg.Text = groups == 0 ? "Nenhum arquivo duplicado de 10 MB ou mais." : $"{Pt.N(groups, "grupo", "grupos")} de arquivos idênticos; as cópias extras ocupam {Cleaner.FormatBytes(extra)}. Confira antes de apagar qualquer uma.";
-                return;
-            }
-            if (mode == "apps")
-            {
-                var apps = await Task.Run(DiskUsage.InstalledApps, ct);
-                Show(apps);
-                SpaceMsg.Text = $"{apps.Count} aplicativos. Tamanho informado pelo próprio instalador (\"n/d\" quando ele não informa).";
+                long min = long.TryParse((SpaceMin.SelectedItem as ComboBoxItem)?.Tag as string, out long m) ? m : 10L << 20;
+                var places = WindowsPlaces.Current(AppPaths.Dir);
+                var groups = await DiskUsage.DuplicatesAsync(root, min, 60, places, Progress, ct);
+                _dupeGroups = groups;
+                _dupeRoot = root;
+                Show(groups.SelectMany(g => g.Files.Select((f, i) => new FolderUsage
+                {
+                    Name = $"{System.IO.Path.GetFileName(f.Path)}  ({Loc.F("cópia {0} de {1}", i + 1, g.Files.Count)})", Path = f.Path, Bytes = g.Size, IsFile = true,
+                })).ToList());
+                SpaceDupesBtn.IsEnabled = groups.Count > 0;
+                long extra = groups.Sum(g => g.Wasted);
+                SpaceMsg.Text = groups.Count == 0
+                    ? Loc.F("Nenhum arquivo duplicado de {0} ou mais.", Cleaner.FormatBytes(min))
+                    : Loc.F("{0} de arquivos idênticos; as cópias extras ocupam {1}. Clique em “Revisar duplicados…” para escolher o que apagar.", Pt.N(groups.Count, Loc.T("grupo"), Loc.T("grupos")), Cleaner.FormatBytes(extra));
                 return;
             }
             await DiskUsage.ScanAsync(root,
@@ -69,52 +81,45 @@ public partial class MainWindow
                     ApplySpaceFilter();
                 }),
                 msg => Dispatcher.BeginInvoke(() => SpaceMsg.Text = msg), ct);
-            SpaceMsg.Text = $"Pronto: {_space.Count} itens em {root} · total {Cleaner.FormatBytes(_space.Sum(x => x.Bytes))}. Só leitura: nada foi apagado.";
+            SpaceMsg.Text = Loc.F("Pronto: {0} itens em {1} · total {2}. Só leitura: nada foi apagado.", _space.Count, root, Cleaner.FormatBytes(_space.Sum(x => x.Bytes)));
         }
-        catch (OperationCanceledException) { SpaceMsg.Text = "Análise cancelada."; }
+        catch (OperationCanceledException) { SpaceMsg.Text = Loc.T("Análise cancelada."); }
         finally { SpaceScanBtn.IsEnabled = true; SpaceCancelBtn.IsEnabled = false; }
     }
 
     private void SpaceCancel_Click(object sender, RoutedEventArgs e) => _spaceCts?.Cancel();
 
+    /// <summary>Leva 6.3: janela de revisão dos grupos de duplicados (miniaturas, qual manter, Lixeira).</summary>
+    private void SpaceDupes_Click(object sender, RoutedEventArgs e)
+    {
+        if (_dupeGroups.Count == 0) return;
+        var window = new DuplicatesWindow(this, _dupeGroups);
+        window.ShowDialog();
+        if (window.RemovedAny) SpaceScan_Click(sender, e); // as cópias que saíram não devem continuar na lista
+    }
+
     private void SpaceMode_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded || e.Source != SpaceMode) return;
-        bool apps = (SpaceMode.SelectedItem as ComboBoxItem)?.Tag as string == "apps";
-        SpaceRoot.IsEnabled = !apps;
-        SpaceUninstallBtn.Visibility = apps ? Visibility.Visible : Visibility.Collapsed;
         SpaceGrid.ItemsSource = null;
-        SpaceMsg.Text = "Clique em Analisar.";
+        SpaceMsg.Text = Loc.T("Clique em Analisar.");
+        string mode = (SpaceMode.SelectedItem as ComboBoxItem)?.Tag as string ?? "folders";
+        SpaceMin.Visibility = SpaceDupesBtn.Visibility = mode == "dupes" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void SpaceOpen_Click(object sender, RoutedEventArgs e)
     {
-        if (SpaceGrid.SelectedItem is not FolderUsage f) { SpaceMsg.Text = "Selecione um item na lista."; return; }
+        if (SpaceGrid.SelectedItem is not FolderUsage f) { SpaceMsg.Text = Loc.T("Selecione um item na lista."); return; }
         if (f.IsFile && System.IO.File.Exists(f.Path))
         {
             try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{f.Path}\""); } catch { }
         }
         else if (System.IO.Directory.Exists(f.Path)) AppInfo.OpenShell(f.Path);
-        else SpaceMsg.Text = "Este item não informa uma pasta.";
+        else SpaceMsg.Text = Loc.T("Este item não informa uma pasta.");
     }
 
-    // ---------- Desinstalador assistido (A29) ----------
-    private void SpaceUninstall_Click(object sender, RoutedEventArgs e)
-    {
-        if (SpaceGrid.SelectedItem is not FolderUsage app || app.Tag.Length == 0) { SpaceMsg.Text = "Selecione um aplicativo."; return; }
-        if (Simulate("Abrir o desinstalador", $"Executaria o desinstalador registrado de {app.Name}: {app.Tag}")) return;
-        if (!Dialogs.Confirm(this, "Desinstalar aplicativo?",
-                $"Abrir o desinstalador de:\n{app.Name}\n\nO próprio desinstalador do programa vai abrir e pedir confirmação. O Notebook Doctor não remove nada sozinho.",
-                "Abrir desinstalador", danger: true)) return;
-        try
-        {
-            // O comando vem do registro do próprio instalador; o cmd interpreta as aspas como o Windows faria em "Aplicativos instalados"
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c \"{app.Tag}\"") { UseShellExecute = false, CreateNoWindow = true });
-            ActionLog.Add("Desinstalador aberto", app.Name);
-            SpaceMsg.Text = "Desinstalador aberto. Clique em Analisar depois para atualizar a lista.";
-        }
-        catch (Exception ex) { SpaceMsg.Text = "Não foi possível abrir o desinstalador: " + ex.Message; }
-    }
+    // A29 passou para a aba Programas (Fase 5)
+    private void SpacePrograms_Click(object sender, RoutedEventArgs e) => Tabs.SelectedIndex = TabPrograms;
 
     private void ApplySpaceFilter() => ApplyFilter(SpaceGrid, SpaceSearch.Text, o => o is FolderUsage f ? f.Name + " " + f.Path : "");
     private void SpaceSearch_Changed(object sender, TextChangedEventArgs e) => ApplySpaceFilter();

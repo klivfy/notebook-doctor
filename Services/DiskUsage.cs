@@ -37,7 +37,7 @@ public static class DiskUsage
             foreach (var f in new DirectoryInfo(root).EnumerateFiles("*", Opts))
             {
                 ct.ThrowIfCancellationRequested();
-                if (++seen % 3000 == 0) onProgress($"{seen:N0} arquivos verificados…");
+                if (++seen % 3000 == 0) onProgress(Loc.F("{0:N0} arquivos verificados…", seen));
                 long len;
                 try { len = f.Length; } catch { continue; }
                 if (len < minBytes) continue;
@@ -52,7 +52,7 @@ public static class DiskUsage
     /// Arquivos idênticos (mesmo tamanho e mesmo conteúdo), a partir de minBytes. Compara primeiro uma amostra (início + fim)
     /// e só lê o arquivo inteiro quando a amostra coincide.
     /// </summary>
-    public static async Task<List<FolderUsage>> DuplicatesAsync(string root, long minBytes, int maxGroups, Action<string> onProgress, CancellationToken ct)
+    public static async Task<List<DuplicateGroup>> DuplicatesAsync(string root, long minBytes, int maxGroups, KnownPlaces places, Action<string> onProgress, CancellationToken ct)
     {
         return await Task.Run(() =>
         {
@@ -61,10 +61,10 @@ public static class DiskUsage
             foreach (var f in new DirectoryInfo(root).EnumerateFiles("*", Opts))
             {
                 ct.ThrowIfCancellationRequested();
-                if (++seen % 3000 == 0) onProgress($"{seen:N0} arquivos verificados…");
+                if (++seen % 3000 == 0) onProgress(Loc.F("{0:N0} arquivos verificados…", seen));
                 long len;
                 try { len = f.Length; } catch { continue; }
-                if (len < minBytes) continue;
+                if (len < minBytes || DuplicateRules.IsSystemPath(f.FullName, places)) continue; // o Windows e os programas não entram
                 if (!bySize.TryGetValue(len, out var l)) bySize[len] = l = new();
                 l.Add(f.FullName);
             }
@@ -74,7 +74,7 @@ public static class DiskUsage
             foreach (var (size, files) in bySize.Where(kv => kv.Value.Count > 1))
             {
                 ct.ThrowIfCancellationRequested();
-                onProgress($"Comparando conteúdo ({++step} grupos de mesmo tamanho)…");
+                onProgress(Loc.F("Comparando conteúdo ({0} grupos de mesmo tamanho)…", ++step));
                 var byHash = new Dictionary<string, List<string>>();
                 foreach (var path in files)
                 {
@@ -97,50 +97,34 @@ public static class DiskUsage
                 }
             }
 
-            var result = new List<FolderUsage>();
-            foreach (var (size, files) in groups.OrderByDescending(g => g.size * (g.files.Count - 1)).Take(maxGroups))
-                for (int i = 0; i < files.Count; i++)
-                    result.Add(new FolderUsage
-                    {
-                        Name = $"{System.IO.Path.GetFileName(files[i])}  (cópia {i + 1} de {files.Count})",
-                        Path = files[i], Bytes = size, IsFile = true,
-                    });
-            return result;
+            static DuplicateFile Info(string path)
+            {
+                try { var i = new FileInfo(path); return new DuplicateFile(path, i.LastWriteTime, i.CreationTime); }
+                catch (IOException) { return new DuplicateFile(path, DateTime.MinValue, DateTime.MinValue); }
+            }
+            return groups.OrderByDescending(g => g.size * (g.files.Count - 1)).Take(maxGroups)
+                .Select(g => new DuplicateGroup(g.size, g.files.Select(Info).OrderBy(f => f.Path, StringComparer.OrdinalIgnoreCase).ToList())).ToList();
         }, ct);
     }
 
-    private static string? HashFile(string path, bool sampleOnly, CancellationToken ct)
+    /// <summary>C09: quanto cada tipo de arquivo ocupa dentro de root.</summary>
+    public static async Task<List<TypeUsage>> ByTypeAsync(string root, Action<string> onProgress, CancellationToken ct)
     {
-        try
+        return await Task.Run(() =>
         {
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 1 << 16);
-            using var sha = System.Security.Cryptography.SHA256.Create();
-            const int sample = 256 * 1024;
-            var buf = new byte[1 << 16];
-            if (sampleOnly)
+            var totals = new SpaceByType();
+            long seen = 0;
+            foreach (var f in new DirectoryInfo(root).EnumerateFiles("*", Opts))
             {
-                var edge = new byte[sample];
-                int n = fs.Read(edge, 0, sample);
-                sha.TransformBlock(edge, 0, n, null, 0);
-                if (fs.Length > sample * 2)
-                {
-                    fs.Seek(-sample, SeekOrigin.End);
-                    n = fs.Read(edge, 0, sample);
-                    sha.TransformBlock(edge, 0, n, null, 0);
-                }
-                sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+                ct.ThrowIfCancellationRequested();
+                if (++seen % 3000 == 0) onProgress(Loc.F("{0:N0} arquivos verificados…", seen));
+                try { totals.Add(f.FullName, f.Length); } catch (IOException) { }
             }
-            else
-            {
-                int n;
-                while ((n = fs.Read(buf, 0, buf.Length)) > 0) { ct.ThrowIfCancellationRequested(); sha.TransformBlock(buf, 0, n, null, 0); }
-                sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-            }
-            return Convert.ToHexString(sha.Hash!);
-        }
-        catch (OperationCanceledException) { throw; }
-        catch { return null; } // arquivo em uso, sem permissão ou removido
+            return totals.Result();
+        }, ct);
     }
+
+    private static string? HashFile(string path, bool sampleOnly, CancellationToken ct) => FileHash.Of(path, sampleOnly, ct);
 
     /// <summary>Aplicativos instalados (registro do Windows), do maior para o menor. Alguns instaladores não informam o tamanho.</summary>
     public static List<FolderUsage> InstalledApps()
@@ -206,7 +190,7 @@ public static class DiskUsage
             foreach (var (name, path) in entries)
             {
                 ct.ThrowIfCancellationRequested();
-                onProgress($"Medindo {name} ({++done} de {entries.Count})…");
+                onProgress(Loc.F("Medindo {0} ({1} de {2})…", name, ++done, entries.Count));
                 onItem(new FolderUsage { Name = name, Path = path, Bytes = FolderSize(path, ct) });
             }
             long loose = 0;

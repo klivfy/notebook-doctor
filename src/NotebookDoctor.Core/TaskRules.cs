@@ -45,10 +45,10 @@ public static class TaskRules
     public static string When(ScheduledTaskInfo t)
     {
         var parts = new List<string>();
-        if (t.AtBoot) parts.Add("ao ligar");
-        if (t.AtLogon) parts.Add("ao entrar");
-        if (t.Repeats) parts.Add("em horários");
-        return parts.Count == 0 ? "sob demanda" : string.Join(", ", parts);
+        if (t.AtBoot) parts.Add(Loc.T("ao ligar"));
+        if (t.AtLogon) parts.Add(Loc.T("ao entrar"));
+        if (t.Repeats) parts.Add(Loc.T("em horários"));
+        return parts.Count == 0 ? Loc.T("sob demanda") : string.Join(", ", parts);
     }
 
     /// <summary>Tarefas de terceiros ativas, das mais recomendáveis a desativar para as menos.</summary>

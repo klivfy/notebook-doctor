@@ -76,4 +76,15 @@ public static class DemoData
             yield return (s, score);
         }
     }
+
+    /// <summary>Inventário de um notebook fictício para a aba "Do fabricante". O número de série é inventado.</summary>
+    public static HardwareInventory OemInventory() => new(
+        new ChassisInfo("Dell Inc.", "Latitude 5440", "DEMO123", "0C08", "Latitude 5440", true),
+        new BiosInfo("Dell Inc.", "1.12.0", new DateTime(2024, 3, 12)),
+        [
+            new GpuInfo("Intel(R) Iris(R) Xe Graphics", SupportVendor.Intel, "31.0.101.4502", OemRules.ParseDeviceId(@"PCI\VEN_8086&DEV_A7A1&SUBSYS_0C081028&REV_04\3&11583659&0&10"), false),
+            new GpuInfo("NVIDIA GeForce MX550", SupportVendor.Nvidia, "31.0.15.3640", OemRules.ParseDeviceId(@"PCI\VEN_10DE&DEV_1F9F&SUBSYS_0C081028&REV_A1\4&2B8260C3&0&0008"), true),
+        ],
+        [new NetworkAdapterInfo("Intel(R) Wi-Fi 6E AX211 160MHz", SupportVendor.Intel, "23.30.0.6", OemRules.ParseDeviceId(@"PCI\VEN_8086&DEV_51F1&SUBSYS_00948086&REV_01\3&11583659&0&A3"))],
+        ["Realtek Audio", "Intel(R) Display Audio"]);
 }

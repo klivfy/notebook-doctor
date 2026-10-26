@@ -14,13 +14,15 @@ public static class Motion
 {
     public static bool Enabled => SystemParameters.ClientAreaAnimation && !SystemParameters.HighContrast;
 
+    // Redesign V6: tempos e curva do Windows 11 (rápido 167 ms, normal 250 ms, desacelerando no fim)
+    public static readonly TimeSpan Fast = TimeSpan.FromMilliseconds(167), Normal = TimeSpan.FromMilliseconds(250);
     private static readonly IEasingFunction Ease = new CubicEase { EasingMode = EasingMode.EaseOut };
 
     /// <summary>B04: o medidor desliza até o valor novo em vez de pular.</summary>
     public static void SetValue(ProgressBar bar, double value)
     {
         if (!Enabled) { bar.BeginAnimation(RangeBase.ValueProperty, null); bar.Value = value; return; }
-        var anim = new DoubleAnimation(value, TimeSpan.FromMilliseconds(450)) { EasingFunction = Ease };
+        var anim = new DoubleAnimation(value, Normal) { EasingFunction = Ease };
         bar.BeginAnimation(RangeBase.ValueProperty, anim);
     }
 
@@ -30,7 +32,7 @@ public static class Motion
         if (content is null || !Enabled) return;
         var move = new TranslateTransform(0, 8);
         content.RenderTransform = move;
-        content.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)) { EasingFunction = Ease });
-        move.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = Ease });
+        content.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(0, 1, Fast) { EasingFunction = Ease });
+        move.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(8, 0, Normal) { EasingFunction = Ease });
     }
 }
