@@ -21,12 +21,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- O app fica na raiz; a biblioteca e os testes têm projeto próprio e não entram na compilação dele -->
-    <Compile Remove="src/**;tests/**" />
-    <None Remove="src/**;tests/**" />
-    <Page Remove="src/**;tests/**" />
-    <ProjectReference Include="src/NotebookDoctor.Core/NotebookDoctor.Core.csproj" />
-    <ProjectReference Include="src/NotebookDoctor.Windows/NotebookDoctor.Windows.csproj" />
+    <!-- R4: o app fica em src/NotebookDoctor, ao lado da biblioteca (Core) e do que fala com o Windows (Windows) -->
+    <ProjectReference Include="../NotebookDoctor.Core/NotebookDoctor.Core.csproj" />
+    <ProjectReference Include="../NotebookDoctor.Windows/NotebookDoctor.Windows.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -8,11 +8,11 @@ Aplicativo de bandeja para Windows que mostra o que deixa o notebook lento e cor
 ## Compilar
 
 ```powershell
-dotnet build -c Release
-dotnet run -c Release
+dotnet build NotebookDoctor.sln -c Release
+dotnet run --project src/NotebookDoctor -c Release
 ```
 
-Requer Windows 10/11 e o SDK do .NET 8. Para gerar o executável: `dotnet publish -c Release -r win-x64 --self-contained false`.
+Requer Windows 10/11 e o SDK do .NET 8. Para gerar o executável: `dotnet publish src/NotebookDoctor -c Release -r win-x64 --self-contained false`.
 
 ## Linha de comando
 
@@ -37,10 +37,10 @@ As regras de diagnóstico, a nota de saúde, a detecção de vazamento de memór
 
 ## Estrutura
 
-- Raiz: o app WPF (janelas, bandeja, temas) e `Services/` com o que conversa com o Windows (processos, registro, powercfg, PowerShell, arquivos)
+- `src/NotebookDoctor`: o app WPF (janelas, bandeja, temas) e `Services/` com o que conversa com o Windows (processos, registro, powercfg, PowerShell, arquivos)
 - `MainWindow.xaml.cs`: o que é comum às abas (navegação, avisos, modo simulação); cada aba tem o seu `MainWindow.<Aba>.cs`
 - `src/NotebookDoctor.Core`: lógica pura, testável
-- `Textos/`: novidades, licenças e "Seus dados e privacidade", embutidos no executável e mostrados no Sobre
+- `src/NotebookDoctor/Textos/`: novidades, licenças e "Seus dados e privacidade", embutidos no executável e mostrados no Sobre
 - `tests/NotebookDoctor.Tests`: testes xUnit do Core
 
 ## Segurança

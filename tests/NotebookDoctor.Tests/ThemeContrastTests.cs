@@ -12,8 +12,7 @@ public class ThemeContrastTests
 {
     private static Dictionary<string, string> Theme(string name)
     {
-        string dir = AppContext.BaseDirectory;
-        while (!File.Exists(Path.Combine(dir, "Themes", name + ".xaml"))) dir = Path.GetDirectoryName(dir) ?? throw new FileNotFoundException(name);
+        string dir = RepoPaths.App;
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
         return XDocument.Load(Path.Combine(dir, "Themes", name + ".xaml")).Root!.Elements()
             .Where(e => e.Name.LocalName == "SolidColorBrush")
@@ -115,11 +114,9 @@ public class SpacingTests
     [Fact]
     public void Margens_das_telas_ficam_na_grade_de_4()
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "NotebookDoctor.csproj"))) dir = dir.Parent;
-        Assert.NotNull(dir);
+        var dir = new DirectoryInfo(RepoPaths.App);
         var off = new List<string>();
-        foreach (var file in dir!.EnumerateFiles("*.xaml"))
+        foreach (var file in dir.EnumerateFiles("*.xaml"))
         {
             string xaml = File.ReadAllText(file.FullName);
             foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(xaml,

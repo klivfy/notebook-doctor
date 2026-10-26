@@ -4,7 +4,7 @@ App de bandeja para Windows (WPF, .NET 8) que mostra o que deixa o notebook lent
 
 ## Onde fica cada coisa
 
-- Raiz: o app WPF (janelas `*.xaml`, `MainWindow.*.cs` por aba, `Dialogs.cs`, `Smoke.cs`) e `Services/` (o que fala com o Windows a partir do app).
+- `src/NotebookDoctor`: o app WPF (janelas `*.xaml`, `MainWindow.*.cs` por aba, `Dialogs.cs`, `Smoke.cs`), `Services/` (o que fala com o Windows a partir do app), `Themes/` e `Textos/`. A solução é `NotebookDoctor.sln`, na raiz.
 - `src/NotebookDoctor.Core`: regras puras, sem WPF nem chamadas ao Windows. Testável em qualquer sistema.
 - `src/NotebookDoctor.Windows`: chamadas ao Windows (registro, arquivos, volumes, Lixeira, backups).
 - `tests/NotebookDoctor.Tests`: xUnit. `[WindowsFact]` marca testes que mexem no sistema de verdade (rodam só no job Windows da CI).
@@ -25,7 +25,7 @@ App de bandeja para Windows (WPF, .NET 8) que mostra o que deixa o notebook lent
 No Linux (sessões na nuvem), com o SDK em `/root/.dotnet` quando ele não estiver no PATH:
 
 ```bash
-dotnet build NotebookDoctor.csproj -c Release -p:EnableWindowsTargeting=true
+dotnet build NotebookDoctor.sln -c Release -p:EnableWindowsTargeting=true
 dotnet test tests/NotebookDoctor.Tests -c Release -p:EnableWindowsTargeting=true
 ```
 

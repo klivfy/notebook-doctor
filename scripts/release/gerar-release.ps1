@@ -31,7 +31,7 @@ if (-not (Test-Path -LiteralPath $Instalador)) { throw "Instalador não encontra
 New-Item -ItemType Directory -Force -Path $Saida | Out-Null
 
 foreach ($rid in 'x64', 'arm64') {
-    dotnet publish "$raiz\NotebookDoctor.csproj" -c Release -r "win-$rid" --self-contained true `
+    dotnet publish "$raiz\src\NotebookDoctor\NotebookDoctor.csproj" -c Release -r "win-$rid" --self-contained true `
         -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
         -p:Version=$Versao -o "$Saida\$rid"
     if ($LASTEXITCODE -ne 0) { throw "dotnet publish ($rid) falhou." }

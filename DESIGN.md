@@ -52,7 +52,7 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 ## Forma e espaço
 
 - Raios: `RadiusControl` 4 (botões, campos, caixas, linhas de tabela), `RadiusCard` 8 (cartões, menus, camada), `RadiusPill` (chips de estado).
-- Espaço em múltiplos de 4: `Space4`…`Space32`, `CardPad` 16 (12 no modo compacto), `CardGap` 4 (2 no compacto). Nas telas (os `*.xaml` da raiz), toda margem e preenchimento fica na grade de 4; o `SpacingTests` falha se não ficar. O miolo dos controles em `Themes/` segue as medidas do WinUI (botão 11,5, campo 10,5), e 1 ou valores negativos são ajustes de traço.
+- Espaço em múltiplos de 4: `Space4`…`Space32`, `CardPad` 16 (12 no modo compacto), `CardGap` 4 (2 no compacto). Nas telas (os `*.xaml` de `src/NotebookDoctor`), toda margem e preenchimento fica na grade de 4; o `SpacingTests` falha se não ficar. O miolo dos controles em `Themes/` segue as medidas do WinUI (botão 11,5, campo 10,5), e 1 ou valores negativos são ajustes de traço.
 - Alvos de clique: botões com 32 px de altura mínima (40 nas ações principais), linhas de navegação de 40 px (56 no trilho).
 
 ## Componentes

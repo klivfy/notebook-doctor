@@ -23,14 +23,14 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Compilar o app
-        run: dotnet build NotebookDoctor.csproj -c Release -p:EnableWindowsTargeting=true
+        run: dotnet build src/NotebookDoctor/NotebookDoctor.csproj -c Release -p:EnableWindowsTargeting=true
 
       - name: Testes
         run: dotnet test tests/NotebookDoctor.Tests -c Release --logger "trx;LogFileName=resultados.trx"
 
       # Leva 8.4 (C20): garante que o app também publica para PCs Arm (Snapdragon). Não roda lá; só prova que compila e empacota.
       - name: Publicar para Windows Arm64
-        run: dotnet publish NotebookDoctor.csproj -c Release -r win-arm64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableWindowsTargeting=true -o publish-arm64
+        run: dotnet publish src/NotebookDoctor/NotebookDoctor.csproj -c Release -r win-arm64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableWindowsTargeting=true -o publish-arm64
 
       - name: Publicar resultados dos testes
         if: always()
@@ -53,7 +53,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Compilar o app
-        run: dotnet build NotebookDoctor.csproj -c Release
+        run: dotnet build src/NotebookDoctor/NotebookDoctor.csproj -c Release
 
       - name: Testes
         run: dotnet test tests/NotebookDoctor.Tests -c Release
@@ -64,7 +64,7 @@ jobs:
         shell: pwsh
         run: |
           $out = Join-Path $PWD 'smoke-out'
-          $p = Start-Process -FilePath 'bin/Release/net8.0-windows/NotebookDoctor.exe' -ArgumentList '--demo', "--smoke=$out" -PassThru
+          $p = Start-Process -FilePath 'src/NotebookDoctor/bin/Release/net8.0-windows/NotebookDoctor.exe' -ArgumentList '--demo', "--smoke=$out" -PassThru
           $null = $p.Handle
           if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Error 'A verificação visual passou de 5 minutos.'; exit 1 }
           if (Test-Path "$out/smoke.txt") { Get-Content "$out/smoke.txt" } else { Write-Error 'O app não gerou o relatório.' }
