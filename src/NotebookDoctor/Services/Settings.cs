@@ -104,6 +104,15 @@ public sealed class AppSettings
     /// <summary>A50: procurar versão nova uma vez por dia.</summary>
     public bool CheckUpdates { get; set; } = true;
     public DateTime LastUpdateCheck { get; set; } = DateTime.MinValue;
+    /// <summary>B25: a avaliação da pessoa (0 = ainda não avaliou), o comentário e quando foi enviada à Klivfy (só num clique em "Enviar avaliação").</summary>
+    public int RatingStars { get; set; }
+    public string RatingComment { get; set; } = "";
+    public DateTime RatingSentAt { get; set; } = DateTime.MinValue;
+    /// <summary>M18: estatísticas de uso anônimas. Desligadas até a pessoa ligar em Configurações › Privacidade; as contagens só existem com a opção ligada.</summary>
+    public bool TelemetryEnabled { get; set; }
+    public Dictionary<string, int> TelemetryUses { get; set; } = new();
+    public Dictionary<string, int> TelemetryFailures { get; set; } = new();
+    public DateTime LastTelemetrySend { get; set; } = DateTime.MinValue;
     /// <summary>A38: mostra o que cada correção faria, sem alterar nada.</summary>
     public bool SimulationMode
     {

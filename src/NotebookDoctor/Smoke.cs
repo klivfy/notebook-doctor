@@ -52,6 +52,27 @@ public static class Smoke
                 await Modal(theme, folder, "boas-vindas", () => Dialogs.ShowWelcome(main, App.Current.Settings));
             }
 
+            // Monitor largo (1360 × 800): o Início passa a duas colunas, com o Diagnóstico ao lado. Todas as abas abrem nesse tamanho
+            // nos dois temas, e a troca de coluna é conferida (não depende do tamanho da tela da CI)
+            main.SizeToContent = SizeToContent.Manual;
+            main.Width = 1360; main.Height = 800;
+            foreach (var theme in new[] { "light", "dark" })
+            {
+                ThemeManager.Apply(theme);
+                await Idle(600);
+                for (int tab = 0; tab <= AppTabs.Settings; tab++)
+                {
+                    await Step($"{theme}-aba-{tab:00}-largo", async () =>
+                    {
+                        main.SelectTab(tab);
+                        await Idle(500);
+                        if (tab == 0 && main.ActualWidth >= 1200 && !main.PainelTwoColumns)
+                            Errors.Add($"Início: janela com {main.ActualWidth:0} px e o Diagnóstico não foi para a coluna ao lado");
+                        Save(main, folder, $"{theme}-aba-{tab:00}-largo");
+                    });
+                }
+            }
+
             // B46: notebook 1366 × 768 com escala de 150% (a mais comum nessa tela) deixa cerca de 911 × 480 para as janelas.
             // Cada aba e cada ferramenta abre nesse tamanho, e botão que fica fora da janela vira aviso.
             ThemeManager.Apply("light");

@@ -1,4 +1,4 @@
-O Notebook Doctor funciona no seu computador e não envia seus dados para a Klivfy nem para ninguém.
+O Notebook Doctor funciona no seu computador e, a menos que você ligue ou peça, não envia seus dados para a Klivfy nem para ninguém.
 
 O que fica guardado no computador
 • Uso de CPU, memória e disco a cada minuto, com os nomes dos programas mais pesados (Histórico, até 30 dias).
@@ -11,6 +11,8 @@ Quando o app usa a internet
 • Procurar atualização: consulta klivfy.com uma vez por dia, se a opção estiver ligada, ou quando você pede. A consulta não leva dados seus.
 • Teste de rede: só quando você clica, faz ping no roteador, em 1.1.1.1 e 8.8.8.8 e consulta o DNS de klivfy.com, github.com e wikipedia.org.
 • Abrir suporte: abre klivfy.com/suporte no seu navegador.
+• Avaliar o app: só quando você clica em “Enviar avaliação” (Configurações › Sobre). Antes de enviar, o app mostra o texto exato: a nota de 1 a 5, o comentário opcional, a versão e o idioma do app, com nome de usuário, e-mails, endereços IP e MAC, GUIDs e caminhos de arquivo trocados por marcadores. Vai para klivfy.com/notebookdoctor/avaliacao, sem identificador seu nem do computador. Sem clique, a nota fica só no seu computador.
+• Estatísticas de uso anônimas (Configurações › Privacidade): vêm desligadas. Se você ligar, o app conta quantas vezes cada ferramenta foi aberta e quantas falhas aconteceram, e envia só essa contagem, com a versão do app, o idioma, a família do Windows (10 ou 11) e a semana do ano, para klivfy.com/notebookdoctor/estatisticas, no máximo uma vez por semana. Não há identificador do computador nem da pessoa, e nunca vão nomes de arquivos ou de programas, endereços, números de série nem textos de erro. “Ver o que seria enviado” mostra o texto exato; desligar a opção apaga a contagem.
 • Termos de uso e política de privacidade: abrem klivfy.com/termos ou klivfy.com/privacidade no seu navegador, só quando você clica nos botões do Sobre.
 • Verificar malware: o app não envia nada, mas o MRT da Microsoft, ao terminar, manda à Microsoft um relatório do que encontrou, e o Microsoft Defender segue as opções de proteção na nuvem e envio de amostras da Segurança do Windows.
 • Drivers do fabricante: o app lê o modelo e o número de série do computador só para uso local. O número só vai para o site da Dell ou da Lenovo se você clicar em “Página do meu modelo…” e confirmar (o app mostra o número antes); para a HP, ele é copiado para você colar. “Abrir a página oficial” nunca leva o número.
@@ -18,4 +20,4 @@ Quando o app usa a internet
 Pacote para o suporte
 O arquivo .zip é criado no seu computador e só vai para a Klivfy se você mesmo anexá-lo num atendimento. Ele troca seu nome de usuário, o nome do computador e a pasta pessoal por marcadores. Dá para abrir e conferir antes de enviar.
 
-O app não tem telemetria, propaganda nem rastreamento.
+O app não tem propaganda nem rastreamento. A única telemetria é a das estatísticas anônimas acima, que só existe se você ligar.

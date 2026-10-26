@@ -18,7 +18,7 @@ App de bandeja para Windows (WPF, .NET 8) que mostra o que deixa o notebook lent
 3. **Nada destrutivo sem rede de segurança.** Confirmação (Cancelar como padrão), modo simulação respeitado, backup antes de apagar (`BackupStore`) e registro em Ações para desfazer. Senhas, cookies, preenchimento automático, favoritos e dados de jogos nunca entram em limpeza.
 4. **Exclusões não seguem links.** Varreduras pulam junções (`AttributesToSkip = ReparsePoint`); exclusões em pastas onde outros usuários escrevem passam por `SafeDelete`.
 5. **Visual pelo sistema de design.** Cores só por `DynamicResource` das chaves de `Themes/Light.xaml` e `Dark.xaml` (as duas com as mesmas chaves); tamanhos de texto pelos tokens `Fs*`; espaços em múltiplos de 4. Detalhes em `DESIGN.md`.
-6. **Privacidade.** O app não tem telemetria. Qualquer acesso novo à internet precisa de opção, aviso e atualização de `Textos/Privacidade.txt`.
+6. **Privacidade.** O app não tem telemetria ligada por padrão: a única é a das estatísticas anônimas opcionais (M18, Configurações › Privacidade, desligadas até a pessoa ligar, só contagens de `Telemetry.Tools`, sem identificador). Qualquer acesso novo à internet precisa de opção, aviso e atualização de `Textos/Privacidade.txt` (e das versões `.en` e `.es`).
 
 ## Como validar antes do commit
 

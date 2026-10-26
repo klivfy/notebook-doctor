@@ -163,7 +163,7 @@ public partial class MainWindow : Window
     private void SnackAction_Click(object sender, RoutedEventArgs e) { var a = _snackAction; HideSnack(); a?.Invoke(); }
 
     // ---------- Barra lateral compacta em janelas estreitas ----------
-    private void Window_SizeChanged(object sender, SizeChangedEventArgs e) => ApplyNavDensity();
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e) { ApplyNavDensity(); ApplyPainelLayout(); }
 
     /// <summary>B46: sem espaço para o título e os avisos lado a lado (texto grande, janela estreita), os avisos descem para baixo do título.</summary>
     private void PageHeader_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -320,6 +320,9 @@ public partial class MainWindow : Window
     {
         if (e.Source != Tabs) return; // ignora seleções de DataGrid/ComboBox internos
         Motion.EnterContent((Tabs.SelectedItem as TabItem)?.Content as FrameworkElement);
+        if (Tabs.SelectedIndex == TabClean) UsageStats.Use("limpeza"); // M18: só conta, e só com a opção ligada
+        else if (Tabs.SelectedIndex == TabPrograms) UsageStats.Use("programas");
+        else if (Tabs.SelectedIndex == TabStartup) UsageStats.Use("inicializacao");
         switch (Tabs.SelectedIndex)
         {
             case TabProcs when Host.Latest is { } s: RefreshProcesses(s); break;

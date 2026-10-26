@@ -105,17 +105,17 @@
                         <Border x:Name="Bar" Width="3" Height="16" CornerRadius="2" HorizontalAlignment="Left" Margin="0,0,0,0"
                                 Background="{DynamicResource Accent}" Visibility="Collapsed"/>
                         <!-- Largo e compacto: ícone ao lado do texto -->
-                        <StackPanel x:Name="Wide" Orientation="Horizontal" Margin="14,8,16,8" VerticalAlignment="Center">
+                        <StackPanel x:Name="Wide" Orientation="Horizontal" Margin="16,8,16,8" VerticalAlignment="Center">
                             <Grid>
                                 <TextBlock x:Name="Glyph" Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIcon}"
                                            VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
                                 <Ellipse x:Name="DotWide" Width="7" Height="7" Fill="{DynamicResource Caution}" HorizontalAlignment="Right" VerticalAlignment="Top"
                                          Margin="0,-3,-5,0" Visibility="Collapsed"/>
                             </Grid>
-                            <ContentPresenter x:Name="Text" Margin="14,0,0,0" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                            <ContentPresenter x:Name="Text" Margin="16,0,0,0" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}"/>
                         </StackPanel>
                         <!-- Trilho: ícone sobre o rótulo curto -->
-                        <StackPanel x:Name="Tall" Margin="4,8,4,7" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                        <StackPanel x:Name="Tall" Margin="4,8,4,8" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
                             <Grid HorizontalAlignment="Center">
                                 <TextBlock x:Name="GlyphTall" Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}"
                                            HorizontalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
@@ -180,7 +180,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Background" Value="{DynamicResource CardFill}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource CardStroke}"/>
-        <Setter Property="Padding" Value="16,14"/>
+        <Setter Property="Padding" Value="16,16"/>
         <Setter Property="Margin" Value="{DynamicResource CardGap}"/>
         <Setter Property="MinHeight" Value="112"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -207,13 +207,14 @@
     </Style>
 
     <!-- ============ Cartão-linha (ActionRow, como os cartões de Configurações do Windows) ============
-         Ícone no Tag, título no Content, descrição no ToolTip (mostrada no cartão, sem balão) e a seta de "abre outra tela". O cartão
-         inteiro é o botão: teclado e Narrador o tratam como um. -->
+         Ícone de 20 px no Tag, título (16, semibold) no Content, descrição (14, texto secundário) no ToolTip, mostrada no cartão e lida
+         pelo Narrador como ajuda. O sinal da direita é › (abre subjanela ou outra seção) ou ↗ (abre fora do app), por ActionRow.Slot.
+         O cartão inteiro é o botão: Enter e Espaço acionam, o anel de foco só aparece no teclado e o Narrador o trata como um controle. -->
     <Style x:Key="ActionRow" TargetType="Button">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="Background" Value="{DynamicResource CardFill}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource CardStroke}"/>
-        <Setter Property="Padding" Value="14,12"/>
+        <Setter Property="Padding" Value="16,12"/>
         <Setter Property="Margin" Value="{DynamicResource CardGap}"/>
         <Setter Property="MinHeight" Value="64"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -221,6 +222,7 @@
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="ToolTipService.IsEnabled" Value="False"/>
+        <Setter Property="AutomationProperties.HelpText" Value="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -229,18 +231,19 @@
                         <Border x:Name="Layer" Background="{DynamicResource StateHover}" CornerRadius="{StaticResource RadiusCard}" Opacity="0"/>
                         <Grid Margin="{TemplateBinding Padding}">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" VerticalAlignment="Center" Margin="2,0,14,0"
+                            <TextBlock Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" VerticalAlignment="Center" Margin="0,0,16,0"
                                        Foreground="{TemplateBinding Foreground}"/>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <ContentPresenter TextElement.FontFamily="{StaticResource FontSemi}"/>
-                                <TextBlock Text="{Binding ToolTip, RelativeSource={RelativeSource TemplatedParent}}" FontSize="{DynamicResource FsLabel}"
-                                           Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                <ContentPresenter TextElement.FontFamily="{StaticResource FontSemi}" TextElement.FontSize="{DynamicResource FsCardTitle}"/>
+                                <TextBlock Text="{Binding ToolTip, RelativeSource={RelativeSource TemplatedParent}}" FontSize="{DynamicResource FsBody}"
+                                           Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                             </StackPanel>
-                            <TextBlock Grid.Column="2" Text="&#xE76C;" FontFamily="{StaticResource FontIcons}" FontSize="12" VerticalAlignment="Center" Margin="12,0,2,0"
+                            <TextBlock x:Name="SlotGlyph" Grid.Column="2" Text="&#xE76C;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsCaption}" VerticalAlignment="Center" Margin="16,0,0,0"
                                        Foreground="{DynamicResource TextSecondary}"/>
                         </Grid>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="local:ActionRow.Slot" Value="External"><Setter TargetName="SlotGlyph" Property="Text" Value="&#xE8A7;"/></Trigger>
                         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Layer" Property="Opacity" Value="1"/></Trigger>
                         <Trigger Property="IsPressed" Value="True"><Setter TargetName="Layer" Property="Opacity" Value="0.6"/></Trigger>
                         <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
@@ -250,12 +253,66 @@
         </Setter>
     </Style>
 
+    <!-- Cartão-linha com botão de destaque à direita (a ação principal da linha). Mesmo desenho do ActionRow: ícone no Tag, título no
+         Header, descrição no ToolTip; o botão fica no Content. A linha em si não é botão: o botão do Content é o único controle. -->
+    <Style x:Key="SettingRow" TargetType="HeaderedContentControl">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="Margin" Value="{DynamicResource CardGap}"/>
+        <Setter Property="MinHeight" Value="64"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="FontFamily" Value="{StaticResource FontBody}"/>
+        <Setter Property="ToolTipService.IsEnabled" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="HeaderedContentControl">
+                    <Grid>
+                        <Border Background="{DynamicResource CardFill}" BorderBrush="{DynamicResource CardStroke}" BorderThickness="1" CornerRadius="{StaticResource RadiusCard}"/>
+                        <Grid Margin="{TemplateBinding Padding}">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="{TemplateBinding Tag}" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsIconLarge}" VerticalAlignment="Center" Margin="0,0,16,0"
+                                       Foreground="{TemplateBinding Foreground}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <ContentPresenter ContentSource="Header" TextElement.FontFamily="{StaticResource FontSemi}" TextElement.FontSize="{DynamicResource FsCardTitle}"/>
+                                <TextBlock Text="{Binding ToolTip, RelativeSource={RelativeSource TemplatedParent}}" FontSize="{DynamicResource FsBody}"
+                                           Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <ContentPresenter Grid.Column="2" VerticalAlignment="Center" Margin="16,0,0,0"/>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Título de grupo acima de uma lista de cartões-linha -->
+    <!-- B25: estrela da avaliação (RadioButton: o leitor de tela diz "1 estrela, botão de opção, selecionado"). Alvo de 40 px; o preenchimento é a cor de destaque, trocada por código -->
+    <Style x:Key="StarRadio" TargetType="RadioButton">
+        <Setter Property="FontFamily" Value="{StaticResource FontIcons}"/>
+        <Setter Property="FontSize" Value="{DynamicResource FsIconLarge}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+        <Setter Property="Margin" Value="0,0,4,0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid Width="40" Height="40">
+                        <Border x:Name="Layer" Background="{DynamicResource StateHover}" CornerRadius="{StaticResource RadiusControl}" Opacity="0"/>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Layer" Property="Opacity" Value="1"/></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style x:Key="GroupTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource FontSemi}"/>
         <Setter Property="FontSize" Value="{DynamicResource FsBody}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-        <Setter Property="Margin" Value="6,14,0,4"/>
+        <Setter Property="Margin" Value="8,16,0,4"/>
     </Style>
 
     <!-- ============ Camada de conteúdo (o plano entre a moldura com Mica e os cartões) ============ -->

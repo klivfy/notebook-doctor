@@ -127,4 +127,21 @@ public class SpacingTests
         }
         Assert.True(off.Count == 0, "Fora da grade de 4:\n" + string.Join("\n", off.Distinct()));
     }
+
+    /// <summary>
+    /// Os componentes (cartão, cartão-linha, ladrilho, título de grupo, navegação) também ficam na grade de 4. Valores de 0 a 2 são
+    /// meio passo (respiro entre itens, como o CardGap compacto). O miolo dos controles em Controls.xaml segue as medidas do WinUI.
+    /// </summary>
+    [Fact]
+    public void Componentes_ficam_na_grade_de_4()
+    {
+        string xaml = File.ReadAllText(Path.Combine(RepoPaths.App, "Themes", "Components.xaml"));
+        var off = new List<string>();
+        foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(xaml,
+                     @"(?:\b(?:Margin|Padding)|Property=""(?:Margin|Padding)""\s+Value)=""([-0-9.,\s]+)"""))
+            foreach (var v in m.Groups[1].Value.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries))
+                if (double.Parse(v, System.Globalization.CultureInfo.InvariantCulture) is var n && n > 2 && n % 4 != 0)
+                    off.Add(m.Value);
+        Assert.True(off.Count == 0, "Fora da grade de 4 em Components.xaml:\n" + string.Join("\n", off.Distinct()));
+    }
 }

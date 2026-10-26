@@ -20,6 +20,7 @@
         <Setter Property="Margin" Value="0,0,8,0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingPill}"/>
+        <Setter Property="local:ClickRipple.Enabled" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -27,6 +28,7 @@
                         <Border x:Name="Bg" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{StaticResource RadiusControl}"/>
                         <Border x:Name="Layer" Background="{TemplateBinding Foreground}" CornerRadius="{StaticResource RadiusControl}" Opacity="0"/>
+                        <Border x:Name="Ripple" CornerRadius="{StaticResource RadiusControl}" IsHitTestVisible="False"/>
                         <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                           TextElement.Foreground="{TemplateBinding Foreground}"/>
                     </Grid>
@@ -64,6 +66,7 @@
                     <Grid>
                         <Border Background="{DynamicResource InfoContainer}" CornerRadius="{StaticResource RadiusPill}"/>
                         <Border x:Name="Layer" Background="{DynamicResource TextPrimary}" CornerRadius="{StaticResource RadiusPill}" Opacity="0"/>
+                        <Border x:Name="Ripple" CornerRadius="{StaticResource RadiusPill}" IsHitTestVisible="False"/>
                         <StackPanel Orientation="Horizontal" Margin="12,4">
                             <TextBlock Text="&#xE946;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsLabel}" VerticalAlignment="Center"
                                        Margin="0,0,8,0" Foreground="{DynamicResource TextPrimary}"/>
@@ -87,6 +90,7 @@
                 <ControlTemplate TargetType="Button">
                     <Grid Width="32" Height="32">
                         <Border x:Name="Layer" Background="{TemplateBinding Foreground}" CornerRadius="{StaticResource RadiusControl}" Opacity="0"/>
+                        <Border x:Name="Ripple" CornerRadius="{StaticResource RadiusControl}" IsHitTestVisible="False"/>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}"/>
                     </Grid>
                     <ControlTemplate.Triggers>

@@ -53,6 +53,8 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 
 - Raios: `RadiusControl` 4 (botões, campos, caixas, linhas de tabela), `RadiusCard` 8 (cartões, menus, camada), `RadiusPill` (chips de estado).
 - Espaço em múltiplos de 4: `Space4`…`Space32`, `CardPad` 16 (12 no modo compacto), `CardGap` 4 (2 no compacto). Nas telas (os `*.xaml` de `src/NotebookDoctor`), toda margem e preenchimento fica na grade de 4; o `SpacingTests` falha se não ficar. O miolo dos controles em `Themes/` segue as medidas do WinUI (botão 11,5, campo 10,5), e 1 ou valores negativos são ajustes de traço.
+- Os componentes de `Themes/Components.xaml` também ficam na grade (`SpacingTests`): só 0 a 2 valem como meio passo. O miolo dos controles em `Controls.xaml` segue o WinUI.
+- Início em duas colunas: com a janela a partir de 1200 px (`Density.PainelSideColumn`; o limite sobe com o "Tamanho do texto": ×1,2 a 150%), a nota de saúde, as métricas e os atalhos ficam na coluna da esquerda (5/8) e o Diagnóstico, com os botões Corrigir, na coluna da direita (3/8). É o mesmo cartão trocado de lugar (`ApplyPainelLayout`), com uma rolagem só; abaixo do limite volta à coluna única.
 - Alvos de clique: botões com 32 px de altura mínima (40 nas ações principais), linhas de navegação de 40 px (56 no trilho).
 
 ## Componentes
@@ -68,8 +70,11 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 | Aviso em linha | `InfoBar`, `InfoBarWarning`, `InfoBarError`, `InfoBarSuccess` (Border) | Faixa dentro da tela, que fica enquanto o assunto vale (programa pesado, ponto de restauração). Texto sempre diz o estado; a cor só reforça. O aviso que some sozinho é o `Snack` da janela principal |
 | Cartão | `Card` | Agrupar conteúdo |
 | Ladrilho | `TileButton` | Atalho com resumo (Painel), cartão inteiro clicável |
-| Cartão-linha | `ActionRow` | Abrir uma ferramenta ou outra tela: ícone no `Tag`, título no `Content`, descrição no `ToolTip` |
-| Título de grupo | `GroupTitle` | Acima de uma lista de cartões-linha |
+| Efeito de clique | `local:ClickRipple.Enabled` | B05: brilho tonal na cor do texto do botão, nascendo no clique/toque e indo até o canto mais distante em 250 ms (`ClickEffect`, tempos do Windows 11). O estilo base de `Button` liga o efeito e o modelo traz o `Border` chamado `Ripple` (padrão, `StatusChipButton` e `IconButton`); sem animações do Windows ou em Alto Contraste (`Motion.Enabled`) só muda o estado "pressionado" |
+| Estrela de nota | `StarRadio` | B25: `RadioButton` de 40 px com ícone de estrela; o leitor de tela diz "1 estrela, botão de opção" |
+| Cartão-linha | `ActionRow` | Abrir uma ferramenta, outra tela ou um link: ícone de 20 no `Tag`, título (16 semibold) no `Content`, descrição (14, texto secundário) no `ToolTip`. `local:ActionRow.Slot` escolhe o sinal da direita: `Detail` (›, subjanela ou outra seção, padrão) ou `External` (↗, navegador ou programa do Windows). `local:ActionRow.Target` leva o destino (nome do texto embutido, endereço do site), porque o `Tag` é o ícone. A linha inteira é o botão |
+| Cartão-linha com botão | `SettingRow` (`HeaderedContentControl`) | Uma ação principal com botão de destaque à direita (ex.: Atualização › Procurar agora). Ícone no `Tag`, título no `Header`, descrição no `ToolTip`, botão no `Content`. Só um por área usa o botão de destaque |
+| Título de grupo | `GroupTitle` | Acima de uma lista de cartões-linha (nível 2 para o leitor de tela) |
 | Navegação | `NavList` / `NavItem` | Tag da lista: `rail` (trilho, padrão), vazio (larga) ou `compact` (só ícones). `NavLabel.Short` = rótulo do trilho; `NavLabel.Badge` = ponto de pendência |
 | Camada de conteúdo | `ContentLayer` | O fundo das páginas da janela principal |
 
@@ -113,4 +118,4 @@ Não há estilo de interruptor: as opções do app são caixas de seleção. Se 
 ## Como conferir uma mudança visual
 
 1. `dotnet test` roda `ThemeContrastTests` (contrastes dos dois temas) e `LocTests` (textos traduzidos).
-2. A CI do Windows roda `NotebookDoctor.exe --demo --smoke=pasta`: abre as 11 abas, as janelas de ferramenta, uma folha de controles e os diálogos nos temas claro e escuro, mais as abas e ferramentas num notebook pequeno (911 × 480) com o texto em 100%, 150% e 200% (`-150`, `-texto150`, `-texto200`), falha se algo não abrir e publica as imagens no artefato **telas**. O relatório `smoke.txt` lista avisos de ligação quebrada e textos que ficaram sem tradução.
+2. A CI do Windows roda `NotebookDoctor.exe --demo --smoke=pasta`: abre as 11 abas, as janelas de ferramenta, uma folha de controles e os diálogos nos temas claro e escuro, mais as 11 abas num monitor largo (1360 × 800, `-largo`, que confere a troca do Diagnóstico de coluna) e as abas e ferramentas num notebook pequeno (911 × 480) com o texto em 100%, 150% e 200% (`-150`, `-texto150`, `-texto200`), falha se algo não abrir e publica as imagens no artefato **telas**. O relatório `smoke.txt` lista avisos de ligação quebrada e textos que ficaram sem tradução.

@@ -150,15 +150,16 @@ public partial class UpdatesWindow : Window
             if (AppPaths.Demo) { _found = DemoUpdates(); _scanned = true; Render(); return; }
             if (!await EnsureWingetAsync() || !EnsureSourceTerms()) return;
             Msg.Text = Loc.T("Consultando o WinGet…");
-            WingetRun run;
-            try { run = await WingetRunner.ListUpgradesAsync(Host.Settings.WingetSourceTerms, CancellationToken.None); }
+            UpdateScan scan;
+            try { scan = await UpdateEngines.Shared.ListUpgradesAsync(Host.Settings.WingetSourceTerms, CancellationToken.None); }
+            catch (UpdateEngineUnavailableException) { Msg.Text = Loc.T("O WinGet não respondeu."); return; }
             catch (Win32Exception) { Msg.Text = Loc.T("O WinGet não respondeu."); return; }
-            if (run.TimedOut) { Msg.Text = Loc.T("O WinGet demorou demais. Tente de novo."); return; }
-            var list = WingetCommands.ParseUpgrades(run.Output);
-            if (list.Items.Count == 0 && run.ExitCode != 0 && !run.Output.Contains("----"))
+            if (scan.TimedOut) { Msg.Text = Loc.T("O WinGet demorou demais. Tente de novo."); return; }
+            var list = scan.List;
+            if (list.Items.Count == 0 && scan.ExitCode != 0 && !scan.HasTable)
             {
                 // Sem tabela: não foi "nada a atualizar", foi erro
-                Msg.Text = Loc.F("O WinGet terminou com o código 0x{0:X8}.", run.ExitCode);
+                Msg.Text = Loc.F("O WinGet terminou com o código 0x{0:X8}.", scan.ExitCode);
                 return;
             }
             _found = list.Items.ToList();
@@ -214,12 +215,11 @@ public partial class UpdatesWindow : Window
         Msg.Text = Loc.T("Consultando o WinGet…");
         try
         {
-            var run = await WingetRunner.ShowAsync(row.Id, Host.Settings.WingetSourceTerms, CancellationToken.None);
-            string text = WingetShowText.Clean(run.Output);
-            Dialogs.ShowText(this, row.Name, text.Length > 0 ? text : Loc.T("O WinGet não devolveu informações deste pacote."));
+            var details = await UpdateEngines.Shared.ShowAsync(row.Id, Host.Settings.WingetSourceTerms, CancellationToken.None);
+            Dialogs.ShowText(this, row.Name, details?.Text is { Length: > 0 } text ? text : Loc.T("O WinGet não devolveu informações deste pacote."));
             Msg.Text = "";
         }
-        catch (Win32Exception) { Msg.Text = Loc.T("O WinGet não respondeu."); }
+        catch (Exception ex) when (ex is UpdateEngineUnavailableException or Win32Exception) { Msg.Text = Loc.T("O WinGet não respondeu."); }
         finally { _busy = false; }
     }
 

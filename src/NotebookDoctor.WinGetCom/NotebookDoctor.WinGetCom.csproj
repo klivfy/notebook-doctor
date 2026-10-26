@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Prioridade 5 (D2/C14): o motor do catálogo do WinGet pela API COM oficial do Instalador de Aplicativo.
+    Fica num projeto só dele (alvo Windows 10.0.22000, exigido pela projeção do pacote) para o resto do código continuar
+    compilando e testando em qualquer sistema. O app usa este motor atrás de IUpdateEngine, com a linha de comando como reserva.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.22000.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>NotebookDoctor</RootNamespace>
+    <AssemblyName>NotebookDoctor.WinGetCom</AssemblyName>
+    <!-- Fora do processo: usa o servidor COM registrado pelo Instalador de Aplicativo; nenhuma DLL nativa é copiada -->
+    <MicrosoftManagementDeployment-FactoryLinkage>none</MicrosoftManagementDeployment-FactoryLinkage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsPackageManager.ComInterop" Version="1.10.340" />
+    <ProjectReference Include="../NotebookDoctor.Core/NotebookDoctor.Core.csproj" />
+    <ProjectReference Include="../NotebookDoctor.Windows/NotebookDoctor.Windows.csproj" />
+  </ItemGroup>
+
+</Project>
