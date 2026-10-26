@@ -1,8 +1,10 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace NotebookDoctor.Tests;
 
 /// <summary>Prioridade 5 (D2/C14): o motor COM é o principal e a linha de comando assume sozinha quando ele falha.</summary>
+[SupportedOSPlatform("windows")] // o projeto Windows marca os tipos como só do Windows; o motor é puro e roda em qualquer sistema
 public class UpdateEngineTests
 {
     private sealed class FakeEngine(string name, Func<Task<UpdateScan>>? scan = null, Func<Task<UpdateDetails?>>? show = null) : IUpdateEngine

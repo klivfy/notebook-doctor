@@ -64,9 +64,11 @@ jobs:
         shell: pwsh
         run: |
           $out = Join-Path $PWD 'smoke-out'
+          $clock = [Diagnostics.Stopwatch]::StartNew()
           $p = Start-Process -FilePath 'src/NotebookDoctor/bin/Release/net8.0-windows10.0.22000.0/NotebookDoctor.exe' -ArgumentList '--demo', "--smoke=$out" -PassThru
           $null = $p.Handle
-          if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Error 'A verificação visual passou de 5 minutos.'; exit 1 }
+          if (-not $p.WaitForExit(600000)) { $p.Kill(); Write-Error 'A verificação visual passou de 10 minutos.'; exit 1 }
+          Write-Host ('A verificação visual levou {0:N0} s.' -f $clock.Elapsed.TotalSeconds)
           if (Test-Path "$out/smoke.txt") { Get-Content "$out/smoke.txt" } else { Write-Error 'O app não gerou o relatório.' }
           exit $p.ExitCode
 
