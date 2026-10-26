@@ -75,7 +75,7 @@ Critérios de impacto
 | A47 | Detalhe por processo: threads, handles, I/O, linha do tempo | 🟡 clique duplo em Processos abre PID, memória, CPU, threads, início, prioridade e caminho; não testado com clique |
 | A48 | Comparativo "antes × depois" de cada otimização | 🟡 "Otimizar agora" mostra espaço livre, memória e nota antes × depois; não exercitado |
 | A49 | Resumo semanal (notificação) com tendência e ações | 🟡 notificação semanal com nota, médias e programas mais pesados, e botão para o relatório; primeira em 7 dias |
-| A50 | Atualização automática do app (assinada) | 🟡 (verificação diária, download com SHA-256 e assinatura Klivfy; falta publicar `versao.json` e assinar o instalador) |
+| A50 | Atualização automática do app (assinada) | 🟡 (verificação diária, download com SHA-256 e assinatura Klivfy; a leitura do manifesto fica no Core (`UpdateManifest`, com testes) e `scripts/release/` assina, confere e escreve o `versao.json`; falta o certificado da Klivfy (preencher `PinnedKeys`), um instalador, e publicar `versao.json` e o instalador) |
 
 ## 🟠 Médio impacto (50)
 
@@ -159,7 +159,7 @@ Critérios de impacto
 | B21 | Atalho no Menu Iniciar pelo instalador | 🟡 ainda sem instalador: botão em Configurações cria, atualiza (app mudou de pasta) ou remove o atalho na pasta Programas do usuário, sem administrador |
 | B22 | Botão "Verificar atualização" | 🟡 "Procurar atualização" no Sobre; falta publicar o versao.json em klivfy.com |
 | B23 | Tela "Sobre" com versão, licenças e novidades | 🟡 versão, suporte, Novidades e Licenças (textos embutidos em Textos/) |
-| B24 | Links de termos e privacidade | 🟡 "Seus dados e privacidade" embutido no app; faltam os termos de uso e o endereço da política publicada |
+| B24 | Links de termos e privacidade | 🟡 "Seus dados e privacidade" embutido no app; Sobre tem os botões “Termos de uso (site)” e “Política de privacidade (site)” (klivfy.com/termos e klivfy.com/privacidade, só abrem no clique e só em https no domínio da Klivfy); falta publicar as páginas no site |
 | B25 | Avaliação do app dentro dele | ⬜ |
 | B26 | Modo demonstração com dados fictícios | 🟡 `--demo`: Painel, Processos e Histórico (7 dias) fictícios, simulação sempre ligada, pasta temporária própria. Limpeza, Espaço, Inicialização e Ajustes ainda leem o PC real (só leitura) |
 | B27 | Variações de texto mais amigáveis | 🟡 "Tudo certo" no diagnóstico e o resultado da limpeza variam a frase de apoio por dia; títulos fixos (relatórios e Narrador) |

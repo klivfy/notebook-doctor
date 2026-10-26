@@ -186,6 +186,12 @@ public partial class MainWindow
     }
 
     // ---------- Sobre: novidades, privacidade e licenças (B23/B24) ----------
+    // Só os endereços fixos do XAML chegam aqui; AppInfo.OpenKlivfy ainda confere https e o domínio da Klivfy
+    private void KlivfyPage_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string url }) AppInfo.OpenKlivfy(url);
+    }
+
     private void AboutText_Click(object sender, RoutedEventArgs e)
     {
         var btn = (Button)sender;

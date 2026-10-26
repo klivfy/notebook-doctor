@@ -3,6 +3,7 @@ Notebook Doctor
 
 Créditos
 Desenvolvido pela Klivfy Tecnologia e Consultoria em TI LTDA, com sugestões de quem usa o app pelo suporte (klivfy.com/suporte).
+Termos de uso: klivfy.com/termos. Política de privacidade: klivfy.com/privacidade.
 
 Componentes de terceiros
 

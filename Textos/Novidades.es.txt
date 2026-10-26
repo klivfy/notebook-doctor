@@ -1,4 +1,5 @@
 Revisión de seguridad, datos y accesibilidad (nuevo)
+• Acerca de: botones para los términos de uso y la política de privacidad en el sitio de Klivfy (solo se abren cuando haces clic).
 • Controladores del fabricante (Configuración › Controladores): lee el equipo y muestra de dónde viene cada controlador. BIOS, chipset, energía y touchpad solo del fabricante del portátil; gráficos dedicados de NVIDIA y AMD con su propia aplicación. Abre el sitio oficial, avisa cuando falta un punto de restauración e instala con WinGet la aplicación del fabricante (Dell, Lenovo, HP, Intel).
 • Portátil pequeño al 150%: las secciones del menú se desplazan en vez de desaparecer, y las listas de Buscar malware, Recuperar archivos, Desfragmentar y Controladores ya no quedan aplastadas.
 • Buscar malware (Sistema): ejecuta Microsoft Defender (rápido, completo o una carpeta) y la Herramienta de eliminación de software malintencionado (MRT) de Windows, muestra el historial de amenazas y lo registra en Acciones. Quien busca y elimina es Microsoft.

@@ -1293,6 +1293,13 @@
                             <Button Content="Seus dados e privacidade" Style="{StaticResource TextButton}" Tag="Privacidade" Click="AboutText_Click" Margin="0,0,8,8"/>
                             <Button Content="Licenças e créditos" Style="{StaticResource TextButton}" Tag="Licencas" Click="AboutText_Click" Margin="0,0,8,8"/>
                         </WrapPanel>
+                        <!-- B24: as versões completas ficam no site da Klivfy; só abrem quando a pessoa clica -->
+                        <WrapPanel Margin="0,0,0,4">
+                            <Button Content="Termos de uso (site)" Style="{StaticResource TextButton}" Tag="https://klivfy.com/termos" Click="KlivfyPage_Click" Margin="0,0,8,8"
+                                    ToolTip="Abre klivfy.com/termos no navegador"/>
+                            <Button Content="Política de privacidade (site)" Style="{StaticResource TextButton}" Tag="https://klivfy.com/privacidade" Click="KlivfyPage_Click" Margin="0,0,8,8"
+                                    ToolTip="Abre klivfy.com/privacidade no navegador"/>
+                        </WrapPanel>
                         <WrapPanel>
                             <Button Content="Abrir suporte" Click="Support_Click" Margin="0,0,8,8"/>
                             <Button Content="Exportar log de diagnóstico" Style="{StaticResource TextButton}" Click="DiagnosticLog_Click" Margin="0,0,8,8"

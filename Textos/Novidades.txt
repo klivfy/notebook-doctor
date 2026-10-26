@@ -1,4 +1,5 @@
 Revisão de segurança, dados e acessibilidade (novo)
+• Sobre: botões para os termos de uso e a política de privacidade no site da Klivfy (só abrem quando você clica).
 • Drivers do fabricante (Configurações › Drivers): lê o computador e mostra de onde vem cada driver. BIOS, chipset, energia e touchpad só do fabricante do notebook; vídeo dedicado da NVIDIA e da AMD pelo aplicativo delas. Abre o site oficial, avisa quando falta ponto de restauração e instala pelo WinGet o aplicativo do fabricante (Dell, Lenovo, HP, Intel).
 • Notebook pequeno a 150%: as seções do menu rolam em vez de sumir, e as listas de Verificar malware, Recuperar arquivos, Desfragmentar e Drivers não ficam mais espremidas.
 • Verificar malware (Sistema): roda o Microsoft Defender (rápida, completa ou uma pasta) e a Ferramenta de Remoção de Software Mal-Intencionado (MRT) do Windows, mostra o histórico de ameaças e registra em Ações. Quem procura e remove é a Microsoft.

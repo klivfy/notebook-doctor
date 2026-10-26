@@ -11,6 +11,7 @@ Quando o app usa a internet
 • Procurar atualização: consulta klivfy.com uma vez por dia, se a opção estiver ligada, ou quando você pede. A consulta não leva dados seus.
 • Teste de rede: só quando você clica, faz ping no roteador, em 1.1.1.1 e 8.8.8.8 e consulta o DNS de klivfy.com, github.com e wikipedia.org.
 • Abrir suporte: abre klivfy.com/suporte no seu navegador.
+• Termos de uso e política de privacidade: abrem klivfy.com/termos ou klivfy.com/privacidade no seu navegador, só quando você clica nos botões do Sobre.
 • Verificar malware: o app não envia nada, mas o MRT da Microsoft, ao terminar, manda à Microsoft um relatório do que encontrou, e o Microsoft Defender segue as opções de proteção na nuvem e envio de amostras da Segurança do Windows.
 • Drivers do fabricante: o app lê o modelo e o número de série do computador só para uso local. O número só vai para o site da Dell ou da Lenovo se você clicar em “Página do meu modelo…” e confirmar (o app mostra o número antes); para a HP, ele é copiado para você colar. “Abrir a página oficial” nunca leva o número.
 

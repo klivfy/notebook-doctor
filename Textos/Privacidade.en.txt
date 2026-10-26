@@ -11,6 +11,7 @@ When the app uses the internet
 • Check for updates: contacts klivfy.com once a day, if the option is on, or when you ask. The request carries no data about you.
 • Network test: only when you click, it pings the router, 1.1.1.1 and 8.8.8.8 and queries the DNS of klivfy.com, github.com and wikipedia.org.
 • Open support: opens klivfy.com/suporte in your browser.
+• Terms of use and privacy policy: open klivfy.com/termos or klivfy.com/privacidade in your browser, only when you click the buttons in About.
 • Scan for malware: the app sends nothing, but Microsoft's MRT sends Microsoft a report of what it found when it finishes, and Microsoft Defender follows the cloud protection and sample submission options in Windows Security.
 • Manufacturer drivers: the app reads the computer's model and serial number for local use only. The number only goes to Dell's or Lenovo's site if you click “My model's page…” and confirm (the app shows the number first); for HP, it is copied for you to paste. “Open the official page” never carries the number.
 

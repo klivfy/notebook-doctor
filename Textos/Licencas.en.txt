@@ -3,6 +3,7 @@ Notebook Doctor
 
 Credits
 Developed by Klivfy Tecnologia e Consultoria em TI LTDA, with suggestions from people who use the app through support (klivfy.com/suporte).
+Terms of use: klivfy.com/termos. Privacy policy: klivfy.com/privacidade.
 
 Third-party components
 
