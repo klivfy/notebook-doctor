@@ -22,6 +22,19 @@ public class DensityTests
     }
 
     [Fact]
+    public void Inicio_em_duas_colunas_a_partir_de_1200_e_o_limite_cresce_com_o_texto()
+    {
+        Assert.False(Density.PainelSideColumn(1199, 1));
+        Assert.True(Density.PainelSideColumn(1200, 1));
+        Assert.True(Density.PainelSideColumn(1920, 1));
+        // Texto a 150%: o limite passa a 1200 × 1,2 = 1440
+        Assert.False(Density.PainelSideColumn(1366, 1.5));
+        Assert.True(Density.PainelSideColumn(1500, 1.5));
+        // Texto menor que 100% não baixa o limite
+        Assert.False(Density.PainelSideColumn(1100, 0.8));
+    }
+
+    [Fact]
     public void Compacto_e_mais_denso_mas_linhas_continuam_clicaveis()
     {
         Assert.True(Density.RowHeight(true) < Density.RowHeight(false));

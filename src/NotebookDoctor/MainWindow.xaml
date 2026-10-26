@@ -67,9 +67,15 @@
             <!-- PAINEL: nota de saúde primeiro, métricas compactas, diagnóstico com as correções -->
             <TabItem Header="Início">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
-                    <StackPanel x:Name="PainelContent">
+                    <!-- Monitor largo (Density.PainelSideColumn): o Diagnóstico sai da coluna única e vai para a coluna da direita (MainWindow.Painel.cs) -->
+                    <Grid x:Name="PainelContent">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition x:Name="PainelMainCol" Width="*"/>
+                            <ColumnDefinition x:Name="PainelSideCol" Width="0"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <!-- Alerta de programa pesado (A41) -->
-                        <Border x:Name="HeavyBanner" Style="{StaticResource InfoBar}" Visibility="Collapsed" Padding="16,12">
+                        <Border x:Name="HeavyBanner" Grid.ColumnSpan="2" Style="{StaticResource InfoBar}" Visibility="Collapsed" Padding="16,12">
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                 <StackPanel VerticalAlignment="Center">
@@ -84,6 +90,7 @@
                             </Grid>
                         </Border>
 
+                        <StackPanel x:Name="PainelMain" Grid.Row="1">
                         <!-- Nota de saúde (redesign V4): o elemento-assinatura do app, como cartão principal do Painel -->
                         <Border Style="{StaticResource Card}" Padding="20,16">
                             <Grid>
@@ -286,7 +293,9 @@
                                 </ItemsControl>
                             </StackPanel>
                         </Border>
-                    </StackPanel>
+                        </StackPanel>
+                        <StackPanel x:Name="PainelSide" Grid.Row="1" Grid.Column="1"/>
+                    </Grid>
                 </ScrollViewer>
             </TabItem>
 
@@ -453,6 +462,9 @@
 
             <!-- ESPAÇO (mapa de uso do disco) -->
             <TabItem Header="Espaço">
+              <ScrollViewer local:FitScroll.StarMin="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -512,14 +524,20 @@
                         </DockPanel>
                         <WrapPanel Grid.Row="3" Margin="0,16,0,0">
                             <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="SpaceOpen_Click" Margin="0,0,8,8"/>
-                            <Button Content="Ver programas instalados" Style="{StaticResource TextButton}" Click="SpacePrograms_Click" Margin="0,0,8,8"
-                                    ToolTip="Tamanho, data e desinstalação de cada programa ficam na aba Programas."/>
                             <TextBlock x:Name="SpaceMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,8" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"
                                        Text="Só leitura. Nos duplicados, “Revisar duplicados…” apaga só o que você marcar e confirmar."/>
                         </WrapPanel>
                     </Grid>
                 </Border>
+                <!-- Redesign V5: para onde ir depois da análise, como cartão-linha -->
+                <StackPanel Grid.Row="1">
+                    <TextBlock Text="Relacionado" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
+                    <Button Content="Ver programas instalados" Tag="&#xE71D;" Style="{StaticResource ActionRow}" Click="SpacePrograms_Click"
+                            ToolTip="Tamanho, data e desinstalação de cada programa ficam na aba Programas."/>
+                </StackPanel>
+              </Grid>
+              </ScrollViewer>
             </TabItem>
 
             <!-- PROGRAMAS (Fase 5): programas instalados, apps da Microsoft Store e atualizações do Windows -->
@@ -877,8 +895,6 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
                                 <WrapPanel Margin="0,12,0,0">
-                                    <Button Content="Abrir extensões do navegador" Style="{StaticResource TonalButton}" Click="ExtensionsOpen_Click" Margin="0,0,8,8"
-                                            ToolTip="Abre a página de extensões do navegador da linha selecionada (ou do primeiro da lista)."/>
                                     <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="ExtensionsRefresh_Click" Margin="0,0,8,8"/>
                                     <TextBlock x:Name="ExtensionsMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,8" TextWrapping="Wrap"
                                                AutomationProperties.LiveSetting="Polite"/>
@@ -907,8 +923,6 @@
                                 </DataGrid>
                                 <WrapPanel Margin="0,12,0,0">
                                     <Button Content="Limpar log selecionado" Style="{StaticResource DangerButton}" Click="EventLogClear_Click" Margin="0,0,8,8"/>
-                                    <Button Content="Abrir Visualizador de Eventos" Style="{StaticResource TextButton}" Click="EventViewer_Click" Margin="0,0,8,8"
-                                            ToolTip="Para salvar uma cópia de um log antes de limpar: clique direito no log › Salvar Todos os Eventos Como."/>
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
@@ -946,6 +960,12 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <!-- Redesign V5: o que abre fora do app, como cartão-linha com ↗ -->
+                        <TextBlock Text="Abrir no Windows" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
+                        <Button Content="Abrir Visualizador de Eventos" Tag="&#xE81C;" Style="{StaticResource ActionRow}" local:ActionRow.Slot="External" Click="EventViewer_Click"
+                                ToolTip="Para salvar uma cópia de um log antes de limpar: clique direito no log › Salvar Todos os Eventos Como."/>
+                        <Button Content="Abrir extensões do navegador" Tag="&#xEA86;" Style="{StaticResource ActionRow}" local:ActionRow.Slot="External" Click="ExtensionsOpen_Click"
+                                ToolTip="Abre a página de extensões do navegador da linha selecionada (ou do primeiro da lista)."/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -961,13 +981,19 @@
                                 ToolTip="Copia um resumo curto para colar numa conversa, e-mail ou chamado."/>
                         <Button Content="Exportar…" Style="{StaticResource TextButton}" Click="SysExport_Click" Margin="0,0,8,8"
                                 ToolTip="Salva o retrato completo em TXT, HTML ou PDF. Nada é enviado para a internet."/>
-                        <Button Content="Verificar malware…" Style="{StaticResource TonalButton}" Click="SysSecurity_Click" Margin="0,0,8,8"
-                                ToolTip="Verifica o computador com o Microsoft Defender e a Ferramenta de Remoção de Software Mal-Intencionado (MRT) do Windows."/>
-                        <Button Content="Ferramentas do Windows…" Style="{StaticResource TextButton}" Click="SysTools_Click" Margin="0,0,8,8"
-                                ToolTip="Atalhos para o Gerenciador de Dispositivos, Serviços, Agendador de Tarefas e outras ferramentas que o Windows já traz."/>
                         <TextBlock x:Name="SysMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,8" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
                     </WrapPanel>
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False">
+                      <StackPanel>
+                        <!-- Redesign V5: as ferramentas de segurança e do Windows como cartões-linha -->
+                        <TextBlock Text="Ferramentas" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2" Margin="8,0,0,4"/>
+                        <UniformGrid Columns="2">
+                            <Button Content="Verificar malware…" Tag="&#xE83D;" Style="{StaticResource ActionRow}" Click="SysSecurity_Click"
+                                    ToolTip="Verifica o computador com o Microsoft Defender e a Ferramenta de Remoção de Software Mal-Intencionado (MRT) do Windows."/>
+                            <Button Content="Ferramentas do Windows…" Tag="&#xE90F;" Style="{StaticResource ActionRow}" Click="SysTools_Click"
+                                    ToolTip="Atalhos para o Gerenciador de Dispositivos, Serviços, Agendador de Tarefas e outras ferramentas que o Windows já traz."/>
+                        </UniformGrid>
+                        <TextBlock Text="Informações do computador" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
                         <ItemsControl x:Name="SysList" Focusable="False" AutomationProperties.Name="Informações do sistema">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -990,6 +1016,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                      </StackPanel>
                     </ScrollViewer>
                 </Grid>
             </TabItem>
@@ -1296,31 +1323,36 @@
                         <!-- U12: os direitos autorais ficam aqui, não no rodapé de todas as telas -->
                         <TextBlock x:Name="AboutCopyright" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,4"/>
                         <TextBlock Text="Fonte Google Sans Flex, licença SIL Open Font License 1.1." Style="{StaticResource Label}" Margin="0,0,0,12" TextWrapping="Wrap"/>
-                        <!-- B23/B24: textos embutidos no app, abrem sem internet -->
-                        <WrapPanel Margin="0,0,0,4">
-                            <Button Content="Novidades" Style="{StaticResource TextButton}" Tag="Novidades" Click="AboutText_Click" Margin="0,0,8,8"/>
-                            <Button Content="Seus dados e privacidade" Style="{StaticResource TextButton}" Tag="Privacidade" Click="AboutText_Click" Margin="0,0,8,8"/>
-                            <Button Content="Licenças e créditos" Style="{StaticResource TextButton}" Tag="Licencas" Click="AboutText_Click" Margin="0,0,8,8"/>
-                        </WrapPanel>
-                        <!-- B24: as versões completas ficam no site da Klivfy; só abrem quando a pessoa clica -->
-                        <WrapPanel Margin="0,0,0,4">
-                            <Button Content="Termos de uso (site)" Style="{StaticResource TextButton}" Tag="https://klivfy.com/termos" Click="KlivfyPage_Click" Margin="0,0,8,8"
-                                    ToolTip="Abre klivfy.com/termos no navegador"/>
-                            <Button Content="Política de privacidade (site)" Style="{StaticResource TextButton}" Tag="https://klivfy.com/privacidade" Click="KlivfyPage_Click" Margin="0,0,8,8"
-                                    ToolTip="Abre klivfy.com/privacidade no navegador"/>
-                        </WrapPanel>
-                        <WrapPanel>
-                            <Button Content="Abrir suporte" Click="Support_Click" Margin="0,0,8,8"/>
-                            <Button Content="Exportar log de diagnóstico" Style="{StaticResource TextButton}" Click="DiagnosticLog_Click" Margin="0,0,8,8"
-                                    ToolTip="Um .txt com diagnóstico, erros recentes, ações e avisos, sem nome de usuário nem do computador. Bom para colar num e-mail."/>
-                            <Button Content="Gerar pacote para o suporte" Style="{StaticResource TonalButton}" Click="SupportPackage_Click" Margin="0,0,8,8"
-                                    ToolTip="Cria um .zip só com dados técnicos (sem seu nome de usuário nem o nome do computador) para anexar no atendimento."/>
-                            <Button x:Name="UpdateBtn" Content="Procurar atualização" Style="{StaticResource TextButton}" Click="CheckUpdate_Click" Margin="0,0,8,8"/>
-                            <Button Content="Abrir pasta de dados" Style="{StaticResource TextButton}" Click="OpenData_Click" Margin="0,0,8,8"/>
-                        </WrapPanel>
-                        <TextBlock x:Name="UpdateMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
                     </StackPanel>
                 </Border>
+
+                <!-- Redesign V5: atualização, textos do app, páginas do site e suporte como cartões-linha -->
+                <TextBlock Text="Informações e suporte" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
+                <HeaderedContentControl Header="Atualização" Tag="&#xE895;" Style="{StaticResource SettingRow}"
+                                        ToolTip="Procura uma versão nova no site da Klivfy, só quando você clica aqui ou se “Procurar nova versão uma vez por dia” estiver ligado.">
+                    <Button x:Name="UpdateBtn" Content="Procurar agora" Click="CheckUpdate_Click" Margin="0" AutomationProperties.Name="Procurar atualização"/>
+                </HeaderedContentControl>
+                <TextBlock x:Name="UpdateMsg" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="8,4,8,4" AutomationProperties.LiveSetting="Polite"/>
+                <!-- B23/B24: textos embutidos no app, abrem sem internet -->
+                <Button Content="Novidades" Tag="&#xE789;" Style="{StaticResource ActionRow}" local:ActionRow.Target="Novidades" Click="AboutText_Click"
+                        ToolTip="O que mudou nas versões do app."/>
+                <Button Content="Seus dados e privacidade" Tag="&#xE72E;" Style="{StaticResource ActionRow}" local:ActionRow.Target="Privacidade" Click="AboutText_Click"
+                        ToolTip="O que o app guarda no seu computador e o que nunca sai dele."/>
+                <Button Content="Licenças e créditos" Tag="&#xE8C8;" Style="{StaticResource ActionRow}" local:ActionRow.Target="Licencas" Click="AboutText_Click"
+                        ToolTip="Fontes, bibliotecas e licenças usadas pelo app."/>
+                <!-- B24: as versões completas ficam no site da Klivfy; só abrem quando a pessoa clica -->
+                <Button Content="Termos de uso (site)" Tag="&#xE8A5;" Style="{StaticResource ActionRow}" local:ActionRow.Slot="External"
+                        local:ActionRow.Target="https://klivfy.com/termos" Click="KlivfyPage_Click" ToolTip="Abre klivfy.com/termos no navegador"/>
+                <Button Content="Política de privacidade (site)" Tag="&#xE8D7;" Style="{StaticResource ActionRow}" local:ActionRow.Slot="External"
+                        local:ActionRow.Target="https://klivfy.com/privacidade" Click="KlivfyPage_Click" ToolTip="Abre klivfy.com/privacidade no navegador"/>
+                <Button Content="Abrir suporte" Tag="&#xE897;" Style="{StaticResource ActionRow}" local:ActionRow.Slot="External" Click="Support_Click"
+                        ToolTip="Abre klivfy.com/suporte no navegador"/>
+                <Button Content="Exportar log de diagnóstico" Tag="&#xE9F9;" Style="{StaticResource ActionRow}" Click="DiagnosticLog_Click"
+                        ToolTip="Um .txt com diagnóstico, erros recentes, ações e avisos, sem nome de usuário nem do computador. Bom para colar num e-mail."/>
+                <Button Content="Gerar pacote para o suporte" Tag="&#xE8B7;" Style="{StaticResource ActionRow}" Click="SupportPackage_Click"
+                        ToolTip="Cria um .zip só com dados técnicos (sem seu nome de usuário nem o nome do computador) para anexar no atendimento."/>
+                <Button Content="Abrir pasta de dados" Tag="&#xED25;" Style="{StaticResource ActionRow}" local:ActionRow.Slot="External" Click="OpenData_Click"
+                        ToolTip="Abre no Explorador de Arquivos a pasta onde o app guarda as preferências, o histórico e os backups."/>
                </StackPanel>
               </ScrollViewer>
             </TabItem>

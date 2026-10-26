@@ -241,6 +241,37 @@ public partial class MainWindow
         catch { ShowSnack("Não foi possível copiar", "Outro programa está usando a área de transferência. Tente de novo."); }
     }
 
+    // ---------- Início em duas colunas no monitor largo ----------
+    /// <summary>O Diagnóstico está na coluna da direita (janela larga) e não embaixo, na coluna única.</summary>
+    internal bool PainelTwoColumns => ReferenceEquals(DiagnosisCard.Parent, PainelSide);
+
+    /// <summary>
+    /// Janela larga (<see cref="Density.PainelSideColumn"/>): nota de saúde, métricas e atalhos ficam à esquerda (5/8 da largura) e o
+    /// Diagnóstico com os botões Corrigir vai para uma coluna ao lado. Estreita, tudo volta para a coluna única. É o mesmo cartão
+    /// trocado de lugar, então nomes, foco e leitura de tela não mudam; a rolagem continua uma só.
+    /// </summary>
+    private void ApplyPainelLayout()
+    {
+        bool wide = Density.PainelSideColumn(ActualWidth, TextScale.Factor);
+        if (wide == PainelTwoColumns) return;
+        if (wide)
+        {
+            PainelMain.Children.Remove(DiagnosisCard);
+            PainelSide.Children.Add(DiagnosisCard);
+            PainelMainCol.Width = new GridLength(5, GridUnitType.Star);
+            PainelSideCol.Width = new GridLength(3, GridUnitType.Star);
+            PainelSide.Margin = new Thickness(8, 0, 0, 0);
+        }
+        else
+        {
+            PainelSide.Children.Remove(DiagnosisCard);
+            PainelMain.Children.Add(DiagnosisCard);
+            PainelMainCol.Width = new GridLength(1, GridUnitType.Star);
+            PainelSideCol.Width = new GridLength(0);
+            PainelSide.Margin = new Thickness(0);
+        }
+    }
+
     // ---------- B19: imagem do painel ----------
     private void PainelImage_Click(object sender, RoutedEventArgs e)
     {

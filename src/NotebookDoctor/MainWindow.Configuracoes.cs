@@ -189,13 +189,13 @@ public partial class MainWindow
     // Só os endereços fixos do XAML chegam aqui; AppInfo.OpenKlivfy ainda confere https e o domínio da Klivfy
     private void KlivfyPage_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { Tag: string url }) AppInfo.OpenKlivfy(url);
+        if (sender is DependencyObject d && ActionRow.GetTarget(d) is { } url) AppInfo.OpenKlivfy(url);
     }
 
     private void AboutText_Click(object sender, RoutedEventArgs e)
     {
         var btn = (Button)sender;
-        string name = (string)btn.Tag;
+        string name = ActionRow.GetTarget(btn)!;
         // M13: Novidades.en.txt, Novidades.es.txt…; sem a versão do idioma, o texto em português
         var assembly = typeof(MainWindow).Assembly;
         using var stream = assembly.GetManifestResourceStream($"Textos.{name}.{Loc.Language}.txt") ?? assembly.GetManifestResourceStream($"Textos.{name}.txt");

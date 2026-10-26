@@ -1,4 +1,5 @@
 Revisión de seguridad, datos y accesibilidad (nuevo)
+• Inicio en monitor ancho (1200 px o más): la nota de salud, las métricas y los accesos quedan a la izquierda y el Diagnóstico, con los botones Corregir, en una columna al lado. En una ventana menor no cambia nada. Ajustes, Sistema, Espacio y Configuración muestran sus herramientas y enlaces como tarjetas-fila: icono, título, descripción y una flecha (› abre otra pantalla, ↗ abre fuera de la app), y toda la fila funciona con Intro y Espacio.
 • La primera sección del menú pasa a llamarse "Inicio" (antes, "Panel"). El comando "--tab=painel" sigue funcionando, y "--tab=inicio" también.
 • Acerca de: botones para los términos de uso y la política de privacidad en el sitio de Klivfy (solo se abren cuando haces clic).
 • Controladores del fabricante (Configuración › Controladores): lee el equipo y muestra de dónde viene cada controlador. BIOS, chipset, energía y touchpad solo del fabricante del portátil; gráficos dedicados de NVIDIA y AMD con su propia aplicación. Abre el sitio oficial, avisa cuando falta un punto de restauración e instala con WinGet la aplicación del fabricante (Dell, Lenovo, HP, Intel).

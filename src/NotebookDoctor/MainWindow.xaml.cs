@@ -163,7 +163,7 @@ public partial class MainWindow : Window
     private void SnackAction_Click(object sender, RoutedEventArgs e) { var a = _snackAction; HideSnack(); a?.Invoke(); }
 
     // ---------- Barra lateral compacta em janelas estreitas ----------
-    private void Window_SizeChanged(object sender, SizeChangedEventArgs e) => ApplyNavDensity();
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e) { ApplyNavDensity(); ApplyPainelLayout(); }
 
     /// <summary>B46: sem espaço para o título e os avisos lado a lado (texto grande, janela estreita), os avisos descem para baixo do título.</summary>
     private void PageHeader_SizeChanged(object sender, SizeChangedEventArgs e)
