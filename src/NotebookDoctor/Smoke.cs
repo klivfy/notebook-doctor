@@ -13,7 +13,7 @@ namespace NotebookDoctor;
 /// escuro, salva uma imagem PNG de cada uma e anota qualquer erro (recurso de estilo que falta, modelo quebrado). Termina o app com código
 /// 0 se tudo abriu e 1 se algo falhou; o relatório fica em <c>smoke.txt</c> na mesma pasta.
 /// </summary>
-public static class Smoke
+public static partial class Smoke
 {
     public static string? FolderFromArgs(IEnumerable<string> args) =>
         args.FirstOrDefault(a => a.StartsWith("--smoke=", StringComparison.Ordinal)) is { } a ? a[8..].Trim('"') : null;
@@ -107,6 +107,9 @@ public static class Smoke
                 foreach (var (name, create) in Tools(main)) await Tool("light", folder, $"{name}-texto{pct}", create, small: true);
             }
             TextScale.Force(1);
+
+            // Prioridade 6: o que só um Windows de verdade responde (árvore do Narrador, teclado, efeito de clique, COM do WinGet)
+            await Step("windows-real", () => RealWindowsAsync(main, folder));
         }
         catch (Exception ex) { Errors.Add("Falha geral: " + ex); }
 

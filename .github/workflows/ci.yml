@@ -69,6 +69,7 @@ jobs:
           $null = $p.Handle
           if (-not $p.WaitForExit(600000)) { $p.Kill(); Write-Error 'A verificação visual passou de 10 minutos.'; exit 1 }
           Write-Host ('A verificação visual levou {0:N0} s.' -f $clock.Elapsed.TotalSeconds)
+          if (Test-Path "$out/windows-real.txt") { Write-Host '--- windows-real.txt'; Get-Content "$out/windows-real.txt" }
           if (Test-Path "$out/smoke.txt") { Get-Content "$out/smoke.txt" } else { Write-Error 'O app não gerou o relatório.' }
           exit $p.ExitCode
 

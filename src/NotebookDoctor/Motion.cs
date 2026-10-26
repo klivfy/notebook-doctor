@@ -12,7 +12,10 @@ namespace NotebookDoctor;
 /// </summary>
 public static class Motion
 {
-    public static bool Enabled => Services.ClickEffect.Allowed(SystemParameters.ClientAreaAnimation, SystemParameters.HighContrast);
+    /// <summary>Só a verificação automática usa: força ligado ou desligado para conferir o efeito de clique mesmo num Windows com as animações desligadas (como o da CI).</summary>
+    internal static bool? ForTesting { get; set; }
+
+    public static bool Enabled => ForTesting ?? Services.ClickEffect.Allowed(SystemParameters.ClientAreaAnimation, SystemParameters.HighContrast);
 
     // Redesign V6: tempos e curva do Windows 11 (rápido 167 ms, normal 250 ms, desacelerando no fim)
     public static readonly TimeSpan Fast = TimeSpan.FromMilliseconds(Services.ClickEffect.FastMs), Normal = TimeSpan.FromMilliseconds(Services.ClickEffect.NormalMs);
