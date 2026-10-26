@@ -67,6 +67,25 @@ public static class Smoke
                 });
             }
             foreach (var (name, create) in Tools(main)) await Tool("light", folder, name + "-150", create, small: true);
+
+            // B46: "Tamanho do texto" do Windows em 150% e 200%, no mesmo notebook pequeno (o pior caso). Texto cortado ou botão
+            // empurrado para fora vira aviso, como acima
+            foreach (int pct in new[] { 150, 200 })
+            {
+                TextScale.Force(pct / 100.0);
+                await Idle(400);
+                for (int tab = 0; tab <= AppTabs.Settings; tab++)
+                {
+                    await Step($"light-aba-{tab:00}-texto{pct}", async () =>
+                    {
+                        main.SelectTab(tab);
+                        await Idle(500);
+                        Save(main, folder, $"light-aba-{tab:00}-texto{pct}");
+                    });
+                }
+                foreach (var (name, create) in Tools(main)) await Tool("light", folder, $"{name}-texto{pct}", create, small: true);
+            }
+            TextScale.Force(1);
         }
         catch (Exception ex) { Errors.Add("Falha geral: " + ex); }
 
@@ -168,7 +187,7 @@ public static class Smoke
         catch (Exception ex) { Errors.Add($"{name}: {ex}"); Log.AppendLine("ERRO  " + name); }
     }
 
-    /// <summary>Uma folha com os controles em cada estado: botões, caixas, interruptor, campos e barras (inclusive a de andamento sem fim).</summary>
+    /// <summary>Uma folha com os controles em cada estado: botões, caixas, campos e barras (inclusive a de andamento sem fim).</summary>
     private static Window Controls(Window owner)
     {
         var w = new Window { Owner = owner, Title = "Controles", Width = 720, Height = 520, ShowInTaskbar = false };
@@ -190,13 +209,8 @@ public static class Smoke
             return b;
         }
         panel.Children.Add(Row(Btn("Destaque"), Btn("Padrão", "TonalButton"), Btn("Sutil", "TextButton"), Btn("Perigo", "DangerButton"), Btn("Desligado", null, false)));
-        var sw = new System.Windows.Controls.CheckBox { Content = Loc.T("Interruptor ligado"), IsChecked = true, Width = 260 };
-        sw.SetResourceReference(FrameworkElement.StyleProperty, "ToggleSwitch");
-        var swOff = new System.Windows.Controls.CheckBox { Content = "Interruptor desligado", Width = 260 };
-        swOff.SetResourceReference(FrameworkElement.StyleProperty, "ToggleSwitch");
         panel.Children.Add(Row(new System.Windows.Controls.CheckBox { Content = "Marcada", IsChecked = true, Margin = new Thickness(0, 0, 16, 0) },
             new System.Windows.Controls.CheckBox { Content = "Desmarcada" }));
-        panel.Children.Add(Row(sw, swOff));
         panel.Children.Add(Row(new System.Windows.Controls.TextBox { Width = 260, Tag = Loc.T("Texto de ajuda"), Margin = new Thickness(0, 0, 12, 0) },
             new System.Windows.Controls.ComboBox { Width = 200, ItemsSource = new[] { Loc.T("Primeira opção"), Loc.T("Segunda") }, SelectedIndex = 0 }));
         panel.Children.Add(new System.Windows.Controls.ProgressBar { Value = 62, Margin = new Thickness(0, 0, 0, 12) });

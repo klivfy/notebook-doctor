@@ -33,9 +33,17 @@ public static class TextScale
     {
         double f = ReadFactor();
         bool changed = Math.Abs(f - Factor) > 0.001;
+        Set(f);
+        return changed;
+    }
+
+    /// <summary>Verificação visual da CI (B46): aplica um fator sem mexer no Windows.</summary>
+    public static void Force(double factor) => Set(factor);
+
+    private static void Set(double f)
+    {
         Factor = f;
         var res = Application.Current.Resources;
         foreach (var (key, px) in Sizes) res[key] = Math.Round(px * f, 1);
-        return changed;
     }
 }

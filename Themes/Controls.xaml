@@ -160,41 +160,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <!-- Interruptor (liga/desliga) do Windows, para opções que valem na hora; mesma semântica da caixa de seleção -->
-    <Style x:Key="ToggleSwitch" TargetType="CheckBox">
-        <Setter Property="Foreground" Value="{DynamicResource OnSurface}"/>
-        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingPill}"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="CheckBox">
-                    <Grid Background="Transparent" MinHeight="32">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                        <ContentPresenter VerticalAlignment="Center" Margin="0,6,12,6">
-                            <ContentPresenter.Resources>
-                                <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
-                            </ContentPresenter.Resources>
-                        </ContentPresenter>
-                        <Border x:Name="Track" Grid.Column="1" Width="40" Height="20" CornerRadius="10" BorderThickness="1"
-                                BorderBrush="{DynamicResource Outline}" Background="{DynamicResource ControlFill}" VerticalAlignment="Center">
-                            <Ellipse x:Name="Knob" Width="12" Height="12" Fill="{DynamicResource OnSurfaceVariant}" HorizontalAlignment="Left" Margin="4,0,0,0"/>
-                        </Border>
-                    </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Track" Property="Background" Value="{DynamicResource ControlFillHover}"/></Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Track" Property="Background" Value="{DynamicResource Primary}"/>
-                            <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource Primary}"/>
-                            <Setter TargetName="Knob" Property="Fill" Value="{DynamicResource OnPrimary}"/>
-                            <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
-                            <Setter TargetName="Knob" Property="Margin" Value="0,0,4,0"/>
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
     <Style x:Key="GridCheck" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
         <Setter Property="HorizontalAlignment" Value="Center"/>
         <Setter Property="VerticalAlignment" Value="Center"/>

@@ -50,6 +50,24 @@
         <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
 
+    <!-- ============ Aviso em linha (InfoBar do Windows): faixa dentro da tela, que fica enquanto o assunto vale ============ -->
+    <!-- A cor só reforça: o texto do aviso sempre diz o que está acontecendo. O aviso que some sozinho é o Snack da janela principal. -->
+    <Style x:Key="InfoBar" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource SecondaryContainer}"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusControl}"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+    <Style x:Key="InfoBarWarning" TargetType="Border" BasedOn="{StaticResource InfoBar}">
+        <Setter Property="Background" Value="{DynamicResource WarningContainer}"/>
+    </Style>
+    <Style x:Key="InfoBarError" TargetType="Border" BasedOn="{StaticResource InfoBar}">
+        <Setter Property="Background" Value="{DynamicResource ErrorContainer}"/>
+    </Style>
+    <Style x:Key="InfoBarSuccess" TargetType="Border" BasedOn="{StaticResource InfoBar}">
+        <Setter Property="Background" Value="{DynamicResource SuccessContainer}"/>
+    </Style>
+
     <!-- ============ Cartão (Fluent: canto de 8 px, contorno de 1 px, sem sombra) ============ -->
     <!-- B15: densidade. App.ApplyDensity troca estes valores no modo compacto (Density, no Core). -->
     <Thickness x:Key="CardPad">16</Thickness>

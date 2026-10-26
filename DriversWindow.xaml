@@ -55,8 +55,7 @@
               <StackPanel>
                 <TextBlock x:Name="OemComputer" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,4"/>
                 <TextBlock x:Name="OemTools" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"/>
-                <Border x:Name="OemRestoreBox" Visibility="Collapsed" Background="{DynamicResource WarningContainer}"
-                        CornerRadius="{StaticResource RadiusControl}" Padding="12,8" Margin="0,0,0,8">
+                <Border x:Name="OemRestoreBox" Style="{StaticResource InfoBarWarning}" Visibility="Collapsed">
                     <TextBlock x:Name="OemRestore" TextWrapping="Wrap" Foreground="{DynamicResource OnSurface}" AutomationProperties.LiveSetting="Polite"/>
                 </Border>
                 <DataGrid x:Name="OemGrid" AutomationProperties.Name="Drivers do fabricante" SelectionMode="Single" SelectionChanged="OemGrid_SelectionChanged"

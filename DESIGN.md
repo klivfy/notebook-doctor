@@ -65,13 +65,27 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 | Perigo | `DangerButton` | Ação destrutiva, sempre com confirmação |
 | Ícone | `IconButton` | Fechar, "Mais"; precisa de `AutomationProperties.Name` |
 | Chip de estado | `StatusChipButton` | Um estado que vale para o app todo (Simulação ligada); clicar leva para onde se muda. Nunca para ações |
-| Interruptor | `ToggleSwitch` (CheckBox) | Opção que vale na hora |
+| Aviso em linha | `InfoBar`, `InfoBarWarning`, `InfoBarError`, `InfoBarSuccess` (Border) | Faixa dentro da tela, que fica enquanto o assunto vale (programa pesado, ponto de restauração). Texto sempre diz o estado; a cor só reforça. O aviso que some sozinho é o `Snack` da janela principal |
 | Cartão | `Card` | Agrupar conteúdo |
 | Ladrilho | `TileButton` | Atalho com resumo (Painel), cartão inteiro clicável |
 | Cartão-linha | `ActionRow` | Abrir uma ferramenta ou outra tela: ícone no `Tag`, título no `Content`, descrição no `ToolTip` |
 | Título de grupo | `GroupTitle` | Acima de uma lista de cartões-linha |
 | Navegação | `NavList` / `NavItem` | Tag da lista: `rail` (trilho, padrão), vazio (larga) ou `compact` (só ícones). `NavLabel.Short` = rótulo do trilho; `NavLabel.Badge` = ponto de pendência |
 | Camada de conteúdo | `ContentLayer` | O fundo das páginas da janela principal |
+
+### Estilos de apoio
+
+| Estilo | Para quê |
+|---|---|
+| `Label` | Rótulo ou descrição pequena (`FsLabel`, cor de texto secundário) |
+| `Muted` | Texto de apoio na cor secundária, no tamanho do texto ao redor |
+| `Value` | Número ou valor em destaque dentro de um cartão (`FsCardTitle`, média) |
+| `EmptyState` | Texto no meio de uma tabela sem linhas. `Tag` aponta para a tabela; some quando ela tem itens |
+| `GridCheck` | Caixa de seleção centralizada numa coluna de tabela |
+| `WhyToggle` | Link "Por que isso importa?" que abre e fecha a explicação logo abaixo de um achado |
+| `RowMin` | Altura mínima de linha de tabela (40; 32 no modo compacto) |
+
+Não há estilo de interruptor: as opções do app são caixas de seleção. Se um dia uma opção precisar de liga/desliga, o estilo entra junto com ela.
 
 ## Movimento
 
@@ -80,4 +94,4 @@ Segoe UI Variable (no Windows 10, Segoe UI). Google Sans Flex só na nota de sa�
 ## Como conferir uma mudança visual
 
 1. `dotnet test` roda `ThemeContrastTests` (contrastes dos dois temas) e `LocTests` (textos traduzidos).
-2. A CI do Windows roda `NotebookDoctor.exe --demo --smoke=pasta`: abre as 11 abas, as janelas de ferramenta, uma folha de controles e os diálogos nos temas claro e escuro, falha se algo não abrir e publica as imagens no artefato **telas**. O relatório `smoke.txt` lista avisos de ligação quebrada e textos que ficaram sem tradução.
+2. A CI do Windows roda `NotebookDoctor.exe --demo --smoke=pasta`: abre as 11 abas, as janelas de ferramenta, uma folha de controles e os diálogos nos temas claro e escuro, mais as abas e ferramentas num notebook pequeno (911 × 480) com o texto em 100%, 150% e 200% (`-150`, `-texto150`, `-texto200`), falha se algo não abrir e publica as imagens no artefato **telas**. O relatório `smoke.txt` lista avisos de ligação quebrada e textos que ficaram sem tradução.
