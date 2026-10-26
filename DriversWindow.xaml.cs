@@ -447,6 +447,13 @@ public partial class DriversWindow : Window
 
     private void OemGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => Msg.Text = "";
 
+    /// <summary>A lista mostra todas as linhas e quem rola é o painel: a roda do mouse sobre a lista vai para ele.</summary>
+    private void OemGrid_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        OemPanel.ScrollToVerticalOffset(OemPanel.VerticalOffset - e.Delta);
+    }
+
     private void OpenOfficial(string url)
     {
         // Só abre endereço que o próprio app montou: nada lido do computador vira link sem passar por aqui
