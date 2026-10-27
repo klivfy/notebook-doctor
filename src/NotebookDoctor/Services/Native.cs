@@ -106,6 +106,33 @@ internal static class Native
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
 
+    // ---------- Leva 10.2: janelas de cada processo e as que pararam de responder ----------
+    private delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern bool IsHungAppWindow(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr hwnd, uint cmd);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowTextLengthW(IntPtr hwnd);
+
+    /// <summary>
+    /// PIDs com janela principal visível (sem dono e com título) e os que têm alguma dessas janelas sem responder. Uma
+    /// passada só pelas janelas da área de trabalho, a cada atualização da tabela.
+    /// </summary>
+    public static (HashSet<int> Windowed, HashSet<int> Hung) TopWindows()
+    {
+        var windowed = new HashSet<int>();
+        var hung = new HashSet<int>();
+        EnumWindows((hwnd, _) =>
+        {
+            if (!IsWindowVisible(hwnd) || GetWindow(hwnd, 4 /* GW_OWNER */) != IntPtr.Zero || GetWindowTextLengthW(hwnd) == 0) return true;
+            GetWindowThreadProcessId(hwnd, out uint pid);
+            windowed.Add((int)pid);
+            if (IsHungAppWindow(hwnd)) hung.Add((int)pid);
+            return true;
+        }, IntPtr.Zero);
+        return (windowed, hung);
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct LASTINPUTINFO { public uint cbSize; public uint dwTime; }
     [DllImport("user32.dll")] public static extern bool GetLastInputInfo(ref LASTINPUTINFO info);

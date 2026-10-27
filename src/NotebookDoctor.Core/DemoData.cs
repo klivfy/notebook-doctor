@@ -16,6 +16,9 @@ public static class DemoData
         ("OneDrive", 1, 0.4, 120), ("SearchIndexer", 1, 0.3, 60), ("dwm", 1, 1.4, 90), ("svchost", 74, 1.8, 980),
     ];
 
+    // Leva 10.2: programas com janela (o resto fica em "Segundo plano")
+    private static readonly HashSet<string> Windowed = new(StringComparer.OrdinalIgnoreCase) { "chrome", "Teams", "Code", "Outlook", "WhatsApp", "Spotify", "explorer" };
+
     /// <summary>Uma leitura ao vivo. <paramref name="tick"/> conta as leituras desde que a demonstração abriu.</summary>
     public static Snapshot Sample(DateTime time, int tick)
     {
@@ -29,7 +32,9 @@ public static class DemoData
             if (a.Name == "chrome" && chromeBusy) cpu = 27 + rnd.NextDouble() * 6;
             long mem = a.Mem + (long)(rnd.NextDouble() * 60);
             if (a.Name == "Teams") mem += Math.Min(tick, 600) * 3L; // cresce por ~30 min: aparece como suspeita de vazamento de memória
-            return new ProcGroup(a.Name, a.Count, Math.Round(cpu, 1), mem, Math.Round(rnd.NextDouble() * 400 * a.Cpu), rnd.Next(0, 12));
+            // Nos primeiros minutos o Outlook "não está respondendo", para mostrar o selo Travado
+            bool hung = a.Name == "Outlook" && tick % 200 < 100;
+            return new ProcGroup(a.Name, a.Count, Math.Round(cpu, 1), mem, Math.Round(rnd.NextDouble() * 400 * a.Cpu), rnd.Next(0, 12), hung, Windowed.Contains(a.Name));
         }).ToList();
 
         double cpuTotal = Math.Clamp(groups.Sum(g => g.CpuPct) + 6 + 5 * wave, 3, 100);

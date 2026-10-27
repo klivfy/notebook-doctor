@@ -2,7 +2,9 @@ namespace NotebookDoctor.Services;
 
 /// <param name="IoKBs">Leitura+gravação em KB/s (inclui arquivos, rede e pipes: é o "movimento de dados" do programa, não só disco)</param>
 /// <param name="Conns">Conexões TCP abertas (indica quem está usando a rede; o Windows não informa banda por app sem administrador)</param>
-public sealed record ProcGroup(string Name, int Count, double CpuPct, long MemMB, double IoKBs = 0, int Conns = 0);
+/// <param name="Hung">Leva 10.2: alguma janela do programa parou de responder (o Windows diz "Não está respondendo").</param>
+/// <param name="HasWindow">Algum processo do programa tem janela visível (aplicativo, e não só segundo plano).</param>
+public sealed record ProcGroup(string Name, int Count, double CpuPct, long MemMB, double IoKBs = 0, int Conns = 0, bool Hung = false, bool HasWindow = false);
 
 public sealed record Snapshot(
     DateTime Time,

@@ -94,6 +94,77 @@ public class Fase10Tests
     }
 }
 
+/// <summary>Fase 10, leva 10.2: aba Processos.</summary>
+public class Fase10ProcessosTests
+{
+    [Theory]
+    [InlineData(ProcessFilter.All, 0.5, false, false, Safety.Never, true, true)]
+    [InlineData(ProcessFilter.HighUse, 10.5, false, false, Safety.Unknown, false, true)]
+    [InlineData(ProcessFilter.HighUse, 10, false, false, Safety.Unknown, false, false)]
+    [InlineData(ProcessFilter.Hung, 0, true, true, Safety.Safe, false, true)]
+    [InlineData(ProcessFilter.Hung, 50, false, true, Safety.Safe, false, false)]
+    [InlineData(ProcessFilter.Windowed, 0, false, true, Safety.Safe, false, true)]
+    [InlineData(ProcessFilter.Background, 0, false, true, Safety.Safe, false, false)]
+    [InlineData(ProcessFilter.Background, 0, false, false, Safety.Careful, false, true)]
+    [InlineData(ProcessFilter.CanClose, 0, false, true, Safety.Safe, false, true)]
+    [InlineData(ProcessFilter.CanClose, 0, false, true, Safety.Safe, true, false)]
+    [InlineData(ProcessFilter.CanClose, 0, false, true, Safety.Careful, false, false)]
+    public void Filtros_rapidos(ProcessFilter f, double cpu, bool hung, bool window, Safety safety, bool isProtected, bool expected) =>
+        Assert.Equal(expected, ProcessView.Matches(f, cpu, hung, window, safety, isProtected));
+
+    [Fact]
+    public void Fixados_primeiro_depois_travados()
+    {
+        Assert.True(ProcessView.Rank(pinned: true, hung: false) < ProcessView.Rank(pinned: false, hung: true));
+        Assert.True(ProcessView.Rank(pinned: false, hung: true) < ProcessView.Rank(pinned: false, hung: false));
+    }
+
+    [Fact]
+    public void No_maximo_cinco_fixados_e_fixar_de_novo_desafixa()
+    {
+        var list = new List<string>();
+        foreach (var n in new[] { "a", "b", "c", "d", "e" }) list = ProcessView.TogglePin(list, n)!;
+        Assert.Equal(5, list.Count);
+        Assert.Null(ProcessView.TogglePin(list, "f"));
+        list = ProcessView.TogglePin(list, "C")!;
+        Assert.Equal(new[] { "a", "b", "d", "e" }, list);
+    }
+
+    [Theory]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(false, false, false)]
+    public void Tabela_espera_com_menu_aberto_ou_espaco_segurado(bool menu, bool space, bool expected) =>
+        Assert.Equal(expected, ProcessView.HoldRefresh(menu, space));
+
+    [Fact]
+    public void Linha_juntada_diz_o_processo_mais_pesado_e_herda_travado_e_janela()
+    {
+        var merged = AppGroups.Merge([
+            new ProcGroup("steam", 1, 2, 200, HasWindow: true),
+            new ProcGroup("steamwebhelper", 6, 9, 600, Hung: true),
+            new ProcGroup("notepad", 1, 0, 20)]);
+        var steam = merged.Single(g => g.Name == "Steam");
+        Assert.Equal("steamwebhelper", steam.Heaviest);
+        Assert.True(steam.Hung);
+        Assert.True(steam.HasWindow);
+        var notepad = merged.Single(g => g.Name == "notepad");
+        Assert.Equal("", notepad.Heaviest);
+        Assert.False(notepad.Hung);
+        var single = AppGroups.Single([new ProcGroup("x", 1, 1, 1, Hung: true, HasWindow: true)]).Single();
+        Assert.True(single.Hung && single.HasWindow);
+    }
+
+    [Fact]
+    public void Demonstracao_mostra_um_programa_travado_e_os_de_janela()
+    {
+        var s = DemoData.Sample(DateTime.Today, 10);
+        Assert.Contains(s.Groups, g => g.Name == "Outlook" && g.Hung);
+        Assert.Contains(s.Groups, g => g.Name == "svchost" && !g.HasWindow);
+        Assert.Contains(s.Groups, g => g.Name == "chrome" && g.HasWindow);
+    }
+}
+
 /// <summary>Na CI do Windows: o Restart Manager de verdade.</summary>
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public class Fase10IntegrationTests

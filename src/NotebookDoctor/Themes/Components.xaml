@@ -308,6 +308,35 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- Leva 10.2: filtro rápido em pílula (RadioButton: o leitor de tela diz "Travados, botão de opção, selecionado").
+         Selecionado ganha o fundo de destaque e o texto em negrito, não só a cor -->
+    <Style x:Key="FilterPill" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="FontSize" Value="{DynamicResource FsLabel}"/>
+        <Setter Property="Margin" Value="0,0,8,8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingPill}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid MinHeight="32">
+                        <Border x:Name="Back" Background="Transparent" BorderBrush="{DynamicResource ControlStroke}" BorderThickness="1" CornerRadius="{StaticResource RadiusPill}"/>
+                        <Border x:Name="Layer" Background="{DynamicResource StateHover}" CornerRadius="{StaticResource RadiusPill}" Opacity="0"/>
+                        <ContentPresenter x:Name="Text" Margin="12,4" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Layer" Property="Opacity" Value="1"/></Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Back" Property="Background" Value="{DynamicResource AccentContainer}"/>
+                            <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource AccentContainer}"/>
+                            <Setter TargetName="Text" Property="TextElement.Foreground" Value="{DynamicResource OnAccentContainer}"/>
+                            <Setter TargetName="Text" Property="TextElement.FontFamily" Value="{StaticResource FontSemi}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style x:Key="GroupTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource FontSemi}"/>
         <Setter Property="FontSize" Value="{DynamicResource FsBody}"/>

@@ -314,6 +314,7 @@ public partial class MainWindow
         CfgCloseExits.IsChecked = s.CloseExits;
         CfgCompact.IsChecked = s.Compact;
         GroupByAppBox.IsChecked = s.GroupByApp; // M22: a opção fica na aba Processos
+        LoadProcFilter();
         RefreshStartMenu();
         RefreshLockCard();
         LoadRatingAndPrivacy();

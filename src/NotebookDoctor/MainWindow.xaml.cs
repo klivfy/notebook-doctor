@@ -7,7 +7,8 @@ using NotebookDoctor.Services;
 namespace NotebookDoctor;
 
 public sealed record ProcRow(string Name, int Count, double CpuPct, long MemMB, double IoKBs, int Conns, string About, string SafetyText,
-                             System.Windows.Media.ImageSource? Icon = null, string Severity = "", IReadOnlyList<string>? Members = null)
+                             System.Windows.Media.ImageSource? Icon = null, string Severity = "", IReadOnlyList<string>? Members = null,
+                             bool Hung = false, bool HasWindow = false, bool Pinned = false, Safety Safety = Safety.Unknown)
 {
     /// <summary>M22: processos que a linha representa (vários quando o aplicativo foi agrupado).</summary>
     public IReadOnlyList<string> Names => Members ?? [Name];
@@ -16,7 +17,8 @@ public sealed record ProcRow(string Name, int Count, double CpuPct, long MemMB, 
     public bool IsProtected => Names.Any(ProcessTools.IsProtected);
     public bool HasIcon => Icon is not null;
     /// <summary>B32: lido pelo Narrador junto com o nome ("uso alto").</summary>
-    public string SeverityText => RowSeverity.Spoken(Severity);
+    public string SeverityText => string.Join(", ", new[] { Hung ? Loc.T("não está respondendo") : "", Pinned ? Loc.T("fixado no topo") : "", RowSeverity.Spoken(Severity) }
+        .Where(t => t.Length > 0));
 }
 
 public partial class MainWindow : Window

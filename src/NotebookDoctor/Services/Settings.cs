@@ -176,6 +176,10 @@ public sealed class AppSettings
     public string Language { get; set; } = Loc.Auto;
     /// <summary>M22: na aba Processos, junta processos do mesmo aplicativo (Steam + steamwebhelper).</summary>
     public bool GroupByApp { get; set; } = true;
+    /// <summary>Leva 10.2: até 5 programas fixados no topo da tabela de Processos (nomes das linhas).</summary>
+    public List<string> PinnedProcesses { get; set; } = [];
+    /// <summary>Leva 10.2: filtro rápido escolhido na aba Processos (<see cref="ProcessFilter"/>).</summary>
+    public ProcessFilter ProcessFilter { get; set; } = ProcessFilter.All;
     /// <summary>B38: hash da senha das configurações (PasswordHash); null = sem senha.</summary>
     public string? SettingsLock { get; set; }
 

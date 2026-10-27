@@ -303,7 +303,7 @@
             <TabItem Header="Processos">
                 <Border Style="{StaticResource Card}">
                     <Grid>
-                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="260"/></Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
@@ -315,14 +315,26 @@
                             <TextBox x:Name="ProcSearch" Grid.Column="1" Tag="Buscar programa…" VerticalAlignment="Top" TextChanged="ProcSearch_Changed"
                                      AutomationProperties.Name="Buscar programa"/>
                         </Grid>
+                        <!-- Leva 10.2: filtros rápidos -->
+                        <WrapPanel x:Name="ProcFilters" Grid.Row="1" Margin="0,8,0,0" AutomationProperties.Name="Mostrar">
+                            <RadioButton Content="Todos os programas" Tag="All" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked" IsChecked="True"/>
+                            <RadioButton Content="Uso alto (mais de 10%)" Tag="HighUse" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"/>
+                            <RadioButton Content="Travados" Tag="Hung" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"
+                                         ToolTip="Programas com uma janela que o Windows marcou como &quot;Não está respondendo&quot;."/>
+                            <RadioButton Content="Com janela" Tag="Windowed" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"/>
+                            <RadioButton Content="Segundo plano" Tag="Background" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"/>
+                            <RadioButton Content="Podem fechar" Tag="CanClose" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"
+                                         ToolTip="Os que a coluna &quot;Pode fechar?&quot; marca como seguros."/>
+                        </WrapPanel>
                         <!-- B33: totais do que está à vista (respeita a busca) -->
-                        <DockPanel Grid.Row="1">
+                        <DockPanel Grid.Row="2">
                             <TextBlock x:Name="ProcTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,8,0,0" TextTrimming="CharacterEllipsis"/>
                             <DataGrid x:Name="ProcGrid" SelectionMode="Extended" MouseDoubleClick="ProcGrid_DoubleClick" PreviewKeyDown="ProcGrid_KeyDown" AutomationProperties.Name="Programas em execução">
                                 <!-- M26: as mesmas ações dos botões, mais abrir o local e pesquisar o nome -->
                                 <DataGrid.ContextMenu>
-                                    <ContextMenu>
+                                    <ContextMenu Opened="ProcMenu_Opened">
                                         <MenuItem Header="_Detalhes" Click="ProcDetails_Click"/>
+                                        <MenuItem x:Name="ProcPinItem" Header="Fi_xar no topo" Click="ProcPin_Click"/>
                                         <MenuItem Header="Abrir _local do arquivo" Click="ProcOpenLocation_Click"/>
                                         <MenuItem Header="_Pesquisar na internet o que é" Click="ProcSearchOnline_Click"/>
                                         <MenuItem Header="Ver o programa _instalado" Click="ProcShowProgram_Click"/>
@@ -361,7 +373,17 @@
                                                                Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
                                                     </Grid>
                                                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
+                                                        <DockPanel>
+                                                            <!-- Leva 10.2: fixado no topo e "Travado" (texto, não só cor) -->
+                                                            <TextBlock DockPanel.Dock="Right" Text="&#xE718;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsLabel}"
+                                                                       Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                       Visibility="{Binding Pinned, Converter={StaticResource B2V}}" ToolTip="Fixado no topo"/>
+                                                            <Border DockPanel.Dock="Right" Background="{DynamicResource CriticalContainer}" CornerRadius="{StaticResource RadiusPill}"
+                                                                    Padding="8,0" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="{Binding Hung, Converter={StaticResource B2V}}">
+                                                                <TextBlock Text="Travado" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}" Foreground="{DynamicResource Critical}"/>
+                                                            </Border>
+                                                            <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
+                                                        </DockPanel>
                                                         <TextBlock Text="{Binding About}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
                                                 </Grid>
@@ -381,7 +403,7 @@
                                 </DataGrid.Columns>
                             </DataGrid>
                         </DockPanel>
-                        <WrapPanel Grid.Row="2" Margin="0,16,0,0">
+                        <WrapPanel Grid.Row="3" Margin="0,16,0,0">
                             <Button Content="Detalhes" Style="{StaticResource TonalButton}" Click="ProcDetails_Click" Margin="0,0,8,8"
                                     ToolTip="Cada processo do programa selecionado, com PID, memória e caminho (ou clique duplo na linha)."/>
                             <Button Content="Encerrar programa selecionado" Style="{StaticResource TonalButton}" Click="KillSelected_Click" Margin="0,0,8,8"/>
@@ -390,6 +412,10 @@
                             <Button Content="Restaurar prioridade" Style="{StaticResource TextButton}" Click="RestorePriority_Click" Margin="0,0,8,8"/>
                             <Button Content="Modo eficiência" Style="{StaticResource TextButton}" Click="Efficiency_Click" Margin="0,0,8,8"
                                     ToolTip="Como no Gerenciador de Tarefas: o programa continua aberto, mas roda devagar e econômico (bom para os que ficam em segundo plano). Desfaça em Ações."/>
+                            <Button Content="Reiniciar o Explorador…" Style="{StaticResource TextButton}" Click="ProcRestartExplorer_Click" Margin="0,0,8,8"
+                                    ToolTip="Quando a barra de tarefas, o menu Iniciar ou as janelas de pasta travam. Eles somem por alguns segundos e voltam sozinhos."/>
+                            <Button Content="Reiniciar o driver de vídeo…" Style="{StaticResource TextButton}" Click="ProcRestartVideo_Click" Margin="0,0,8,8"
+                                    ToolTip="Quando a tela congela ou fica preta mas o mouse ainda mexe. A tela pisca e volta em um ou dois segundos, sem fechar nada (o mesmo que Windows+Ctrl+Shift+B)."/>
                             <Button x:Name="ExceptionBtn" Content="Não avisar sobre este" Style="{StaticResource TextButton}" Click="AlertException_Click" Margin="0,0,8,8"
                                     ToolTip="O programa continua na lista, mas não gera mais avisos de uso alto. Desfaça em Configurações › Exceções."/>
                             <TextBlock x:Name="ProcMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,8" TextWrapping="Wrap"

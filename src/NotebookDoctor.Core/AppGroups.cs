@@ -1,7 +1,9 @@
 namespace NotebookDoctor.Services;
 
 /// <param name="Members">Nomes dos processos que formam a linha (um só quando não houve junção)</param>
-public sealed record AppGroup(string Name, IReadOnlyList<string> Members, int Count, double CpuPct, long MemMB, double IoKBs, int Conns)
+/// <param name="Heaviest">Leva 10.2: numa linha juntada, o processo que mais pesa (CPU, e memória no empate); vazio quando a linha é um processo só.</param>
+public sealed record AppGroup(string Name, IReadOnlyList<string> Members, int Count, double CpuPct, long MemMB, double IoKBs, int Conns,
+                              bool Hung = false, bool HasWindow = false, string Heaviest = "")
 {
     /// <summary>Processo principal: dá o ícone, a descrição e o local do arquivo.</summary>
     public string Main => Members[0];
@@ -66,13 +68,15 @@ public static class AppGroups
         {
             var members = family.OrderBy(g => ByName.TryGetValue(g.Name, out var a) ? a.Rank : 0).ToList();
             string name = members.Count > 1 ? AppOf(members[0].Name)! : members[0].Name;
+            string heaviest = members.Count > 1 ? members.OrderByDescending(m => m.CpuPct).ThenByDescending(m => m.MemMB).First().Name : "";
             result.Add(new AppGroup(name, members.Select(m => m.Name).ToList(), members.Sum(m => m.Count), members.Sum(m => m.CpuPct),
-                                    members.Sum(m => m.MemMB), members.Sum(m => m.IoKBs), members.Sum(m => m.Conns)));
+                                    members.Sum(m => m.MemMB), members.Sum(m => m.IoKBs), members.Sum(m => m.Conns),
+                                    members.Any(m => m.Hung), members.Any(m => m.HasWindow), heaviest));
         }
         return result;
     }
 
     /// <summary>Sem juntar: cada processo na sua linha (opção desligada).</summary>
     public static List<AppGroup> Single(IEnumerable<ProcGroup> groups) =>
-        groups.Select(g => new AppGroup(g.Name, [g.Name], g.Count, g.CpuPct, g.MemMB, g.IoKBs, g.Conns)).ToList();
+        groups.Select(g => new AppGroup(g.Name, [g.Name], g.Count, g.CpuPct, g.MemMB, g.IoKBs, g.Conns, g.Hung, g.HasWindow)).ToList();
 }

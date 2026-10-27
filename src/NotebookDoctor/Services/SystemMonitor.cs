@@ -76,7 +76,8 @@ public sealed class SystemMonitor : IDisposable
         var newCpu = new Dictionary<int, TimeSpan>();
         var newIo = new Dictionary<int, ulong>();
         var conns = Native.TcpConnectionsByPid();
-        var groups = new Dictionary<string, (int n, double cpu, long mem, double io, int conns)>(StringComparer.OrdinalIgnoreCase);
+        var (windowed, hungPids) = Native.TopWindows();
+        var groups = new Dictionary<string, (int n, double cpu, long mem, double io, int conns, bool hung, bool window)>(StringComparer.OrdinalIgnoreCase);
         foreach (var p in Process.GetProcesses())
         {
             using (p)
@@ -109,7 +110,8 @@ public sealed class SystemMonitor : IDisposable
                         finally { Native.CloseHandle(h); }
                     }
                     var g = groups.GetValueOrDefault(p.ProcessName);
-                    groups[p.ProcessName] = (g.n + 1, g.cpu + Math.Max(pct, 0), g.mem + p.WorkingSet64, g.io + ioKBs, g.conns + conns.GetValueOrDefault(p.Id));
+                    groups[p.ProcessName] = (g.n + 1, g.cpu + Math.Max(pct, 0), g.mem + p.WorkingSet64, g.io + ioKBs, g.conns + conns.GetValueOrDefault(p.Id),
+                                             g.hung || hungPids.Contains(p.Id), g.window || windowed.Contains(p.Id));
                 }
                 catch { /* processo terminou durante a leitura */ }
             }
@@ -118,7 +120,8 @@ public sealed class SystemMonitor : IDisposable
         _prevIo = newIo;
         _prevTime = now;
 
-        var list = groups.Select(kv => new ProcGroup(kv.Key, kv.Value.n, Math.Round(kv.Value.cpu, 1), kv.Value.mem / 1048576, Math.Round(kv.Value.io), kv.Value.conns)).ToList();
+        var list = groups.Select(kv => new ProcGroup(kv.Key, kv.Value.n, Math.Round(kv.Value.cpu, 1), kv.Value.mem / 1048576, Math.Round(kv.Value.io), kv.Value.conns,
+                                                     kv.Value.hung, kv.Value.window)).ToList();
 
         // Rede total (todas as placas ativas)
         long rx = 0, tx = 0;
