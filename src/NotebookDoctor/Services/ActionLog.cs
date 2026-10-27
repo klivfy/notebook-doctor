@@ -147,6 +147,10 @@ public static class ActionLog
                 msg = ok ? "Modo Colo desfeito: o turbo voltou." : "Não foi possível devolver o turbo: o plano de energia mudou.";
                 break;
             }
+            case "dns":
+                // UndoArg1 = placa; UndoArg2 = DNS fixo de antes ("" = automático)
+                msg = NetProbe.SetDns(entry.UndoArg1, entry.UndoArg2) ? "DNS como antes." : "Não foi possível desfazer: abra o app como administrador.";
+                break;
             case "usb-suspend":
             {
                 var p = entry.UndoArg1.Split(',');

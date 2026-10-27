@@ -133,7 +133,7 @@ public partial class MainWindow : Window
     private Action? _snackAction;
 
     /// <summary>Mostra o resultado de uma ação sem bloquear a tela. Some sozinho; Esc ou o X fecham antes.</summary>
-    private void ShowSnack(string title, string text, string? actionLabel = null, Action? action = null, int seconds = 10)
+    internal void ShowSnack(string title, string text, string? actionLabel = null, Action? action = null, int seconds = 10)
     {
         // U1: o aviso já está carregado, então a tradução automática da janela não o alcança; textos montados chegam prontos (Loc.F)
         (title, text, actionLabel) = (Loc.T(title), Loc.T(text), actionLabel is null ? null : Loc.T(actionLabel));

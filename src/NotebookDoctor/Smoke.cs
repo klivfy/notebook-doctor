@@ -250,6 +250,7 @@ public static partial class Smoke
         ("desfragmentar", () => new DefragWindow(main)),
         ("destravar", () => new FileUnlockWindow(main)),
         ("videochamadas", () => new MeetingWindow(main)),
+        ("rede", () => new NetworkWindow(main)),
         ("drivers", () => new DriversWindow(main)),
         ("drivers-fabricante", () => new DriversWindow(main, oem: true)),
         ("duplicados", () => new DuplicatesWindow(main, [])),

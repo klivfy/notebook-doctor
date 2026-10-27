@@ -128,6 +128,23 @@ public partial class MainWindow
         else ProcMsg.Text = Loc.T("Selecione um programa na lista.");
     }
 
+    // Fase 12, leva 12.2, tarefa 09: com quem o programa está conversando pela rede (endereços e portas, sem consultar nomes)
+    private void ProcConnections_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        var pids = new HashSet<int>();
+        foreach (var name in r.Names)
+            foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
+                using (p) pids.Add(p.Id);
+        var conns = NetProbe.TcpConnections(pids);
+        string body = conns.Count == 0 ? Loc.T("Nenhuma conexão de rede aberta agora.")
+            : string.Join("\n", conns.Take(60).Select(c => c.State == "LISTEN"
+                ? Loc.F("• porta {0} aberta, {1}", c.LocalPort, NetworkDoctor.StateText(c.State))
+                : Loc.F("• {0}:{1} ← porta {2}, {3}", c.Remote, c.RemotePort, c.LocalPort, NetworkDoctor.StateText(c.State))))
+              + (conns.Count > 60 ? "\n" + Loc.F("… e mais {0}", conns.Count - 60) : "");
+        Dialogs.Info(this, Loc.F("Conexões de {0}", r.Name), body);
+    }
+
     // ---------- Processos ----------
     private void RefreshProcesses(Snapshot s, bool force = false)
     {

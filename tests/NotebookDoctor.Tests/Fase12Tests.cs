@@ -93,4 +93,83 @@ public class Fase12IntegrationTests
         MediaProbe.GloballyDenied("microphone");
         MediaProbe.HandsFreeDevices();
     }
+
+    [WindowsFact]
+    public void Conexoes_do_proprio_processo_e_DNS_de_verdade()
+    {
+        using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        var mine = NetProbe.TcpConnections(new HashSet<int> { Environment.ProcessId });
+        Assert.Contains(mine, c => c.LocalPort == port && c.State == "LISTEN");
+        Assert.NotNull(NetProbe.ActiveAdapter());      // o executor tem rede
+        NetProbe.VisibleBss();                         // sem Wi-Fi no executor: lista vazia, sem exceção
+        NetProbe.Proxy();
+    }
+}
+
+/// <summary>Fase 12, leva 12.2: reparo de rede, DNS, Wi-Fi e VPN.</summary>
+public class Fase12RedeTests
+{
+    [Fact]
+    public void Primeira_etapa_que_falhou_e_a_correcao_dela()
+    {
+        NetCheck[] checks = [new(NetStep.Adapter, true), new(NetStep.Address, true), new(NetStep.Router, true), new(NetStep.Internet, true), new(NetStep.Dns, false), new(NetStep.Proxy, false)];
+        Assert.Equal(NetStep.Dns, NetworkDoctor.FirstFailure(checks)!.Step);
+        Assert.Equal("flushdns", NetworkDoctor.Fix(NetStep.Dns).FixId);
+        Assert.Equal("renew", NetworkDoctor.Fix(NetStep.Address).FixId);
+        Assert.Null(NetworkDoctor.Fix(NetStep.Internet).FixId);     // provedor: nada que o app possa fazer
+        Assert.Null(NetworkDoctor.FirstFailure([new(NetStep.Adapter, true)]));
+        Assert.True(NetworkDoctor.IsApipa("169.254.10.2"));
+        Assert.False(NetworkDoctor.IsApipa("192.168.0.10"));
+    }
+
+    [Fact]
+    public void DNS_so_troca_quando_a_diferenca_vale()
+    {
+        DnsResult[] r = [new("Atual", "192.168.0.1", 48), new("Cloudflare", "1.1.1.1", 12), new("Google", "8.8.8.8", 18)];
+        Assert.Equal("1.1.1.1", NetworkDoctor.BetterThanCurrent(r, "192.168.0.1")!.Server);
+        DnsResult[] close = [new("Atual", "192.168.0.1", 15), new("Cloudflare", "1.1.1.1", 12)];
+        Assert.Null(NetworkDoctor.BetterThanCurrent(close, "192.168.0.1"));
+        DnsResult[] currentDown = [new("Atual", "192.168.0.1", null), new("Quad9", "9.9.9.9", 30)];
+        Assert.Equal("9.9.9.9", NetworkDoctor.BetterThanCurrent(currentDown, "192.168.0.1")!.Server);
+        Assert.Equal(15, NetworkDoctor.Median([10, null, 20, 15]));
+        Assert.Null(NetworkDoctor.Median([null, null]));
+    }
+
+    [Fact]
+    public void Wi_Fi_em_2_4_GHz_com_5_GHz_disponivel()
+    {
+        WifiBss[] seen = [new("Casa", 2_437_000, 90), new("Casa", 5_180_000, 70), new("Vizinho", 5_200_000, 99)];
+        Assert.Equal(("Casa", "5 GHz"), NetworkDoctor.FasterBand("Casa", "2,4 GHz", seen));
+        Assert.Equal(("Casa_5G", "5 GHz"), NetworkDoctor.FasterBand("Casa", "2,4 GHz", [new("Casa_5G", 5_180_000, 60)]));
+        Assert.Null(NetworkDoctor.FasterBand("Casa", "2,4 GHz", [new("Casa", 5_180_000, 30)]));   // sinal fraco no 5 GHz
+        Assert.Null(NetworkDoctor.FasterBand("Casa", "5 GHz", seen));                             // já está no 5 GHz
+        Assert.Equal("6 GHz", NetworkDoctor.Band(6_115_000));
+    }
+
+    [Fact]
+    public void VPN_desconectada_que_sobrou()
+    {
+        var orphans = NetworkDoctor.OrphanVpnAdapters([("TAP-Windows Adapter V9", false), ("Wintun Userspace Tunnel", true), ("Intel(R) Wi-Fi 6 AX201", false), ("WireGuard Tunnel", false)]);
+        Assert.Equal(new[] { "TAP-Windows Adapter V9", "WireGuard Tunnel" }, orphans);
+    }
+
+    [Fact]
+    public void Estados_das_conexoes()
+    {
+        Assert.Equal("ESTABLISHED", NetworkDoctor.StateName(5));
+        Assert.Equal("LISTEN", NetworkDoctor.StateName(2));
+        Assert.Equal(Loc.T("conectado"), NetworkDoctor.StateText("ESTABLISHED"));
+        Assert.Equal(Loc.T("fechando"), NetworkDoctor.StateText("TIME_WAIT"));
+    }
+
+    [Fact]
+    public void Janela_de_rede_no_smoke_e_conexoes_em_Processos()
+    {
+        Assert.Contains("new NetworkWindow(main)", File.ReadAllText(Path.Combine(RepoPaths.App, "Smoke.cs")));
+        string main = File.ReadAllText(Path.Combine(RepoPaths.App, "MainWindow.xaml"));
+        Assert.Contains("Click=\"SysNetwork_Click\"", main);
+        Assert.Contains("Click=\"ProcConnections_Click\"", main);
+    }
 }
