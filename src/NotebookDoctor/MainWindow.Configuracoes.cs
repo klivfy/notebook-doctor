@@ -296,7 +296,8 @@ public partial class MainWindow
         SelectByTag(CfgLanguage, s.Language);
         CfgThemeLight.Text = s.ThemeLightAt;
         CfgThemeDark.Text = s.ThemeDarkAt;
-        CfgTrayCpu.IsChecked = s.TrayCpu;
+        SelectByTag(CfgTrayIcon, s.TrayIcon.ToString());
+        SelectByTag(CfgTrayMiddle, s.TrayMiddle.ToString());
         CfgSounds.IsChecked = s.PlaySounds;
         CfgStart.IsChecked = s.StartWithWindows;
         CfgAlerts.IsChecked = s.AlertsEnabled;
@@ -356,7 +357,8 @@ public partial class MainWindow
         s.RestorePointBeforeChanges = CfgRestore.IsChecked == true;
         s.CheckUpdates = CfgUpdates.IsChecked == true;
         s.CrashReports = CfgCrash.IsChecked == true;
-        s.TrayCpu = CfgTrayCpu.IsChecked == true;
+        if (Enum.TryParse<TrayIconShows>((CfgTrayIcon.SelectedItem as ComboBoxItem)?.Tag as string, out var trayIcon)) s.TrayIcon = trayIcon;
+        if (Enum.TryParse<TrayMiddleAction>((CfgTrayMiddle.SelectedItem as ComboBoxItem)?.Tag as string, out var middle)) s.TrayMiddle = middle;
         s.PlaySounds = CfgSounds.IsChecked == true;
         bool themeClockOk = AlertPolicy.TryParseClock(CfgThemeLight.Text, out var tl) & AlertPolicy.TryParseClock(CfgThemeDark.Text, out var td);
         if (themeClockOk) { s.ThemeLightAt = tl.ToString("HH:mm"); s.ThemeDarkAt = td.ToString("HH:mm"); }

@@ -151,6 +151,32 @@ public partial class MainWindow
         AlertsEmpty.Visibility = events.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    // Leva 10.3: programa pedido pela aba Processos, escolhido assim que a lista do histórico estiver pronta
+    private IReadOnlyList<string>? _histWant;
+
+    internal void ShowProgramHistory(IReadOnlyList<string> names)
+    {
+        _histWant = names;
+        Tabs.SelectedIndex = TabHistory;
+        if (ProcTimelineBox.ItemsSource is IEnumerable<string> loaded) PickWanted(loaded.ToList());
+    }
+
+    /// <summary>Escolhe o programa pedido, se ele aparece no histórico do período; senão, diz por quê.</summary>
+    private bool PickWanted(List<string> names)
+    {
+        if (_histWant is not { } want) return false;
+        _histWant = null;
+        var hit = names.FirstOrDefault(n => want.Contains(n, StringComparer.OrdinalIgnoreCase));
+        if (hit is null)
+        {
+            ProcTimelineInfo.Text = Loc.F("{0} não aparece entre os programas mais pesados deste período. Escolha um período maior acima.", want[0]);
+            return false;
+        }
+        ProcTimelineBox.SelectedItem = hit;
+        ProcTimelineBox.BringIntoView();
+        return true;
+    }
+
     private void FillProcTimeline(List<HistSample> data)
     {
         string? keep = ProcTimelineBox.SelectedItem as string;
@@ -167,6 +193,7 @@ public partial class MainWindow
             PCpu.SetValues(Array.Empty<double>()); PRam.SetValues(Array.Empty<double>());
             return;
         }
+        if (PickWanted(names)) return;
         ProcTimelineBox.SelectedItem = keep is not null && names.Contains(keep) ? keep : names[0];
     }
 

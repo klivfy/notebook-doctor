@@ -335,6 +335,8 @@
                                     <ContextMenu Opened="ProcMenu_Opened">
                                         <MenuItem Header="_Detalhes" Click="ProcDetails_Click"/>
                                         <MenuItem x:Name="ProcPinItem" Header="Fi_xar no topo" Click="ProcPin_Click"/>
+                                        <MenuItem Header="Ver _histórico deste programa" Click="ProcHistory_Click"/>
+                                        <MenuItem Header="Pôr em modo so_neca…" Click="ProcSnooze_Click"/>
                                         <MenuItem Header="Abrir _local do arquivo" Click="ProcOpenLocation_Click"/>
                                         <MenuItem Header="_Pesquisar na internet o que é" Click="ProcSearchOnline_Click"/>
                                         <MenuItem Header="Ver o programa _instalado" Click="ProcShowProgram_Click"/>
@@ -382,7 +384,8 @@
                                                                     Padding="8,0" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="{Binding Hung, Converter={StaticResource B2V}}">
                                                                 <TextBlock Text="Travado" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}" Foreground="{DynamicResource Critical}"/>
                                                             </Border>
-                                                            <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock local:SearchHighlight.Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"
+                                                                       local:SearchHighlight.Term="{Binding Tag, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                                                         </DockPanel>
                                                         <TextBlock Text="{Binding About}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
@@ -628,7 +631,8 @@
                                                                Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
                                                     </Grid>
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock local:SearchHighlight.Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"
+                                                                   local:SearchHighlight.Term="{Binding Tag, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                                                         <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
                                                 </Grid>
@@ -1124,7 +1128,27 @@
                                        AutomationProperties.LiveSetting="Polite"/>
                         </WrapPanel>
                         <CheckBox x:Name="CfgStart" Content="Iniciar com o Windows (fica na bandeja)"/>
-                        <CheckBox x:Name="CfgTrayCpu" Content="Mostrar o uso da CPU (%) no ícone da bandeja"/>
+                        <!-- B01 e leva 10.3 -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Text="Ícone da bandeja mostra" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CfgTrayIcon" Grid.Column="1" AutomationProperties.Name="Ícone da bandeja mostra"
+                                      ToolTip="Sem sensor de temperatura, ou com a nota ainda sendo calculada, o ícone volta para o logo.">
+                                <ComboBoxItem Content="Logo e bolinha de estado" Tag="Logo"/>
+                                <ComboBoxItem Content="Uso da CPU (%)" Tag="Cpu"/>
+                                <ComboBoxItem Content="Temperatura" Tag="Temperature"/>
+                                <ComboBoxItem Content="Nota de saúde" Tag="Score"/>
+                            </ComboBox>
+                            <TextBlock Grid.Row="1" Text="Clique do meio no ícone" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                            <ComboBox x:Name="CfgTrayMiddle" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" AutomationProperties.Name="Clique do meio no ícone">
+                                <ComboBoxItem Content="Não faz nada" Tag="Nothing"/>
+                                <ComboBoxItem Content="Abre o painel" Tag="OpenPanel"/>
+                                <ComboBoxItem Content="Liga ou desliga o mini-widget" Tag="MiniWidget"/>
+                                <ComboBoxItem Content="Limpa os temporários" Tag="CleanTemp"/>
+                                <ComboBoxItem Content="Limpa a área de transferência" Tag="ClearClipboard"/>
+                            </ComboBox>
+                        </Grid>
                         <CheckBox x:Name="CfgSounds" Content="Som discreto ao terminar uma limpeza"/>
                         <CheckBox x:Name="CfgStartMin" Content="Ao abrir pelo atalho, começar minimizado na barra de tarefas"/>
                         <CheckBox x:Name="CfgCloseExits" Content="Fechar a janela encerra o app (em vez de continuar na bandeja)"

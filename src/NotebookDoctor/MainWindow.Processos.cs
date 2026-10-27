@@ -15,6 +15,7 @@ public partial class MainWindow
         if (ProcGrid.ItemsSource is null) return;
         var view = System.Windows.Data.CollectionViewSource.GetDefaultView(ProcGrid.ItemsSource);
         string q = ProcSearch.Text.Trim();
+        ProcGrid.Tag = q;
         var filter = Host.Settings.ProcessFilter;
         view.Filter = q.Length == 0 && filter == ProcessFilter.All ? null : o => o is ProcRow r
             && (q.Length == 0 || (r.Name + " " + r.About).Contains(q, StringComparison.CurrentCultureIgnoreCase))
@@ -52,6 +53,19 @@ public partial class MainWindow
         Host.Settings.Save();
         ProcMsg.Text = r.Pinned ? Loc.F("{0} não fica mais no topo.", r.Name) : Loc.F("{0} fica no topo da lista.", r.Name);
         if (Host.Latest is { } s) RefreshProcesses(s, force: true);
+    }
+
+    // Leva 10.3: da linha direto para a soneca e para o histórico do programa
+    private void ProcSnooze_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        new SnoozeWindow(this, r.Names).ShowDialog();
+    }
+
+    private void ProcHistory_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        ShowProgramHistory(r.Names);
     }
 
     // Leva 10.2: socorro rápido

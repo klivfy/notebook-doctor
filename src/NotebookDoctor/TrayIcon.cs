@@ -21,6 +21,12 @@ public sealed class TrayIcon : IDisposable
     public event Action<bool>? StartWithWindowsToggled, MiniToggled;
     public event Action? UnlockRequested;
     public event Action<char>? EjectRequested;
+    public event Action<PowerPlan>? PowerPlanRequested;
+    public event Action? ClearClipboardRequested, MiddleClicked;
+
+    // Leva 10.3: CPU dos últimos 5 minutos (uma leitura a cada 3 s) para o minigráfico da dica
+    private readonly Queue<double> _recentCpu = new();
+    private const int RecentMax = 100;
 
     public TrayIcon(bool startWithWindows)
     {
@@ -39,6 +45,12 @@ public sealed class TrayIcon : IDisposable
         usb.DropDownItems.Add(new WinForms.ToolStripMenuItem("")); // mostra a seta antes da primeira abertura
         usb.DropDownOpening += (_, _) => FillDrives(usb);
         _menu.Items.Add(usb);
+        // Leva 10.3: plano de energia em 1 clique e limpar a área de transferência
+        var plans = new WinForms.ToolStripMenuItem(Loc.T("Plano de energia"));
+        plans.DropDownItems.Add(new WinForms.ToolStripMenuItem(""));
+        plans.DropDownOpening += (_, _) => FillPlans(plans);
+        _menu.Items.Add(plans);
+        _menu.Items.Add(Loc.T("Limpar a área de transferência"), null, (_, _) => ClearClipboardRequested?.Invoke());
         _miniItem = new WinForms.ToolStripMenuItem(Loc.T("Mini-widget sempre visível")) { CheckOnClick = true };
         _miniItem.Click += (_, _) => MiniToggled?.Invoke(_miniItem.Checked);
         _menu.Items.Add(_miniItem);
@@ -50,10 +62,29 @@ public sealed class TrayIcon : IDisposable
         _menu.Items.Add(Loc.T("Sair"), null, (_, _) => ExitRequested?.Invoke());
         _icon.ContextMenuStrip = _menu;
         _icon.BalloonTipClicked += (_, _) => BalloonClicked?.Invoke();
-        _icon.MouseClick += (_, e) => { if (e.Button == WinForms.MouseButtons.Left) OpenRequested?.Invoke(); };
+        _icon.MouseClick += (_, e) =>
+        {
+            if (e.Button == WinForms.MouseButtons.Left) OpenRequested?.Invoke();
+            else if (e.Button == WinForms.MouseButtons.Middle) MiddleClicked?.Invoke();
+        };
         DrawIcon(TrayBand.Ok, null);
         _icon.Text = "Notebook Doctor";
         ApplyTheme();
+    }
+
+    private void FillPlans(WinForms.ToolStripMenuItem parent)
+    {
+        parent.DropDownItems.Clear();
+        var list = PowerPlans.List();
+        if (list.Count == 0) parent.DropDownItems.Add(new WinForms.ToolStripMenuItem(Loc.T("Não foi possível ler os planos")) { Enabled = false });
+        foreach (var plan in list)
+        {
+            var item = new WinForms.ToolStripMenuItem(plan.Name) { Checked = plan.Active };
+            item.Click += (_, _) => PowerPlanRequested?.Invoke(plan);
+            parent.DropDownItems.Add(item);
+        }
+        foreach (WinForms.ToolStripItem i in parent.DropDownItems) { i.BackColor = _menu.BackColor; i.ForeColor = _menu.ForeColor; }
+        parent.DropDown.BackColor = _menu.BackColor;
     }
 
     private void FillDrives(WinForms.ToolStripMenuItem parent)
@@ -104,13 +135,15 @@ public sealed class TrayIcon : IDisposable
         public override Drawing.Color CheckSelectedBackground => hover;
     }
 
-    /// <param name="showCpu">B01: o ícone mostra o número da CPU em vez do logo com a bolinha.</param>
-    public void Update(Snapshot s, int score, bool showCpu)
+    /// <param name="shows">B01 e leva 10.3: o ícone mostra a CPU, a temperatura ou a nota em vez do logo com a bolinha.</param>
+    public void Update(Snapshot s, int score, TrayIconShows shows)
     {
         var band = Tray.Band(s.Cpu, s.RamPct);
-        string? label = showCpu ? Tray.CpuLabel(s.Cpu) : null;
+        string? label = Tray.IconLabel(shows, s, score);
         if ($"{band}{label}" != _iconKey) DrawIcon(band, label);
-        _icon.Text = $"CPU {s.Cpu:0}% · RAM {s.RamPct:0}% · Disco livre {s.DiskFreePct:0}%"; // limite do Windows: 63 caracteres
+        _recentCpu.Enqueue(s.Cpu);
+        while (_recentCpu.Count > RecentMax) _recentCpu.Dequeue();
+        _icon.Text = Tray.Tooltip(s, _recentCpu.ToList());
         (_usageItem.Text, _healthItem.Text) = Tray.MenuLines(s, score);
     }
 

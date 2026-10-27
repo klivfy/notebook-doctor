@@ -161,8 +161,12 @@ public sealed class AppSettings
     public string NavStyle { get; set; } = "rail";
     /// <summary>B29/B30/B31: ordenação, colunas ocultas e larguras de coluna de cada tabela.</summary>
     public Dictionary<string, GridLayout> Grids { get; set; } = new();
-    /// <summary>B01: número da CPU no ícone da bandeja.</summary>
+    /// <summary>B01: número da CPU no ícone da bandeja. Desde a leva 10.3 só migra para <see cref="TrayIcon"/>.</summary>
     public bool TrayCpu { get; set; }
+    /// <summary>Leva 10.3: o que o ícone da bandeja mostra (logo, CPU, temperatura ou nota de saúde).</summary>
+    public TrayIconShows TrayIcon { get; set; } = TrayIconShows.Logo;
+    /// <summary>Leva 10.3: o que o clique do meio no ícone faz.</summary>
+    public TrayMiddleAction TrayMiddle { get; set; } = TrayMiddleAction.MiniWidget;
     /// <summary>B37: com o tema "schedule", claro a partir de ThemeLightAt e escuro a partir de ThemeDarkAt.</summary>
     public string ThemeLightAt { get; set; } = "07:00";
     public string ThemeDarkAt { get; set; } = "19:00";
@@ -214,6 +218,9 @@ public sealed class AppSettings
         // não conhece e perderia ao gravar
         if (s.SchemaVersion > CurrentSchema) AtomicFile.KeepCopy(AppPaths.Settings, $"v{s.SchemaVersion}");
         s.SchemaVersion = CurrentSchema;
+        // Leva 10.3: quem tinha ligado "CPU no ícone" (B01) continua vendo a CPU
+        if (s.TrayCpu && s.TrayIcon == TrayIconShows.Logo) s.TrayIcon = TrayIconShows.Cpu;
+        s.TrayCpu = false;
         ProcessTools.SetUserProtected(s.ExtraProtected);
         return s;
     }

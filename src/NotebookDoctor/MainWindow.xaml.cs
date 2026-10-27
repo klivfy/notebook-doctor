@@ -198,6 +198,7 @@ public partial class MainWindow : Window
         if (grid.ItemsSource is null) return;
         var view = System.Windows.Data.CollectionViewSource.GetDefaultView(grid.ItemsSource);
         string q = text.Trim();
+        grid.Tag = q; // leva 10.3: as células com SearchHighlight grifam a busca
         view.Filter = q.Length == 0 ? null : o => key(o).Contains(q, StringComparison.CurrentCultureIgnoreCase);
     }
 

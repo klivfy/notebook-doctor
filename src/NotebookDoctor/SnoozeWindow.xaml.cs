@@ -49,8 +49,12 @@ public partial class SnoozeWindow : Window
     private readonly ISnoozeSystem _system = new WindowsSnoozeSystem();
     private bool _busy;
 
-    public SnoozeWindow(MainWindow main)
+    // Leva 10.3: aberta pela aba Processos, já seleciona o programa daquela linha
+    private readonly IReadOnlyList<string>? _select;
+
+    public SnoozeWindow(MainWindow main, IReadOnlyList<string>? select = null)
     {
+        _select = select;
         InitializeComponent();
         _main = main;
         Owner = main;
@@ -94,6 +98,13 @@ public partial class SnoozeWindow : Window
             long ram = candidates.Where(a => a.CanSleep).Sum(a => a.RamMb);
             Info.Text = Loc.F("{0} programas rodam sozinhos · {1} em soneca · os que podem dormir somam {2} de RAM em segundo plano.",
                 candidates.Count, asleep.Count, Units.Bytes(ram * 1048576));
+            if (_select is { Count: > 0 } wanted)
+            {
+                var row = _rows.FirstOrDefault(r => r.App is { } a && SnoozeRules.Owns(a, wanted))
+                          ?? _rows.FirstOrDefault(r => wanted.Contains(r.Name, StringComparer.OrdinalIgnoreCase) || wanted.Contains(r.Key, StringComparer.OrdinalIgnoreCase));
+                if (row is not null) { Grid.SelectedItem = row; Grid.ScrollIntoView(row); }
+                else Msg.Text = Loc.F("{0} não deixa nada rodando sozinho (inicialização, serviços ou tarefas): não há o que pôr para dormir.", wanted[0]);
+            }
         }
         finally { _busy = false; }
     }

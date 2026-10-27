@@ -165,6 +165,91 @@ public class Fase10ProcessosTests
     }
 }
 
+/// <summary>Fase 10, leva 10.3: bandeja, busca e atalhos.</summary>
+public class Fase10BandejaTests
+{
+    private static Snapshot Snap(double cpu = 37, double temp = 71.6) =>
+        new(DateTime.Today, cpu, 64, 10, 16, 5, 42, 100, [], TempC: temp);
+
+    [Fact]
+    public void Icone_mostra_o_numero_escolhido()
+    {
+        Assert.Null(Tray.IconLabel(TrayIconShows.Logo, Snap(), 80));
+        Assert.Equal("37", Tray.IconLabel(TrayIconShows.Cpu, Snap(), 80));
+        Assert.Equal("72", Tray.IconLabel(TrayIconShows.Temperature, Snap(), 80));
+        Assert.Equal("80", Tray.IconLabel(TrayIconShows.Score, Snap(), 80));
+        Assert.Equal("99", Tray.IconLabel(TrayIconShows.Score, Snap(), 100));   // dois dígitos cabem no ícone de 16 px
+    }
+
+    [Fact]
+    public void Sem_sensor_ou_sem_nota_o_icone_volta_para_o_logo()
+    {
+        Assert.Null(Tray.IconLabel(TrayIconShows.Temperature, Snap(temp: -1), 80));
+        Assert.Null(Tray.IconLabel(TrayIconShows.Score, Snap(), 0));
+    }
+
+    [Fact]
+    public void Minigrafico_em_texto()
+    {
+        Assert.Equal("", Tray.Spark([]));
+        Assert.Equal("▁█", Tray.Spark([0, 100], 10));                 // menos leituras que barras: uma barra por leitura
+        Assert.Equal("▁▁▁▁▁█████", Tray.Spark(Enumerable.Repeat(0.0, 50).Concat(Enumerable.Repeat(100.0, 50)).ToList()));
+        Assert.Equal(10, Tray.Spark(Enumerable.Range(0, 100).Select(i => (double)i).ToList()).Length);
+        Assert.Equal("█", Tray.Spark([250], 1));                      // fora da faixa fica no limite
+    }
+
+    [Fact]
+    public void Dica_do_icone_cabe_nos_63_caracteres_do_Windows()
+    {
+        var cpu = Enumerable.Range(0, 100).Select(i => (double)(i % 100)).ToList();
+        string tip = Tray.Tooltip(Snap(cpu: 100), cpu);
+        Assert.True(tip.Length <= 63, tip);
+        Assert.Contains("\n", tip);
+        Assert.Contains("5 min", tip);
+        Assert.DoesNotContain("\n", Tray.Tooltip(Snap(), [12]));     // uma leitura só ainda não vira gráfico
+    }
+
+    [Fact]
+    public void Busca_grifa_cada_ocorrencia_sem_diferenca_de_maiusculas()
+    {
+        Assert.Equal([("msedge", false)], SearchMatch.Split("msedge", ""));
+        Assert.Equal([("Micro", false), ("SOFT", true), (" Edge ", false), ("soft", true)], SearchMatch.Split("MicroSOFT Edge soft", "soft"));
+        Assert.Equal([("chrome", true)], SearchMatch.Split("chrome", " Chrome "));
+        Assert.Equal([("", false)], SearchMatch.Split("", "x"));
+    }
+
+    [Fact]
+    public void Rodape_diz_quantos_o_filtro_esconde()
+    {
+        Assert.StartsWith("12 de 148 programas (136 ocultos pelo filtro)", TableTotals.Processes(Enumerable.Repeat((1, 1.0, 10L), 12).ToList(), 148));
+        Assert.DoesNotContain("ocultos", TableTotals.Space([1, 2], 2));
+    }
+
+    [Fact]
+    public void Soneca_acha_o_programa_pelo_processo_principal_ou_de_fundo()
+    {
+        var steam = new SnoozeApp { Key = "steam", Name = "Steam", MainExes = ["steam"], Background = [new("steamwebhelper", "", 400, 10, false, 4)] };
+        Assert.True(SnoozeRules.Owns(steam, ["steamwebhelper"]));
+        Assert.True(SnoozeRules.Owns(steam, ["STEAM"]));
+        Assert.False(SnoozeRules.Owns(steam, ["chrome"]));
+    }
+
+    [Fact]
+    public void Bandeja_e_processos_tem_os_atalhos_da_leva()
+    {
+        string tray = File.ReadAllText(Path.Combine(RepoPaths.App, "TrayIcon.cs"));
+        Assert.Contains("MouseButtons.Middle", tray);
+        Assert.Contains("PowerPlanRequested", tray);
+        Assert.Contains("ClearClipboardRequested", tray);
+        string main = File.ReadAllText(Path.Combine(RepoPaths.App, "MainWindow.xaml"));
+        Assert.Contains("Click=\"ProcSnooze_Click\"", main);
+        Assert.Contains("Click=\"ProcHistory_Click\"", main);
+        Assert.Equal(2, main.Split("local:SearchHighlight.Text=").Length - 1);   // Processos e Programas
+        // B01 continua: quem tinha a CPU no ícone passa para a opção nova
+        Assert.Contains("s.TrayCpu && s.TrayIcon == TrayIconShows.Logo", File.ReadAllText(Path.Combine(RepoPaths.App, "Services", "Settings.cs")));
+    }
+}
+
 /// <summary>Na CI do Windows: o Restart Manager de verdade.</summary>
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public class Fase10IntegrationTests

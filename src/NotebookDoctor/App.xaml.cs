@@ -114,6 +114,9 @@ public partial class App : Application
         _tray.MiniToggled += SetMiniWidget;
         _tray.UnlockRequested += () => { ShowWindow(); (MainWindow as NotebookDoctor.MainWindow)?.OpenFileUnlock(null); };
         _tray.EjectRequested += letter => _ = EjectAsync(letter);
+        _tray.PowerPlanRequested += SetPowerPlanFromTray;
+        _tray.ClearClipboardRequested += ClearClipboard;
+        _tray.MiddleClicked += () => RunMiddleAction(Settings.TrayMiddle);
 
         var win = new MainWindow();
         MainWindow = win;
@@ -318,6 +321,35 @@ public partial class App : Application
         _tray.Notify(title, text);
     }
 
+    // ---------- Leva 10.3: ações rápidas da bandeja ----------
+    private void SetPowerPlanFromTray(PowerPlan target)
+    {
+        var previous = PowerPlans.List().FirstOrDefault(p => p.Active);
+        if (previous?.Guid == target.Guid) return;
+        if (Settings.SimulationMode) { Notify(Loc.F("Simulação: plano {0}", target.Name), Loc.T("Nada foi alterado.")); return; }
+        if (!PowerPlans.SetActive(target.Guid)) { Notify(Loc.T("Plano de energia"), Loc.T("Não foi possível trocar o plano de energia.")); return; }
+        ActionLog.Add(Loc.T("Plano de energia alterado"), Loc.F("{0} → {1} (pela bandeja)", previous?.Name ?? "?", target.Name), previous is null ? "" : "power", previous?.Guid ?? "");
+    }
+
+    private void ClearClipboard()
+    {
+        if (Settings.SimulationMode) { Notify(Loc.T("Simulação: limpar a área de transferência"), Loc.T("Nada foi alterado.")); return; }
+        try { Clipboard.Clear(); }
+        catch (System.Runtime.InteropServices.COMException) { return; } // outro programa está com a área de transferência aberta
+        ActionLog.Add("Área de transferência limpa");
+    }
+
+    private void RunMiddleAction(TrayMiddleAction action)
+    {
+        switch (action)
+        {
+            case TrayMiddleAction.OpenPanel: ShowWindow(); break;
+            case TrayMiddleAction.MiniWidget: SetMiniWidget(!Settings.MiniWidget); break;
+            case TrayMiddleAction.CleanTemp: _ = QuickCleanAsync(notify: true); break;
+            case TrayMiddleAction.ClearClipboard: ClearClipboard(); break;
+        }
+    }
+
     /// <summary>Fase 10, leva 10.1: ejetar pelo menu da bandeja. Em uso: abre o destravador já na unidade.</summary>
     private async Task EjectAsync(char letter)
     {
@@ -405,7 +437,7 @@ public partial class App : Application
                 Sampling.TrimRecent(_recent, snap.Time); // M42: com amostras espaçadas, a nota não usa dados velhos
                 Score = Insights.Score(_recent, Health);
                 History.Record(snap, Score.Score);
-                _tray.Update(snap, Score.Score, Settings.TrayCpu);
+                _tray.Update(snap, Score.Score, Settings.TrayIcon);
                 if (Settings.ThemeMode == ThemeSchedule.Mode && Settings.EffectiveTheme(DateTime.Now) != _appliedTheme) ApplyTheme(); // B37
                 CheckAlerts(snap);
                 CheckHeavyPrograms(snap);

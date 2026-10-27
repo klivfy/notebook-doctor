@@ -4,7 +4,7 @@ namespace NotebookDoctor.Services;
 public static class TableTotals
 {
     private static string Of(int visible, int total, string one, string many) =>
-        visible == total ? Pt.N(total, one, many) : Loc.F("{0:N0} de {1}", visible, Pt.N(total, one, many));
+        visible == total ? Pt.N(total, one, many) : Loc.F("{0:N0} de {1} ({2:N0} ocultos pelo filtro)", visible, Pt.N(total, one, many), total - visible);
 
     public static string Processes(IReadOnlyCollection<(int Count, double Cpu, long MemMB)> visible, int total) =>
         Of(visible.Count, total, "programa", "programas") +
