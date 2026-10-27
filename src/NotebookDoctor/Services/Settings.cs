@@ -52,6 +52,9 @@ public static class AppPaths
 
 public sealed class AppSettings
 {
+    /// <summary>Leva 9.2: versão do formato do settings.json. Sobe quando uma opção muda de sentido ou de tipo.</summary>
+    public const int CurrentSchema = 1;
+    public int SchemaVersion { get; set; } = CurrentSchema;
     public string ThemeMode { get; set; } = "system"; // system | light | dark
     public int LastTab { get; set; }
     public string ActiveProfile { get; set; } = "work";
@@ -196,7 +199,17 @@ public sealed class AppSettings
     {
         AppSettings s;
         try { s = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(AppPaths.Settings)) ?? new(); }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
+        {
+            // Arquivo ilegível: guarda uma cópia antes que a próxima gravação o troque pelas configurações padrão
+            AtomicFile.KeepCopy(AppPaths.Settings, "ilegivel");
+            s = new();
+        }
         catch { s = new(); }
+        // Gravado por uma versão mais nova do app (a pessoa voltou para esta): guarda o original, com as opções que esta versão
+        // não conhece e perderia ao gravar
+        if (s.SchemaVersion > CurrentSchema) AtomicFile.KeepCopy(AppPaths.Settings, $"v{s.SchemaVersion}");
+        s.SchemaVersion = CurrentSchema;
         ProcessTools.SetUserProtected(s.ExtraProtected);
         return s;
     }
@@ -209,7 +222,7 @@ public sealed class AppSettings
 
     public void Save()
     {
-        try { File.WriteAllText(AppPaths.Settings, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true })); }
+        try { AtomicFile.WriteAllText(AppPaths.Settings, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true })); }
         catch (Exception ex)
         {
             // Sem permissão de escrita (ou valor inválido): as configurações valem só nesta sessão; fica registrado

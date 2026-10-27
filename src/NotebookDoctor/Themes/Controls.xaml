@@ -502,6 +502,10 @@
     <Style TargetType="DataGrid">
         <!-- U5: largura mínima de cada coluna pela maior palavra do cabeçalho, antes do primeiro layout -->
         <Setter Property="local:HeaderFit.Auto" Value="True"/>
+        <!-- Leva 9.2: listas de milhares de linhas (Duplicados, Limpeza avançada, Processos) reaproveitam as linhas que saem da tela -->
+        <Setter Property="EnableRowVirtualization" Value="True"/>
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
         <Setter Property="AutoGenerateColumns" Value="False"/>
         <Setter Property="IsReadOnly" Value="True"/>
         <Setter Property="CanUserAddRows" Value="False"/>

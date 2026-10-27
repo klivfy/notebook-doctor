@@ -15,13 +15,19 @@ public static class ActionLog
         lock (Lock)
         {
             try { return JsonSerializer.Deserialize<List<ActionEntry>>(File.ReadAllText(FilePath)) ?? new(); }
+            catch (JsonException)
+            {
+                // Ilegível: guarda uma cópia, porque a próxima ação gravada substitui o arquivo e o Desfazer das antigas se perderia
+                AtomicFile.KeepCopy(FilePath, "ilegivel");
+                return new();
+            }
             catch { return new(); }
         }
     }
 
     private static void Save(List<ActionEntry> list)
     {
-        try { File.WriteAllText(FilePath, JsonSerializer.Serialize(list.OrderByDescending(e => e.Time).Take(200).ToList())); } catch { }
+        try { AtomicFile.WriteAllText(FilePath, JsonSerializer.Serialize(list.OrderByDescending(e => e.Time).Take(200).ToList())); } catch { }
     }
 
     public static void Add(string title, string detail = "", string undoKind = "", string arg1 = "", string arg2 = "")
