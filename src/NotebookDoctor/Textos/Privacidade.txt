@@ -4,6 +4,7 @@ O que fica guardado no computador
 • Uso de CPU, memória e disco a cada minuto, com os nomes dos programas mais pesados (Histórico, até 30 dias).
 • Suas preferências, as ações feitas pelo app (para "Desfazer") e os avisos mostrados.
 • O tamanho das pastas dos programas instalados, para a aba Programas abrir mais rápido.
+• O consumo da bateria em watts dos últimos 7 dias e uma medida por dia da capacidade dela, para estimar quanto a bateria dura e mostrar o desgaste.
 • Se alguém definir uma senha para as configurações, só um código derivado dela (hash), nunca a senha em si.
 • Erros do app (erros.log) e, só se você ligar a opção, relatórios de falha sem nome de usuário, nome do computador ou pasta pessoal.
 Tudo fica na pasta de dados do app (botão "Abrir pasta de dados"). Desinstalar o app ou apagar a pasta remove esses dados.

@@ -44,6 +44,14 @@ public static class DemoData
             Groups: groups, CpuPerf: 88 + rnd.Next(0, 10), TempC: 58 + 6 * Math.Abs(wave), NetDownKBs: 120 + rnd.Next(0, 300), NetUpKBs: 20 + rnd.Next(0, 60));
     }
 
+    /// <summary>Leva 11.1: notebook na bateria, gastando entre 9 e 15 W, com a carga caindo devagar.</summary>
+    public static BatteryReading Battery(DateTime time, int tick)
+    {
+        int pct = Math.Max(8, 64 - tick / 40);
+        double w = 9 + 6 * Math.Abs(Math.Sin(tick / 9.0));
+        return new BatteryReading(time, false, false, -Math.Round(w, 1), 48.5 * pct / 100, 48.5, 57, pct);
+    }
+
     public static HealthInfo Health() => new(
         "SSD NVMe 512 GB", "SSD", "Healthy", DiskWearPct: 7, DiskTempC: 41,
         BatteryHealthPct: 83, BatteryCycles: 312, BootSeconds: 38, BootAvgSeconds: 31,

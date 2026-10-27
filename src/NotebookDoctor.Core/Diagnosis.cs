@@ -86,7 +86,9 @@ public static class Diagnosis
     public const int TabProcs = AppTabs.Processes, TabClean = AppTabs.Clean, TabSpace = AppTabs.Space, TabStartup = AppTabs.Startup, TabSettings = AppTabs.Settings;
 
     /// <param name="uptime">Tempo ligado; nulo usa o do Windows (os testes passam um valor fixo).</param>
-    public static List<Finding> Evaluate(IReadOnlyList<Snapshot> recent, HealthInfo h, IReadOnlyList<LeakSuspect>? leaks = null, TimeSpan? uptime = null)
+    /// <param name="battery">Leva 11.1: leituras recentes da bateria (a mais nova por último); vazio ou nulo sem bateria.</param>
+    public static List<Finding> Evaluate(IReadOnlyList<Snapshot> recent, HealthInfo h, IReadOnlyList<LeakSuspect>? leaks = null, TimeSpan? uptime = null,
+                                         IReadOnlyList<BatteryReading>? battery = null)
     {
         var f = new List<Finding>();
         if (recent.Count == 0) return f;
@@ -101,7 +103,14 @@ public static class Diagnosis
 
         // A08: sob carga, a CPU deveria rodar perto da frequência máxima. Bem abaixo disso = limite térmico ou de energia
         var loaded = recent.TakeLast(12).Where(s => s.Cpu >= 60 && s.CpuPerf >= 0).ToList();
-        if (loaded.Count >= 4 && loaded.Average(s => s.CpuPerf) < 65)
+        // Leva 11.1, tarefa 04: quente e lento ao mesmo tempo é estrangulamento térmico; diz quanto foi perdido e oferece o Modo Colo
+        int? thermalLoss = loaded.Count >= 4 ? BatteryRules.ThermalLossPct(loaded.Average(s => s.TempC), loaded.Average(s => s.CpuPerf), loaded.Average(s => s.Cpu)) : null;
+        if (thermalLoss is { } loss)
+            f.Add(new("PROBLEMA", "O calor está tirando velocidade do processador",
+                      Loc.F("{0}% mais lento que o normal, a {1}", loss, Units.Temp(loaded.Average(s => s.TempC))),
+                      "O processador se freia para não passar do limite de temperatura. O Modo Colo desliga o turbo: um pouco menos de pico, mas bem menos calor e barulho, e a velocidade fica estável. Use também em superfície firme e com as saídas de ar livres.",
+                      "lap-mode", "Ligar Modo Colo") { TitleShown = Loc.F("O calor está tirando {0}% da velocidade do processador", loss) });
+        else if (loaded.Count >= 4 && loaded.Average(s => s.CpuPerf) < 65)
             f.Add(new("ATENCAO", "O processador está reduzindo a velocidade sob carga",
                       Loc.F("Rodando a {0:0}% da frequência máxima com a CPU em {1:0}%", loaded.Average(s => s.CpuPerf), loaded.Average(s => s.Cpu)),
                       "Costuma ser calor (limpe as saídas de ar, use em superfície firme) ou limite de energia (use a tomada e o plano Alto desempenho).",
@@ -110,6 +119,16 @@ public static class Diagnosis
 
         if (now.TempC >= 90) f.Add(new("PROBLEMA", "Temperatura muito alta", Units.Temp(now.TempC), "Desligue pesados, limpe as saídas de ar e use o notebook em superfície firme.", $"tab:{TabProcs}", "Ver programas"));
         else if (now.TempC >= 80) f.Add(new("ATENCAO", "Temperatura alta", Units.Temp(now.TempC), "Verifique a ventilação; calor faz o processador reduzir a velocidade.", $"tab:{TabProcs}", "Ver programas"));
+
+        // Leva 11.1: carregador fraco e bateria no fim
+        if (battery is { Count: > 0 })
+        {
+            if (BatteryRules.SlowCharger(battery) is { } charger) f.Add(charger);
+            if (BatteryRules.OfferSurvival(battery[^1]))
+                f.Add(new("PROBLEMA", "Bateria quase no fim", Loc.F("{0}% e descarregando", battery[^1].Percent),
+                          "O Modo sobrevivência liga o economizador de bateria, deixa os programas sem janela no modo eficiência, baixa a tela para 60 Hz e passa para o tema escuro. Tudo volta ao ligar na tomada.",
+                          "survival", "Modo sobrevivência"));
+        }
 
         // M41: a máquina virtual do WSL/Docker reserva RAM e quase nunca devolve sozinha
         long vmMB = now.Groups.Where(g => g.Name.StartsWith("vmmem", StringComparison.OrdinalIgnoreCase)).Sum(g => g.MemMB);

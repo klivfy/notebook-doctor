@@ -165,6 +165,10 @@ public sealed class AppSettings
     public bool TrayCpu { get; set; }
     /// <summary>Leva 10.3: o que o ícone da bandeja mostra (logo, CPU, temperatura ou nota de saúde).</summary>
     public TrayIconShows TrayIcon { get; set; } = TrayIconShows.Logo;
+    /// <summary>Leva 11.1: como estava tudo antes do Modo sobrevivência (JSON de SurvivalState); null fora dele.</summary>
+    public string? SurvivalState { get; set; }
+    /// <summary>Leva 11.1: turbo antes do Modo Colo ("ac,dc,plano"); null com o Modo Colo desligado.</summary>
+    public string? LapModePrevious { get; set; }
     /// <summary>Leva 10.3: o que o clique do meio no ícone faz.</summary>
     public TrayMiddleAction TrayMiddle { get; set; } = TrayMiddleAction.MiniWidget;
     /// <summary>B37: com o tema "schedule", claro a partir de ThemeLightAt e escuro a partir de ThemeDarkAt.</summary>

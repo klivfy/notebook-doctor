@@ -4,6 +4,7 @@ What is kept on your computer
 • CPU, memory and disk use every minute, with the names of the heaviest programs (History, up to 30 days).
 • Your preferences, the actions the app performed (for "Undo") and the notices it showed.
 • The size of the installed programs' folders, so the Programs tab opens faster.
+• Battery power use in watts over the last 7 days and one daily reading of its capacity, to estimate how long the battery lasts and show its wear.
 • If someone sets a password for the settings, only a code derived from it (a hash), never the password itself.
 • App errors (erros.log) and, only if you turn the option on, crash reports without your user name, computer name or personal folder.
 Everything stays in the app's data folder ("Open data folder" button). Uninstalling the app or deleting the folder removes this data.

@@ -98,7 +98,7 @@ public partial class MainWindow : Window
             case TabStartup: RefreshStartup(); break;
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
-            case TabTweaks: LoadTweaks(); break;
+            case TabTweaks: LoadTweaks(); RefreshEnergy(); break;
             case TabSettings: LoadPlans(); break;
         }
     }

@@ -147,6 +147,8 @@
                                         <StackPanel>
                                             <TextBlock x:Name="BatteryBootText" Style="{StaticResource Value}" Margin="0"/>
                                             <TextBlock Text="Bateria · tempo de inicialização" Style="{StaticResource Label}" ToolTip="Capacidade da bateria comparada à de fábrica e quanto o Windows levou para iniciar da última vez." AutomationProperties.HelpText="Capacidade da bateria comparada à de fábrica e quanto o Windows levou para iniciar da última vez."/>
+                                            <!-- Leva 11.1: bateria agora, em watts, e quanto dura -->
+                                            <TextBlock x:Name="BatteryNowText" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </DockPanel>
                                 </UniformGrid>
@@ -859,6 +861,26 @@
             <TabItem Header="Ajustes">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
                     <StackPanel HorizontalAlignment="Left" MaxWidth="820">
+                        <!-- Fase 11, leva 11.1: calor e bateria -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Energia e calor" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Text="Modo Colo (silencioso)" FontFamily="{StaticResource FontMedium}" Margin="0,0,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Desliga o turbo do processador no plano de energia, na tomada e na bateria. O notebook perde um pouco do pico de velocidade, mas esquenta bem menos, a ventoinha quase não gira e a bateria dura mais. Bom para usar no colo. Volta como estava ao desligar, ou pelo Desfazer em Ações."/>
+                                <WrapPanel>
+                                    <Button x:Name="LapBtn" Content="Ligar Modo Colo" Click="LapMode_Click" Margin="0,0,8,8"/>
+                                    <TextBlock x:Name="LapInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                                <TextBlock Text="Modo sobrevivência" FontFamily="{StaticResource FontMedium}" Margin="0,8,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Para a bateria chegar até a tomada: liga o economizador de bateria do Windows, põe no modo eficiência os programas sem janela que estão usando a CPU, baixa a tela para 60 Hz e passa para o tema escuro. Nada é fechado, e tudo volta sozinho ao ligar na tomada."/>
+                                <WrapPanel>
+                                    <Button x:Name="SurvivalBtn" Content="Ligar Modo sobrevivência…" Style="{StaticResource TonalButton}" Click="Survival_Click" Margin="0,0,8,8"/>
+                                    <TextBlock x:Name="SurvivalInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
                                 <TextBlock Text="Ajustes do Windows" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>

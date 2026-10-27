@@ -34,6 +34,14 @@ public partial class App : Application
     public FocusMode Focus { get; } = new();
     public event Action? HealthUpdated, HeavyAlertChanged;
     private DateTime _lastProbe = DateTime.MinValue;
+
+    // ---------- Leva 11.1: bateria ----------
+    private readonly List<BatteryReading> _battery = new();
+    private DateTime _lastBattery = DateTime.MinValue, _lastBatterySave = DateTime.MinValue;
+    public BatteryReading? Battery => _battery.Count > 0 ? _battery[^1] : null;
+    public IReadOnlyList<BatteryReading> BatteryRecent => _battery;
+    public BatteryHistory BatteryLog { get; private set; } = new();
+    private static string BatteryFile => Path.Combine(AppPaths.Dir, "bateria.json");
     private readonly BrowserWatch _browserWatch = new();
     private bool _browserCleaning, _scheduleRan;
     private DateTime _lastJunkCheck = DateTime.MinValue;
@@ -95,6 +103,8 @@ public partial class App : Application
             if (a.Mode == Microsoft.Win32.PowerModes.StatusChange) Dispatcher.BeginInvoke(() => _ = OnPowerSourceChangedAsync());
         };
         History = new HistoryStore();
+        try { BatteryLog = BatteryHistory.Parse(File.Exists(BatteryFile) ? File.ReadAllText(BatteryFile) : null); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         if (AppPaths.Demo) History.Seed(DemoData.Week(DateTime.Now));
         _monitor = new SystemMonitor();
 
@@ -444,6 +454,7 @@ public partial class App : Application
                 CheckHeat(snap);
                 CheckWeeklySummary();
                 Memory.Feed(snap);
+                if ((DateTime.Now - _lastBattery).TotalSeconds >= 30) await ReadBatteryAsync();
                 if ((DateTime.Now - _lastProbe).TotalMinutes >= 30) _ = RefreshHealthAsync();
                 await CheckWeeklyAsync();
                 await CheckJunkMonitorAsync();
@@ -459,6 +470,33 @@ public partial class App : Application
             var wait = Sampling.Interval(WindowVisible || _overlay is { IsVisible: true }, power.OnBattery, power.Saver, power.Percent);
             try { await Task.Delay(wait, ct); } catch (OperationCanceledException) { break; }
         }
+    }
+
+    /// <summary>Leva 11.1: bateria a cada 30 s (watts, histórico de consumo, carregador) e a volta do Modo sobrevivência na tomada.</summary>
+    private async Task ReadBatteryAsync()
+    {
+        _lastBattery = DateTime.Now;
+        var b = AppPaths.Demo ? DemoData.Battery(DateTime.Now, _demoTick) : await Task.Run(PowerProbe.ReadBattery);
+        if (b is null) return;
+        _battery.Add(b);
+        if (_battery.Count > 20) _battery.RemoveAt(0);
+        if (BatteryLog.Add(b) && (DateTime.Now - _lastBatterySave).TotalMinutes >= 5 && !AppPaths.Demo)
+        {
+            _lastBatterySave = DateTime.Now;
+            try { AtomicFile.WriteAllText(BatteryFile, BatteryLog.Serialize()); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        }
+        if (b.OnAc && SurvivalState.Parse(Settings.SurvivalState) is { } state) EndSurvival(state, Loc.T("Na tomada: o Modo sobrevivência foi desligado e tudo voltou como estava."));
+    }
+
+    /// <summary>Devolve o que o Modo sobrevivência mudou e avisa.</summary>
+    public void EndSurvival(SurvivalState state, string message)
+    {
+        Survival.Restore(state);
+        Settings.SurvivalState = null;
+        Settings.Save();
+        ActionLog.Add("Modo sobrevivência desligado", message);
+        Notify(Loc.T("Modo sobrevivência"), message);
     }
 
     /// <summary>Atualiza SMART, bateria, boot, plano de energia e lixo (fora da thread de interface).</summary>

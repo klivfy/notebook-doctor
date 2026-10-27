@@ -173,7 +173,7 @@ public partial class MainWindow
         try
         {
             var snap = Host.Latest;
-            var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects);
+            var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent);
             var health = Host.Health;
             string zip = await Task.Run(() => SupportPackage.Create(snap, findings, health, Host.History.Load(TimeSpan.FromDays(7))));
             System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{zip}\"");
@@ -221,7 +221,7 @@ public partial class MainWindow
             string errorsFile = System.IO.Path.Combine(AppPaths.Dir, "erros.log");
             string errors = System.IO.File.Exists(errorsFile) ? System.IO.File.ReadAllText(errorsFile) : "";
             string text = DiagnosticLog.Build(AppInfo.Version, Environment.OSVersion.VersionString, DateTime.Now,
-                Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects), errors,
+                Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent), errors,
                 CrashLog.Files().OrderByDescending(f => f).Take(5).Select(f => System.IO.Path.GetFileName(f)).ToList(),
                 ActionLog.Load().OrderByDescending(a => a.Time).Take(20).Select(a => $"{a.Time:dd/MM HH:mm}  {a.Title}: {a.Detail}").ToList(),
                 AlertLog.Load(TimeSpan.FromDays(7)).OrderByDescending(a => a.Time).Take(20).Select(a => $"{a.TimeText}  {a.Title}: {a.Text}").ToList());

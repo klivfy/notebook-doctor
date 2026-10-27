@@ -128,6 +128,25 @@ public static class ActionLog
                 msg = DriverTexts.Restore(outcome);
                 if (outcome != RestoreOutcome.Restored) return msg; // continua desfazível: a pessoa pode tentar de novo
                 break;
+            // Leva 11.1
+            case "boost":
+            {
+                var p = entry.UndoArg1.Split(',');
+                bool ok = p.Length == 3 && uint.TryParse(p[0], out uint ac) && uint.TryParse(p[1], out uint dc) && Guid.TryParse(p[2], out var scheme) && PowerProbe.WriteBoost(scheme, ac, dc);
+                if (ok && global::NotebookDoctor.App.Current.Settings is { } s) { s.LapModePrevious = null; s.Save(); }
+                msg = ok ? "Modo Colo desfeito: o turbo voltou." : "Não foi possível devolver o turbo: o plano de energia mudou.";
+                break;
+            }
+            case "survival":
+                if (SurvivalState.Parse(entry.UndoArg1) is { } state)
+                {
+                    Survival.Restore(state);
+                    var settings = global::NotebookDoctor.App.Current.Settings;
+                    settings.SurvivalState = null;
+                    settings.Save();
+                }
+                msg = "Modo sobrevivência desfeito: tudo voltou como estava.";
+                break;
             case "plan-created":
                 msg = PowerPlans.Delete(entry.UndoArg1) ? "Plano criado foi removido." : "Não foi possível remover (talvez esteja ativo): troque de plano e tente de novo.";
                 break;
