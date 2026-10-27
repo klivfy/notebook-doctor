@@ -1,4 +1,5 @@
 Security, data and accessibility review (new)
+• System and Manufacturer drivers read the computer directly through Windows, without opening PowerShell: they open faster and work where the company blocked PowerShell. The Programs tab remembers the size of folders that did not change and fills in much sooner.
 • Settings, Actions and alerts are saved in a way that a power cut in the middle does not damage the file. Very long lists (Duplicates, Advanced cleaning) scroll more smoothly.
 • Security: the app only loads Windows libraries from the system folder. A DLL with the same name left next to the executable (in the Downloads folder or on a USB drive) is ignored.
 • Updating programs now queries WinGet through the official Windows interface (with the command line as a fallback), buttons get a soft glow when clicked (off if you turned off Windows animations or use High Contrast) and, in Settings, you can rate the app with 1 to 5 stars (it is only sent if you click “Send rating”, after seeing the exact text) and, if you want, turn on anonymous usage statistics, which come turned off.

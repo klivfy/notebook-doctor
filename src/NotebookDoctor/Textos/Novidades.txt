@@ -1,4 +1,5 @@
 Revisão de segurança, dados e acessibilidade (novo)
+• Sistema e Drivers do fabricante leem o computador direto pelo Windows, sem abrir o PowerShell: abrem mais rápido e funcionam onde a empresa bloqueou o PowerShell. A aba Programas lembra o tamanho das pastas que não mudaram e abre completa bem antes.
 • Configurações, Ações e alertas são gravados de um jeito que uma queda de energia no meio não estraga o arquivo. Listas muito grandes (Duplicados, Limpeza avançada) rolam mais leves.
 • Segurança: o app só carrega bibliotecas do Windows da pasta do sistema. Uma DLL com o mesmo nome deixada ao lado do executável (na pasta Downloads ou num pendrive) é ignorada.
 • Atualizar programas agora consulta o WinGet pela interface oficial do Windows (com a linha de comando como reserva), os botões ganham um brilho suave ao clicar (desligado se você desativou as animações do Windows ou usa Alto Contraste) e, em Configurações, dá para avaliar o app com 1 a 5 estrelas (só é enviada se você clicar em “Enviar avaliação”, vendo antes o texto exato) e ligar, se quiser, estatísticas de uso anônimas, que vêm desligadas.

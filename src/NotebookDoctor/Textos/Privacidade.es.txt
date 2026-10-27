@@ -3,6 +3,7 @@ Notebook Doctor funciona en tu equipo y, salvo que actives algo o lo pidas, no e
 Qué se guarda en el equipo
 • Uso de CPU, memoria y disco cada minuto, con los nombres de los programas más pesados (Historial, hasta 30 días).
 • Tus preferencias, las acciones realizadas por la app (para "Deshacer") y los avisos mostrados.
+• El tamaño de las carpetas de los programas instalados, para que la pestaña Programas abra más rápido.
 • Si alguien define una contraseña para la configuración, solo un código derivado de ella (hash), nunca la contraseña en sí.
 • Errores de la app (erros.log) y, solo si activas la opción, informes de fallos sin nombre de usuario, nombre del equipo ni carpeta personal.
 Todo queda en la carpeta de datos de la app (botón "Abrir carpeta de datos"). Desinstalar la app o borrar la carpeta elimina estos datos.

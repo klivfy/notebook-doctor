@@ -123,9 +123,12 @@ try { Get-AppxPackage | Where-Object { $_.PackageFullName -eq '{{full}}' } | Res
         yield return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
     }
 
+    private static string SizeCachePath => Path.Combine(AppPaths.Dir, "tamanhos-programas.json");
+
     /// <summary>
     /// Mede a pasta dos itens sem tamanho informado pelo instalador, um de cada vez e fora da thread de interface.
-    /// Avisa a cada medição para a tabela ir se completando.
+    /// Avisa a cada medição para a tabela ir se completando. Leva 9.3: as pastas que não mudaram desde a última medição
+    /// (<see cref="FolderSizeCache"/>) aparecem logo, sem medir; só as outras são percorridas.
     /// </summary>
     public static Task MeasureAsync(IReadOnlyList<InstalledProgram> items, Action<InstalledProgram> measured, Action<int, int> progress, CancellationToken ct) =>
         Task.Run(() =>
@@ -135,18 +138,50 @@ try { Get-AppxPackage | Where-Object { $_.PackageFullName -eq '{{full}}' } | Res
             var todo = items.Where(p => p.SizeSource == SizeSource.None && p.Kind != ProgramKind.Update)
                 .Select(p => (p, dir: ProgramRules.FolderOf(p, Directory.Exists, File.Exists)))
                 .Where(x => x.dir is not null && ProgramRules.CanMeasure(x.dir, roots, windows))
+                .Select(x => (x.p, dir: x.dir!, changed: LastWriteUtc(x.dir!)))
                 .ToList();
-            for (int i = 0; i < todo.Count; i++)
+            FolderSizeCache cache;
+            try { cache = FolderSizeCache.Parse(File.Exists(SizeCachePath) ? File.ReadAllText(SizeCachePath) : null); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { cache = new FolderSizeCache(); }
+
+            var now = DateTime.UtcNow;
+            var pending = new List<(InstalledProgram p, string dir, DateTime? changed)>();
+            foreach (var t in todo)
             {
-                ct.ThrowIfCancellationRequested();
-                progress(i + 1, todo.Count);
-                long bytes = DiskUsage.FolderSize(todo[i].dir!, ct);
-                if (bytes <= 0) continue;
-                todo[i].p.Bytes = bytes;
-                todo[i].p.SizeSource = SizeSource.Folder;
-                measured(todo[i].p);
+                if (t.changed is { } c && cache.TryGet(t.dir, c, now, out long cached)) Apply(t.p, cached);
+                else pending.Add(t);
+            }
+            try
+            {
+                for (int i = 0; i < pending.Count; i++)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    progress(i + 1, pending.Count);
+                    long bytes = DiskUsage.FolderSize(pending[i].dir, ct);
+                    if (pending[i].changed is { } c) cache.Set(pending[i].dir, c, bytes, DateTime.UtcNow);
+                    if (bytes > 0) Apply(pending[i].p, bytes);
+                }
+            }
+            finally
+            {
+                // Também quando a pessoa sai da aba no meio: o que já foi medido vale para a próxima vez
+                try { AtomicFile.WriteAllText(SizeCachePath, cache.Serialize(DateTime.UtcNow)); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            }
+
+            void Apply(InstalledProgram p, long bytes)
+            {
+                p.Bytes = bytes;
+                p.SizeSource = SizeSource.Folder;
+                measured(p);
             }
         }, ct);
+
+    private static DateTime? LastWriteUtc(string dir)
+    {
+        try { return Directory.GetLastWriteTimeUtc(dir); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
+    }
 
     private static string PowerShell(string script, int timeoutMs)
     {
