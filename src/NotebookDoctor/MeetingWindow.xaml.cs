@@ -47,7 +47,7 @@ public partial class MeetingWindow : Window
         MediaNow.Text = now.Length > 0 ? Loc.F("Em uso agora: {0}", now) : Loc.T("Nenhum aplicativo está usando a câmera ou o microfone agora.");
 
         var (denied, desktopDenied, devices, handsFree) = AppPaths.Demo
-            ? (false, false, 1, (List<string>)["Fone Bluetooth"])
+            ? (false, false, 1, (List<string>)["Headset BT-500"])
             : await Task.Run(() => (MediaProbe.GloballyDenied("microphone"), MediaProbe.DesktopAppsDenied("microphone"), MediaProbe.CaptureDevices(), MediaProbe.HandsFreeDevices()));
         var problems = Meeting.MicProblems(denied, desktopDenied, devices, handsFree);
         MicInfo.Text = problems.Count == 0

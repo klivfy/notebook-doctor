@@ -383,10 +383,10 @@
                                                             <!-- Leva 10.2: fixado no topo e "Travado" (texto, não só cor) -->
                                                             <TextBlock DockPanel.Dock="Right" Text="&#xE718;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsLabel}"
                                                                        Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"
-                                                                       Visibility="{Binding Pinned, Converter={StaticResource B2V}}" ToolTip="Fixado no topo"/>
+                                                                       Visibility="{Binding Pinned, Converter={StaticResource B2V}}" ToolTip="{Binding PinnedLabel}"/>
                                                             <Border DockPanel.Dock="Right" Background="{DynamicResource CriticalContainer}" CornerRadius="{StaticResource RadiusPill}"
                                                                     Padding="8,0" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="{Binding Hung, Converter={StaticResource B2V}}">
-                                                                <TextBlock Text="Travado" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}" Foreground="{DynamicResource Critical}"/>
+                                                                <TextBlock Text="{Binding HungLabel}" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}" Foreground="{DynamicResource Critical}"/>
                                                             </Border>
                                                             <TextBlock local:SearchHighlight.Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"
                                                                        local:SearchHighlight.Term="{Binding Tag, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>

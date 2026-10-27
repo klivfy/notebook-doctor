@@ -168,7 +168,7 @@ public partial class NetworkWindow : Window
     private async Task LoadProfilesAsync()
     {
         var profiles = AppPaths.Demo
-            ? [new WifiProfile("Casa", "WPA2PSK", "AES", "senha-de-exemplo"), new WifiProfile("Cafeteria", "open", "none", null), new WifiProfile("Escritório", "WPA3SAE", "AES", null)]
+            ? [new WifiProfile("Casa", "WPA2PSK", "AES", "senha-de-exemplo"), new WifiProfile("Cafeteria", "open", "none", null), new WifiProfile("Studio 5G", "WPA3SAE", "AES", null)]
             : await Task.Run(PrivacyProbe.WifiProfiles);
         ProfilesGrid.ItemsSource = profiles.Select(p => new ProfileRow(p)).ToList();
         int weak = profiles.Count(p => p.Weak);

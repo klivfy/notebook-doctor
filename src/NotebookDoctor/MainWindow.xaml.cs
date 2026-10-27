@@ -16,6 +16,9 @@ public sealed record ProcRow(string Name, int Count, double CpuPct, long MemMB, 
     /// <summary>Basta um processo protegido para a linha toda ficar protegida.</summary>
     public bool IsProtected => Names.Any(ProcessTools.IsProtected);
     public bool HasIcon => Icon is not null;
+    // Textos do modelo da linha: a tradução automática da janela não alcança o que nasce dentro de um DataTemplate
+    public string HungLabel => Loc.T("Travado");
+    public string PinnedLabel => Loc.T("Fixado no topo");
     /// <summary>B32: lido pelo Narrador junto com o nome ("uso alto").</summary>
     public string SeverityText => string.Join(", ", new[] { Hung ? Loc.T("não está respondendo") : "", Pinned ? Loc.T("fixado no topo") : "", RowSeverity.Spoken(Severity) }
         .Where(t => t.Length > 0));
