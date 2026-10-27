@@ -7,6 +7,8 @@ Qué se guarda en el equipo
 • El consumo de la batería en vatios de los últimos 7 días una medida diaria de su capacidad y cuánto tiempo estuvo llena enchufada, para estimar cuánto dura la batería, mostrar su desgaste y sugerir un límite de carga.
 • Si alguien define una contraseña para la configuración, solo un código derivado de ella (hash), nunca la contraseña en sí.
 • Errores de la app (erros.log) y, solo si activas la opción, informes de fallos sin nombre de usuario, nombre del equipo ni carpeta personal.
+• Al borrar los recientes, restaurar el archivo hosts o quitar el script de proxy, una copia de lo que salió queda en la copia de seguridad de la app, para Deshacer.
+Las redes Wi-Fi guardadas, el archivo hosts y el tipo de conexión (para avisar cuando usas internet del celular) se leen de Windows solo para mostrarlos en pantalla. La contraseña del Wi-Fi aparece solo cuando pides el código QR, con la app como administrador, y nunca se guarda ni se envía.
 Todo queda en la carpeta de datos de la app (botón "Abrir carpeta de datos"). Desinstalar la app o borrar la carpeta elimina estos datos.
 
 Cuándo la app usa internet

@@ -35,8 +35,60 @@ public partial class SecurityWindow : Window
         {
             ShowStatus();
             if (!MalwareScanner.MrtAvailable) MrtQuickBtn.IsEnabled = MrtFullBtn.IsEnabled = MrtCleanBtn.IsEnabled = false;
+            await LoadHijackAsync();
             if (!AppPaths.Demo) await LoadHistoryAsync(quiet: true);
         };
+    }
+
+    // ---------- Leva 12.3: hosts e script de proxy ----------
+
+    private async Task LoadHijackAsync()
+    {
+        var (findings, pac) = AppPaths.Demo
+            ? (NetworkPrivacy.AuditHosts(["0.0.0.0 ads.example.com", "203.0.113.7 www.itau.com.br"]), (string?)null)
+            : await Task.Run(() => (NetworkPrivacy.AuditHosts(PrivacyProbe.ReadHosts()), PrivacyProbe.Pac()));
+        string? pacProblem = NetworkPrivacy.SuspiciousPac(pac);
+        var lines = new List<string>();
+        lines.AddRange(findings.Select(f => "• " + Loc.F("Arquivo hosts: {0}", f.Reason)));
+        if (pacProblem is not null) lines.Add("• " + Loc.F("Proxy: {0} ({1})", pacProblem, pac!));
+        HijackInfo.Text = lines.Count == 0 ? Loc.T("Nada desviando a navegação: o hosts e o proxy estão limpos.") : string.Join("\n", lines);
+        HostsBtn.Visibility = findings.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        PacBtn.Visibility = pacProblem is not null ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private async void Hosts_Click(object sender, RoutedEventArgs e)
+    {
+        if (!AppInfo.IsAdmin) { HijackInfo.Text += "\n\n" + Loc.T("Para mexer no hosts, abra o app como administrador."); return; }
+        if (!Dialogs.Confirm(this, Loc.T("Restaurar o hosts padrão?"),
+                Loc.T("O arquivo hosts volta a ser o de um Windows recém-instalado: todas as linhas atuais saem, inclusive as de bloqueadores de anúncio. O atual fica no backup, e o Desfazer em Ações devolve."),
+                Loc.T("Restaurar"), danger: true)) return;
+        if (_main.Simulate("Restaurar o hosts padrão", Loc.T("Trocaria o arquivo hosts pelo padrão do Windows, com backup."))) return;
+        var (id, ok) = await Task.Run(() =>
+        {
+            using var session = new BackupStore(AppPaths.Backups).Begin(Loc.T("Arquivo hosts"));
+            return (session.Id, PrivacyProbe.RestoreHosts(session));
+        });
+        if (!ok) { HijackInfo.Text += "\n\n" + Loc.T("O Windows não deixou alterar o hosts (o antivírus pode estar protegendo o arquivo)."); return; }
+        ActionLog.Add("Arquivo hosts restaurado", PrivacyProbe.HostsPath, "leftovers", id);
+        _main.ShowSnack(Loc.T("Arquivo hosts restaurado"), Loc.T("Desfaça em Ações se algo deixar de funcionar."));
+        await LoadHijackAsync();
+    }
+
+    private async void Pac_Click(object sender, RoutedEventArgs e)
+    {
+        if (!Dialogs.Confirm(this, Loc.T("Tirar o script de proxy?"),
+                Loc.T("O Windows deixa de usar o script de proxy configurado para a sua conta. Se o notebook é da empresa e a internet parar, desfaça em Ações."),
+                Loc.T("Tirar"))) return;
+        if (_main.Simulate("Tirar o script de proxy", Loc.T("Removeria o script de proxy da sua conta, com backup."))) return;
+        var (id, ok) = await Task.Run(() =>
+        {
+            using var session = new BackupStore(AppPaths.Backups).Begin(Loc.T("Script de proxy"));
+            return (session.Id, PrivacyProbe.RemovePac(session));
+        });
+        if (!ok) { HijackInfo.Text += "\n\n" + Loc.T("Não foi possível tirar o script de proxy."); return; }
+        ActionLog.Add("Script de proxy removido", Loc.T("Configuração da sua conta"), "leftovers", id);
+        _main.ShowSnack(Loc.T("Script de proxy removido"), Loc.T("Desfaça em Ações se a internet parar."));
+        await LoadHijackAsync();
     }
 
     private static string Elapsed(TimeSpan t) => t.TotalHours >= 1 ? Loc.F("{0} h {1:00} min", (int)t.TotalHours, t.Minutes)

@@ -62,4 +62,8 @@
     <SolidColorBrush x:Key="LevelMid" Color="#FCE100"/>
     <SolidColorBrush x:Key="LevelHigh" Color="#FF9D3D"/>
     <SolidColorBrush x:Key="LevelCrit" Color="#FF99A4"/>
+
+    <!-- Código QR: preto no branco nos dois temas, porque muitas câmeras não leem o QR invertido -->
+    <SolidColorBrush x:Key="QrLight" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="QrDark" Color="#000000"/>
 </ResourceDictionary>

@@ -29,7 +29,13 @@ public partial class MeetingWindow : Window
         Owner = main;
         SourceInitialized += (_, _) => ThemeManager.ApplyTitleBar(this);
         Loaded += async (_, _) => await ReloadAsync();
+        Host.PresentationChanged += OnPresentation;
+        Closed += (_, _) => Host.PresentationChanged -= OnPresentation;
+        OnPresentation(Host.Presenting);
     }
+
+    private void OnPresentation(bool on) =>
+        PresentBtn.Content = on ? Loc.T("Desligar o modo apresentação") : Loc.T("Ligar o modo apresentação");
 
     private async void Reload_Click(object sender, RoutedEventArgs e) => await ReloadAsync();
 
@@ -52,6 +58,29 @@ public partial class MeetingWindow : Window
         DownloadsInfo.Text = _busy.Count == 0 ? Loc.T("Nenhum atualizador ou sincronizador está baixando muito agora.")
             : Loc.F("Baixando em segundo plano: {0}.", string.Join(", ", _busy.Select(g => Loc.F("{0} ({1:N0} KB/s)", g.Name, g.IoKBs))));
         EcoBtn.Visibility = _busy.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        int recent = AppPaths.Demo ? 37 : await Task.Run(PrivacyProbe.RecentCount);
+        ShareInfo.Text = recent == 0 ? Loc.T("Nenhum arquivo recente à mostra.")
+            : Loc.F("{0} à mostra no Explorador e no Iniciar.", Pt.N(recent, "item recente", "itens recentes"));
+        RecentBtn.IsEnabled = recent > 0;
+    }
+
+    private async void Present_Click(object sender, RoutedEventArgs e) => await Host.SetPresentationAsync(!Host.Presenting);
+
+    private async void Recent_Click(object sender, RoutedEventArgs e)
+    {
+        if (!Dialogs.Confirm(this, Loc.T("Limpar recentes"),
+                Loc.T("Os arquivos recentes do Explorador e do Iniciar, as listas de atalhos da barra de tarefas e o que foi digitado na barra de endereços e no Executar saem da vista. Os arquivos em si não são apagados. Tudo vai para o backup, e o Desfazer em Ações devolve."),
+                Loc.T("Limpar"))) return;
+        if (_main.Simulate("Limpar recentes", Loc.T("Limparia os itens recentes, com backup."))) return;
+        RecentBtn.IsEnabled = false;
+        var (id, removed) = await Task.Run(() =>
+        {
+            using var session = new BackupStore(AppPaths.Backups).Begin(Loc.T("Limpar recentes"));
+            return (session.Id, PrivacyProbe.ClearRecent(session));
+        });
+        ActionLog.Add("Recentes limpos", Pt.N(removed, "item", "itens"), "leftovers", id);
+        ShareInfo.Text = Loc.F("{0} fora da vista. Desfaça em Ações.", Pt.N(removed, "item recente", "itens recentes"));
     }
 
     private async void Test_Click(object sender, RoutedEventArgs e)

@@ -31,6 +31,33 @@
             <Button x:Name="DnsAutoBtn" Content="Voltar ao DNS automático…" Style="{StaticResource TextButton}" Click="DnsAuto_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
         </WrapPanel>
 
+        <!-- Leva 12.3: redes Wi-Fi salvas -->
+        <TextBlock Text="Redes Wi-Fi salvas" Style="{StaticResource CardTitle}" Margin="0,16,0,8" AutomationProperties.HeadingLevel="Level2"/>
+        <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                   Text="As redes que o notebook lembra. As abertas ou com proteção antiga merecem ser esquecidas: outro aparelho pode se passar por elas. Para passar a senha a uma visita, escolha a rede e mostre o código QR (a senha só aparece com o app como administrador)."/>
+        <DataGrid x:Name="ProfilesGrid" MaxHeight="240" SelectionMode="Single" AutomationProperties.Name="Redes Wi-Fi salvas" SelectionChanged="Profiles_SelectionChanged">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Rede" Binding="{Binding Ssid}" Width="*"/>
+                <DataGridTextColumn Header="Proteção" Binding="{Binding AuthText}" Width="200"/>
+                <DataGridTextColumn Header="Situação" Binding="{Binding StateText}" Width="200"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock x:Name="ProfilesInfo" TextWrapping="Wrap" LineHeight="24" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+        <WrapPanel Margin="0,12,0,0">
+            <Button x:Name="QrBtn" Content="Mostrar o código QR" Style="{StaticResource TonalButton}" Click="Qr_Click" Margin="0,0,8,8" IsEnabled="False"/>
+            <Button Content="Gerenciar redes conhecidas" Style="{StaticResource TextButton}" Click="Known_Click" Margin="0,0,8,8"
+                    ToolTip="Abre as configurações do Windows, onde cada rede pode ser esquecida."/>
+        </WrapPanel>
+        <StackPanel x:Name="QrPanel" Orientation="Horizontal" Visibility="Collapsed" Margin="0,0,0,8">
+            <Border Background="{DynamicResource QrLight}" Padding="16" CornerRadius="8">
+                <Image x:Name="QrImage" Width="200" Height="200" RenderOptions.BitmapScalingMode="NearestNeighbor" AutomationProperties.Name="Código QR da rede Wi-Fi"/>
+            </Border>
+            <StackPanel Margin="16,0,0,0" VerticalAlignment="Center" MaxWidth="400">
+                <TextBlock x:Name="QrText" TextWrapping="Wrap" LineHeight="24"/>
+                <Button Content="Esconder" Style="{StaticResource TextButton}" Click="QrHide_Click" Margin="0,8,0,0" HorizontalAlignment="Left"/>
+            </StackPanel>
+        </StackPanel>
+
         <TextBlock Text="Wi-Fi e adaptadores" Style="{StaticResource CardTitle}" Margin="0,16,0,8" AutomationProperties.HeadingLevel="Level2"/>
         <TextBlock x:Name="WifiInfo" TextWrapping="Wrap" LineHeight="24" AutomationProperties.LiveSetting="Polite"/>
         <TextBlock x:Name="VpnInfo" TextWrapping="Wrap" LineHeight="24" Margin="0,8,0,0"/>

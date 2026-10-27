@@ -156,6 +156,7 @@ public partial class App : Application
             Settings.StartWithWindows = v; Settings.ApplyStartWithWindows(); Settings.Save();
         };
         _tray.MiniToggled += SetMiniWidget;
+        _tray.PresentationToggled += on => _ = SetPresentationAsync(on);
         _tray.UnlockRequested += () => { ShowWindow(); (MainWindow as NotebookDoctor.MainWindow)?.OpenFileUnlock(null); };
         _tray.EjectRequested += letter => _ = EjectAsync(letter);
         _tray.PowerPlanRequested += SetPowerPlanFromTray;
@@ -355,7 +356,65 @@ public partial class App : Application
     }
 
     /// <summary>M43/M44: horário silencioso ou alguém em tela cheia, jogo ou apresentação.</summary>
-    private bool IsQuietNow() => Settings.InQuietHours(DateTime.Now) || (Settings.QuietFullscreen && Native.IsFullscreenOrPresenting());
+    private bool IsQuietNow() => Presenting || Settings.InQuietHours(DateTime.Now) || (Settings.QuietFullscreen && Native.IsFullscreenOrPresenting());
+
+    // ---------- Leva 12.3: modo apresentação ----------
+    public bool Presenting { get; private set; }
+    private bool _presentationHidIcons, _presentationStartedFocus;
+    public event Action<bool>? PresentationChanged;
+
+    /// <summary>
+    /// Para compartilhar a tela: avisos do app em silêncio, ícones da área de trabalho escondidos, tela sem apagar e Modo Foco.
+    /// Desligar devolve cada coisa como estava; sair do app também.
+    /// </summary>
+    public async Task SetPresentationAsync(bool on)
+    {
+        if (on == Presenting) return;
+        if (on && Settings.SimulationMode) { Notify(Loc.T("Simulação: modo apresentação"), Loc.T("Nada foi alterado.")); _tray.SyncPresentation(false); return; }
+        Presenting = on;
+        if (!AppPaths.Demo)
+        {
+            PrivacyProbe.KeepAwake(on);
+            if (on) _presentationHidIcons = PrivacyProbe.DesktopIconsVisible() && PrivacyProbe.ToggleDesktopIcons();
+            else if (_presentationHidIcons) { PrivacyProbe.ToggleDesktopIcons(); _presentationHidIcons = false; }
+            if (on && !Focus.Active && Latest is { } snap) { await Focus.StartAsync(snap, Health); _presentationStartedFocus = true; }
+            else if (!on && _presentationStartedFocus) { if (Focus.Active) await Focus.StopAsync(); _presentationStartedFocus = false; }
+        }
+        _tray.SyncPresentation(on);
+        ActionLog.Add(on ? "Modo apresentação ligado" : "Modo apresentação desligado",
+                      on ? Loc.T("Avisos em silêncio, ícones da área de trabalho escondidos, tela sempre acesa e Modo Foco") : Loc.T("Tudo voltou como estava"));
+        PresentationChanged?.Invoke(on);
+    }
+
+    // ---------- Leva 12.3: franquia do celular ----------
+    private bool _hotspotWarned;
+    private DateTime _lastMobileCheck = DateTime.MinValue;
+
+    /// <summary>
+    /// Na internet do celular (rede limitada ou com cara de hotspot), avisa uma vez por conexão quando programas em segundo
+    /// plano estão gastando os dados.
+    /// </summary>
+    private void CheckMobileData(Snapshot snap)
+    {
+        bool metered = false;
+        try
+        {
+            var profile = global::Windows.Networking.Connectivity.NetworkInformation.GetInternetConnectionProfile();
+            var cost = profile?.GetConnectionCost();
+            metered = cost is not null && (cost.NetworkCostType is global::Windows.Networking.Connectivity.NetworkCostType.Fixed or global::Windows.Networking.Connectivity.NetworkCostType.Variable || cost.Roaming);
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or InvalidOperationException) { }
+        var adapter = AppPaths.Demo ? null : NetProbe.ActiveAdapter();
+        string? ssid = AppPaths.Demo ? null : SystemProbe.Wifi()?.Ssid;
+        bool mobile = metered || NetworkPrivacy.LooksLikeHotspot(ssid, adapter?.Gateway);
+        if (!mobile) { _hotspotWarned = false; return; }
+        var hogs = NetworkPrivacy.DataHogs(snap.Groups, mobile);
+        if (hogs.Count == 0 || _hotspotWarned) return;
+        _hotspotWarned = true;
+        Notify(Loc.T("Usando a internet do celular"),
+               Loc.F("{0} está baixando em segundo plano e gastando a franquia.", hogs[0].Name) + " "
+               + (metered ? Loc.T("Feche o programa se não precisar dele agora.") : Loc.T("Marque esta rede como conexão limitada (Configurações › Wi-Fi › propriedades da rede) para o Windows segurar as atualizações.")));
+    }
 
     public void Notify(string title, string text, params (string label, string action)[] buttons)
     {
@@ -486,6 +545,7 @@ public partial class App : Application
                 History.Record(snap, Score.Score, powerNow.Percent >= 0 ? powerNow.OnBattery : null);
                 ApplyAutoEco(snap);
                 CheckMedia(snap);
+                if ((DateTime.Now - _lastMobileCheck).TotalSeconds >= 60) { _lastMobileCheck = DateTime.Now; CheckMobileData(snap); }
                 _tray.Update(snap, Score.Score, Settings.TrayIcon);
                 if (Settings.ThemeMode == ThemeSchedule.Mode && Settings.EffectiveTheme(DateTime.Now) != _appliedTheme) ApplyTheme(); // B37
                 CheckAlerts(snap);
@@ -996,6 +1056,7 @@ public partial class App : Application
         if (Quitting) return;
         Quitting = true;
         (MainWindow as NotebookDoctor.MainWindow)?.SavePlacement();
+        if (Presenting && _presentationHidIcons) PrivacyProbe.ToggleDesktopIcons(); // leva 12.3: os ícones voltam
         if (Focus.Active) Task.Run(Focus.StopAsync).Wait(3000); // devolve as prioridades e o plano de energia
         _cts.Cancel();
         _mini?.Close();

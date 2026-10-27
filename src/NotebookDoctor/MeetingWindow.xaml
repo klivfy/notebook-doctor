@@ -11,7 +11,7 @@
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <TextBlock Text="Videochamadas" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
         <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
@@ -51,6 +51,18 @@
             <Button x:Name="EcoBtn" Content="Modo eficiência nos downloads" Style="{StaticResource TonalButton}" Click="Eco_Click" Margin="0,0,8,8" Visibility="Collapsed"
                     ToolTip="Os programas continuam abertos, mas baixam devagar e cedem a rede e o processador à chamada. Desfaça em Ações."/>
             <Button Content="Abrir privacidade do microfone" Style="{StaticResource TextButton}" Click="MicSettings_Click" Margin="0,0,8,8"/>
+        </WrapPanel>
+
+        <!-- Leva 12.3: antes de compartilhar a tela -->
+        <StackPanel Grid.Row="7" Margin="0,16,0,0">
+            <TextBlock Text="Antes de compartilhar a tela" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
+            <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="O modo apresentação silencia os avisos do app, esconde os ícones da área de trabalho, mantém a tela acesa e liga o Modo Foco. Limpar os recentes tira da vista os arquivos abertos há pouco (Explorador, Iniciar e listas da barra de tarefas), com backup para o Desfazer."/>
+            <TextBlock x:Name="ShareInfo" TextWrapping="Wrap" LineHeight="24" AutomationProperties.LiveSetting="Polite"/>
+        </StackPanel>
+        <WrapPanel Grid.Row="8" Margin="0,12,0,0">
+            <Button x:Name="PresentBtn" Content="Ligar o modo apresentação" Style="{StaticResource TonalButton}" Click="Present_Click" Margin="0,0,8,8"/>
+            <Button x:Name="RecentBtn" Content="Limpar recentes…" Style="{StaticResource TonalButton}" Click="Recent_Click" Margin="0,0,8,8"/>
             <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="Reload_Click" Margin="0,0,8,8"/>
             <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,8"/>
         </WrapPanel>

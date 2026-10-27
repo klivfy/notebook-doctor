@@ -13,12 +13,12 @@ public sealed class TrayIcon : IDisposable
 
     private readonly WinForms.NotifyIcon _icon = new() { Visible = true };
     private readonly WinForms.ContextMenuStrip _menu = new();
-    private readonly WinForms.ToolStripMenuItem _startItem, _miniItem, _usageItem, _healthItem;
+    private readonly WinForms.ToolStripMenuItem _startItem, _miniItem, _usageItem, _healthItem, _presentItem;
     private IntPtr _hIcon;
     private string _iconKey = "";
 
     public event Action? OpenRequested, CleanRequested, ExitRequested, SupportRequested, BalloonClicked;
-    public event Action<bool>? StartWithWindowsToggled, MiniToggled;
+    public event Action<bool>? StartWithWindowsToggled, MiniToggled, PresentationToggled;
     public event Action? UnlockRequested;
     public event Action<char>? EjectRequested;
     public event Action<PowerPlan>? PowerPlanRequested;
@@ -51,6 +51,10 @@ public sealed class TrayIcon : IDisposable
         plans.DropDownOpening += (_, _) => FillPlans(plans);
         _menu.Items.Add(plans);
         _menu.Items.Add(Loc.T("Limpar a área de transferência"), null, (_, _) => ClearClipboardRequested?.Invoke());
+        // Leva 12.3: modo apresentação (sem notificações, tela acesa, ícones da área de trabalho escondidos)
+        _presentItem = new WinForms.ToolStripMenuItem(Loc.T("Modo apresentação")) { CheckOnClick = true };
+        _presentItem.Click += (_, _) => PresentationToggled?.Invoke(_presentItem.Checked);
+        _menu.Items.Add(_presentItem);
         _miniItem = new WinForms.ToolStripMenuItem(Loc.T("Mini-widget sempre visível")) { CheckOnClick = true };
         _miniItem.Click += (_, _) => MiniToggled?.Invoke(_miniItem.Checked);
         _menu.Items.Add(_miniItem);
@@ -161,6 +165,8 @@ public sealed class TrayIcon : IDisposable
         _icon.Text = Tray.Tooltip(s, _recentCpu.ToList());
         (_usageItem.Text, _healthItem.Text) = Tray.MenuLines(s, score);
     }
+
+    public void SyncPresentation(bool value) { if (_presentItem.Checked != value) _presentItem.Checked = value; }
 
     public void SyncMini(bool value) { if (_miniItem.Checked != value) _miniItem.Checked = value; }
 

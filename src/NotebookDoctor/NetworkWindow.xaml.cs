@@ -3,6 +3,14 @@ using NotebookDoctor.Services;
 
 namespace NotebookDoctor;
 
+public sealed class ProfileRow(WifiProfile profile)
+{
+    public WifiProfile Profile { get; } = profile;
+    public string Ssid => Profile.Ssid;
+    public string AuthText => NetworkPrivacy.AuthText(Profile);
+    public string StateText => Profile.Weak ? Loc.T("Fraca: vale esquecer") : Loc.T("Protegida");
+}
+
 /// <summary>Fase 12, leva 12.2: reparo de rede em etapas, DNS mais rápido, banda do Wi-Fi e VPNs que sobraram.</summary>
 public partial class NetworkWindow : Window
 {
@@ -16,7 +24,7 @@ public partial class NetworkWindow : Window
         _main = main;
         Owner = main;
         SourceInitialized += (_, _) => ThemeManager.ApplyTitleBar(this);
-        Loaded += async (_, _) => await LoadWifiAsync();
+        Loaded += async (_, _) => { await LoadWifiAsync(); await LoadProfilesAsync(); };
     }
 
     // ---------- conectado, mas não navega ----------
@@ -154,6 +162,72 @@ public partial class NetworkWindow : Window
     }
 
     private void Devices_Click(object sender, RoutedEventArgs e) => AppInfo.OpenShell("devmgmt.msc");
+
+    // ---------- Leva 12.3: redes Wi-Fi salvas ----------
+
+    private async Task LoadProfilesAsync()
+    {
+        var profiles = AppPaths.Demo
+            ? [new WifiProfile("Casa", "WPA2PSK", "AES", "senha-de-exemplo"), new WifiProfile("Cafeteria", "open", "none", null), new WifiProfile("Escritório", "WPA3SAE", "AES", null)]
+            : await Task.Run(PrivacyProbe.WifiProfiles);
+        ProfilesGrid.ItemsSource = profiles.Select(p => new ProfileRow(p)).ToList();
+        int weak = profiles.Count(p => p.Weak);
+        ProfilesInfo.Text = profiles.Count == 0 ? Loc.T("Nenhuma rede Wi-Fi salva.")
+            : weak == 0 ? Loc.F("{0}, nenhuma aberta ou com proteção antiga.", Pt.N(profiles.Count, "rede salva", "redes salvas"))
+            : Loc.F("{0} abertas ou com proteção antiga: esqueça as que não usa mais em Gerenciar redes conhecidas.", Pt.N(weak, "rede", "redes"));
+    }
+
+    private void Profiles_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        QrBtn.IsEnabled = ProfilesGrid.SelectedItem is ProfileRow;
+        QrPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void Qr_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProfilesGrid.SelectedItem is not ProfileRow { Profile: var p }) return;
+        bool open = p.Auth.Equals("open", StringComparison.OrdinalIgnoreCase) && !p.Cipher.Equals("WEP", StringComparison.OrdinalIgnoreCase);
+        if (p.Key is null && !open)
+        {
+            ProfilesInfo.Text = Loc.F("O Windows só entrega a senha de {0} com o app aberto como administrador.", p.Ssid);
+            return;
+        }
+        string auth = p.Cipher.Equals("WEP", StringComparison.OrdinalIgnoreCase) ? "WEP" : p.Auth;
+        if (QrCode.Encode(QrCode.WifiPayload(p.Ssid, p.Key ?? "", auth)) is not { } matrix)
+        {
+            ProfilesInfo.Text = Loc.T("O nome ou a senha da rede são longos demais para o código QR.");
+            return;
+        }
+        QrImage.Source = Render(matrix);
+        QrText.Text = Loc.F("Aponte a câmera do celular para entrar em {0}.", p.Ssid) + (p.Key is { } key ? "\n" + Loc.F("Senha: {0}", key) : "");
+        QrPanel.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>Desenha a matriz do QR com a margem de 4 módulos que a norma pede, preto no branco nos dois temas.</summary>
+    private System.Windows.Media.DrawingImage Render(bool[,] m)
+    {
+        int n = m.GetLength(0), quiet = 4;
+        var dark = new System.Windows.Media.GeometryGroup { FillRule = System.Windows.Media.FillRule.Nonzero };
+        for (int r = 0; r < n; r++)
+            for (int c = 0; c < n; c++)
+                if (m[r, c]) dark.Children.Add(new System.Windows.Media.RectangleGeometry(new Rect(c + quiet, r + quiet, 1, 1)));
+        var group = new System.Windows.Media.DrawingGroup();
+        group.Children.Add(new System.Windows.Media.GeometryDrawing((System.Windows.Media.Brush)FindResource("QrLight"), null,
+                                                                    new System.Windows.Media.RectangleGeometry(new Rect(0, 0, n + 2 * quiet, n + 2 * quiet))));
+        group.Children.Add(new System.Windows.Media.GeometryDrawing((System.Windows.Media.Brush)FindResource("QrDark"), null, dark));
+        var image = new System.Windows.Media.DrawingImage(group);
+        image.Freeze();
+        return image;
+    }
+
+    private void QrHide_Click(object sender, RoutedEventArgs e)
+    {
+        QrPanel.Visibility = Visibility.Collapsed;
+        QrImage.Source = null;
+        QrText.Text = "";
+    }
+
+    private void Known_Click(object sender, RoutedEventArgs e) => AppInfo.OpenShell("ms-settings:network-wifisettings");
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }

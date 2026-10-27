@@ -7,6 +7,8 @@ What is kept on your computer
 • Battery power use in watts over the last 7 days one daily reading of its capacity and how long it stayed full while plugged in, to estimate how long the battery lasts, show its wear and suggest a charge limit.
 • If someone sets a password for the settings, only a code derived from it (a hash), never the password itself.
 • App errors (erros.log) and, only if you turn the option on, crash reports without your user name, computer name or personal folder.
+• When you clear recent items, restore the hosts file or remove the proxy script, a copy of what was removed stays in the app's backup, for Undo.
+Saved Wi-Fi networks, the hosts file and the connection type (to warn you when you are on your phone's internet) are read from Windows only to show on screen. The Wi-Fi password appears only when you ask for the QR code, with the app running as administrator, and is never saved or sent.
 Everything stays in the app's data folder ("Open data folder" button). Uninstalling the app or deleting the folder removes this data.
 
 When the app uses the internet

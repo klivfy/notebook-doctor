@@ -173,3 +173,133 @@ public class Fase12RedeTests
         Assert.Contains("Click=\"ProcConnections_Click\"", main);
     }
 }
+
+/// <summary>Fase 12, leva 12.3: código QR do Wi-Fi, redes salvas, hosts, proxy e internet do celular.</summary>
+public class Fase12PrivacidadeTests
+{
+    private static int Format(bool[,] m, bool second)
+    {
+        int size = m.GetLength(0), bits = 0;
+        bool Bit(int i)
+        {
+            if (second) return i < 8 ? m[8, size - 1 - i] : m[size - 15 + i, 8];
+            return i switch { <= 5 => m[i, 8], 6 => m[7, 8], 7 => m[8, 8], 8 => m[8, 7], _ => m[8, 14 - i] };
+        }
+        for (int i = 0; i < 15; i++) if (Bit(i)) bits |= 1 << i;
+        return bits ^ 0x5412;
+    }
+
+    [Fact]
+    public void QR_tem_tamanho_localizadores_e_formato_validos()
+    {
+        var small = QrCode.Encode("WIFI:T:WPA;S:Casa;;")!;   // 19 bytes: versão 2 no nível M
+        Assert.Equal(25, small.GetLength(0));
+        Assert.Equal(21, QrCode.Encode("klivfy.com")!.GetLength(0));
+        foreach (var m in new[] { small, QrCode.Encode(QrCode.WifiPayload("Rede da casa com nome comprido", "uma senha bem longa de 40 caracteres!!", "WPA2PSK"))! })
+        {
+            int n = m.GetLength(0);
+            // Localizadores 7x7 nos três cantos: borda escura, anel claro, miolo 3x3 escuro
+            foreach (var (r0, c0) in new[] { (0, 0), (0, n - 7), (n - 7, 0) })
+                for (int r = 0; r < 7; r++)
+                    for (int c = 0; c < 7; c++)
+                    {
+                        bool ring = r is 1 or 5 && c is >= 1 and <= 5 || c is 1 or 5 && r is >= 1 and <= 5;
+                        Assert.Equal(!ring, m[r0 + r, c0 + c]);
+                    }
+            for (int i = 8; i < n - 8; i++) Assert.Equal(i % 2 == 0, m[6, i]);   // padrão de tempo
+            Assert.True(m[n - 8, 8]);                                             // o módulo sempre escuro
+            int f = Format(m, second: false);
+            Assert.Equal(f, Format(m, second: true));
+            int data = f >> 10, rem = data;
+            for (int i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >> 9) * 0x537);
+            Assert.Equal(f, data << 10 | rem);          // BCH confere
+            Assert.Equal(0, data >> 3);                 // nível M
+        }
+        Assert.Null(QrCode.Encode(new string('a', 300)));
+    }
+
+    [Fact]
+    public void Texto_do_QR_do_Wi_Fi_escapa_os_caracteres_especiais()
+    {
+        Assert.Equal(@"WIFI:T:WPA;S:Casa\;1;P:a\:b\\c;;", QrCode.WifiPayload("Casa;1", @"a:b\c", "WPA2PSK"));
+        Assert.Equal("WIFI:T:nopass;S:Cafe;;", QrCode.WifiPayload("Cafe", "", "open"));
+        Assert.Equal("WIFI:T:WEP;S:Velha;P:12345;;", QrCode.WifiPayload("Velha", "12345", "WEP"));
+    }
+
+    [Fact]
+    public void Perfil_do_Wi_Fi_e_protecao_fraca()
+    {
+        const string xml = """
+            <?xml version="1.0"?>
+            <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+              <name>Casa</name>
+              <SSIDConfig><SSID><hex>43617361</hex><name>Casa</name></SSID></SSIDConfig>
+              <MSM><security>
+                <authEncryption><authentication>WPA2PSK</authentication><encryption>AES</encryption></authEncryption>
+                <sharedKey><keyType>passPhrase</keyType><protected>false</protected><keyMaterial>segredo123</keyMaterial></sharedKey>
+              </security></MSM>
+            </WLANProfile>
+            """;
+        var p = NetworkPrivacy.ParseProfile(xml)!;
+        Assert.Equal(("Casa", "WPA2PSK", "AES", "segredo123"), (p.Ssid, p.Auth, p.Cipher, p.Key));
+        Assert.False(p.Weak);
+        Assert.Equal("WPA2", NetworkPrivacy.AuthText(p));
+        Assert.Null(NetworkPrivacy.ParseProfile(xml.Replace("<protected>false", "<protected>true"))!.Key);   // sem administrador
+        Assert.True(new WifiProfile("Cafe", "open", "none", null).Weak);
+        Assert.True(new WifiProfile("Velha", "open", "WEP", "1").Weak);
+        Assert.True(new WifiProfile("Antiga", "WPAPSK", "TKIP", "1").Weak);
+        Assert.Null(NetworkPrivacy.ParseProfile("não é xml"));
+    }
+
+    [Fact]
+    public void Hosts_aponta_desvio_de_banco_e_ignora_bloqueador_de_anuncio()
+    {
+        string[] hosts =
+        [
+            "# comentário 203.0.113.7 itau.com.br",
+            "127.0.0.1 localhost",
+            "0.0.0.0 ads.doubleclick.net tracker.example",
+            "203.0.113.7  www.itau.com.br   # golpe",
+            "0.0.0.0 update.microsoft.com",
+        ];
+        var f = NetworkPrivacy.AuditHosts(hosts);
+        Assert.Equal(new[] { "www.itau.com.br", "update.microsoft.com" }, f.Select(x => x.Host));
+        Assert.Equal("203.0.113.7", f[0].Ip);
+        Assert.Contains("203.0.113.7", f[0].Reason);
+        Assert.Empty(NetworkPrivacy.AuditHosts(NetworkPrivacy.DefaultHosts.Split("\r\n")));
+        Assert.Empty(NetworkPrivacy.AuditHosts(["1.2.3.4 notitau.com.br"]));    // só o domínio e os subdomínios
+    }
+
+    [Fact]
+    public void Script_de_proxy_suspeito()
+    {
+        Assert.Null(NetworkPrivacy.SuspiciousPac(null));
+        Assert.Null(NetworkPrivacy.SuspiciousPac("http://wpad/wpad.dat"));                 // rede da empresa
+        Assert.Null(NetworkPrivacy.SuspiciousPac("http://192.168.0.5/proxy.pac"));
+        Assert.Null(NetworkPrivacy.SuspiciousPac("https://proxy.empresa.com.br/proxy.pac"));
+        Assert.NotNull(NetworkPrivacy.SuspiciousPac("http://proxy-gratis.example.com/p.pac"));
+        Assert.NotNull(NetworkPrivacy.SuspiciousPac("https://198.51.100.9/p.pac"));
+        Assert.NotNull(NetworkPrivacy.SuspiciousPac("file:///C:/Users/Public/p.pac"));
+    }
+
+    [Fact]
+    public void Internet_do_celular_e_quem_gasta_a_franquia()
+    {
+        Assert.True(NetworkPrivacy.LooksLikeHotspot("iPhone de Ana", null));
+        Assert.True(NetworkPrivacy.LooksLikeHotspot("Casa", "172.20.10.1"));
+        Assert.True(NetworkPrivacy.LooksLikeHotspot("Galaxy A54", "192.168.1.1"));
+        Assert.False(NetworkPrivacy.LooksLikeHotspot("Casa", "192.168.0.1"));
+        ProcGroup[] g = [new("OneDrive", 1, 1, 80, IoKBs: 900), new("chrome", 10, 20, 900, IoKBs: 4000, HasWindow: true), new("steam", 3, 4, 300, IoKBs: 200)];
+        Assert.Empty(NetworkPrivacy.DataHogs(g, onMobileData: false));
+        Assert.Equal(new[] { "OneDrive" }, NetworkPrivacy.DataHogs(g, onMobileData: true).Select(x => x.Name));
+    }
+
+    [Fact]
+    public void Telas_da_leva_12_3_ligadas()
+    {
+        Assert.Contains("Click=\"Recent_Click\"", File.ReadAllText(Path.Combine(RepoPaths.App, "MeetingWindow.xaml")));
+        Assert.Contains("Click=\"Qr_Click\"", File.ReadAllText(Path.Combine(RepoPaths.App, "NetworkWindow.xaml")));
+        Assert.Contains("Click=\"Hosts_Click\"", File.ReadAllText(Path.Combine(RepoPaths.App, "SecurityWindow.xaml")));
+        Assert.Contains("PresentationToggled", File.ReadAllText(Path.Combine(RepoPaths.App, "TrayIcon.cs")));
+    }
+}
