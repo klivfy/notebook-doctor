@@ -112,6 +112,8 @@ public partial class App : Application
             Settings.StartWithWindows = v; Settings.ApplyStartWithWindows(); Settings.Save();
         };
         _tray.MiniToggled += SetMiniWidget;
+        _tray.UnlockRequested += () => { ShowWindow(); (MainWindow as NotebookDoctor.MainWindow)?.OpenFileUnlock(null); };
+        _tray.EjectRequested += letter => _ = EjectAsync(letter);
 
         var win = new MainWindow();
         MainWindow = win;
@@ -314,6 +316,22 @@ public partial class App : Application
         buttons = buttons.Select(b => (Loc.T(b.label), b.action)).ToArray();
         if (Settings.NativeNotifications && !AppPaths.Demo && Toasts.Show(title, text, buttons)) return;
         _tray.Notify(title, text);
+    }
+
+    /// <summary>Fase 10, leva 10.1: ejetar pelo menu da bandeja. Em uso: abre o destravador já na unidade.</summary>
+    private async Task EjectAsync(char letter)
+    {
+        string drive = $"{letter}:";
+        if (Settings.SimulationMode) { Notify(Loc.F("Simulação: ejetar {0}", drive), Loc.T("Nada foi alterado.")); return; }
+        var result = await Task.Run(() => FileUnlocker.Eject(letter));
+        if (result == EjectResult.InUse)
+        {
+            ShowWindow();
+            (MainWindow as NotebookDoctor.MainWindow)?.OpenFileUnlock($"{letter}:\\");
+            return;
+        }
+        if (result == EjectResult.Ejected) ActionLog.Add(Loc.F("Unidade ejetada: {0}", drive));
+        Notify(result == EjectResult.Ejected ? Loc.T("Pendrive ejetado") : Loc.T("Pendrive não ejetado"), FileUnlockWindow.EjectText(result, drive));
     }
 
     public void ShowWindow()

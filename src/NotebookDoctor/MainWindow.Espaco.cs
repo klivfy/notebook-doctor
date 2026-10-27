@@ -118,6 +118,17 @@ public partial class MainWindow
         else SpaceMsg.Text = Loc.T("Este item não informa uma pasta.");
     }
 
+    // Fase 10, leva 10.1: o item selecionado direto no destravador
+    private void SpaceWhoUses_Click(object sender, RoutedEventArgs e)
+    {
+        if (SpaceGrid.SelectedItem is not FolderUsage f || f.Path.Length == 0) { SpaceMsg.Text = Loc.T("Selecione um item na lista."); return; }
+        OpenFileUnlock(f.Path);
+    }
+
+    private void FileUnlock_Click(object sender, RoutedEventArgs e) => OpenFileUnlock(null);
+
+    internal void OpenFileUnlock(string? path) => new FileUnlockWindow(this, path).ShowDialog();
+
     // A29 passou para a aba Programas (Fase 5)
     private void SpacePrograms_Click(object sender, RoutedEventArgs e) => Tabs.SelectedIndex = TabPrograms;
 

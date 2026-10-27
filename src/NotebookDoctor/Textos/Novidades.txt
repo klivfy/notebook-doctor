@@ -1,4 +1,5 @@
 Revisão de segurança, dados e acessibilidade (novo)
+• Destravar arquivo ou pendrive (Limpeza, Espaço e menu da bandeja): mostra quais programas estão usando um arquivo, uma pasta ou um pendrive que o Windows diz estar em uso e fecha o que você escolher, com confirmação. Programas do sistema e serviços nunca são encerrados. Na bandeja, "Pendrives" ejeta com segurança e, se a unidade estiver em uso, mostra quem a segura.
 • Sistema e Drivers do fabricante leem o computador direto pelo Windows, sem abrir o PowerShell: abrem mais rápido e funcionam onde a empresa bloqueou o PowerShell. A aba Programas lembra o tamanho das pastas que não mudaram e abre completa bem antes.
 • Configurações, Ações e alertas são gravados de um jeito que uma queda de energia no meio não estraga o arquivo. Listas muito grandes (Duplicados, Limpeza avançada) rolam mais leves.
 • Segurança: o app só carrega bibliotecas do Windows da pasta do sistema. Uma DLL com o mesmo nome deixada ao lado do executável (na pasta Downloads ou num pendrive) é ignorada.

@@ -454,6 +454,8 @@
                                 ToolTip="Apaga arquivos e pastas sem chance de recuperar, limpa o espaço livre de uma unidade ou apaga um pen drive inteiro."/>
                         <Button Content="Verificar registro…" Tag="&#xE9D5;" Style="{StaticResource ActionRow}" Click="RegistryCheck_Click"
                                 ToolTip="Aponta só entradas do registro com prova de estarem quebradas (o arquivo que citam não existe mais) e apaga as que você marcar, com backup."/>
+                        <Button Content="Destravar arquivo ou pendrive…" Tag="&#xE785;" Style="{StaticResource ActionRow}" Click="FileUnlock_Click"
+                                ToolTip="Mostra quais programas estão usando um arquivo, uma pasta ou um pendrive que o Windows diz estar em uso, e fecha o que você escolher."/>
                     </UniformGrid>
                 </StackPanel>
               </Grid>
@@ -499,6 +501,12 @@
                             <TextBlock x:Name="SpaceTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,8,0,0" TextTrimming="CharacterEllipsis"/>
                             <Grid>
                             <DataGrid x:Name="SpaceGrid" AutomationProperties.Name="Resultado da análise de espaço">
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Abrir _local" Click="SpaceOpen_Click"/>
+                                        <MenuItem Header="_Quem está usando este arquivo ou pasta…" Click="SpaceWhoUses_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Item" Binding="{Binding Name}" Width="340">
                                         <DataGridTextColumn.ElementStyle>
@@ -535,6 +543,8 @@
                     <TextBlock Text="Relacionado" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
                     <Button Content="Ver programas instalados" Tag="&#xE71D;" Style="{StaticResource ActionRow}" Click="SpacePrograms_Click"
                             ToolTip="Tamanho, data e desinstalação de cada programa ficam na aba Programas."/>
+                    <Button Content="Destravar arquivo ou pendrive…" Tag="&#xE785;" Style="{StaticResource ActionRow}" Click="FileUnlock_Click"
+                            ToolTip="Mostra quais programas estão usando um arquivo, uma pasta ou um pendrive que o Windows diz estar em uso, e fecha o que você escolher."/>
                 </StackPanel>
               </Grid>
               </ScrollViewer>

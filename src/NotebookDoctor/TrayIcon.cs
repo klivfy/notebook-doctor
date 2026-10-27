@@ -19,6 +19,8 @@ public sealed class TrayIcon : IDisposable
 
     public event Action? OpenRequested, CleanRequested, ExitRequested, SupportRequested, BalloonClicked;
     public event Action<bool>? StartWithWindowsToggled, MiniToggled;
+    public event Action? UnlockRequested;
+    public event Action<char>? EjectRequested;
 
     public TrayIcon(bool startWithWindows)
     {
@@ -32,6 +34,11 @@ public sealed class TrayIcon : IDisposable
         _menu.Items.Add(new WinForms.ToolStripSeparator());
         _menu.Items.Add(Loc.T("Abrir painel"), null, (_, _) => OpenRequested?.Invoke());
         _menu.Items.Add(Loc.T("Limpar temporários agora"), null, (_, _) => CleanRequested?.Invoke());
+        // Fase 10, leva 10.1: pendrives conectados, montados na hora de abrir o menu
+        var usb = new WinForms.ToolStripMenuItem(Loc.T("Pendrives"));
+        usb.DropDownItems.Add(new WinForms.ToolStripMenuItem("")); // mostra a seta antes da primeira abertura
+        usb.DropDownOpening += (_, _) => FillDrives(usb);
+        _menu.Items.Add(usb);
         _miniItem = new WinForms.ToolStripMenuItem(Loc.T("Mini-widget sempre visível")) { CheckOnClick = true };
         _miniItem.Click += (_, _) => MiniToggled?.Invoke(_miniItem.Checked);
         _menu.Items.Add(_miniItem);
@@ -47,6 +54,25 @@ public sealed class TrayIcon : IDisposable
         DrawIcon(TrayBand.Ok, null);
         _icon.Text = "Notebook Doctor";
         ApplyTheme();
+    }
+
+    private void FillDrives(WinForms.ToolStripMenuItem parent)
+    {
+        parent.DropDownItems.Clear();
+        var drives = FileUnlocker.RemovableDrives();
+        if (drives.Count == 0) parent.DropDownItems.Add(new WinForms.ToolStripMenuItem(Loc.T("Nenhum pendrive conectado")) { Enabled = false });
+        foreach (var d in drives)
+        {
+            char letter = d.Name[0];
+            string label;
+            try { label = d.VolumeLabel; } catch (System.IO.IOException) { label = ""; }
+            string text = label.Length > 0 ? Loc.F("Ejetar {0} ({1})", $"{letter}:", label) : Loc.F("Ejetar {0}", $"{letter}:");
+            parent.DropDownItems.Add(text, null, (_, _) => EjectRequested?.Invoke(letter));
+        }
+        parent.DropDownItems.Add(new WinForms.ToolStripSeparator());
+        parent.DropDownItems.Add(Loc.T("Destravar arquivo ou pendrive…"), null, (_, _) => UnlockRequested?.Invoke());
+        foreach (WinForms.ToolStripItem i in parent.DropDownItems) { i.BackColor = _menu.BackColor; i.ForeColor = _menu.ForeColor; }
+        parent.DropDown.BackColor = _menu.BackColor;
     }
 
     public void ApplyTheme()
