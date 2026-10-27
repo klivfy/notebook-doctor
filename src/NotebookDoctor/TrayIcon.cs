@@ -72,6 +72,21 @@ public sealed class TrayIcon : IDisposable
         ApplyTheme();
     }
 
+    // Leva 12.1: primeira linha do menu quando a câmera ou o microfone estão abertos
+    private WinForms.ToolStripMenuItem? _mediaItem;
+
+    public void SetMediaInUse(string text)
+    {
+        if (_mediaItem is null)
+        {
+            _mediaItem = new WinForms.ToolStripMenuItem("") { Visible = false, ForeColor = Bad };
+            _mediaItem.Click += (_, _) => OpenRequested?.Invoke();
+            _menu.Items.Insert(0, _mediaItem);
+        }
+        _mediaItem.Text = text.Length > 0 ? "● " + text : "";
+        _mediaItem.Visible = text.Length > 0;
+    }
+
     private void FillPlans(WinForms.ToolStripMenuItem parent)
     {
         parent.DropDownItems.Clear();

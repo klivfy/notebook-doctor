@@ -37,6 +37,35 @@ public partial class App : Application
     public event Action? HealthUpdated, HeavyAlertChanged;
     private DateTime _lastProbe = DateTime.MinValue;
 
+    // ---------- Leva 12.1: câmera e microfone ----------
+    public IReadOnlyList<MediaUse> Media { get; private set; } = [];
+    public bool InCall => Media.Any(m => m.InUse);
+    private bool _callWarned;
+
+    private void CheckMedia(Snapshot snap)
+    {
+        Media = AppPaths.Demo ? DemoMedia() : MediaProbe.Uses();
+        string text = Meeting.InUseText(Media);
+        _tray.SetMediaInUse(text);
+        MediaChanged?.Invoke(text);
+        if (!InCall) { _callWarned = false; return; }
+        // Uma vez por chamada: downloads de fundo puxando a rede enquanto a câmera ou o microfone estão abertos
+        var busy = Meeting.BackgroundDownloads(snap.Groups, InCall);
+        if (busy.Count > 0 && !_callWarned)
+        {
+            _callWarned = true;
+            Notify(Loc.T("Downloads de fundo durante a chamada"),
+                   Loc.F("{0} está baixando enquanto você está em chamada. Em Sistema › Videochamadas dá para pôr no modo eficiência.", busy[0].Name));
+        }
+    }
+
+    private static List<MediaUse> DemoMedia() =>
+        [new("webcam", "Zoom.exe", DateTime.Now.AddMinutes(-12), null), new("microphone", "Zoom.exe", DateTime.Now.AddMinutes(-12), null),
+         new("microphone", "Microsoft.WindowsSoundRecorder", DateTime.Now.AddHours(-3), DateTime.Now.AddHours(-3).AddMinutes(4))];
+
+    /// <summary>Leva 12.1: quem está usando câmera ou microfone mudou ("Câmera: Zoom · Microfone: Zoom", ou vazio).</summary>
+    public event Action<string>? MediaChanged;
+
     // ---------- Leva 11.1: bateria ----------
     private readonly List<BatteryReading> _battery = new();
     private DateTime _lastBattery = DateTime.MinValue, _lastBatterySave = DateTime.MinValue;
@@ -456,6 +485,7 @@ public partial class App : Application
                 var powerNow = Native.PowerStatus();
                 History.Record(snap, Score.Score, powerNow.Percent >= 0 ? powerNow.OnBattery : null);
                 ApplyAutoEco(snap);
+                CheckMedia(snap);
                 _tray.Update(snap, Score.Score, Settings.TrayIcon);
                 if (Settings.ThemeMode == ThemeSchedule.Mode && Settings.EffectiveTheme(DateTime.Now) != _appliedTheme) ApplyTheme(); // B37
                 CheckAlerts(snap);

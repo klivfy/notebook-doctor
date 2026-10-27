@@ -1085,6 +1085,8 @@
                                     ToolTip="Verifica o computador com o Microsoft Defender e a Ferramenta de Remoção de Software Mal-Intencionado (MRT) do Windows."/>
                             <Button Content="Ferramentas do Windows…" Tag="&#xE90F;" Style="{StaticResource ActionRow}" Click="SysTools_Click"
                                     ToolTip="Atalhos para o Gerenciador de Dispositivos, Serviços, Agendador de Tarefas e outras ferramentas que o Windows já traz."/>
+                            <Button Content="Videochamadas…" Tag="&#xE714;" Style="{StaticResource ActionRow}" Click="SysMeeting_Click"
+                                    ToolTip="Quem está usando a câmera e o microfone, por que ninguém ouve você, se a conexão aguenta a chamada e o que está baixando em segundo plano."/>
                         </UniformGrid>
                         <TextBlock Text="Informações do computador" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
                         <ItemsControl x:Name="SysList" Focusable="False" AutomationProperties.Name="Informações do sistema">

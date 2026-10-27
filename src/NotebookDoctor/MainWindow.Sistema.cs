@@ -27,6 +27,9 @@ public partial class MainWindow
 
     private void SysTools_Click(object sender, RoutedEventArgs e) => new WindowsToolsWindow(this).ShowDialog();
 
+    // Fase 12, leva 12.1
+    private void SysMeeting_Click(object sender, RoutedEventArgs e) => new MeetingWindow(this).ShowDialog();
+
     // Verificar malware: Defender e MRT do Windows
     private void SysSecurity_Click(object sender, RoutedEventArgs e) => new SecurityWindow(this).ShowDialog();
 

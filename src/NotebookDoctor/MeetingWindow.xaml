@@ -1,0 +1,59 @@
+<Window x:Class="NotebookDoctor.MeetingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:NotebookDoctor"
+        Title="Videochamadas" Width="980" Height="720" MinWidth="760" MinHeight="520"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource WindowBackdrop}" Foreground="{DynamicResource TextPrimary}"
+        FontFamily="{StaticResource FontBody}" FontSize="{DynamicResource FsBody}" UseLayoutRounding="True"
+        AutomationProperties.Name="Videochamadas">
+    <ScrollViewer local:FitScroll.StarMin="160" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="Videochamadas" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
+        <TextBlock Grid.Row="1" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"
+                   Text="Para reuniões sem travar: quem está usando a câmera e o microfone, por que ninguém ouve você, se a conexão aguenta a chamada e o que está baixando em segundo plano. Só leitura, até você escolher uma ação."/>
+
+        <!-- Câmera e microfone -->
+        <StackPanel Grid.Row="2">
+            <TextBlock Text="Câmera e microfone" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
+            <TextBlock x:Name="MediaNow" FontFamily="{StaticResource FontMedium}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+        </StackPanel>
+        <Grid Grid.Row="3">
+            <DataGrid x:Name="MediaGrid" AutomationProperties.Name="Quem usou a câmera e o microfone">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Recurso" Binding="{Binding KindText}" Width="110"/>
+                    <DataGridTextColumn Header="Aplicativo" Binding="{Binding App}" Width="*"/>
+                    <DataGridTextColumn Header="Começou" Binding="{Binding StartText}" SortMemberPath="Start" Width="170"/>
+                    <DataGridTextColumn Header="Situação" Binding="{Binding StateText}" Width="190"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Style="{StaticResource EmptyState}" Tag="{Binding ElementName=MediaGrid}" Text="Nenhum aplicativo usou a câmera ou o microfone ainda."/>
+        </Grid>
+
+        <!-- Por que ninguém me ouve, conexão e downloads -->
+        <StackPanel Grid.Row="4" Margin="0,16,0,0">
+            <TextBlock Text="Por que ninguém me ouve?" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
+            <TextBlock x:Name="MicInfo" TextWrapping="Wrap" LineHeight="24" AutomationProperties.LiveSetting="Polite"/>
+        </StackPanel>
+        <StackPanel Grid.Row="5" Margin="0,16,0,0">
+            <TextBlock Text="A conexão aguenta a chamada?" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
+            <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="Manda 30 pings ao roteador e a 1.1.1.1 ao mesmo tempo (cerca de 10 segundos) e compara: assim dá para saber se o problema é o Wi-Fi da casa, a internet ou o próprio notebook."/>
+            <TextBlock x:Name="NetInfo" TextWrapping="Wrap" LineHeight="24" AutomationProperties.LiveSetting="Polite"/>
+            <TextBlock x:Name="DownloadsInfo" TextWrapping="Wrap" LineHeight="24" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+        </StackPanel>
+        <WrapPanel Grid.Row="6" Margin="0,12,0,0">
+            <Button x:Name="TestBtn" Content="Testar a conexão" Click="Test_Click" Margin="0,0,8,8"/>
+            <Button x:Name="EcoBtn" Content="Modo eficiência nos downloads" Style="{StaticResource TonalButton}" Click="Eco_Click" Margin="0,0,8,8" Visibility="Collapsed"
+                    ToolTip="Os programas continuam abertos, mas baixam devagar e cedem a rede e o processador à chamada. Desfaça em Ações."/>
+            <Button Content="Abrir privacidade do microfone" Style="{StaticResource TextButton}" Click="MicSettings_Click" Margin="0,0,8,8"/>
+            <Button Content="Atualizar" Style="{StaticResource TextButton}" Click="Reload_Click" Margin="0,0,8,8"/>
+            <Button Content="Fechar" Style="{StaticResource TextButton}" IsCancel="True" Click="Close_Click" Margin="0,0,8,8"/>
+        </WrapPanel>
+    </Grid>
+    </ScrollViewer>
+</Window>
