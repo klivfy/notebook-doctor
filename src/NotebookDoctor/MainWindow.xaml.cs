@@ -47,6 +47,7 @@ public partial class MainWindow : Window
         LoadSettingsIntoForm();
         RefreshProfileCard();
         Host.SnapshotReady += OnSnapshot;
+        Host.PowerSourceChanged += onAc => Dispatcher.Invoke(() => OnPowerSourceChanged(onAc));
         Host.HealthUpdated += () => { RefreshHealthStrip(); if (Host.Latest is not null) OnSnapshot(Host.Latest); };
         Host.HeavyAlertChanged += RefreshHeavyBanner;
         Host.MiniChanged += on => CfgMini.IsChecked = on;

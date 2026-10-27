@@ -153,6 +153,106 @@ public class Fase11Tests
     }
 }
 
+/// <summary>Fase 11, leva 11.2: vampiros de bateria, sono, 60 Hz, USB e modo eficiência automático.</summary>
+public class Fase11SonoTests
+{
+    private static HistSample H(DateTime t, bool? bat, params (string Name, double Cpu)[] p) =>
+        new(t, 20, 40, 1, 50, [], P: p.ToDictionary(x => x.Name, x => new[] { x.Cpu, 100.0 }), B: bat);
+
+    [Fact]
+    public void Vampiros_de_bateria_contam_so_a_CPU_na_bateria()
+    {
+        var now = Make.T0;
+        var samples = new[]
+        {
+            H(now.AddHours(-1), true, ("chrome", 30), ("Teams", 10)),
+            H(now.AddHours(-2), true, ("chrome", 10), ("Teams", 30), ("Idle", 90)),
+            H(now.AddHours(-3), false, ("Steam", 90)),          // na tomada: não conta
+            H(now.AddHours(-4), null, ("Code", 90)),            // amostra antiga, sem a marca
+            H(now.AddDays(-9), true, ("OneDrive", 90)),         // fora do período
+        };
+        var users = PowerAudit.BatteryUsers(samples, now.AddDays(-7));
+        Assert.Equal(new[] { "chrome", "Teams" }, users.Select(u => u.Name).OrderBy(n => n));
+        Assert.Equal(50, users[0].SharePct);
+        Assert.Equal(2, users[0].Minutes);
+        Assert.Empty(PowerAudit.BatteryUsers([H(now, false, ("x", 10))], now.AddDays(-1)));
+    }
+
+    [Fact]
+    public void Pedidos_de_energia_do_powercfg()
+    {
+        const string output = """
+            DISPLAY:
+            [PROCESS] \Device\HarddiskVolume3\Program Files\Google\Chrome\Application\chrome.exe
+            Video Wake Lock
+
+            SYSTEM:
+            [DRIVER] Realtek High Definition Audio (HDAUDIO\FUNC_01&VEN_10EC)
+            An audio stream is currently in use.
+            [SERVICE] \Device\HarddiskVolume3\Windows\System32\svchost.exe (wuauserv)
+
+            AWAYMODE:
+            Nenhum.
+
+            EXECUTION:
+            None.
+            """;
+        var r = PowerAudit.ParseRequests(output);
+        Assert.Equal(3, r.Count);
+        Assert.Equal(new PowerRequest("DISPLAY", "PROCESS", "chrome.exe"), r[0]);
+        Assert.Equal("SYSTEM", r[1].Kind);
+        Assert.Equal("DRIVER", r[1].Category);
+        Assert.StartsWith("Realtek", r[1].Name);
+        Assert.Equal("SERVICE", r[2].Category);
+        Assert.Empty(PowerAudit.ParseRequests(""));
+    }
+
+    [Fact]
+    public void Aparelhos_que_acordam_o_PC()
+    {
+        Assert.Equal(new[] { "HID Keyboard Device", "Intel(R) Wi-Fi 6 AX201" }, PowerAudit.ParseWakeDevices("HID Keyboard Device\r\nIntel(R) Wi-Fi 6 AX201\r\n\r\n"));
+        Assert.Empty(PowerAudit.ParseWakeDevices("NONE\r\n"));
+    }
+
+    [Fact]
+    public void Tela_em_60_Hz_na_bateria_e_de_volta_na_tomada()
+    {
+        Assert.Equal(60, PowerAudit.DynamicHzTarget(nowOnAc: false, 144, [60, 144], null));
+        Assert.Equal(144, PowerAudit.DynamicHzTarget(nowOnAc: true, 60, [60, 144], 144));
+        Assert.Null(PowerAudit.DynamicHzTarget(nowOnAc: true, 60, [60, 144], null));     // nada guardado: não inventa
+        Assert.Null(PowerAudit.DynamicHzTarget(nowOnAc: false, 60, [60], null));         // tela de 60 Hz: nada a fazer
+        Assert.Null(PowerAudit.DynamicHzTarget(nowOnAc: true, 60, [60, 120], 144));      // outra tela agora: a taxa guardada não existe
+    }
+
+    [Fact]
+    public void Modo_eficiencia_fora_de_foco()
+    {
+        var (on, off) = PowerAudit.AutoEco(["chrome", "Teams", "Spotify"], ["chrome", "Teams", "explorer"], "chrome", ["chrome"]);
+        Assert.Equal(new[] { "Teams" }, on);        // aberto e fora de foco; o Spotify não está aberto
+        Assert.Equal(new[] { "chrome" }, off);      // voltou ao foco
+        var again = PowerAudit.AutoEco(["chrome", "Teams"], ["chrome", "Teams"], "explorer", ["chrome", "Teams"]);
+        Assert.Empty(again.TurnOn);
+        Assert.Empty(again.TurnOff);
+    }
+
+    [Fact]
+    public void Suspensao_seletiva_USB()
+    {
+        Assert.True(PowerAudit.UsbSuspendOff(0));
+        Assert.False(PowerAudit.UsbSuspendOff(1));
+        Assert.False(PowerAudit.UsbSuspendOff(null));
+    }
+
+    [Fact]
+    public void Historico_grava_a_marca_de_bateria()
+    {
+        var s = H(Make.T0, true, ("chrome", 5));
+        var back = System.Text.Json.JsonSerializer.Deserialize<HistSample>(System.Text.Json.JsonSerializer.Serialize(s))!;
+        Assert.True(back.B);
+        Assert.Null(System.Text.Json.JsonSerializer.Deserialize<HistSample>("""{"T":"2026-10-01T09:00:00","Cpu":1,"Ram":1,"Disk":1,"FreePct":1,"Top":[]}""")!.B);
+    }
+}
+
 /// <summary>Na CI do Windows: as APIs de energia de verdade (o executor não tem bateria).</summary>
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public class Fase11IntegrationTests
@@ -166,6 +266,8 @@ public class Fase11IntegrationTests
         Assert.NotNull(PowerProbe.ReadSaverThreshold());
         PowerProbe.ReadBattery();          // no executor (sem bateria) volta null, sem exceção
         PowerProbe.RefreshRates();         // sem monitor de verdade pode não haver modos
+        Assert.NotNull(PowerProbe.ReadUsbSuspend());
+        PowerProbe.WakeDevices();          // sem administrador também funciona
         var (apps, system) = PowerProbe.ReadLightTheme();
         Assert.True(apps is null or 0 or 1 && system is null or 0 or 1);
     }

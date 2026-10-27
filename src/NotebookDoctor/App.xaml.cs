@@ -25,6 +25,8 @@ public partial class App : Application
     private MiniWidget? _mini;
     public UpdateInfo? PendingUpdate { get; private set; }
     public event Action<Snapshot>? SnapshotReady;
+    /// <summary>Leva 11.2: o notebook saiu (false) ou voltou (true) para a tomada.</summary>
+    public event Action<bool>? PowerSourceChanged;
 
     // Saúde (dados lentos), nota e alerta de programa pesado
     public HealthInfo Health { get; private set; } = HealthInfo.Empty;
@@ -446,7 +448,9 @@ public partial class App : Application
                 _recent.Add(snap);
                 Sampling.TrimRecent(_recent, snap.Time); // M42: com amostras espaçadas, a nota não usa dados velhos
                 Score = Insights.Score(_recent, Health);
-                History.Record(snap, Score.Score);
+                var powerNow = Native.PowerStatus();
+                History.Record(snap, Score.Score, powerNow.Percent >= 0 ? powerNow.OnBattery : null);
+                ApplyAutoEco(snap);
                 _tray.Update(snap, Score.Score, Settings.TrayIcon);
                 if (Settings.ThemeMode == ThemeSchedule.Mode && Settings.EffectiveTheme(DateTime.Now) != _appliedTheme) ApplyTheme(); // B37
                 CheckAlerts(snap);
@@ -478,8 +482,14 @@ public partial class App : Application
         _lastBattery = DateTime.Now;
         var b = AppPaths.Demo ? DemoData.Battery(DateTime.Now, _demoTick) : await Task.Run(PowerProbe.ReadBattery);
         if (b is null) return;
+        bool? wasOnAc = _battery.Count > 0 ? _battery[^1].OnAc : null;
         _battery.Add(b);
         if (_battery.Count > 20) _battery.RemoveAt(0);
+        if (wasOnAc is { } before && before != b.OnAc)
+        {
+            ApplyDynamicHz(b.OnAc);
+            PowerSourceChanged?.Invoke(b.OnAc);
+        }
         if (BatteryLog.Add(b) && (DateTime.Now - _lastBatterySave).TotalMinutes >= 5 && !AppPaths.Demo)
         {
             _lastBatterySave = DateTime.Now;
@@ -487,6 +497,40 @@ public partial class App : Application
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
         if (b.OnAc && SurvivalState.Parse(Settings.SurvivalState) is { } state) EndSurvival(state, Loc.T("Na tomada: o Modo sobrevivência foi desligado e tudo voltou como estava."));
+    }
+
+    /// <summary>Leva 11.2, tarefa 08: tela em 60 Hz na bateria, a taxa de antes na tomada.</summary>
+    private void ApplyDynamicHz(bool onAc)
+    {
+        if (!Settings.DynamicHz || AppPaths.Demo || Settings.SurvivalState is not null) return;
+        if (PowerProbe.RefreshRates() is not { } rates) return;
+        if (PowerAudit.DynamicHzTarget(onAc, rates.Current, rates.Supported, Settings.DynamicHzHigh) is not { } target) return;
+        if (!PowerProbe.SetRefreshRate(target)) return;
+        Settings.DynamicHzHigh = onAc ? null : rates.Current;
+        Settings.Save();
+    }
+
+    // Leva 11.2, tarefa 10: programas marcados entram no modo eficiência fora de foco e saem ao voltar ao foco
+    private readonly HashSet<string> _autoEcoOn = new(StringComparer.OrdinalIgnoreCase);
+
+    private void ApplyAutoEco(Snapshot snap)
+    {
+        if (Settings.AutoEcoApps.Count == 0 && _autoEcoOn.Count == 0) return;
+        if (AppPaths.Demo || Settings.SimulationMode) return;
+        string? foreground = null;
+        try { using var p = System.Diagnostics.Process.GetProcessById(Native.ForegroundProcessId()); foreground = p.ProcessName; }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { }
+        var running = snap.Groups.Select(g => g.Name).ToList();
+        // Desmarcado na lista: sai do modo eficiência na hora
+        foreach (var gone in _autoEcoOn.Where(n => !Settings.AutoEcoApps.Contains(n, StringComparer.OrdinalIgnoreCase)).ToList())
+        {
+            ProcessActions.SetEfficiency(gone, false);
+            _autoEcoOn.Remove(gone);
+        }
+        _autoEcoOn.RemoveWhere(n => !running.Contains(n, StringComparer.OrdinalIgnoreCase));
+        var (on, off) = PowerAudit.AutoEco(Settings.AutoEcoApps, running, foreground, _autoEcoOn);
+        foreach (var n in on) if (ProcessActions.SetEfficiency(n, true) > 0) _autoEcoOn.Add(n);
+        foreach (var n in off) { ProcessActions.SetEfficiency(n, false); _autoEcoOn.Remove(n); }
     }
 
     /// <summary>Devolve o que o Modo sobrevivência mudou e avisa.</summary>

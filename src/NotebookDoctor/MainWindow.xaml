@@ -339,6 +339,7 @@
                                         <MenuItem x:Name="ProcPinItem" Header="Fi_xar no topo" Click="ProcPin_Click"/>
                                         <MenuItem Header="Ver _histórico deste programa" Click="ProcHistory_Click"/>
                                         <MenuItem Header="Pôr em modo so_neca…" Click="ProcSnooze_Click"/>
+                                        <MenuItem x:Name="ProcAutoEcoItem" Header="Modo eficiência _automático fora de foco" IsCheckable="True" Click="ProcAutoEco_Click"/>
                                         <MenuItem Header="Abrir _local do arquivo" Click="ProcOpenLocation_Click"/>
                                         <MenuItem Header="_Pesquisar na internet o que é" Click="ProcSearchOnline_Click"/>
                                         <MenuItem Header="Ver o programa _instalado" Click="ProcShowProgram_Click"/>
@@ -788,6 +789,10 @@
                             <StackPanel>
                                 <TextBlock Text="Programas que mais pesaram no período" Style="{StaticResource CardTitle}"/>
                                 <TextBlock x:Name="HOffenders" TextWrapping="Wrap" LineHeight="24"/>
+                                <!-- Leva 11.2: quem mais gastou bateria -->
+                                <TextBlock Text="Quem mais gastou bateria" FontFamily="{StaticResource FontMedium}" Margin="0,16,0,4" AutomationProperties.HeadingLevel="Level3"
+                                           ToolTip="Fatia do processador que cada programa usou enquanto o notebook estava na bateria. A tela e o Wi-Fi também gastam, mas não são de nenhum programa."/>
+                                <TextBlock x:Name="HBatteryUsers" TextWrapping="Wrap" LineHeight="24"/>
                             </StackPanel>
                         </Border>
                         <!-- M05: linha do tempo de um programa -->
@@ -872,6 +877,23 @@
                                     <Button x:Name="LapBtn" Content="Ligar Modo Colo" Click="LapMode_Click" Margin="0,0,8,8"/>
                                     <TextBlock x:Name="LapInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
                                 </WrapPanel>
+                                <!-- Leva 11.2 -->
+                                <CheckBox x:Name="CfgDynamicHz" Content="Baixar a tela para 60 Hz na bateria e voltar à taxa de antes na tomada" Click="DynamicHz_Click" Margin="0,0,0,8"
+                                          ToolTip="Telas de 120 Hz ou mais gastam bem mais energia. Vale para a tela principal."/>
+                                <WrapPanel>
+                                    <TextBlock x:Name="UsbSuspendInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,8"/>
+                                    <Button x:Name="UsbSuspendBtn" Content="Ligar a suspensão seletiva USB" Style="{StaticResource TextButton}" Click="UsbSuspend_Click" Margin="0,0,8,8" Visibility="Collapsed"
+                                            ToolTip="Deixa o Windows desligar, na bateria, os aparelhos USB parados (webcam, leitor de digitais, mouse sem uso)."/>
+                                </WrapPanel>
+                                <TextBlock Text="Por que o notebook não dorme?" FontFamily="{StaticResource FontMedium}" Margin="0,8,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Mostra quem está pedindo para o computador ficar acordado agora (exige o app como administrador) e quais aparelhos podem acordá-lo sozinho, como o mouse esbarrado dentro da mochila."/>
+                                <WrapPanel>
+                                    <Button Content="Verificar" Style="{StaticResource TonalButton}" Click="SleepCheck_Click" Margin="0,0,8,8"/>
+                                    <ComboBox x:Name="WakeBox" Width="260" Margin="0,0,8,8" AutomationProperties.Name="Aparelhos que podem acordar o computador" Visibility="Collapsed"/>
+                                    <Button x:Name="WakeOffBtn" Content="Não deixar acordar o PC…" Style="{StaticResource TextButton}" Click="WakeOff_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+                                </WrapPanel>
+                                <TextBlock x:Name="SleepInfo" TextWrapping="Wrap" LineHeight="24" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
                                 <TextBlock Text="Modo sobrevivência" FontFamily="{StaticResource FontMedium}" Margin="0,8,0,4" AutomationProperties.HeadingLevel="Level3"/>
                                 <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
                                            Text="Para a bateria chegar até a tomada: liga o economizador de bateria do Windows, põe no modo eficiência os programas sem janela que estão usando a CPU, baixa a tela para 60 Hz e passa para o tema escuro. Nada é fechado, e tudo volta sozinho ao ligar na tomada."/>

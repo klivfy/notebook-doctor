@@ -43,6 +43,17 @@ public partial class MainWindow
             .Select(g => (Name: g.Key, Pct: g.Count() * 100.0 / basis.Count)).OrderByDescending(x => x.Pct).Take(6);
         string head = (heavy.Count >= 5 ? Loc.F("Nos {0} momentos de carga alta (CPU ≥ 50% ou RAM ≥ 80%):", heavy.Count) : Loc.T("Nenhum período de carga alta registrado; ranking geral:")) + "\n";
         HOffenders.Text = head + string.Join("\n", ranking.Select(r => "• " + Loc.F("{0} — entre os 3 maiores em {1:0}% das amostras", r.Name, r.Pct)));
+        ShowBatteryUsers(month);
+    }
+
+    // Leva 11.2, tarefa 06: quem mais gastou bateria nas últimas 24 horas e nos últimos 7 dias
+    private void ShowBatteryUsers(List<HistSample> month)
+    {
+        var day = PowerAudit.BatteryUsers(month, DateTime.Now.AddDays(-1), 5);
+        var week = PowerAudit.BatteryUsers(month, DateTime.Now.AddDays(-7), 5);
+        if (week.Count == 0) { HBatteryUsers.Text = Loc.T("Ainda sem uso na bateria registrado: aparece depois de usar o notebook fora da tomada."); return; }
+        string List(List<BatteryUser> users) => string.Join("\n", users.Select(u => "• " + Loc.F("{0} — {1:0}% do processador na bateria ({2})", u.Name, u.SharePct, Pt.N(u.Minutes, "minuto", "minutos"))));
+        HBatteryUsers.Text = (day.Count > 0 ? Loc.T("Últimas 24 horas:") + "\n" + List(day) + "\n\n" : "") + Loc.T("Últimos 7 dias:") + "\n" + List(week);
     }
 
     // ---------- Tendências: hoje × semana passada (M48) e previsão do disco (M50) ----------

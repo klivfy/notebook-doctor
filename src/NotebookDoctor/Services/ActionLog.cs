@@ -137,6 +137,16 @@ public static class ActionLog
                 msg = ok ? "Modo Colo desfeito: o turbo voltou." : "Não foi possível devolver o turbo: o plano de energia mudou.";
                 break;
             }
+            case "usb-suspend":
+            {
+                var p = entry.UndoArg1.Split(',');
+                bool ok = p.Length == 3 && uint.TryParse(p[0], out uint ac) && uint.TryParse(p[1], out uint dc) && Guid.TryParse(p[2], out var scheme) && PowerProbe.WriteUsbSuspend(scheme, ac, dc);
+                msg = ok ? "Suspensão seletiva USB como antes." : "Não foi possível desfazer: o plano de energia mudou.";
+                break;
+            }
+            case "wake":
+                msg = PowerProbe.SetWake(entry.UndoArg1, allowed: true) ? "O aparelho voltou a poder acordar o computador." : "Não foi possível desfazer: abra o app como administrador.";
+                break;
             case "survival":
                 if (SurvivalState.Parse(entry.UndoArg1) is { } state)
                 {

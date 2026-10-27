@@ -85,6 +85,49 @@ public static class PowerProbe
 
     public static bool WriteSaverThreshold(Guid scheme, uint ac, uint dc) => Write(scheme, SubEnergySaver, EnergySaverThreshold, ac, dc);
 
+    // ---------- suspensão seletiva USB (leva 11.2) ----------
+
+    private static readonly Guid SubUsb = new("2a737441-1930-4402-8d77-b2bebba308a3");
+    private static readonly Guid UsbSelectiveSuspend = new("48e6b7a6-50f5-4782-a5d4-53bb8f07e226");
+
+    public static (Guid Scheme, uint Ac, uint Dc)? ReadUsbSuspend() =>
+        ActiveScheme() is { } s && Read(s, SubUsb, UsbSelectiveSuspend) is { } v ? (s, v.Ac, v.Dc) : null;
+
+    public static bool WriteUsbSuspend(Guid scheme, uint ac, uint dc) => Write(scheme, SubUsb, UsbSelectiveSuspend, ac, dc);
+
+    // ---------- powercfg: quem não deixa dormir e quem acorda o PC (leva 11.2) ----------
+
+    private static (int Exit, string Output) Powercfg(string args)
+    {
+        try
+        {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            // powercfg escreve na página de código OEM do console (ex.: 850 no Brasil), não em UTF-8
+            var oem = System.Text.Encoding.GetEncoding(System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
+            using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "powercfg.exe"), args)
+            { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true, StandardOutputEncoding = oem });
+            if (p is null) return (-1, "");
+            string output = p.StandardOutput.ReadToEnd();
+            return p.WaitForExit(15_000) ? (p.ExitCode, output) : (-1, output);
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { return (-1, ""); }
+    }
+
+    /// <summary>Quem está pedindo para o computador não dormir agora. Null sem administrador (o Windows exige).</summary>
+    public static List<PowerRequest>? PowerRequests()
+    {
+        var (exit, output) = Powercfg("/requests");
+        return exit == 0 ? PowerAudit.ParseRequests(output) : null;
+    }
+
+    /// <summary>Dispositivos que podem acordar o computador (teclado, mouse, placa de rede).</summary>
+    public static List<string> WakeDevices() => PowerAudit.ParseWakeDevices(Powercfg("/devicequery wake_armed").Output);
+
+    /// <summary>Tira (ou devolve) do dispositivo a permissão de acordar o computador. Exige administrador.</summary>
+    public static bool SetWake(string device, bool allowed) =>
+        !device.Contains('"') && Powercfg($"/device{(allowed ? "enable" : "disable")}wake \"{device}\"").Exit == 0;
+
     // ---------- taxa de atualização da tela principal ----------
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

@@ -165,6 +165,12 @@ public sealed class AppSettings
     public bool TrayCpu { get; set; }
     /// <summary>Leva 10.3: o que o ícone da bandeja mostra (logo, CPU, temperatura ou nota de saúde).</summary>
     public TrayIconShows TrayIcon { get; set; } = TrayIconShows.Logo;
+    /// <summary>Leva 11.2: baixar a tela para 60 Hz ao sair da tomada e devolver ao voltar.</summary>
+    public bool DynamicHz { get; set; }
+    /// <summary>Leva 11.2: a taxa de antes, para devolver na tomada.</summary>
+    public int? DynamicHzHigh { get; set; }
+    /// <summary>Leva 11.2: programas que entram no modo eficiência sozinhos quando ficam fora de foco.</summary>
+    public List<string> AutoEcoApps { get; set; } = [];
     /// <summary>Leva 11.1: como estava tudo antes do Modo sobrevivência (JSON de SurvivalState); null fora dele.</summary>
     public string? SurvivalState { get; set; }
     /// <summary>Leva 11.1: turbo antes do Modo Colo ("ac,dc,plano"); null com o Modo Colo desligado.</summary>

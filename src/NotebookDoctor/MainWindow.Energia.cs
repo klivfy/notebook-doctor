@@ -25,6 +25,12 @@ public partial class MainWindow
         if (!lap && !AppPaths.Demo && PowerProbe.ReadBoost() is { } boost) lap = !BatteryRules.BoostEnabled(boost.Ac) && !BatteryRules.BoostEnabled(boost.Dc);
         LapBtn.Content = Loc.T(lap ? "Desligar Modo Colo" : "Ligar Modo Colo");
         LapInfo.Text = lap ? Loc.T("Ligado: o turbo do processador está desligado.") : "";
+        CfgDynamicHz.IsChecked = Host.Settings.DynamicHz;
+        var usb = AppPaths.Demo ? null : PowerProbe.ReadUsbSuspend();
+        bool usbOff = PowerAudit.UsbSuspendOff(usb?.Dc);
+        UsbSuspendInfo.Text = usb is null ? "" : Loc.T(usbOff ? "Suspensão seletiva USB desligada na bateria: aparelhos USB parados continuam gastando energia."
+                                                             : "Suspensão seletiva USB ligada na bateria.");
+        UsbSuspendBtn.Visibility = usbOff ? Visibility.Visible : Visibility.Collapsed;
         bool survival = Host.Settings.SurvivalState is not null;
         SurvivalBtn.Content = Loc.T(survival ? "Desligar Modo sobrevivência" : "Ligar Modo sobrevivência…");
         SurvivalInfo.Text = survival ? Loc.T("Ligado: volta sozinho ao ligar na tomada.")
@@ -32,6 +38,65 @@ public partial class MainWindow
     }
 
     private void LapMode_Click(object sender, RoutedEventArgs e) => ToggleLapMode();
+
+    // ---------- Leva 11.2 ----------
+
+    private void DynamicHz_Click(object sender, RoutedEventArgs e)
+    {
+        Host.Settings.DynamicHz = CfgDynamicHz.IsChecked == true;
+        Host.Settings.Save();
+        ShowSnack(Host.Settings.DynamicHz ? "Tela em 60 Hz na bateria" : "Taxa da tela sem mudança automática",
+                  Host.Settings.DynamicHz ? "Vale a partir da próxima vez que o notebook sair da tomada." : "A tela fica na taxa escolhida no Windows.");
+    }
+
+    private void UsbSuspend_Click(object sender, RoutedEventArgs e)
+    {
+        if (PowerProbe.ReadUsbSuspend() is not { } usb) return;
+        if (Simulate("Ligar a suspensão seletiva USB", "Ligaria a suspensão seletiva USB na bateria, no plano de energia ativo.")) return;
+        if (!PowerProbe.WriteUsbSuspend(usb.Scheme, usb.Ac, 1)) { UsbSuspendInfo.Text = Loc.T("O Windows não deixou mudar o plano de energia."); return; }
+        ActionLog.Add("Suspensão seletiva USB ligada na bateria", Loc.T("Plano de energia ativo"), "usb-suspend", $"{usb.Ac},{usb.Dc},{usb.Scheme}");
+        ShowSnack("Suspensão seletiva USB ligada", "Se algum aparelho USB passar a desconectar sozinho, desfaça em Ações.");
+        RefreshEnergy();
+    }
+
+    private async void SleepCheck_Click(object sender, RoutedEventArgs e)
+    {
+        SleepInfo.Text = Loc.T("Perguntando ao Windows…");
+        var (requests, wake) = AppPaths.Demo
+            ? ((List<PowerRequest>?)[new("SYSTEM", "PROCESS", "Teams.exe"), new("DISPLAY", "PROCESS", "chrome.exe")], (List<string>)["Mouse HID", "Intel(R) Wi-Fi 6 AX201"])
+            : await Task.Run(() => (PowerProbe.PowerRequests(), PowerProbe.WakeDevices()));
+        var lines = new List<string>();
+        if (requests is null) lines.Add(Loc.T("Quem segura o computador acordado: abra o app como administrador para ver (o Windows exige)."));
+        else if (requests.Count == 0) lines.Add(Loc.T("Nenhum programa está segurando o computador acordado agora."));
+        else lines.AddRange(requests.Select(r => $"• {r.Name} {PowerAudit.KindText(r.Kind)}"));
+        lines.Add(wake.Count == 0 ? Loc.T("Nenhum aparelho pode acordar o computador sozinho.")
+                                  : Loc.F("Podem acordar o computador: {0}.", string.Join(", ", wake)));
+        SleepInfo.Text = string.Join("\n", lines);
+        WakeBox.ItemsSource = wake;
+        WakeBox.SelectedIndex = wake.Count > 0 ? 0 : -1;
+        WakeBox.Visibility = WakeOffBtn.Visibility = wake.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void WakeOff_Click(object sender, RoutedEventArgs e)
+    {
+        if (WakeBox.SelectedItem is not string device) return;
+        if (Simulate(Loc.F("Não deixar {0} acordar o computador", device), Loc.F("Tiraria de {0} a permissão de acordar o computador.", device))) return;
+        if (!AppInfo.IsAdmin) { SleepInfo.Text = Loc.T("Para mudar quem acorda o computador, abra o app como administrador."); return; }
+        if (!Dialogs.Confirm(this, Loc.F("Não deixar {0} acordar o computador?", device),
+                Loc.T("O aparelho continua funcionando normalmente; ele só não tira mais o computador do modo de suspensão. Para acordar, use o botão de ligar ou abra a tampa."),
+                "Confirmar")) return;
+        if (!PowerProbe.SetWake(device, allowed: false)) { SleepInfo.Text = Loc.T("O Windows recusou a mudança."); return; }
+        ActionLog.Add(Loc.F("{0} não acorda mais o computador", device), "", "wake", device);
+        ShowSnack("Feito", Loc.F("{0} não acorda mais o computador.", device));
+        SleepCheck_Click(sender, e);
+    }
+
+    /// <summary>Leva 11.2, tarefa 09: ao sair da tomada no meio de uma análise longa, pergunta se continua.</summary>
+    private void OnPowerSourceChanged(bool onAc)
+    {
+        if (onAc || _spaceCts is not { IsCancellationRequested: false }) return;
+        ShowSnack("Na bateria", "A análise do Espaço continua e gasta bateria. Quer parar e terminar na tomada?", "Parar análise", () => _spaceCts?.Cancel(), seconds: 20);
+    }
 
     internal void ToggleLapMode()
     {

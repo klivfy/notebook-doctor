@@ -42,6 +42,7 @@ public partial class MainWindow
     {
         bool pinned = ProcGrid.SelectedItem is ProcRow { Pinned: true };
         ProcPinItem.Header = Loc.T(pinned ? "Desa_fixar do topo" : "Fi_xar no topo");
+        ProcAutoEcoItem.IsChecked = ProcGrid.SelectedItem is ProcRow r && r.Names.Any(n => Host.Settings.AutoEcoApps.Contains(n, StringComparer.OrdinalIgnoreCase));
     }
 
     private void ProcPin_Click(object sender, RoutedEventArgs e)
@@ -66,6 +67,20 @@ public partial class MainWindow
     {
         if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
         ShowProgramHistory(r.Names);
+    }
+
+    // Leva 11.2, tarefa 10: modo eficiência sozinho quando o programa fica fora de foco
+    private void ProcAutoEco_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        if (r.IsProtected) { ProcMsg.Text = Loc.F("{0} é do sistema: a prioridade não é alterada.", r.Name); return; }
+        var s = Host.Settings;
+        bool on = r.Names.Any(n => s.AutoEcoApps.Contains(n, StringComparer.OrdinalIgnoreCase));
+        s.AutoEcoApps = on ? s.AutoEcoApps.Where(n => !r.Names.Contains(n, StringComparer.OrdinalIgnoreCase)).ToList()
+                           : AppSettings.ParseNames(string.Join("\n", s.AutoEcoApps.Concat(r.Names)));
+        s.Save();
+        ProcMsg.Text = on ? Loc.F("{0} não entra mais no modo eficiência sozinho.", r.Name)
+                          : Loc.F("{0} entra no modo eficiência quando você estiver em outra janela e sai ao voltar para ele.", r.Name);
     }
 
     // Leva 10.2: socorro rápido
