@@ -4,7 +4,7 @@ Qué se guarda en el equipo
 • Uso de CPU, memoria y disco cada minuto, con los nombres de los programas más pesados (Historial, hasta 30 días).
 • Tus preferencias, las acciones realizadas por la app (para "Deshacer") y los avisos mostrados.
 • El tamaño de las carpetas de los programas instalados, para que la pestaña Programas abra más rápido.
-• El consumo de la batería en vatios de los últimos 7 días y una medida diaria de su capacidad, para estimar cuánto dura la batería y mostrar su desgaste.
+• El consumo de la batería en vatios de los últimos 7 días una medida diaria de su capacidad y cuánto tiempo estuvo llena enchufada, para estimar cuánto dura la batería, mostrar su desgaste y sugerir un límite de carga.
 • Si alguien define una contraseña para la configuración, solo un código derivado de ella (hash), nunca la contraseña en sí.
 • Errores de la app (erros.log) y, solo si activas la opción, informes de fallos sin nombre de usuario, nombre del equipo ni carpeta personal.
 Todo queda en la carpeta de datos de la app (botón "Abrir carpeta de datos"). Desinstalar la app o borrar la carpeta elimina estos datos.

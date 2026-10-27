@@ -49,11 +49,25 @@ public partial class MainWindow
     // Leva 11.2, tarefa 06: quem mais gastou bateria nas últimas 24 horas e nos últimos 7 dias
     private void ShowBatteryUsers(List<HistSample> month)
     {
+        ShowBatteryHealth();
         var day = PowerAudit.BatteryUsers(month, DateTime.Now.AddDays(-1), 5);
         var week = PowerAudit.BatteryUsers(month, DateTime.Now.AddDays(-7), 5);
         if (week.Count == 0) { HBatteryUsers.Text = Loc.T("Ainda sem uso na bateria registrado: aparece depois de usar o notebook fora da tomada."); return; }
         string List(List<BatteryUser> users) => string.Join("\n", users.Select(u => "• " + Loc.F("{0} — {1:0}% do processador na bateria ({2})", u.Name, u.SharePct, Pt.N(u.Minutes, "minuto", "minutos"))));
         HBatteryUsers.Text = (day.Count > 0 ? Loc.T("Últimas 24 horas:") + "\n" + List(day) + "\n\n" : "") + Loc.T("Últimos 7 dias:") + "\n" + List(week);
+    }
+
+    // Leva 11.3, tarefa 11: uma medida de capacidade por dia, da mais antiga à mais nova
+    private void ShowBatteryHealth()
+    {
+        var days = Host.BatteryLog.Capacity.OrderBy(c => c.Day).ToList();
+        HBatteryHealth.SetValues(days.Select(c => c.HealthPct).ToList(), days.Select(c => c.Day).ToList());
+        HBatteryHealthLabel.Text = days.Count switch
+        {
+            0 => Loc.T("Saúde da bateria · a primeira medida aparece no próximo uso"),
+            1 => Loc.F("Saúde da bateria · {0:0}% da capacidade de fábrica", days[0].HealthPct),
+            _ => Loc.F("Saúde da bateria · {0:0}% hoje · {1:0}% em {2:d}", days[^1].HealthPct, days[0].HealthPct, days[0].Day),
+        };
     }
 
     // ---------- Tendências: hoje × semana passada (M48) e previsão do disco (M50) ----------

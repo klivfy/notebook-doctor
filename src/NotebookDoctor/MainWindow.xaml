@@ -717,6 +717,9 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
+                                    <!-- Leva 11.3: medido pelo Windows e gasto de bateria -->
+                                    <DataGridTextColumn Header="Atrasou o boot" Binding="{Binding BootText}" Width="130"/>
+                                    <DataGridTextColumn Header="Na bateria" Binding="{Binding BatteryText}" Width="120"/>
                                     <DataGridTextColumn Header="Editor" Binding="{Binding Publisher}" Width="200"/>
                                     <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
                                 </DataGrid.Columns>
@@ -724,6 +727,8 @@
                         </DockPanel>
                         <WrapPanel Grid.Row="2" Margin="0,16,0,0">
                             <Button Content="Ativar / Desativar selecionado" Click="ToggleStartup_Click" Margin="0,0,8,8"/>
+                            <Button Content="Atrasar 2 min…" Style="{StaticResource TonalButton}" Click="DelayStartup_Click" Margin="0,0,8,8"
+                                    ToolTip="O Windows não abre mais o programa sozinho; o Notebook Doctor o abre 2 minutos depois de você entrar, quando o computador já terminou de ligar. Desfaça em Ações."/>
                             <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="StartupOpen_Click" Margin="0,0,8,8"
                                     ToolTip="Abre a pasta do programa com o arquivo selecionado"/>
                             <Button Content="Ver o programa" Style="{StaticResource TextButton}" Click="StartupShowProgram_Click" Margin="0,0,8,8"
@@ -793,6 +798,10 @@
                                 <TextBlock Text="Quem mais gastou bateria" FontFamily="{StaticResource FontMedium}" Margin="0,16,0,4" AutomationProperties.HeadingLevel="Level3"
                                            ToolTip="Fatia do processador que cada programa usou enquanto o notebook estava na bateria. A tela e o Wi-Fi também gastam, mas não são de nenhum programa."/>
                                 <TextBlock x:Name="HBatteryUsers" TextWrapping="Wrap" LineHeight="24"/>
+                                <!-- Leva 11.3: curva de desgaste da bateria -->
+                                <TextBlock x:Name="HBatteryHealthLabel" Text="Saúde da bateria" FontFamily="{StaticResource FontMedium}" Margin="0,16,0,4" AutomationProperties.HeadingLevel="Level3"
+                                           ToolTip="Capacidade de hoje comparada à de fábrica, uma medida por dia. Cai devagar com o uso; uma queda rápida pede atenção."/>
+                                <local:Sparkline x:Name="HBatteryHealth" Height="70" Unit="%" Title="Saúde da bateria por dia" Stroke="{DynamicResource ChartDisk}" GridBrush="{DynamicResource OutlineVariant}"/>
                             </StackPanel>
                         </Border>
                         <!-- M05: linha do tempo de um programa -->
@@ -1251,6 +1260,8 @@
                                   ToolTip="Nada é enviado pela internet. Os relatórios ficam na pasta de dados do app e vão no pacote para o suporte."/>
                         <CheckBox x:Name="CfgHotkey" Content="Atalho Ctrl+Alt+N abre o painel de qualquer lugar"/>
                         <CheckBox x:Name="CfgAccent" Content="Usar a cor de destaque do Windows (ajustada para manter a leitura)"/>
+                        <CheckBox x:Name="CfgPureBlack" Content="Preto puro no tema escuro (telas OLED gastam menos energia)"
+                                  ToolTip="Nas telas OLED, o pixel preto fica apagado. Os textos mantêm o mesmo contraste; o fundo Mica fica desligado com esta opção."/>
                         <!-- M43/M44: sem notificações em tela cheia ou no horário escolhido (os avisos continuam no Histórico) -->
                         <CheckBox x:Name="CfgQuietFull" Content="Sem notificações com app em tela cheia, jogo ou apresentação"/>
                         <WrapPanel>

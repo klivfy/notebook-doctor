@@ -253,6 +253,89 @@ public class Fase11SonoTests
     }
 }
 
+/// <summary>Fase 11, leva 11.3: desgaste, limite de carga, boot medido e inicialização atrasada.</summary>
+public class Fase11InicializacaoTests
+{
+    private static DayUsage D(int daysAgo, int samples, int acFull) => new(Make.T0.Date.AddDays(-daysAgo), samples, acFull);
+
+    [Fact]
+    public void Sempre_na_tomada_a_100_por_3_dias()
+    {
+        Assert.True(BatteryRules.AlwaysPluggedFull([D(0, 100, 80), D(1, 200, 190), D(2, 90, 70), D(5, 100, 0)]));
+        Assert.False(BatteryRules.AlwaysPluggedFull([D(0, 100, 80), D(1, 200, 100), D(2, 90, 70)]));  // um dia usou na bateria
+        Assert.False(BatteryRules.AlwaysPluggedFull([D(0, 100, 80), D(1, 200, 190)]));               // só 2 dias
+        Assert.False(BatteryRules.AlwaysPluggedFull([D(0, 100, 80), D(1, 30, 30), D(2, 90, 70)]));    // dia com pouco uso não conta
+    }
+
+    [Theory]
+    [InlineData("LENOVO", "Lenovo Vantage")]
+    [InlineData("Dell Inc.", "Dell Power Manager")]
+    [InlineData("ASUSTeK COMPUTER INC.", "MyASUS")]
+    [InlineData("HP", "Adaptive Battery Optimizer")]
+    [InlineData("Acer", "Acer Care Center")]
+    [InlineData("Microsoft Corporation", "Surface")]
+    [InlineData("", "BIOS")]
+    public void Limite_de_carga_no_app_de_cada_fabricante(string manufacturer, string expected) =>
+        Assert.Contains(expected, BatteryRules.ChargeLimitAdvice(manufacturer));
+
+    [Fact]
+    public void Historico_conta_o_tempo_cheio_na_tomada_por_dia()
+    {
+        var h = new BatteryHistory();
+        var full = new BatteryReading(Make.T0, true, false, 0, 50, 50, 57, 100);
+        h.Add(full);
+        h.Add(full with { Time = Make.T0.AddMinutes(1) });
+        h.Add(full with { Time = Make.T0.AddMinutes(2), OnAc = false, RateW = -8, Percent = 99 });
+        var day = Assert.Single(h.Usage);
+        Assert.Equal(3, day.Samples);
+        Assert.Equal(2, day.AcFull);
+        Assert.Equal(87.7, h.Capacity[0].HealthPct);
+    }
+
+    [Fact]
+    public void Diagnostico_sugere_limite_de_carga_com_o_app_do_fabricante()
+    {
+        var log = new BatteryHistory { Usage = [D(0, 100, 90), D(1, 100, 90), D(2, 100, 90)] };
+        var s = new Snapshot(Make.T0, 10, 40, 6, 16, 2, 40, 100, []);
+        var f = Diagnosis.Evaluate(Make.Minute(s), Make.Health(), uptime: Make.FreshBoot,
+            battery: [new BatteryReading(Make.T0, true, false, 0, 50, 50, 57, 100)], batteryLog: log, manufacturer: "LENOVO");
+        var guard = Assert.Single(f, x => x.FixId == "drivers-oem");
+        Assert.Contains("Lenovo Vantage", guard.AdviceText);
+    }
+
+    [Fact]
+    public void Atraso_no_boot_medido_pelo_Windows()
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse("""[{"f":"OneDrive.exe","n":"Microsoft OneDrive","ms":5400},{"f":"onedrive.exe","n":"","ms":2100},{"f":"","ms":900},{"f":"Teams.exe","ms":0}]""");
+        var byFile = BootDelays.ByFile(BootDelays.Parse(doc.RootElement));
+        var od = Assert.Single(byFile).Value;
+        Assert.Equal(5400, od.DegradationMs);                                   // o maior dos boots medidos
+        Assert.Equal(od, BootDelays.For(@"C:\Users\a\AppData\Local\Microsoft\OneDrive\OneDrive.exe", byFile));
+        Assert.Null(BootDelays.For(@"C:\x\Teams.exe", byFile));
+        Assert.Equal(Loc.F("+{0:0.0} s no boot", 5.4), BootDelays.Text(od));
+        Assert.Equal(Loc.F("+{0} ms no boot", 450), BootDelays.Text(od with { DegradationMs = 450 }));
+    }
+
+    [Theory]
+    [InlineData("\"C:\\Program Files\\App\\app.exe\" --min -x", "C:\\Program Files\\App\\app.exe", "--min -x")]
+    [InlineData("C:\\Program Files\\App\\app.exe /bg", "C:\\Program Files\\App\\app.exe", "/bg")]
+    [InlineData("C:\\App\\app.exe", "C:\\App\\app.exe", "")]
+    public void Linha_de_comando_separa_programa_e_argumentos(string command, string exe, string args)
+    {
+        var (e, a) = CommandLine.Split(command);
+        Assert.Equal(exe, e);
+        Assert.Equal(args, a);
+    }
+
+    [Fact]
+    public void Inicializacao_atrasada_e_aberta_pelo_app_no_login()
+    {
+        string app = File.ReadAllText(Path.Combine(RepoPaths.App, "App.xaml.cs"));
+        Assert.Contains("e.Args.Contains(\"--background\") && Settings.DelayedStartup.Count > 0", app);
+        Assert.Equal(TimeSpan.FromMinutes(2), DelayedStartupItem.Delay);
+    }
+}
+
 /// <summary>Na CI do Windows: as APIs de energia de verdade (o executor não tem bateria).</summary>
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public class Fase11IntegrationTests

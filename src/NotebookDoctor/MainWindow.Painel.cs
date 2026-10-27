@@ -20,6 +20,9 @@ public partial class MainWindow
                 var g = Host.Latest?.Groups.FirstOrDefault(x => x.Name == name);
                 KillProgram(name, g?.Count ?? 1, g?.MemMB ?? 0);
                 break;
+            case "drivers-oem":
+                new DriversWindow(this, oem: true).ShowDialog();
+                break;
             case "lap-mode":
                 ToggleLapMode();
                 break;
@@ -233,7 +236,7 @@ public partial class MainWindow
     private void ExportPdf_Click(object sender, RoutedEventArgs e)
     {
         if (Host.Latest is not { } s) return;
-        var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent);
+        var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent, batteryLog: Host.BatteryLog, manufacturer: Host.Manufacturer);
         try { AppInfo.OpenShell(ReportExporter.ExportPdf(s, findings, Host.History.Load(TimeSpan.FromDays(7)))); }
         catch (Exception ex) { ShowSnack("Não foi possível gerar o PDF", ex.Message); }
     }
@@ -241,7 +244,7 @@ public partial class MainWindow
     private void CopySummary_Click(object sender, RoutedEventArgs e)
     {
         if (Host.Latest is not { } s) return;
-        var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent);
+        var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent, batteryLog: Host.BatteryLog, manufacturer: Host.Manufacturer);
         string text = ReportContent.Summary(s, Host.Score, Insights.Bottleneck(Host.Recent), findings);
         try { Clipboard.SetText(text); ShowSnack("Resumo copiado", "Cole com Ctrl+V numa conversa, e-mail ou chamado."); }
         catch { ShowSnack("Não foi possível copiar", "Outro programa está usando a área de transferência. Tente de novo."); }
@@ -316,7 +319,7 @@ public partial class MainWindow
     private void Export_Click(object sender, RoutedEventArgs e)
     {
         if (Host.Latest is not { } s) return;
-        var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent);
+        var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent, batteryLog: Host.BatteryLog, manufacturer: Host.Manufacturer);
         string file = ReportExporter.Export(s, findings, Host.History.Load(TimeSpan.FromDays(7)));
         AppInfo.OpenShell(file);
     }
@@ -351,7 +354,7 @@ public partial class MainWindow
         Motion.SetValue(RamBar, s.RamPct); RamBar.SetResourceReference(ProgressBar.ForegroundProperty, LevelKey(s.RamPct));
         Motion.SetValue(DiskBar, s.DiskBusy); DiskBar.SetResourceReference(ProgressBar.ForegroundProperty, LevelKey(s.DiskBusy));
 
-        var findings = Diagnosis.Evaluate(recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent);
+        var findings = Diagnosis.Evaluate(recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent, batteryLog: Host.BatteryLog, manufacturer: Host.Manufacturer);
         foreach (var f in findings) f.WhyOpen = _whyOpen.Contains(f.Title);
         FindingsList.ItemsSource = findings;
         UpdateStatusChip(findings);

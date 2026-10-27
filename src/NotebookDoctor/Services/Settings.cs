@@ -165,6 +165,10 @@ public sealed class AppSettings
     public bool TrayCpu { get; set; }
     /// <summary>Leva 10.3: o que o ícone da bandeja mostra (logo, CPU, temperatura ou nota de saúde).</summary>
     public TrayIconShows TrayIcon { get; set; } = TrayIconShows.Logo;
+    /// <summary>Leva 11.3: itens de inicialização que o app abre 2 minutos depois de entrar no Windows.</summary>
+    public List<DelayedStartupItem> DelayedStartup { get; set; } = [];
+    /// <summary>Leva 11.3: variante preto puro (OLED) do tema escuro.</summary>
+    public bool PureBlack { get; set; }
     /// <summary>Leva 11.2: baixar a tela para 60 Hz ao sair da tomada e devolver ao voltar.</summary>
     public bool DynamicHz { get; set; }
     /// <summary>Leva 11.2: a taxa de antes, para devolver na tomada.</summary>

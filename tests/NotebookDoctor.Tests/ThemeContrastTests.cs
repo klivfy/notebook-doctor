@@ -12,6 +12,13 @@ public class ThemeContrastTests
 {
     private static Dictionary<string, string> Theme(string name)
     {
+        // Leva 11.3: o "preto puro" (OLED) é o escuro com os fundos trocados; textos e estados precisam do mesmo contraste
+        if (name == "Oled")
+        {
+            var dark = Theme("Dark");
+            foreach (var (key, hex) in NotebookDoctor.Services.OledTheme.Overrides) dark[key] = hex;
+            return dark;
+        }
         string dir = RepoPaths.App;
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
         return XDocument.Load(Path.Combine(dir, "Themes", name + ".xaml")).Root!.Elements()
@@ -40,7 +47,7 @@ public class ThemeContrastTests
     public static TheoryData<string, string, string, double> Pairs()
     {
         var data = new TheoryData<string, string, string, double>();
-        foreach (var theme in new[] { "Light", "Dark" })
+        foreach (var theme in new[] { "Light", "Dark", "Oled" })
         {
             void Add(string fg, string bg, double min) => data.Add(theme, fg, bg, min);
             foreach (var bg in new[] { "WindowBackdrop", "LayerFill", "CardFill" })
@@ -83,6 +90,14 @@ public class ThemeContrastTests
         var t = Theme(theme);
         double r = Ratio(t[fg], t[bg]);
         Assert.True(r >= min, $"{theme}: {fg} {t[fg]} sobre {bg} {t[bg]} = {r:0.00}:1 (mínimo {min}:1)");
+    }
+
+    [Fact]
+    public void Preto_puro_so_troca_fundos_que_existem_no_tema_escuro()
+    {
+        var dark = Theme("Dark");
+        Assert.All(NotebookDoctor.Services.OledTheme.Overrides.Keys, k => Assert.True(dark.ContainsKey(k), k));
+        Assert.Equal("#000000", NotebookDoctor.Services.OledTheme.Overrides["WindowBackdrop"]);
     }
 
     [Fact]
@@ -144,4 +159,5 @@ public class SpacingTests
                     off.Add(m.Value);
         Assert.True(off.Count == 0, "Fora da grade de 4 em Components.xaml:\n" + string.Join("\n", off.Distinct()));
     }
+
 }

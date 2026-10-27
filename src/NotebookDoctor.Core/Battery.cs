@@ -112,6 +112,35 @@ public static class BatteryRules
 
     public static bool BoostEnabled(uint value) => value != BoostOff;
 
+    // ---------- leva 11.3: guardião de carga ----------
+
+    /// <summary>
+    /// Sempre na tomada a 100%: nos 3 dias mais recentes com uso (pelo menos 60 leituras, cerca de meia hora), 70% ou mais
+    /// do tempo na tomada com a bateria cheia. Ficar cheia o tempo todo, quente, é o que mais gasta uma bateria de lítio.
+    /// </summary>
+    public static bool AlwaysPluggedFull(IReadOnlyList<DayUsage> usage)
+    {
+        var days = usage.Where(u => u.Samples >= 60).OrderByDescending(u => u.Day).Take(3).ToList();
+        return days.Count == 3 && days.All(d => d.AcFull >= d.Samples * 0.7);
+    }
+
+    /// <summary>Onde ligar o limite de carga em 80% (ou parecido) no aplicativo oficial de cada fabricante.</summary>
+    public static string ChargeLimitAdvice(string manufacturer)
+    {
+        string m = manufacturer.ToLowerInvariant();
+        return m switch
+        {
+            _ when m.Contains("lenovo") => Loc.T("No Lenovo Vantage: Dispositivo › Energia › Modo de conservação da bateria (para em cerca de 80%)."),
+            _ when m.Contains("dell") => Loc.T("No Dell Power Manager (ou Dell Optimizer): Bateria › “Uso principalmente na tomada”."),
+            _ when m.Contains("asus") => Loc.T("No MyASUS: Personalização › Bateria › Modo de Carga Inteligente para a Saúde da Bateria (“Equilibrado”, 80%)."),
+            _ when m.Contains("hp") || m.Contains("hewlett") => Loc.T("No HP: ligue o “Adaptive Battery Optimizer” na BIOS (F10) ou no HP Smart / HP Power Manager, quando houver."),
+            _ when m.Contains("acer") => Loc.T("No Acer Care Center (ou AcerSense): Bateria › Limite de carga em 80%."),
+            _ when m.Contains("samsung") => Loc.T("No Samsung Settings: Gerenciamento de bateria › Proteger a bateria (85%)."),
+            _ when m.Contains("microsoft") => Loc.T("No Surface: Configurações › Sistema › Energia e bateria › “Limite de carga inteligente”."),
+            _ => Loc.T("Procure no aplicativo do fabricante do notebook (ou na BIOS) uma opção de limite de carga ou de conservação da bateria."),
+        };
+    }
+
     // ---------- sobrevivência ----------
 
     public const int SurvivalPct = 15;
@@ -124,7 +153,14 @@ public static class BatteryRules
 public sealed record DischargeSample(DateTime T, double W);
 
 /// <summary>Uma medida diária da capacidade da bateria (curva de desgaste).</summary>
-public sealed record CapacitySample(DateTime Day, double FullWh, double DesignWh);
+public sealed record CapacitySample(DateTime Day, double FullWh, double DesignWh)
+{
+    /// <summary>Saúde: capacidade de hoje sobre a de fábrica, em %.</summary>
+    public double HealthPct => DesignWh > 0 ? Math.Round(FullWh * 100 / DesignWh, 1) : 0;
+}
+
+/// <summary>Leva 11.3: quantas leituras do dia e quantas foram na tomada com a bateria cheia (98% ou mais).</summary>
+public sealed record DayUsage(DateTime Day, int Samples, int AcFull);
 
 /// <summary>
 /// Leva 11.1: o consumo na bateria dos últimos 7 dias (para a previsão usar o uso real da pessoa) e uma medida da capacidade
@@ -135,6 +171,7 @@ public sealed class BatteryHistory
     public static readonly TimeSpan Keep = TimeSpan.FromDays(7);
     public List<DischargeSample> Discharge { get; set; } = [];
     public List<CapacitySample> Capacity { get; set; } = [];
+    public List<DayUsage> Usage { get; set; } = [];
 
     /// <summary>Guarda a leitura; devolve true quando algo mudou.</summary>
     public bool Add(BatteryReading b)
@@ -146,6 +183,13 @@ public sealed class BatteryHistory
             changed = true;
         }
         Discharge.RemoveAll(d => b.Time - d.T > Keep);
+        // Leva 11.3: quanto do dia a bateria passou cheia na tomada (guarda 14 dias)
+        int i = Usage.FindIndex(u => u.Day == b.Time.Date);
+        var day = i >= 0 ? Usage[i] : new DayUsage(b.Time.Date, 0, 0);
+        day = day with { Samples = day.Samples + 1, AcFull = day.AcFull + (b.OnAc && b.Percent >= 98 ? 1 : 0) };
+        if (i >= 0) Usage[i] = day; else Usage.Add(day);
+        Usage.RemoveAll(u => b.Time.Date - u.Day > TimeSpan.FromDays(14));
+        changed = true;
         if (b.FullWh > 0 && b.DesignWh > 0 && Capacity.All(c => c.Day.Date != b.Time.Date))
         {
             Capacity.Add(new CapacitySample(b.Time.Date, Math.Round(b.FullWh, 2), Math.Round(b.DesignWh, 2)));

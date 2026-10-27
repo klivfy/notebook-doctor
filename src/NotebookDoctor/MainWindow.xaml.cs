@@ -96,7 +96,7 @@ public partial class MainWindow : Window
             case 0: _ = Host.RefreshHealthAsync(); break;
             case TabClean: Scan_Click(this, new RoutedEventArgs()); break;
             case TabPrograms: _ = LoadProgramsAsync(); break;
-            case TabStartup: RefreshStartup(); break;
+            case TabStartup: _ = LoadBatteryWeekAsync(); break;
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
             case TabTweaks: LoadTweaks(); RefreshEnergy(); break;
@@ -334,7 +334,8 @@ public partial class MainWindow : Window
             case TabPrograms when !_progLoaded: _ = LoadProgramsAsync(); break;
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
-            case TabTweaks: LoadTweaks(); break;
+            case TabTweaks: LoadTweaks(); RefreshEnergy(); break;
+            case TabStartup: _ = LoadBatteryWeekAsync(); break;
             case TabSystem when _sysSections is null: _ = LoadSystemAsync(); break;
             case TabSettings: CfgMsg.Text = ""; LoadPlans(); RefreshLockCard(); break;
         }

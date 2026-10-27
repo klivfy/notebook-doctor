@@ -43,6 +43,8 @@ public partial class App : Application
     public BatteryReading? Battery => _battery.Count > 0 ? _battery[^1] : null;
     public IReadOnlyList<BatteryReading> BatteryRecent => _battery;
     public BatteryHistory BatteryLog { get; private set; } = new();
+    /// <summary>Leva 11.3: fabricante do notebook, para dizer onde fica o limite de carga.</summary>
+    public string Manufacturer { get; private set; } = "";
     private static string BatteryFile => Path.Combine(AppPaths.Dir, "bateria.json");
     private readonly BrowserWatch _browserWatch = new();
     private bool _browserCleaning, _scheduleRan;
@@ -89,6 +91,7 @@ public partial class App : Application
         CrashLog.Enabled = Settings.CrashReports;
         Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
+        ThemeManager.PureBlack = Settings.PureBlack;
         ApplyTheme();
         TextScale.Apply();
         ApplyDensity();
@@ -133,6 +136,7 @@ public partial class App : Application
         var win = new MainWindow();
         MainWindow = win;
         if (e.Args.Contains("--background")) { }
+        if (e.Args.Contains("--background") && Settings.DelayedStartup.Count > 0 && !AppPaths.Demo) _ = LaunchDelayedAsync(); // leva 11.3
         // B09: aberto pelo atalho, sem pedido de aba ou de notificação, começa minimizado na barra de tarefas
         else if (Settings.StartMinimized && Settings.FirstRunDone && uri is null && !e.Args.Any(a => a.StartsWith("--tab=")))
         {
@@ -423,6 +427,7 @@ public partial class App : Application
         CrashLog.Enabled = Settings.CrashReports;
         Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
+        ThemeManager.PureBlack = Settings.PureBlack;
         ApplyTheme();
         ApplyDensity();
     }
@@ -482,6 +487,8 @@ public partial class App : Application
         _lastBattery = DateTime.Now;
         var b = AppPaths.Demo ? DemoData.Battery(DateTime.Now, _demoTick) : await Task.Run(PowerProbe.ReadBattery);
         if (b is null) return;
+        if (Manufacturer.Length == 0)
+            Manufacturer = AppPaths.Demo ? "LENOVO" : await Task.Run(() => WmiReader.Query("SELECT Manufacturer FROM Win32_ComputerSystem").Select(m => WmiReader.Str(m, "Manufacturer")).FirstOrDefault() ?? "");
         bool? wasOnAc = _battery.Count > 0 ? _battery[^1].OnAc : null;
         _battery.Add(b);
         if (_battery.Count > 20) _battery.RemoveAt(0);
@@ -497,6 +504,24 @@ public partial class App : Application
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
         if (b.OnAc && SurvivalState.Parse(Settings.SurvivalState) is { } state) EndSurvival(state, Loc.T("Na tomada: o Modo sobrevivência foi desligado e tudo voltou como estava."));
+    }
+
+    /// <summary>Leva 11.3, tarefa 14: abre, 2 minutos depois de entrar no Windows, os itens de inicialização atrasados.</summary>
+    private async Task LaunchDelayedAsync()
+    {
+        await Task.Delay(DelayedStartupItem.Delay);
+        foreach (var item in Settings.DelayedStartup.ToList())
+        {
+            var (exe, args) = CommandLine.Split(item.Command);
+            if (exe is null || !File.Exists(exe)) continue;
+            try
+            {
+                // Atalho da pasta Inicializar abre pelo Windows; .exe direto, sem passar por um shell
+                bool shortcut = exe.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase);
+                using var _ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, args) { UseShellExecute = shortcut, WorkingDirectory = Path.GetDirectoryName(exe) ?? "" });
+            }
+            catch (System.ComponentModel.Win32Exception ex) { LogError(ex); }
+        }
     }
 
     /// <summary>Leva 11.2, tarefa 08: tela em 60 Hz na bateria, a taxa de antes na tomada.</summary>

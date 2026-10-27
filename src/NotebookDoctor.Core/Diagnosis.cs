@@ -88,7 +88,7 @@ public static class Diagnosis
     /// <param name="uptime">Tempo ligado; nulo usa o do Windows (os testes passam um valor fixo).</param>
     /// <param name="battery">Leva 11.1: leituras recentes da bateria (a mais nova por último); vazio ou nulo sem bateria.</param>
     public static List<Finding> Evaluate(IReadOnlyList<Snapshot> recent, HealthInfo h, IReadOnlyList<LeakSuspect>? leaks = null, TimeSpan? uptime = null,
-                                         IReadOnlyList<BatteryReading>? battery = null)
+                                         IReadOnlyList<BatteryReading>? battery = null, BatteryHistory? batteryLog = null, string manufacturer = "")
     {
         var f = new List<Finding>();
         if (recent.Count == 0) return f;
@@ -124,6 +124,12 @@ public static class Diagnosis
         if (battery is { Count: > 0 })
         {
             if (BatteryRules.SlowCharger(battery) is { } charger) f.Add(charger);
+            // Leva 11.3, tarefa 12: sempre na tomada a 100% gasta a bateria; o limite de carga fica no app do fabricante
+            if (batteryLog is not null && BatteryRules.AlwaysPluggedFull(batteryLog.Usage))
+                f.Add(new("ATENCAO", "Sempre na tomada com a bateria em 100%",
+                          Loc.T("Nos últimos 3 dias de uso, a bateria passou a maior parte do tempo cheia, na tomada"),
+                          BatteryRules.ChargeLimitAdvice(manufacturer) + " " + Loc.T("Parar em cerca de 80% quando o notebook vive na tomada faz a bateria durar anos a mais."),
+                          "drivers-oem", "Ver o app do fabricante"));
             if (BatteryRules.OfferSurvival(battery[^1]))
                 f.Add(new("PROBLEMA", "Bateria quase no fim", Loc.F("{0}% e descarregando", battery[^1].Percent),
                           "O Modo sobrevivência liga o economizador de bateria, deixa os programas sem janela no modo eficiência, baixa a tela para 60 Hz e passa para o tema escuro. Tudo volta ao ligar na tomada.",

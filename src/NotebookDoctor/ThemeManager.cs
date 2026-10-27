@@ -14,6 +14,8 @@ public static class ThemeManager
     public static bool IsDark { get; private set; }
     /// <summary>M09: aplicar a cor de destaque do Windows por cima da paleta do tema.</summary>
     public static bool UseAccent { get; set; }
+    /// <summary>Leva 11.3: no tema escuro, fundos em preto puro (telas OLED). Sem Mica, que clarearia o preto.</summary>
+    public static bool PureBlack { get; set; }
     public static event Action? Changed;
 
     private static ResourceDictionary? _current;
@@ -40,6 +42,8 @@ public static class ThemeManager
                                 : new ResourceDictionary { Source = new Uri($"pack://application:,,,/Themes/{(dark ? "Dark" : "Light")}.xaml") };
         if (HighContrast) dark = SystemColors.WindowColor.R + SystemColors.WindowColor.G + SystemColors.WindowColor.B < 384;
         else if (UseAccent && ReadAccent() is { } accent) ApplyAccent(next, accent, dark);
+        if (dark && PureBlack && !HighContrast)
+            foreach (var (key, hex) in OledTheme.Overrides) next[key] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
         if (_current is not null) dicts.Remove(_current);
         dicts.Insert(0, next); // antes dos estilos, para que o DynamicResource encontre as cores
         _current = next;
@@ -125,7 +129,7 @@ public static class ThemeManager
     /// </summary>
     public static bool MicaAvailable()
     {
-        if (!UseMica || HighContrast || Environment.OSVersion.Version.Build < 22621) return false;
+        if (!UseMica || HighContrast || PureBlack && IsDark || Environment.OSVersion.Version.Build < 22621) return false;
         try
         {
             using var k = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");

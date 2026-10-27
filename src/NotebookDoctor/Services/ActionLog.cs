@@ -56,6 +56,16 @@ public static class ActionLog
                 StartupManager.SetEnabled(parts[0], entry.UndoArg1, bool.Parse(parts[1]));
                 msg = "Item de inicialização restaurado.";
                 break;
+            case "startup-delay":
+                // UndoArg1 = nome do item; UndoArg2 = subchave do StartupApproved
+                StartupManager.SetEnabled(entry.UndoArg2, entry.UndoArg1, true);
+                if (global::NotebookDoctor.App.Current.Settings is { } st)
+                {
+                    st.DelayedStartup = st.DelayedStartup.Where(d => !(d.Name == entry.UndoArg1 && d.SubKey == entry.UndoArg2)).ToList();
+                    st.Save();
+                }
+                msg = "O Windows volta a abrir o programa na hora.";
+                break;
             case "service":
                 // UndoArg1 = nome do serviço; UndoArg2 = tipo de início anterior (2 = automático)
                 try { ServiceManager.SetStart(entry.UndoArg1, int.Parse(entry.UndoArg2)); }
