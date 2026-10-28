@@ -38,6 +38,12 @@
                 <TextBlock x:Name="DiskText" Grid.Row="2" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,8,0"/>
             </Grid>
             <TextBlock x:Name="TopText" Style="{StaticResource Muted}" Margin="0,8,8,0" TextTrimming="CharacterEllipsis"/>
+            <!-- Leva 12.1: câmera ou microfone abertos (ponto e texto: a cor não é o único sinal) -->
+            <StackPanel x:Name="MediaRow" Orientation="Horizontal" Margin="0,8,8,0" Visibility="Collapsed">
+                <Ellipse Width="8" Height="8" Fill="{DynamicResource Critical}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock x:Name="MediaText" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis" MaxWidth="180"
+                           AutomationProperties.LiveSetting="Polite"/>
+            </StackPanel>
         </StackPanel>
     </Border>
 </Window>

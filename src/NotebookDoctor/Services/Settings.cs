@@ -52,6 +52,9 @@ public static class AppPaths
 
 public sealed class AppSettings
 {
+    /// <summary>Leva 9.2: versão do formato do settings.json. Sobe quando uma opção muda de sentido ou de tipo.</summary>
+    public const int CurrentSchema = 1;
+    public int SchemaVersion { get; set; } = CurrentSchema;
     public string ThemeMode { get; set; } = "system"; // system | light | dark
     public int LastTab { get; set; }
     public string ActiveProfile { get; set; } = "work";
@@ -158,8 +161,26 @@ public sealed class AppSettings
     public string NavStyle { get; set; } = "rail";
     /// <summary>B29/B30/B31: ordenação, colunas ocultas e larguras de coluna de cada tabela.</summary>
     public Dictionary<string, GridLayout> Grids { get; set; } = new();
-    /// <summary>B01: número da CPU no ícone da bandeja.</summary>
+    /// <summary>B01: número da CPU no ícone da bandeja. Desde a leva 10.3 só migra para <see cref="TrayIcon"/>.</summary>
     public bool TrayCpu { get; set; }
+    /// <summary>Leva 10.3: o que o ícone da bandeja mostra (logo, CPU, temperatura ou nota de saúde).</summary>
+    public TrayIconShows TrayIcon { get; set; } = TrayIconShows.Logo;
+    /// <summary>Leva 11.3: itens de inicialização que o app abre 2 minutos depois de entrar no Windows.</summary>
+    public List<DelayedStartupItem> DelayedStartup { get; set; } = [];
+    /// <summary>Leva 11.3: variante preto puro (OLED) do tema escuro.</summary>
+    public bool PureBlack { get; set; }
+    /// <summary>Leva 11.2: baixar a tela para 60 Hz ao sair da tomada e devolver ao voltar.</summary>
+    public bool DynamicHz { get; set; }
+    /// <summary>Leva 11.2: a taxa de antes, para devolver na tomada.</summary>
+    public int? DynamicHzHigh { get; set; }
+    /// <summary>Leva 11.2: programas que entram no modo eficiência sozinhos quando ficam fora de foco.</summary>
+    public List<string> AutoEcoApps { get; set; } = [];
+    /// <summary>Leva 11.1: como estava tudo antes do Modo sobrevivência (JSON de SurvivalState); null fora dele.</summary>
+    public string? SurvivalState { get; set; }
+    /// <summary>Leva 11.1: turbo antes do Modo Colo ("ac,dc,plano"); null com o Modo Colo desligado.</summary>
+    public string? LapModePrevious { get; set; }
+    /// <summary>Leva 10.3: o que o clique do meio no ícone faz.</summary>
+    public TrayMiddleAction TrayMiddle { get; set; } = TrayMiddleAction.MiniWidget;
     /// <summary>B37: com o tema "schedule", claro a partir de ThemeLightAt e escuro a partir de ThemeDarkAt.</summary>
     public string ThemeLightAt { get; set; } = "07:00";
     public string ThemeDarkAt { get; set; } = "19:00";
@@ -173,6 +194,10 @@ public sealed class AppSettings
     public string Language { get; set; } = Loc.Auto;
     /// <summary>M22: na aba Processos, junta processos do mesmo aplicativo (Steam + steamwebhelper).</summary>
     public bool GroupByApp { get; set; } = true;
+    /// <summary>Leva 10.2: até 5 programas fixados no topo da tabela de Processos (nomes das linhas).</summary>
+    public List<string> PinnedProcesses { get; set; } = [];
+    /// <summary>Leva 10.2: filtro rápido escolhido na aba Processos (<see cref="ProcessFilter"/>).</summary>
+    public ProcessFilter ProcessFilter { get; set; } = ProcessFilter.All;
     /// <summary>B38: hash da senha das configurações (PasswordHash); null = sem senha.</summary>
     public string? SettingsLock { get; set; }
 
@@ -196,7 +221,20 @@ public sealed class AppSettings
     {
         AppSettings s;
         try { s = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(AppPaths.Settings)) ?? new(); }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
+        {
+            // Arquivo ilegível: guarda uma cópia antes que a próxima gravação o troque pelas configurações padrão
+            AtomicFile.KeepCopy(AppPaths.Settings, "ilegivel");
+            s = new();
+        }
         catch { s = new(); }
+        // Gravado por uma versão mais nova do app (a pessoa voltou para esta): guarda o original, com as opções que esta versão
+        // não conhece e perderia ao gravar
+        if (s.SchemaVersion > CurrentSchema) AtomicFile.KeepCopy(AppPaths.Settings, $"v{s.SchemaVersion}");
+        s.SchemaVersion = CurrentSchema;
+        // Leva 10.3: quem tinha ligado "CPU no ícone" (B01) continua vendo a CPU
+        if (s.TrayCpu && s.TrayIcon == TrayIconShows.Logo) s.TrayIcon = TrayIconShows.Cpu;
+        s.TrayCpu = false;
         ProcessTools.SetUserProtected(s.ExtraProtected);
         return s;
     }
@@ -209,7 +247,7 @@ public sealed class AppSettings
 
     public void Save()
     {
-        try { File.WriteAllText(AppPaths.Settings, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true })); }
+        try { AtomicFile.WriteAllText(AppPaths.Settings, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true })); }
         catch (Exception ex)
         {
             // Sem permissão de escrita (ou valor inválido): as configurações valem só nesta sessão; fica registrado

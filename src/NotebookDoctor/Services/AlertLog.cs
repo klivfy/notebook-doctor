@@ -37,7 +37,7 @@ public static class AlertLog
                 }
                 // Mantém o arquivo pequeno: reescreve só quando passa de 256 KB
                 if (new FileInfo(FilePath).Length > 256 * 1024)
-                    File.WriteAllLines(FilePath, Load30().Select(a => JsonSerializer.Serialize(a)));
+                    AtomicFile.WriteAllLines(FilePath, Load30().Select(a => JsonSerializer.Serialize(a)));
             }
             catch { }
         }

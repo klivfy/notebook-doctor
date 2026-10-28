@@ -3,13 +3,19 @@ Notebook Doctor runs on your computer and, unless you turn something on or ask f
 What is kept on your computer
 • CPU, memory and disk use every minute, with the names of the heaviest programs (History, up to 30 days).
 • Your preferences, the actions the app performed (for "Undo") and the notices it showed.
+• The size of the installed programs' folders, so the Programs tab opens faster.
+• Battery power use in watts over the last 7 days one daily reading of its capacity and how long it stayed full while plugged in, to estimate how long the battery lasts, show its wear and suggest a charge limit.
 • If someone sets a password for the settings, only a code derived from it (a hash), never the password itself.
 • App errors (erros.log) and, only if you turn the option on, crash reports without your user name, computer name or personal folder.
+• When you clear recent items, restore the hosts file or remove the proxy script, a copy of what was removed stays in the app's backup, for Undo.
+Saved Wi-Fi networks, the hosts file and the connection type (to warn you when you are on your phone's internet) are read from Windows only to show on screen. The Wi-Fi password appears only when you ask for the QR code, with the app running as administrator, and is never saved or sent.
 Everything stays in the app's data folder ("Open data folder" button). Uninstalling the app or deleting the folder removes this data.
 
 When the app uses the internet
 • Check for updates: contacts klivfy.com once a day, if the option is on, or when you ask. The request carries no data about you.
 • Network test: only when you click, it pings the router, 1.1.1.1 and 8.8.8.8 and queries the DNS of klivfy.com, github.com and wikipedia.org.
+• Video calls: the connection test pings the router and 1.1.1.1, only when you click. Who used the camera and microphone is read from Windows itself and never leaves the computer.
+• Network and internet: only when you click, tests the router, 1.1.1.1 and the DNS of klivfy.com; "Compare DNS" looks up klivfy.com, github.com and wikipedia.org on your DNS and on Cloudflare (1.1.1.1), Google (8.8.8.8) and Quad9 (9.9.9.9).
 • Open support: opens klivfy.com/suporte in your browser.
 • Rate the app: only when you click “Send rating” (Settings › About). Before sending, the app shows the exact text: the 1 to 5 rating, the optional comment, the app version and language, with user names, emails, IP and MAC addresses, GUIDs and file paths replaced by placeholders. It goes to klivfy.com/notebookdoctor/avaliacao, with no identifier of you or of the computer. Without a click, the rating stays only on your computer.
 • Anonymous usage statistics (Settings › Privacy): they come turned off. If you turn them on, the app counts how many times each tool was opened and how many failures happened, and sends only that count, with the app version, the language, the Windows family (10 or 11) and the week of the year, to klivfy.com/notebookdoctor/estatisticas, at most once a week. There is no identifier of the computer or of the person, and file or program names, addresses, serial numbers and error texts are never sent. “See what would be sent” shows the exact text; turning the option off deletes the count.

@@ -9,7 +9,13 @@ public sealed class StartupEntry
     public string Command { get; init; } = "";
     public string Origin { get; init; } = "";
     public bool Enabled { get; set; }
-    public string State => Enabled ? "Ativado" : "Desativado";
+    /// <summary>Leva 11.3: desativado no Windows, mas aberto pelo Notebook Doctor 2 minutos depois.</summary>
+    public bool Delayed { get; set; }
+    public string State => Delayed ? "Atrasado 2 min" : Enabled ? "Ativado" : "Desativado";
+    /// <summary>Leva 11.3: quanto o Windows mediu este item atrasando o boot (log Diagnostics-Performance).</summary>
+    public string BootText { get; set; } = "";
+    /// <summary>Leva 11.3: fatia da CPU na bateria nos últimos 7 dias, quando o programa fica aberto o dia todo.</summary>
+    public string BatteryText { get; set; } = "";
     public string StateText => Loc.T(State);
     /// <summary>Estimativa pelo que o programa já consumiu desde que abriu (CPU acumulada e RAM). Não é a medição do Windows.</summary>
     public string Impact { get; set; } = "";

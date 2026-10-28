@@ -56,6 +56,29 @@ try{ Get-CimInstance -Namespace root/wmi -ClassName MSAcpi_ThermalZoneTemperatur
 $o | ConvertTo-Json -Compress -Depth 6
 """;
 
+    /// <summary>
+    /// Leva 9.3: lê o WMI direto e só roda o script do PowerShell quando a leitura direta falha ou não traz nem o nome do
+    /// Windows. A aba fica pronta alguns segundos antes, e funciona onde a empresa bloqueou o PowerShell.
+    /// </summary>
+    public static RawSystem Read()
+    {
+        var native = ReadNative();
+        return native.OsName.Length > 0 ? native : Run();
+    }
+
+    /// <summary>O retrato pelo WMI, sem PowerShell (até 2 minutos). Falha devolve um retrato vazio.</summary>
+    public static RawSystem ReadNative()
+    {
+        try
+        {
+            var task = Task.Run(WmiReader.SystemInfoJson);
+            return task.Wait(TimeSpan.FromMinutes(2)) ? SystemInfoParser.Parse(task.Result) : new RawSystem();
+        }
+        catch (AggregateException ex) when (ex.InnerException is PlatformNotSupportedException or DllNotFoundException or TypeInitializationException
+                                            or System.Runtime.InteropServices.COMException) { return new RawSystem(); }
+        catch (System.Text.Json.JsonException) { return new RawSystem(); }
+    }
+
     /// <summary>Roda o script (até 2 minutos) e lê o JSON. Qualquer falha devolve um retrato vazio: a aba mostra o que as outras fontes deram.</summary>
     public static RawSystem Run()
     {

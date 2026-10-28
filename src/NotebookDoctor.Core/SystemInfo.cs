@@ -145,6 +145,24 @@ public sealed class RawSystem
 public sealed record NetAdapter(string Name, string Description, string Kind, string Mac, long SpeedMbps, bool Up, IReadOnlyList<string> Ips, string Gateway, IReadOnlyList<string> Dns);
 public sealed record WifiInfo(string Ssid, int SignalPct, int Channel, string Band, string Standard, int RxMbps, int TxMbps);
 
+/// <summary>
+/// Leva 9.3: o WMI de armazenamento (MSFT_PhysicalDisk) devolve números; o Get-PhysicalDisk do PowerShell mostrava os nomes.
+/// A leitura direta usa os mesmos nomes para a aba Sistema não mudar.
+/// </summary>
+public static class StorageNames
+{
+    public static string Media(long code) => code switch { 3 => "HDD", 4 => "SSD", 5 => "SCM", _ => "Unspecified" };
+
+    public static string Bus(long code) => code switch
+    {
+        1 => "SCSI", 2 => "ATAPI", 3 => "ATA", 4 => "1394", 5 => "SSA", 6 => "Fibre Channel", 7 => "USB", 8 => "RAID", 9 => "iSCSI",
+        10 => "SAS", 11 => "SATA", 12 => "SD", 13 => "MMC", 14 => "Virtual", 15 => "File Backed Virtual", 16 => "Storage Spaces",
+        17 => "NVMe", 18 => "SCM", 19 => "UFS", _ => "Unknown",
+    };
+
+    public static string Health(long code) => code switch { 0 => "Healthy", 1 => "Warning", 2 => "Unhealthy", _ => "Unknown" };
+}
+
 public static class SystemInfoParser
 {
     private static IEnumerable<JsonElement> Items(JsonElement e) =>

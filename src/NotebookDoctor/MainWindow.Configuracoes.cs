@@ -173,7 +173,7 @@ public partial class MainWindow
         try
         {
             var snap = Host.Latest;
-            var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects);
+            var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent, batteryLog: Host.BatteryLog, manufacturer: Host.Manufacturer);
             var health = Host.Health;
             string zip = await Task.Run(() => SupportPackage.Create(snap, findings, health, Host.History.Load(TimeSpan.FromDays(7))));
             System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{zip}\"");
@@ -221,7 +221,7 @@ public partial class MainWindow
             string errorsFile = System.IO.Path.Combine(AppPaths.Dir, "erros.log");
             string errors = System.IO.File.Exists(errorsFile) ? System.IO.File.ReadAllText(errorsFile) : "";
             string text = DiagnosticLog.Build(AppInfo.Version, Environment.OSVersion.VersionString, DateTime.Now,
-                Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects), errors,
+                Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent, batteryLog: Host.BatteryLog, manufacturer: Host.Manufacturer), errors,
                 CrashLog.Files().OrderByDescending(f => f).Take(5).Select(f => System.IO.Path.GetFileName(f)).ToList(),
                 ActionLog.Load().OrderByDescending(a => a.Time).Take(20).Select(a => $"{a.Time:dd/MM HH:mm}  {a.Title}: {a.Detail}").ToList(),
                 AlertLog.Load(TimeSpan.FromDays(7)).OrderByDescending(a => a.Time).Take(20).Select(a => $"{a.TimeText}  {a.Title}: {a.Text}").ToList());
@@ -296,7 +296,8 @@ public partial class MainWindow
         SelectByTag(CfgLanguage, s.Language);
         CfgThemeLight.Text = s.ThemeLightAt;
         CfgThemeDark.Text = s.ThemeDarkAt;
-        CfgTrayCpu.IsChecked = s.TrayCpu;
+        SelectByTag(CfgTrayIcon, s.TrayIcon.ToString());
+        SelectByTag(CfgTrayMiddle, s.TrayMiddle.ToString());
         CfgSounds.IsChecked = s.PlaySounds;
         CfgStart.IsChecked = s.StartWithWindows;
         CfgAlerts.IsChecked = s.AlertsEnabled;
@@ -314,6 +315,7 @@ public partial class MainWindow
         CfgCloseExits.IsChecked = s.CloseExits;
         CfgCompact.IsChecked = s.Compact;
         GroupByAppBox.IsChecked = s.GroupByApp; // M22: a opção fica na aba Processos
+        LoadProcFilter();
         RefreshStartMenu();
         RefreshLockCard();
         LoadRatingAndPrivacy();
@@ -329,6 +331,7 @@ public partial class MainWindow
         CfgRam.Text = s.RamAlertPct.ToString();
         CfgAlertMin.Text = s.AlertMinutes.ToString();
         CfgAccent.IsChecked = s.UseAccentColor;
+        CfgPureBlack.IsChecked = s.PureBlack;
         CfgQuietFull.IsChecked = s.QuietFullscreen;
         CfgQuiet.IsChecked = s.QuietHours;
         CfgQuietStart.Text = s.QuietStart;
@@ -355,7 +358,8 @@ public partial class MainWindow
         s.RestorePointBeforeChanges = CfgRestore.IsChecked == true;
         s.CheckUpdates = CfgUpdates.IsChecked == true;
         s.CrashReports = CfgCrash.IsChecked == true;
-        s.TrayCpu = CfgTrayCpu.IsChecked == true;
+        if (Enum.TryParse<TrayIconShows>((CfgTrayIcon.SelectedItem as ComboBoxItem)?.Tag as string, out var trayIcon)) s.TrayIcon = trayIcon;
+        if (Enum.TryParse<TrayMiddleAction>((CfgTrayMiddle.SelectedItem as ComboBoxItem)?.Tag as string, out var middle)) s.TrayMiddle = middle;
         s.PlaySounds = CfgSounds.IsChecked == true;
         bool themeClockOk = AlertPolicy.TryParseClock(CfgThemeLight.Text, out var tl) & AlertPolicy.TryParseClock(CfgThemeDark.Text, out var td);
         if (themeClockOk) { s.ThemeLightAt = tl.ToString("HH:mm"); s.ThemeDarkAt = td.ToString("HH:mm"); }
@@ -376,6 +380,7 @@ public partial class MainWindow
         s.RamAlertPct = ParseOr(CfgRam.Text, s.RamAlertPct, 30, 100);
         s.AlertMinutes = ParseOr(CfgAlertMin.Text, s.AlertMinutes, 0, 60);
         s.UseAccentColor = CfgAccent.IsChecked == true;
+        s.PureBlack = CfgPureBlack.IsChecked == true;
         s.QuietFullscreen = CfgQuietFull.IsChecked == true;
         s.QuietHours = CfgQuiet.IsChecked == true;
         // Horário inválido mantém o anterior; o formulário recarregado mostra o que ficou valendo

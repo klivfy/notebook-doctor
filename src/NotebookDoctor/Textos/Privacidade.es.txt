@@ -3,13 +3,19 @@ Notebook Doctor funciona en tu equipo y, salvo que actives algo o lo pidas, no e
 Qué se guarda en el equipo
 • Uso de CPU, memoria y disco cada minuto, con los nombres de los programas más pesados (Historial, hasta 30 días).
 • Tus preferencias, las acciones realizadas por la app (para "Deshacer") y los avisos mostrados.
+• El tamaño de las carpetas de los programas instalados, para que la pestaña Programas abra más rápido.
+• El consumo de la batería en vatios de los últimos 7 días una medida diaria de su capacidad y cuánto tiempo estuvo llena enchufada, para estimar cuánto dura la batería, mostrar su desgaste y sugerir un límite de carga.
 • Si alguien define una contraseña para la configuración, solo un código derivado de ella (hash), nunca la contraseña en sí.
 • Errores de la app (erros.log) y, solo si activas la opción, informes de fallos sin nombre de usuario, nombre del equipo ni carpeta personal.
+• Al borrar los recientes, restaurar el archivo hosts o quitar el script de proxy, una copia de lo que salió queda en la copia de seguridad de la app, para Deshacer.
+Las redes Wi-Fi guardadas, el archivo hosts y el tipo de conexión (para avisar cuando usas internet del celular) se leen de Windows solo para mostrarlos en pantalla. La contraseña del Wi-Fi aparece solo cuando pides el código QR, con la app como administrador, y nunca se guarda ni se envía.
 Todo queda en la carpeta de datos de la app (botón "Abrir carpeta de datos"). Desinstalar la app o borrar la carpeta elimina estos datos.
 
 Cuándo la app usa internet
 • Buscar actualización: consulta klivfy.com una vez al día, si la opción está activada, o cuando lo pides. La consulta no lleva datos tuyos.
 • Prueba de red: solo cuando haces clic, hace ping al router, a 1.1.1.1 y a 8.8.8.8 y consulta el DNS de klivfy.com, github.com y wikipedia.org.
+• Videollamadas: la prueba de conexión hace ping al router y a 1.1.1.1, solo cuando haces clic. Quién usó la cámara y el micrófono se lee del propio Windows y no sale del equipo.
+• Red e internet: solo cuando haces clic, prueba el router, 1.1.1.1 y el DNS de klivfy.com; "Comparar DNS" consulta klivfy.com, github.com y wikipedia.org en tu DNS y en Cloudflare (1.1.1.1), Google (8.8.8.8) y Quad9 (9.9.9.9).
 • Abrir soporte: abre klivfy.com/suporte en tu navegador.
 • Valorar la app: solo cuando haces clic en “Enviar valoración” (Configuración › Acerca de). Antes de enviar, la app muestra el texto exacto: la nota de 1 a 5, el comentario opcional, la versión y el idioma de la app, con nombres de usuario, correos, direcciones IP y MAC, GUID y rutas de archivo sustituidos por marcadores. Va a klivfy.com/notebookdoctor/avaliacao, sin identificador tuyo ni del equipo. Sin clic, la nota se queda solo en tu equipo.
 • Estadísticas de uso anónimas (Configuración › Privacidad): vienen desactivadas. Si las activas, la app cuenta cuántas veces se abrió cada herramienta y cuántos fallos hubo, y envía solo ese recuento, con la versión de la app, el idioma, la familia de Windows (10 u 11) y la semana del año, a klivfy.com/notebookdoctor/estatisticas, como máximo una vez por semana. No hay identificador del equipo ni de la persona, y nunca se envían nombres de archivos ni de programas, direcciones, números de serie ni textos de error. “Ver lo que se enviaría” muestra el texto exacto; desactivar la opción borra el recuento.

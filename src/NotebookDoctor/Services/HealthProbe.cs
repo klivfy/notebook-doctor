@@ -23,6 +23,7 @@ if(-not $d){ $d=Get-PhysicalDisk | Sort-Object DeviceId | Select-Object -First 1
 if($d){ $r=$d | Get-StorageReliabilityCounter; $o.disk=[ordered]@{name="$($d.FriendlyName)";type="$($d.MediaType)";health="$($d.HealthStatus)";wear=$r.Wear;temp=$r.Temperature} }
 $b=@(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Diagnostics-Performance/Operational';Id=100} -MaxEvents 5 | ForEach-Object { $x=[xml]$_.ToXml(); ($x.Event.EventData.Data | Where-Object Name -eq 'BootTime').'#text' })
 $o.boot=$b
+$o.slow=@(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Diagnostics-Performance/Operational';Id=101} -MaxEvents 40 | ForEach-Object { $x=[xml]$_.ToXml(); $v=@{}; $x.Event.EventData.Data | ForEach-Object { $v[$_.Name]=$_.'#text' }; [ordered]@{f="$($v['Name'])";n="$($v['FriendlyName'])";ms=[int]$v['DegradationTime']} })
 $o.drivers=@(Get-PnpDevice -PresentOnly | Where-Object { $_.Status -eq 'Error' } | Select-Object -First 8 | ForEach-Object { "$($_.FriendlyName)" })
 try { $h=(New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher(); $c=$h.GetTotalHistoryCount(); if($c -gt 0){ $o.wu=@($h.QueryHistory(0,[Math]::Min($c,80)) | Where-Object { $_.Operation -eq 1 } | ForEach-Object { [ordered]@{t="$($_.Title)";d=$_.Date.ToLocalTime().ToString('yyyy-MM-ddTHH:mm:ss');r=[int]$_.ResultCode} }) } } catch {}
 $o.wuoff=("$((Get-Service wuauserv).StartType)" -eq 'Disabled')
@@ -101,7 +102,7 @@ $o | ConvertTo-Json -Compress -Depth 3
         return new HealthInfo(name, type, health, wear, temp, batPct, cycles, bootLast, bootAvg,
             RebootPending(), System.Windows.SystemParameters.PowerLineStatus == System.Windows.PowerLineStatus.Online,
             plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result, tVhd.Result, tOneDrive.Result,
-            _updates, _gpus, _maintenance);
+            _updates, _gpus, _maintenance, _bootDelays);
     }
 
     // Pastas de dados do usuário, onde malware costuma rodar. Pastas de desenvolvimento ficam de fora para evitar alarme falso.
@@ -214,6 +215,7 @@ $o | ConvertTo-Json -Compress -Depth 3
     private static UpdateStatus? _updates;
     private static List<GpuDriver> _gpus = new();
     private static WindowsMaintenance? _maintenance;
+    private static List<BootDelay> _bootDelays = new();
 
     private static void ReadUpkeep(JsonElement root)
     {
@@ -224,13 +226,14 @@ $o | ConvertTo-Json -Compress -Depth 3
         _gpus = root.TryGetProperty("gpu", out var gpu) ? DriverRules.Parse(gpu) : new();
         bool? defrag = root.TryGetProperty("defrag", out var df) && df.ValueKind is JsonValueKind.True or JsonValueKind.False ? df.GetBoolean() : null;
         _maintenance = new WindowsMaintenance(defrag, root.TryGetProperty("maintoff", out var mo) && mo.ValueKind == JsonValueKind.True);
+        _bootDelays = root.TryGetProperty("slow", out var slow) ? BootDelays.Parse(slow) : new(); // leva 11.3
     }
 
     private static (string name, string type, string health, int? wear, int? temp, List<int> boots, List<string> drivers) RunPowerShell()
     {
         var boots = new List<int>();
         var drivers = new List<string>();
-        _updates = null; _gpus = new(); _maintenance = null;
+        _updates = null; _gpus = new(); _maintenance = null; _bootDelays = new();
         try
         {
             string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(Script));

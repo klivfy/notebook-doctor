@@ -9,7 +9,7 @@
         AutomationProperties.Name="Verificar malware">
     <ScrollViewer local:FitScroll.StarMin="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
     <Grid Margin="24">
-        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <TextBlock Text="Verificar malware" Style="{StaticResource PageTitle}" AutomationProperties.HeadingLevel="Level1"/>
         <StackPanel Grid.Row="1" Margin="0,4,0,12">
             <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap"
@@ -57,7 +57,22 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="3">
+        <!-- Leva 12.3: desvios de navegação (arquivo hosts e script de proxy) -->
+        <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Text="Desvios de navegação" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
+                <TextBlock Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="Alguns malwares não aparecem como programa: mudam o arquivo hosts ou põem um script de proxy para levar banco, e-mail e atualizações a sites falsos ou bloquear o antivírus. Bloqueadores de anúncio que usam o hosts ficam de fora."/>
+                <TextBlock x:Name="HijackInfo" TextWrapping="Wrap" LineHeight="24" AutomationProperties.LiveSetting="Polite"/>
+                <WrapPanel Margin="0,8,0,0">
+                    <Button x:Name="HostsBtn" Content="Restaurar o hosts padrão…" Style="{StaticResource TonalButton}" Click="Hosts_Click" Margin="0,0,8,8" Visibility="Collapsed"
+                            ToolTip="Volta o hosts ao do Windows recém-instalado, com o atual no backup. Exige o app como administrador."/>
+                    <Button x:Name="PacBtn" Content="Tirar o script de proxy…" Style="{StaticResource TonalButton}" Click="Pac_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="4">
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
             <DockPanel Margin="0,0,0,8">
                 <Button DockPanel.Dock="Right" Content="Atualizar" Style="{StaticResource TextButton}" Click="History_Click"/>
@@ -84,7 +99,7 @@
                      FontSize="{DynamicResource FsLabel}" Visibility="Collapsed" AutomationProperties.Name="Resultado do MRT"/>
         </Grid>
 
-        <DockPanel Grid.Row="4" Margin="0,12,0,0">
+        <DockPanel Grid.Row="5" Margin="0,12,0,0">
             <Button DockPanel.Dock="Right" Content="Fechar" IsCancel="True" Click="Close_Click" Style="{StaticResource TextButton}" Margin="8,0,0,0"/>
             <Button DockPanel.Dock="Right" Content="Abrir Segurança do Windows" Style="{StaticResource TextButton}" Click="OpenSecurity_Click" Margin="8,0,0,0"/>
             <Button x:Name="CancelBtn" DockPanel.Dock="Right" Content="Cancelar" Click="Cancel_Click" Style="{StaticResource TonalButton}" Visibility="Collapsed" Margin="8,0,0,0"/>

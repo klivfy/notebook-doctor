@@ -7,7 +7,8 @@ using NotebookDoctor.Services;
 namespace NotebookDoctor;
 
 public sealed record ProcRow(string Name, int Count, double CpuPct, long MemMB, double IoKBs, int Conns, string About, string SafetyText,
-                             System.Windows.Media.ImageSource? Icon = null, string Severity = "", IReadOnlyList<string>? Members = null)
+                             System.Windows.Media.ImageSource? Icon = null, string Severity = "", IReadOnlyList<string>? Members = null,
+                             bool Hung = false, bool HasWindow = false, bool Pinned = false, Safety Safety = Safety.Unknown)
 {
     /// <summary>M22: processos que a linha representa (vários quando o aplicativo foi agrupado).</summary>
     public IReadOnlyList<string> Names => Members ?? [Name];
@@ -15,8 +16,12 @@ public sealed record ProcRow(string Name, int Count, double CpuPct, long MemMB, 
     /// <summary>Basta um processo protegido para a linha toda ficar protegida.</summary>
     public bool IsProtected => Names.Any(ProcessTools.IsProtected);
     public bool HasIcon => Icon is not null;
+    // Textos do modelo da linha: a tradução automática da janela não alcança o que nasce dentro de um DataTemplate
+    public string HungLabel => Loc.T("Travado");
+    public string PinnedLabel => Loc.T("Fixado no topo");
     /// <summary>B32: lido pelo Narrador junto com o nome ("uso alto").</summary>
-    public string SeverityText => RowSeverity.Spoken(Severity);
+    public string SeverityText => string.Join(", ", new[] { Hung ? Loc.T("não está respondendo") : "", Pinned ? Loc.T("fixado no topo") : "", RowSeverity.Spoken(Severity) }
+        .Where(t => t.Length > 0));
 }
 
 public partial class MainWindow : Window
@@ -45,6 +50,7 @@ public partial class MainWindow : Window
         LoadSettingsIntoForm();
         RefreshProfileCard();
         Host.SnapshotReady += OnSnapshot;
+        Host.PowerSourceChanged += onAc => Dispatcher.Invoke(() => OnPowerSourceChanged(onAc));
         Host.HealthUpdated += () => { RefreshHealthStrip(); if (Host.Latest is not null) OnSnapshot(Host.Latest); };
         Host.HeavyAlertChanged += RefreshHeavyBanner;
         Host.MiniChanged += on => CfgMini.IsChecked = on;
@@ -93,10 +99,10 @@ public partial class MainWindow : Window
             case 0: _ = Host.RefreshHealthAsync(); break;
             case TabClean: Scan_Click(this, new RoutedEventArgs()); break;
             case TabPrograms: _ = LoadProgramsAsync(); break;
-            case TabStartup: RefreshStartup(); break;
+            case TabStartup: _ = LoadBatteryWeekAsync(); break;
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
-            case TabTweaks: LoadTweaks(); break;
+            case TabTweaks: LoadTweaks(); RefreshEnergy(); break;
             case TabSettings: LoadPlans(); break;
         }
     }
@@ -130,7 +136,7 @@ public partial class MainWindow : Window
     private Action? _snackAction;
 
     /// <summary>Mostra o resultado de uma ação sem bloquear a tela. Some sozinho; Esc ou o X fecham antes.</summary>
-    private void ShowSnack(string title, string text, string? actionLabel = null, Action? action = null, int seconds = 10)
+    internal void ShowSnack(string title, string text, string? actionLabel = null, Action? action = null, int seconds = 10)
     {
         // U1: o aviso já está carregado, então a tradução automática da janela não o alcança; textos montados chegam prontos (Loc.F)
         (title, text, actionLabel) = (Loc.T(title), Loc.T(text), actionLabel is null ? null : Loc.T(actionLabel));
@@ -196,6 +202,7 @@ public partial class MainWindow : Window
         if (grid.ItemsSource is null) return;
         var view = System.Windows.Data.CollectionViewSource.GetDefaultView(grid.ItemsSource);
         string q = text.Trim();
+        grid.Tag = q; // leva 10.3: as células com SearchHighlight grifam a busca
         view.Filter = q.Length == 0 ? null : o => key(o).Contains(q, StringComparison.CurrentCultureIgnoreCase);
     }
 
@@ -330,7 +337,8 @@ public partial class MainWindow : Window
             case TabPrograms when !_progLoaded: _ = LoadProgramsAsync(); break;
             case TabHistory: LoadHistory(); break;
             case TabActions: LoadActions(); break;
-            case TabTweaks: LoadTweaks(); break;
+            case TabTweaks: LoadTweaks(); RefreshEnergy(); break;
+            case TabStartup: _ = LoadBatteryWeekAsync(); break;
             case TabSystem when _sysSections is null: _ = LoadSystemAsync(); break;
             case TabSettings: CfgMsg.Text = ""; LoadPlans(); RefreshLockCard(); break;
         }

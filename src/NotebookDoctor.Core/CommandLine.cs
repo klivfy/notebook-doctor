@@ -26,4 +26,20 @@ public static class CommandLine
         }
         return c; // sem .exe (ex.: atalho .lnk na pasta Inicializar): o próprio caminho
     }
+
+    /// <summary>Leva 11.3: o programa e o resto da linha (os argumentos), para abrir o item depois sem passar por um shell.</summary>
+    public static (string? Exe, string Args) Split(string? command)
+    {
+        string c = Environment.ExpandEnvironmentVariables((command ?? "").Trim());
+        string? exe = ExecutablePath(c);
+        if (exe is null) return (null, "");
+        int at = c.StartsWith('"') ? c.IndexOf('"', 1) + 1 : c.IndexOf(exe, StringComparison.OrdinalIgnoreCase) + exe.Length;
+        return (exe, at > 0 && at <= c.Length ? c[at..].Trim() : "");
+    }
+}
+
+/// <summary>Leva 11.3, tarefa 14: item de inicialização que o Notebook Doctor abre 2 minutos depois de entrar no Windows.</summary>
+public sealed record DelayedStartupItem(string Name, string Command, string SubKey)
+{
+    public static readonly TimeSpan Delay = TimeSpan.FromMinutes(2);
 }

@@ -43,6 +43,31 @@ public partial class MainWindow
             .Select(g => (Name: g.Key, Pct: g.Count() * 100.0 / basis.Count)).OrderByDescending(x => x.Pct).Take(6);
         string head = (heavy.Count >= 5 ? Loc.F("Nos {0} momentos de carga alta (CPU ≥ 50% ou RAM ≥ 80%):", heavy.Count) : Loc.T("Nenhum período de carga alta registrado; ranking geral:")) + "\n";
         HOffenders.Text = head + string.Join("\n", ranking.Select(r => "• " + Loc.F("{0} — entre os 3 maiores em {1:0}% das amostras", r.Name, r.Pct)));
+        ShowBatteryUsers(month);
+    }
+
+    // Leva 11.2, tarefa 06: quem mais gastou bateria nas últimas 24 horas e nos últimos 7 dias
+    private void ShowBatteryUsers(List<HistSample> month)
+    {
+        ShowBatteryHealth();
+        var day = PowerAudit.BatteryUsers(month, DateTime.Now.AddDays(-1), 5);
+        var week = PowerAudit.BatteryUsers(month, DateTime.Now.AddDays(-7), 5);
+        if (week.Count == 0) { HBatteryUsers.Text = Loc.T("Ainda sem uso na bateria registrado: aparece depois de usar o notebook fora da tomada."); return; }
+        string List(List<BatteryUser> users) => string.Join("\n", users.Select(u => "• " + Loc.F("{0} — {1:0}% do processador na bateria ({2})", u.Name, u.SharePct, Pt.N(u.Minutes, "minuto", "minutos"))));
+        HBatteryUsers.Text = (day.Count > 0 ? Loc.T("Últimas 24 horas:") + "\n" + List(day) + "\n\n" : "") + Loc.T("Últimos 7 dias:") + "\n" + List(week);
+    }
+
+    // Leva 11.3, tarefa 11: uma medida de capacidade por dia, da mais antiga à mais nova
+    private void ShowBatteryHealth()
+    {
+        var days = Host.BatteryLog.Capacity.OrderBy(c => c.Day).ToList();
+        HBatteryHealth.SetValues(days.Select(c => c.HealthPct).ToList(), days.Select(c => c.Day).ToList());
+        HBatteryHealthLabel.Text = days.Count switch
+        {
+            0 => Loc.T("Saúde da bateria · a primeira medida aparece no próximo uso"),
+            1 => Loc.F("Saúde da bateria · {0:0}% da capacidade de fábrica", days[0].HealthPct),
+            _ => Loc.F("Saúde da bateria · {0:0}% hoje · {1:0}% em {2:d}", days[^1].HealthPct, days[0].HealthPct, days[0].Day),
+        };
     }
 
     // ---------- Tendências: hoje × semana passada (M48) e previsão do disco (M50) ----------
@@ -151,6 +176,32 @@ public partial class MainWindow
         AlertsEmpty.Visibility = events.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    // Leva 10.3: programa pedido pela aba Processos, escolhido assim que a lista do histórico estiver pronta
+    private IReadOnlyList<string>? _histWant;
+
+    internal void ShowProgramHistory(IReadOnlyList<string> names)
+    {
+        _histWant = names;
+        Tabs.SelectedIndex = TabHistory;
+        if (ProcTimelineBox.ItemsSource is IEnumerable<string> loaded) PickWanted(loaded.ToList());
+    }
+
+    /// <summary>Escolhe o programa pedido, se ele aparece no histórico do período; senão, diz por quê.</summary>
+    private bool PickWanted(List<string> names)
+    {
+        if (_histWant is not { } want) return false;
+        _histWant = null;
+        var hit = names.FirstOrDefault(n => want.Contains(n, StringComparer.OrdinalIgnoreCase));
+        if (hit is null)
+        {
+            ProcTimelineInfo.Text = Loc.F("{0} não aparece entre os programas mais pesados deste período. Escolha um período maior acima.", want[0]);
+            return false;
+        }
+        ProcTimelineBox.SelectedItem = hit;
+        ProcTimelineBox.BringIntoView();
+        return true;
+    }
+
     private void FillProcTimeline(List<HistSample> data)
     {
         string? keep = ProcTimelineBox.SelectedItem as string;
@@ -167,6 +218,7 @@ public partial class MainWindow
             PCpu.SetValues(Array.Empty<double>()); PRam.SetValues(Array.Empty<double>());
             return;
         }
+        if (PickWanted(names)) return;
         ProcTimelineBox.SelectedItem = keep is not null && names.Contains(keep) ? keep : names[0];
     }
 

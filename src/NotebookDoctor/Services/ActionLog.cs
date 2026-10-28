@@ -15,13 +15,19 @@ public static class ActionLog
         lock (Lock)
         {
             try { return JsonSerializer.Deserialize<List<ActionEntry>>(File.ReadAllText(FilePath)) ?? new(); }
+            catch (JsonException)
+            {
+                // Ilegível: guarda uma cópia, porque a próxima ação gravada substitui o arquivo e o Desfazer das antigas se perderia
+                AtomicFile.KeepCopy(FilePath, "ilegivel");
+                return new();
+            }
             catch { return new(); }
         }
     }
 
     private static void Save(List<ActionEntry> list)
     {
-        try { File.WriteAllText(FilePath, JsonSerializer.Serialize(list.OrderByDescending(e => e.Time).Take(200).ToList())); } catch { }
+        try { AtomicFile.WriteAllText(FilePath, JsonSerializer.Serialize(list.OrderByDescending(e => e.Time).Take(200).ToList())); } catch { }
     }
 
     public static void Add(string title, string detail = "", string undoKind = "", string arg1 = "", string arg2 = "")
@@ -49,6 +55,16 @@ public static class ActionLog
                 var parts = entry.UndoArg2.Split('|');
                 StartupManager.SetEnabled(parts[0], entry.UndoArg1, bool.Parse(parts[1]));
                 msg = "Item de inicialização restaurado.";
+                break;
+            case "startup-delay":
+                // UndoArg1 = nome do item; UndoArg2 = subchave do StartupApproved
+                StartupManager.SetEnabled(entry.UndoArg2, entry.UndoArg1, true);
+                if (global::NotebookDoctor.App.Current.Settings is { } st)
+                {
+                    st.DelayedStartup = st.DelayedStartup.Where(d => !(d.Name == entry.UndoArg1 && d.SubKey == entry.UndoArg2)).ToList();
+                    st.Save();
+                }
+                msg = "O Windows volta a abrir o programa na hora.";
                 break;
             case "service":
                 // UndoArg1 = nome do serviço; UndoArg2 = tipo de início anterior (2 = automático)
@@ -121,6 +137,39 @@ public static class ActionLog
                 catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or ArgumentException) { return Loc.T("Não foi possível voltar ao driver anterior: ") + ex.Message; }
                 msg = DriverTexts.Restore(outcome);
                 if (outcome != RestoreOutcome.Restored) return msg; // continua desfazível: a pessoa pode tentar de novo
+                break;
+            // Leva 11.1
+            case "boost":
+            {
+                var p = entry.UndoArg1.Split(',');
+                bool ok = p.Length == 3 && uint.TryParse(p[0], out uint ac) && uint.TryParse(p[1], out uint dc) && Guid.TryParse(p[2], out var scheme) && PowerProbe.WriteBoost(scheme, ac, dc);
+                if (ok && global::NotebookDoctor.App.Current.Settings is { } s) { s.LapModePrevious = null; s.Save(); }
+                msg = ok ? "Modo Colo desfeito: o turbo voltou." : "Não foi possível devolver o turbo: o plano de energia mudou.";
+                break;
+            }
+            case "dns":
+                // UndoArg1 = placa; UndoArg2 = DNS fixo de antes ("" = automático)
+                msg = NetProbe.SetDns(entry.UndoArg1, entry.UndoArg2) ? "DNS como antes." : "Não foi possível desfazer: abra o app como administrador.";
+                break;
+            case "usb-suspend":
+            {
+                var p = entry.UndoArg1.Split(',');
+                bool ok = p.Length == 3 && uint.TryParse(p[0], out uint ac) && uint.TryParse(p[1], out uint dc) && Guid.TryParse(p[2], out var scheme) && PowerProbe.WriteUsbSuspend(scheme, ac, dc);
+                msg = ok ? "Suspensão seletiva USB como antes." : "Não foi possível desfazer: o plano de energia mudou.";
+                break;
+            }
+            case "wake":
+                msg = PowerProbe.SetWake(entry.UndoArg1, allowed: true) ? "O aparelho voltou a poder acordar o computador." : "Não foi possível desfazer: abra o app como administrador.";
+                break;
+            case "survival":
+                if (SurvivalState.Parse(entry.UndoArg1) is { } state)
+                {
+                    Survival.Restore(state);
+                    var settings = global::NotebookDoctor.App.Current.Settings;
+                    settings.SurvivalState = null;
+                    settings.Save();
+                }
+                msg = "Modo sobrevivência desfeito: tudo voltou como estava.";
                 break;
             case "plan-created":
                 msg = PowerPlans.Delete(entry.UndoArg1) ? "Plano criado foi removido." : "Não foi possível remover (talvez esteja ativo): troque de plano e tente de novo.";

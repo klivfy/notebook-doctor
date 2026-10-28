@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using NotebookDoctor.Services;
 
@@ -25,6 +25,8 @@ public partial class App : Application
     private MiniWidget? _mini;
     public UpdateInfo? PendingUpdate { get; private set; }
     public event Action<Snapshot>? SnapshotReady;
+    /// <summary>Leva 11.2: o notebook saiu (false) ou voltou (true) para a tomada.</summary>
+    public event Action<bool>? PowerSourceChanged;
 
     // Saúde (dados lentos), nota e alerta de programa pesado
     public HealthInfo Health { get; private set; } = HealthInfo.Empty;
@@ -34,6 +36,45 @@ public partial class App : Application
     public FocusMode Focus { get; } = new();
     public event Action? HealthUpdated, HeavyAlertChanged;
     private DateTime _lastProbe = DateTime.MinValue;
+
+    // ---------- Leva 12.1: câmera e microfone ----------
+    public IReadOnlyList<MediaUse> Media { get; private set; } = [];
+    public bool InCall => Media.Any(m => m.InUse);
+    private bool _callWarned;
+
+    private void CheckMedia(Snapshot snap)
+    {
+        Media = AppPaths.Demo ? DemoMedia() : MediaProbe.Uses();
+        string text = Meeting.InUseText(Media);
+        _tray.SetMediaInUse(text);
+        MediaChanged?.Invoke(text);
+        if (!InCall) { _callWarned = false; return; }
+        // Uma vez por chamada: downloads de fundo puxando a rede enquanto a câmera ou o microfone estão abertos
+        var busy = Meeting.BackgroundDownloads(snap.Groups, InCall);
+        if (busy.Count > 0 && !_callWarned)
+        {
+            _callWarned = true;
+            Notify(Loc.T("Downloads de fundo durante a chamada"),
+                   Loc.F("{0} está baixando enquanto você está em chamada. Em Sistema › Videochamadas dá para pôr no modo eficiência.", busy[0].Name));
+        }
+    }
+
+    private static List<MediaUse> DemoMedia() =>
+        [new("webcam", "Zoom.exe", DateTime.Now.AddMinutes(-12), null), new("microphone", "Zoom.exe", DateTime.Now.AddMinutes(-12), null),
+         new("microphone", "Microsoft.WindowsSoundRecorder", DateTime.Now.AddHours(-3), DateTime.Now.AddHours(-3).AddMinutes(4))];
+
+    /// <summary>Leva 12.1: quem está usando câmera ou microfone mudou ("Câmera: Zoom · Microfone: Zoom", ou vazio).</summary>
+    public event Action<string>? MediaChanged;
+
+    // ---------- Leva 11.1: bateria ----------
+    private readonly List<BatteryReading> _battery = new();
+    private DateTime _lastBattery = DateTime.MinValue, _lastBatterySave = DateTime.MinValue;
+    public BatteryReading? Battery => _battery.Count > 0 ? _battery[^1] : null;
+    public IReadOnlyList<BatteryReading> BatteryRecent => _battery;
+    public BatteryHistory BatteryLog { get; private set; } = new();
+    /// <summary>Leva 11.3: fabricante do notebook, para dizer onde fica o limite de carga.</summary>
+    public string Manufacturer { get; private set; } = "";
+    private static string BatteryFile => Path.Combine(AppPaths.Dir, "bateria.json");
     private readonly BrowserWatch _browserWatch = new();
     private bool _browserCleaning, _scheduleRan;
     private DateTime _lastJunkCheck = DateTime.MinValue;
@@ -79,6 +120,7 @@ public partial class App : Application
         CrashLog.Enabled = Settings.CrashReports;
         Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
+        ThemeManager.PureBlack = Settings.PureBlack;
         ApplyTheme();
         TextScale.Apply();
         ApplyDensity();
@@ -95,6 +137,8 @@ public partial class App : Application
             if (a.Mode == Microsoft.Win32.PowerModes.StatusChange) Dispatcher.BeginInvoke(() => _ = OnPowerSourceChangedAsync());
         };
         History = new HistoryStore();
+        try { BatteryLog = BatteryHistory.Parse(File.Exists(BatteryFile) ? File.ReadAllText(BatteryFile) : null); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         if (AppPaths.Demo) History.Seed(DemoData.Week(DateTime.Now));
         _monitor = new SystemMonitor();
 
@@ -112,10 +156,17 @@ public partial class App : Application
             Settings.StartWithWindows = v; Settings.ApplyStartWithWindows(); Settings.Save();
         };
         _tray.MiniToggled += SetMiniWidget;
+        _tray.PresentationToggled += on => _ = SetPresentationAsync(on);
+        _tray.UnlockRequested += () => { ShowWindow(); (MainWindow as NotebookDoctor.MainWindow)?.OpenFileUnlock(null); };
+        _tray.EjectRequested += letter => _ = EjectAsync(letter);
+        _tray.PowerPlanRequested += SetPowerPlanFromTray;
+        _tray.ClearClipboardRequested += ClearClipboard;
+        _tray.MiddleClicked += () => RunMiddleAction(Settings.TrayMiddle);
 
         var win = new MainWindow();
         MainWindow = win;
         if (e.Args.Contains("--background")) { }
+        if (e.Args.Contains("--background") && Settings.DelayedStartup.Count > 0 && !AppPaths.Demo) _ = LaunchDelayedAsync(); // leva 11.3
         // B09: aberto pelo atalho, sem pedido de aba ou de notificação, começa minimizado na barra de tarefas
         else if (Settings.StartMinimized && Settings.FirstRunDone && uri is null && !e.Args.Any(a => a.StartsWith("--tab=")))
         {
@@ -305,7 +356,65 @@ public partial class App : Application
     }
 
     /// <summary>M43/M44: horário silencioso ou alguém em tela cheia, jogo ou apresentação.</summary>
-    private bool IsQuietNow() => Settings.InQuietHours(DateTime.Now) || (Settings.QuietFullscreen && Native.IsFullscreenOrPresenting());
+    private bool IsQuietNow() => Presenting || Settings.InQuietHours(DateTime.Now) || (Settings.QuietFullscreen && Native.IsFullscreenOrPresenting());
+
+    // ---------- Leva 12.3: modo apresentação ----------
+    public bool Presenting { get; private set; }
+    private bool _presentationHidIcons, _presentationStartedFocus;
+    public event Action<bool>? PresentationChanged;
+
+    /// <summary>
+    /// Para compartilhar a tela: avisos do app em silêncio, ícones da área de trabalho escondidos, tela sem apagar e Modo Foco.
+    /// Desligar devolve cada coisa como estava; sair do app também.
+    /// </summary>
+    public async Task SetPresentationAsync(bool on)
+    {
+        if (on == Presenting) return;
+        if (on && Settings.SimulationMode) { Notify(Loc.T("Simulação: modo apresentação"), Loc.T("Nada foi alterado.")); _tray.SyncPresentation(false); return; }
+        Presenting = on;
+        if (!AppPaths.Demo)
+        {
+            PrivacyProbe.KeepAwake(on);
+            if (on) _presentationHidIcons = PrivacyProbe.DesktopIconsVisible() && PrivacyProbe.ToggleDesktopIcons();
+            else if (_presentationHidIcons) { PrivacyProbe.ToggleDesktopIcons(); _presentationHidIcons = false; }
+            if (on && !Focus.Active && Latest is { } snap) { await Focus.StartAsync(snap, Health); _presentationStartedFocus = true; }
+            else if (!on && _presentationStartedFocus) { if (Focus.Active) await Focus.StopAsync(); _presentationStartedFocus = false; }
+        }
+        _tray.SyncPresentation(on);
+        ActionLog.Add(on ? "Modo apresentação ligado" : "Modo apresentação desligado",
+                      on ? Loc.T("Avisos em silêncio, ícones da área de trabalho escondidos, tela sempre acesa e Modo Foco") : Loc.T("Tudo voltou como estava"));
+        PresentationChanged?.Invoke(on);
+    }
+
+    // ---------- Leva 12.3: franquia do celular ----------
+    private bool _hotspotWarned;
+    private DateTime _lastMobileCheck = DateTime.MinValue;
+
+    /// <summary>
+    /// Na internet do celular (rede limitada ou com cara de hotspot), avisa uma vez por conexão quando programas em segundo
+    /// plano estão gastando os dados.
+    /// </summary>
+    private void CheckMobileData(Snapshot snap)
+    {
+        bool metered = false;
+        try
+        {
+            var profile = global::Windows.Networking.Connectivity.NetworkInformation.GetInternetConnectionProfile();
+            var cost = profile?.GetConnectionCost();
+            metered = cost is not null && (cost.NetworkCostType is global::Windows.Networking.Connectivity.NetworkCostType.Fixed or global::Windows.Networking.Connectivity.NetworkCostType.Variable || cost.Roaming);
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or InvalidOperationException) { }
+        var adapter = AppPaths.Demo ? null : NetProbe.ActiveAdapter();
+        string? ssid = AppPaths.Demo ? null : SystemProbe.Wifi()?.Ssid;
+        bool mobile = metered || NetworkPrivacy.LooksLikeHotspot(ssid, adapter?.Gateway);
+        if (!mobile) { _hotspotWarned = false; return; }
+        var hogs = NetworkPrivacy.DataHogs(snap.Groups, mobile);
+        if (hogs.Count == 0 || _hotspotWarned) return;
+        _hotspotWarned = true;
+        Notify(Loc.T("Usando a internet do celular"),
+               Loc.F("{0} está baixando em segundo plano e gastando a franquia.", hogs[0].Name) + " "
+               + (metered ? Loc.T("Feche o programa se não precisar dele agora.") : Loc.T("Marque esta rede como conexão limitada (Configurações › Wi-Fi › propriedades da rede) para o Windows segurar as atualizações.")));
+    }
 
     public void Notify(string title, string text, params (string label, string action)[] buttons)
     {
@@ -314,6 +423,51 @@ public partial class App : Application
         buttons = buttons.Select(b => (Loc.T(b.label), b.action)).ToArray();
         if (Settings.NativeNotifications && !AppPaths.Demo && Toasts.Show(title, text, buttons)) return;
         _tray.Notify(title, text);
+    }
+
+    // ---------- Leva 10.3: ações rápidas da bandeja ----------
+    private void SetPowerPlanFromTray(PowerPlan target)
+    {
+        var previous = PowerPlans.List().FirstOrDefault(p => p.Active);
+        if (previous?.Guid == target.Guid) return;
+        if (Settings.SimulationMode) { Notify(Loc.F("Simulação: plano {0}", target.Name), Loc.T("Nada foi alterado.")); return; }
+        if (!PowerPlans.SetActive(target.Guid)) { Notify(Loc.T("Plano de energia"), Loc.T("Não foi possível trocar o plano de energia.")); return; }
+        ActionLog.Add(Loc.T("Plano de energia alterado"), Loc.F("{0} → {1} (pela bandeja)", previous?.Name ?? "?", target.Name), previous is null ? "" : "power", previous?.Guid ?? "");
+    }
+
+    private void ClearClipboard()
+    {
+        if (Settings.SimulationMode) { Notify(Loc.T("Simulação: limpar a área de transferência"), Loc.T("Nada foi alterado.")); return; }
+        try { Clipboard.Clear(); }
+        catch (System.Runtime.InteropServices.COMException) { return; } // outro programa está com a área de transferência aberta
+        ActionLog.Add("Área de transferência limpa");
+    }
+
+    private void RunMiddleAction(TrayMiddleAction action)
+    {
+        switch (action)
+        {
+            case TrayMiddleAction.OpenPanel: ShowWindow(); break;
+            case TrayMiddleAction.MiniWidget: SetMiniWidget(!Settings.MiniWidget); break;
+            case TrayMiddleAction.CleanTemp: _ = QuickCleanAsync(notify: true); break;
+            case TrayMiddleAction.ClearClipboard: ClearClipboard(); break;
+        }
+    }
+
+    /// <summary>Fase 10, leva 10.1: ejetar pelo menu da bandeja. Em uso: abre o destravador já na unidade.</summary>
+    private async Task EjectAsync(char letter)
+    {
+        string drive = $"{letter}:";
+        if (Settings.SimulationMode) { Notify(Loc.F("Simulação: ejetar {0}", drive), Loc.T("Nada foi alterado.")); return; }
+        var result = await Task.Run(() => FileUnlocker.Eject(letter));
+        if (result == EjectResult.InUse)
+        {
+            ShowWindow();
+            (MainWindow as NotebookDoctor.MainWindow)?.OpenFileUnlock($"{letter}:\\");
+            return;
+        }
+        if (result == EjectResult.Ejected) ActionLog.Add(Loc.F("Unidade ejetada: {0}", drive));
+        Notify(result == EjectResult.Ejected ? Loc.T("Pendrive ejetado") : Loc.T("Pendrive não ejetado"), FileUnlockWindow.EjectText(result, drive));
     }
 
     public void ShowWindow()
@@ -361,6 +515,7 @@ public partial class App : Application
         CrashLog.Enabled = Settings.CrashReports;
         Settings.ApplyUnits();
         ThemeManager.UseAccent = Settings.UseAccentColor;
+        ThemeManager.PureBlack = Settings.PureBlack;
         ApplyTheme();
         ApplyDensity();
     }
@@ -386,14 +541,19 @@ public partial class App : Application
                 _recent.Add(snap);
                 Sampling.TrimRecent(_recent, snap.Time); // M42: com amostras espaçadas, a nota não usa dados velhos
                 Score = Insights.Score(_recent, Health);
-                History.Record(snap, Score.Score);
-                _tray.Update(snap, Score.Score, Settings.TrayCpu);
+                var powerNow = Native.PowerStatus();
+                History.Record(snap, Score.Score, powerNow.Percent >= 0 ? powerNow.OnBattery : null);
+                ApplyAutoEco(snap);
+                CheckMedia(snap);
+                if ((DateTime.Now - _lastMobileCheck).TotalSeconds >= 60) { _lastMobileCheck = DateTime.Now; CheckMobileData(snap); }
+                _tray.Update(snap, Score.Score, Settings.TrayIcon);
                 if (Settings.ThemeMode == ThemeSchedule.Mode && Settings.EffectiveTheme(DateTime.Now) != _appliedTheme) ApplyTheme(); // B37
                 CheckAlerts(snap);
                 CheckHeavyPrograms(snap);
                 CheckHeat(snap);
                 CheckWeeklySummary();
                 Memory.Feed(snap);
+                if ((DateTime.Now - _lastBattery).TotalSeconds >= 30) await ReadBatteryAsync();
                 if ((DateTime.Now - _lastProbe).TotalMinutes >= 30) _ = RefreshHealthAsync();
                 await CheckWeeklyAsync();
                 await CheckJunkMonitorAsync();
@@ -409,6 +569,93 @@ public partial class App : Application
             var wait = Sampling.Interval(WindowVisible || _overlay is { IsVisible: true }, power.OnBattery, power.Saver, power.Percent);
             try { await Task.Delay(wait, ct); } catch (OperationCanceledException) { break; }
         }
+    }
+
+    /// <summary>Leva 11.1: bateria a cada 30 s (watts, histórico de consumo, carregador) e a volta do Modo sobrevivência na tomada.</summary>
+    private async Task ReadBatteryAsync()
+    {
+        _lastBattery = DateTime.Now;
+        var b = AppPaths.Demo ? DemoData.Battery(DateTime.Now, _demoTick) : await Task.Run(PowerProbe.ReadBattery);
+        if (b is null) return;
+        if (Manufacturer.Length == 0)
+            Manufacturer = AppPaths.Demo ? "LENOVO" : await Task.Run(() => WmiReader.Query("SELECT Manufacturer FROM Win32_ComputerSystem").Select(m => WmiReader.Str(m, "Manufacturer")).FirstOrDefault() ?? "");
+        bool? wasOnAc = _battery.Count > 0 ? _battery[^1].OnAc : null;
+        _battery.Add(b);
+        if (_battery.Count > 20) _battery.RemoveAt(0);
+        if (wasOnAc is { } before && before != b.OnAc)
+        {
+            ApplyDynamicHz(b.OnAc);
+            PowerSourceChanged?.Invoke(b.OnAc);
+        }
+        if (BatteryLog.Add(b) && (DateTime.Now - _lastBatterySave).TotalMinutes >= 5 && !AppPaths.Demo)
+        {
+            _lastBatterySave = DateTime.Now;
+            try { AtomicFile.WriteAllText(BatteryFile, BatteryLog.Serialize()); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        }
+        if (b.OnAc && SurvivalState.Parse(Settings.SurvivalState) is { } state) EndSurvival(state, Loc.T("Na tomada: o Modo sobrevivência foi desligado e tudo voltou como estava."));
+    }
+
+    /// <summary>Leva 11.3, tarefa 14: abre, 2 minutos depois de entrar no Windows, os itens de inicialização atrasados.</summary>
+    private async Task LaunchDelayedAsync()
+    {
+        await Task.Delay(DelayedStartupItem.Delay);
+        foreach (var item in Settings.DelayedStartup.ToList())
+        {
+            var (exe, args) = CommandLine.Split(item.Command);
+            if (exe is null || !File.Exists(exe)) continue;
+            try
+            {
+                // Atalho da pasta Inicializar abre pelo Windows; .exe direto, sem passar por um shell
+                bool shortcut = exe.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase);
+                using var _ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, args) { UseShellExecute = shortcut, WorkingDirectory = Path.GetDirectoryName(exe) ?? "" });
+            }
+            catch (System.ComponentModel.Win32Exception ex) { LogError(ex); }
+        }
+    }
+
+    /// <summary>Leva 11.2, tarefa 08: tela em 60 Hz na bateria, a taxa de antes na tomada.</summary>
+    private void ApplyDynamicHz(bool onAc)
+    {
+        if (!Settings.DynamicHz || AppPaths.Demo || Settings.SurvivalState is not null) return;
+        if (PowerProbe.RefreshRates() is not { } rates) return;
+        if (PowerAudit.DynamicHzTarget(onAc, rates.Current, rates.Supported, Settings.DynamicHzHigh) is not { } target) return;
+        if (!PowerProbe.SetRefreshRate(target)) return;
+        Settings.DynamicHzHigh = onAc ? null : rates.Current;
+        Settings.Save();
+    }
+
+    // Leva 11.2, tarefa 10: programas marcados entram no modo eficiência fora de foco e saem ao voltar ao foco
+    private readonly HashSet<string> _autoEcoOn = new(StringComparer.OrdinalIgnoreCase);
+
+    private void ApplyAutoEco(Snapshot snap)
+    {
+        if (Settings.AutoEcoApps.Count == 0 && _autoEcoOn.Count == 0) return;
+        if (AppPaths.Demo || Settings.SimulationMode) return;
+        string? foreground = null;
+        try { using var p = System.Diagnostics.Process.GetProcessById(Native.ForegroundProcessId()); foreground = p.ProcessName; }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { }
+        var running = snap.Groups.Select(g => g.Name).ToList();
+        // Desmarcado na lista: sai do modo eficiência na hora
+        foreach (var gone in _autoEcoOn.Where(n => !Settings.AutoEcoApps.Contains(n, StringComparer.OrdinalIgnoreCase)).ToList())
+        {
+            ProcessActions.SetEfficiency(gone, false);
+            _autoEcoOn.Remove(gone);
+        }
+        _autoEcoOn.RemoveWhere(n => !running.Contains(n, StringComparer.OrdinalIgnoreCase));
+        var (on, off) = PowerAudit.AutoEco(Settings.AutoEcoApps, running, foreground, _autoEcoOn);
+        foreach (var n in on) if (ProcessActions.SetEfficiency(n, true) > 0) _autoEcoOn.Add(n);
+        foreach (var n in off) { ProcessActions.SetEfficiency(n, false); _autoEcoOn.Remove(n); }
+    }
+
+    /// <summary>Devolve o que o Modo sobrevivência mudou e avisa.</summary>
+    public void EndSurvival(SurvivalState state, string message)
+    {
+        Survival.Restore(state);
+        Settings.SurvivalState = null;
+        Settings.Save();
+        ActionLog.Add("Modo sobrevivência desligado", message);
+        Notify(Loc.T("Modo sobrevivência"), message);
     }
 
     /// <summary>Atualiza SMART, bateria, boot, plano de energia e lixo (fora da thread de interface).</summary>
@@ -686,7 +933,9 @@ public partial class App : Application
     /// <summary>Idioma, formato de números e datas e tradução das telas. Roda uma vez, antes de abrir qualquer janela.</summary>
     private void ApplyLanguage()
     {
-        Loc.Use(Loc.Resolve(Settings.Language, System.Globalization.CultureInfo.InstalledUICulture.Name));
+        // Só no modo demonstração: as capturas de tela de divulgação saem no idioma pedido, e não no do Windows da máquina
+        string? forcado = AppPaths.Demo ? Environment.GetEnvironmentVariable("NOTEBOOKDOCTOR_DEMO_LANG") : null;
+        Loc.Use(Loc.Resolve(string.IsNullOrEmpty(forcado) ? Settings.Language : forcado, System.Globalization.CultureInfo.InstalledUICulture.Name));
         var culture = Loc.Culture;
         System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
         System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.CurrentUICulture = culture;
@@ -807,6 +1056,7 @@ public partial class App : Application
         if (Quitting) return;
         Quitting = true;
         (MainWindow as NotebookDoctor.MainWindow)?.SavePlacement();
+        if (Presenting && _presentationHidIcons) PrivacyProbe.ToggleDesktopIcons(); // leva 12.3: os ícones voltam
         if (Focus.Active) Task.Run(Focus.StopAsync).Wait(3000); // devolve as prioridades e o plano de energia
         _cts.Cancel();
         _mini?.Close();

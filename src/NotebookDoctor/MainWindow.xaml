@@ -147,6 +147,8 @@
                                         <StackPanel>
                                             <TextBlock x:Name="BatteryBootText" Style="{StaticResource Value}" Margin="0"/>
                                             <TextBlock Text="Bateria · tempo de inicialização" Style="{StaticResource Label}" ToolTip="Capacidade da bateria comparada à de fábrica e quanto o Windows levou para iniciar da última vez." AutomationProperties.HelpText="Capacidade da bateria comparada à de fábrica e quanto o Windows levou para iniciar da última vez."/>
+                                            <!-- Leva 11.1: bateria agora, em watts, e quanto dura -->
+                                            <TextBlock x:Name="BatteryNowText" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </DockPanel>
                                 </UniformGrid>
@@ -303,7 +305,7 @@
             <TabItem Header="Processos">
                 <Border Style="{StaticResource Card}">
                     <Grid>
-                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="260"/></Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
@@ -315,14 +317,30 @@
                             <TextBox x:Name="ProcSearch" Grid.Column="1" Tag="Buscar programa…" VerticalAlignment="Top" TextChanged="ProcSearch_Changed"
                                      AutomationProperties.Name="Buscar programa"/>
                         </Grid>
+                        <!-- Leva 10.2: filtros rápidos -->
+                        <WrapPanel x:Name="ProcFilters" Grid.Row="1" Margin="0,8,0,0" AutomationProperties.Name="Mostrar">
+                            <RadioButton Content="Todos os programas" Tag="All" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked" IsChecked="True"/>
+                            <RadioButton Content="Uso alto (mais de 10%)" Tag="HighUse" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"/>
+                            <RadioButton Content="Travados" Tag="Hung" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"
+                                         ToolTip="Programas com uma janela que o Windows marcou como &quot;Não está respondendo&quot;."/>
+                            <RadioButton Content="Com janela" Tag="Windowed" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"/>
+                            <RadioButton Content="Segundo plano" Tag="Background" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"/>
+                            <RadioButton Content="Podem fechar" Tag="CanClose" GroupName="ProcFilter" Style="{StaticResource FilterPill}" Checked="ProcFilter_Checked"
+                                         ToolTip="Os que a coluna &quot;Pode fechar?&quot; marca como seguros."/>
+                        </WrapPanel>
                         <!-- B33: totais do que está à vista (respeita a busca) -->
-                        <DockPanel Grid.Row="1">
+                        <DockPanel Grid.Row="2">
                             <TextBlock x:Name="ProcTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,8,0,0" TextTrimming="CharacterEllipsis"/>
                             <DataGrid x:Name="ProcGrid" SelectionMode="Extended" MouseDoubleClick="ProcGrid_DoubleClick" PreviewKeyDown="ProcGrid_KeyDown" AutomationProperties.Name="Programas em execução">
                                 <!-- M26: as mesmas ações dos botões, mais abrir o local e pesquisar o nome -->
                                 <DataGrid.ContextMenu>
-                                    <ContextMenu>
+                                    <ContextMenu Opened="ProcMenu_Opened">
                                         <MenuItem Header="_Detalhes" Click="ProcDetails_Click"/>
+                                        <MenuItem Header="Ver co_nexões de rede" Click="ProcConnections_Click"/>
+                                        <MenuItem x:Name="ProcPinItem" Header="Fi_xar no topo" Click="ProcPin_Click"/>
+                                        <MenuItem Header="Ver _histórico deste programa" Click="ProcHistory_Click"/>
+                                        <MenuItem Header="Pôr em modo so_neca…" Click="ProcSnooze_Click"/>
+                                        <MenuItem x:Name="ProcAutoEcoItem" Header="Modo eficiência _automático fora de foco" IsCheckable="True" Click="ProcAutoEco_Click"/>
                                         <MenuItem Header="Abrir _local do arquivo" Click="ProcOpenLocation_Click"/>
                                         <MenuItem Header="_Pesquisar na internet o que é" Click="ProcSearchOnline_Click"/>
                                         <MenuItem Header="Ver o programa _instalado" Click="ProcShowProgram_Click"/>
@@ -361,7 +379,18 @@
                                                                Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
                                                     </Grid>
                                                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
+                                                        <DockPanel>
+                                                            <!-- Leva 10.2: fixado no topo e "Travado" (texto, não só cor) -->
+                                                            <TextBlock DockPanel.Dock="Right" Text="&#xE718;" FontFamily="{StaticResource FontIcons}" FontSize="{DynamicResource FsLabel}"
+                                                                       Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                       Visibility="{Binding Pinned, Converter={StaticResource B2V}}" ToolTip="{Binding PinnedLabel}"/>
+                                                            <Border DockPanel.Dock="Right" Background="{DynamicResource CriticalContainer}" CornerRadius="{StaticResource RadiusPill}"
+                                                                    Padding="8,0" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="{Binding Hung, Converter={StaticResource B2V}}">
+                                                                <TextBlock Text="{Binding HungLabel}" FontFamily="{StaticResource FontSemi}" FontSize="{DynamicResource FsLabel}" Foreground="{DynamicResource Critical}"/>
+                                                            </Border>
+                                                            <TextBlock local:SearchHighlight.Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"
+                                                                       local:SearchHighlight.Term="{Binding Tag, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                        </DockPanel>
                                                         <TextBlock Text="{Binding About}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
                                                 </Grid>
@@ -381,7 +410,7 @@
                                 </DataGrid.Columns>
                             </DataGrid>
                         </DockPanel>
-                        <WrapPanel Grid.Row="2" Margin="0,16,0,0">
+                        <WrapPanel Grid.Row="3" Margin="0,16,0,0">
                             <Button Content="Detalhes" Style="{StaticResource TonalButton}" Click="ProcDetails_Click" Margin="0,0,8,8"
                                     ToolTip="Cada processo do programa selecionado, com PID, memória e caminho (ou clique duplo na linha)."/>
                             <Button Content="Encerrar programa selecionado" Style="{StaticResource TonalButton}" Click="KillSelected_Click" Margin="0,0,8,8"/>
@@ -390,6 +419,10 @@
                             <Button Content="Restaurar prioridade" Style="{StaticResource TextButton}" Click="RestorePriority_Click" Margin="0,0,8,8"/>
                             <Button Content="Modo eficiência" Style="{StaticResource TextButton}" Click="Efficiency_Click" Margin="0,0,8,8"
                                     ToolTip="Como no Gerenciador de Tarefas: o programa continua aberto, mas roda devagar e econômico (bom para os que ficam em segundo plano). Desfaça em Ações."/>
+                            <Button Content="Reiniciar o Explorador…" Style="{StaticResource TextButton}" Click="ProcRestartExplorer_Click" Margin="0,0,8,8"
+                                    ToolTip="Quando a barra de tarefas, o menu Iniciar ou as janelas de pasta travam. Eles somem por alguns segundos e voltam sozinhos."/>
+                            <Button Content="Reiniciar o driver de vídeo…" Style="{StaticResource TextButton}" Click="ProcRestartVideo_Click" Margin="0,0,8,8"
+                                    ToolTip="Quando a tela congela ou fica preta mas o mouse ainda mexe. A tela pisca e volta em um ou dois segundos, sem fechar nada (o mesmo que Windows+Ctrl+Shift+B)."/>
                             <Button x:Name="ExceptionBtn" Content="Não avisar sobre este" Style="{StaticResource TextButton}" Click="AlertException_Click" Margin="0,0,8,8"
                                     ToolTip="O programa continua na lista, mas não gera mais avisos de uso alto. Desfaça em Configurações › Exceções."/>
                             <TextBlock x:Name="ProcMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,8" TextWrapping="Wrap"
@@ -454,6 +487,8 @@
                                 ToolTip="Apaga arquivos e pastas sem chance de recuperar, limpa o espaço livre de uma unidade ou apaga um pen drive inteiro."/>
                         <Button Content="Verificar registro…" Tag="&#xE9D5;" Style="{StaticResource ActionRow}" Click="RegistryCheck_Click"
                                 ToolTip="Aponta só entradas do registro com prova de estarem quebradas (o arquivo que citam não existe mais) e apaga as que você marcar, com backup."/>
+                        <Button Content="Destravar arquivo ou pendrive…" Tag="&#xE785;" Style="{StaticResource ActionRow}" Click="FileUnlock_Click"
+                                ToolTip="Mostra quais programas estão usando um arquivo, uma pasta ou um pendrive que o Windows diz estar em uso, e fecha o que você escolher."/>
                     </UniformGrid>
                 </StackPanel>
               </Grid>
@@ -499,6 +534,12 @@
                             <TextBlock x:Name="SpaceTotal" DockPanel.Dock="Bottom" Style="{StaticResource Label}" Margin="4,8,0,0" TextTrimming="CharacterEllipsis"/>
                             <Grid>
                             <DataGrid x:Name="SpaceGrid" AutomationProperties.Name="Resultado da análise de espaço">
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Abrir _local" Click="SpaceOpen_Click"/>
+                                        <MenuItem Header="_Quem está usando este arquivo ou pasta…" Click="SpaceWhoUses_Click"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Item" Binding="{Binding Name}" Width="340">
                                         <DataGridTextColumn.ElementStyle>
@@ -535,6 +576,8 @@
                     <TextBlock Text="Relacionado" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
                     <Button Content="Ver programas instalados" Tag="&#xE71D;" Style="{StaticResource ActionRow}" Click="SpacePrograms_Click"
                             ToolTip="Tamanho, data e desinstalação de cada programa ficam na aba Programas."/>
+                    <Button Content="Destravar arquivo ou pendrive…" Tag="&#xE785;" Style="{StaticResource ActionRow}" Click="FileUnlock_Click"
+                            ToolTip="Mostra quais programas estão usando um arquivo, uma pasta ou um pendrive que o Windows diz estar em uso, e fecha o que você escolher."/>
                 </StackPanel>
               </Grid>
               </ScrollViewer>
@@ -592,7 +635,8 @@
                                                                Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
                                                     </Grid>
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock local:SearchHighlight.Text="{Binding Name}" FontFamily="{StaticResource FontMedium}" TextTrimming="CharacterEllipsis"
+                                                                   local:SearchHighlight.Term="{Binding Tag, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                                                         <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
                                                 </Grid>
@@ -674,6 +718,9 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
+                                    <!-- Leva 11.3: medido pelo Windows e gasto de bateria -->
+                                    <DataGridTextColumn Header="Atrasou o boot" Binding="{Binding BootText}" Width="130"/>
+                                    <DataGridTextColumn Header="Na bateria" Binding="{Binding BatteryText}" Width="120"/>
                                     <DataGridTextColumn Header="Editor" Binding="{Binding Publisher}" Width="200"/>
                                     <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
                                 </DataGrid.Columns>
@@ -681,6 +728,8 @@
                         </DockPanel>
                         <WrapPanel Grid.Row="2" Margin="0,16,0,0">
                             <Button Content="Ativar / Desativar selecionado" Click="ToggleStartup_Click" Margin="0,0,8,8"/>
+                            <Button Content="Atrasar 2 min…" Style="{StaticResource TonalButton}" Click="DelayStartup_Click" Margin="0,0,8,8"
+                                    ToolTip="O Windows não abre mais o programa sozinho; o Notebook Doctor o abre 2 minutos depois de você entrar, quando o computador já terminou de ligar. Desfaça em Ações."/>
                             <Button Content="Abrir local" Style="{StaticResource TonalButton}" Click="StartupOpen_Click" Margin="0,0,8,8"
                                     ToolTip="Abre a pasta do programa com o arquivo selecionado"/>
                             <Button Content="Ver o programa" Style="{StaticResource TextButton}" Click="StartupShowProgram_Click" Margin="0,0,8,8"
@@ -746,6 +795,14 @@
                             <StackPanel>
                                 <TextBlock Text="Programas que mais pesaram no período" Style="{StaticResource CardTitle}"/>
                                 <TextBlock x:Name="HOffenders" TextWrapping="Wrap" LineHeight="24"/>
+                                <!-- Leva 11.2: quem mais gastou bateria -->
+                                <TextBlock Text="Quem mais gastou bateria" FontFamily="{StaticResource FontMedium}" Margin="0,16,0,4" AutomationProperties.HeadingLevel="Level3"
+                                           ToolTip="Fatia do processador que cada programa usou enquanto o notebook estava na bateria. A tela e o Wi-Fi também gastam, mas não são de nenhum programa."/>
+                                <TextBlock x:Name="HBatteryUsers" TextWrapping="Wrap" LineHeight="24"/>
+                                <!-- Leva 11.3: curva de desgaste da bateria -->
+                                <TextBlock x:Name="HBatteryHealthLabel" Text="Saúde da bateria" FontFamily="{StaticResource FontMedium}" Margin="0,16,0,4" AutomationProperties.HeadingLevel="Level3"
+                                           ToolTip="Capacidade de hoje comparada à de fábrica, uma medida por dia. Cai devagar com o uso; uma queda rápida pede atenção."/>
+                                <local:Sparkline x:Name="HBatteryHealth" Height="70" Unit="%" Title="Saúde da bateria por dia" Stroke="{DynamicResource ChartDisk}" GridBrush="{DynamicResource OutlineVariant}"/>
                             </StackPanel>
                         </Border>
                         <!-- M05: linha do tempo de um programa -->
@@ -819,6 +876,43 @@
             <TabItem Header="Ajustes">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
                     <StackPanel HorizontalAlignment="Left" MaxWidth="820">
+                        <!-- Fase 11, leva 11.1: calor e bateria -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Energia e calor" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
+                                <TextBlock Text="Modo Colo (silencioso)" FontFamily="{StaticResource FontMedium}" Margin="0,0,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Desliga o turbo do processador no plano de energia, na tomada e na bateria. O notebook perde um pouco do pico de velocidade, mas esquenta bem menos, a ventoinha quase não gira e a bateria dura mais. Bom para usar no colo. Volta como estava ao desligar, ou pelo Desfazer em Ações."/>
+                                <WrapPanel>
+                                    <Button x:Name="LapBtn" Content="Ligar Modo Colo" Click="LapMode_Click" Margin="0,0,8,8"/>
+                                    <TextBlock x:Name="LapInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                                <!-- Leva 11.2 -->
+                                <CheckBox x:Name="CfgDynamicHz" Content="Baixar a tela para 60 Hz na bateria e voltar à taxa de antes na tomada" Click="DynamicHz_Click" Margin="0,0,0,8"
+                                          ToolTip="Telas de 120 Hz ou mais gastam bem mais energia. Vale para a tela principal."/>
+                                <WrapPanel>
+                                    <TextBlock x:Name="UsbSuspendInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,8"/>
+                                    <Button x:Name="UsbSuspendBtn" Content="Ligar a suspensão seletiva USB" Style="{StaticResource TextButton}" Click="UsbSuspend_Click" Margin="0,0,8,8" Visibility="Collapsed"
+                                            ToolTip="Deixa o Windows desligar, na bateria, os aparelhos USB parados (webcam, leitor de digitais, mouse sem uso)."/>
+                                </WrapPanel>
+                                <TextBlock Text="Por que o notebook não dorme?" FontFamily="{StaticResource FontMedium}" Margin="0,8,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Mostra quem está pedindo para o computador ficar acordado agora (exige o app como administrador) e quais aparelhos podem acordá-lo sozinho, como o mouse esbarrado dentro da mochila."/>
+                                <WrapPanel>
+                                    <Button Content="Verificar" Style="{StaticResource TonalButton}" Click="SleepCheck_Click" Margin="0,0,8,8"/>
+                                    <ComboBox x:Name="WakeBox" Width="260" Margin="0,0,8,8" AutomationProperties.Name="Aparelhos que podem acordar o computador" Visibility="Collapsed"/>
+                                    <Button x:Name="WakeOffBtn" Content="Não deixar acordar o PC…" Style="{StaticResource TextButton}" Click="WakeOff_Click" Margin="0,0,8,8" Visibility="Collapsed"/>
+                                </WrapPanel>
+                                <TextBlock x:Name="SleepInfo" TextWrapping="Wrap" LineHeight="24" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+                                <TextBlock Text="Modo sobrevivência" FontFamily="{StaticResource FontMedium}" Margin="0,8,0,4" AutomationProperties.HeadingLevel="Level3"/>
+                                <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Para a bateria chegar até a tomada: liga o economizador de bateria do Windows, põe no modo eficiência os programas sem janela que estão usando a CPU, baixa a tela para 60 Hz e passa para o tema escuro. Nada é fechado, e tudo volta sozinho ao ligar na tomada."/>
+                                <WrapPanel>
+                                    <Button x:Name="SurvivalBtn" Content="Ligar Modo sobrevivência…" Style="{StaticResource TonalButton}" Click="Survival_Click" Margin="0,0,8,8"/>
+                                    <TextBlock x:Name="SurvivalInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="8,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
                                 <TextBlock Text="Ajustes do Windows" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
@@ -992,6 +1086,10 @@
                                     ToolTip="Verifica o computador com o Microsoft Defender e a Ferramenta de Remoção de Software Mal-Intencionado (MRT) do Windows."/>
                             <Button Content="Ferramentas do Windows…" Tag="&#xE90F;" Style="{StaticResource ActionRow}" Click="SysTools_Click"
                                     ToolTip="Atalhos para o Gerenciador de Dispositivos, Serviços, Agendador de Tarefas e outras ferramentas que o Windows já traz."/>
+                            <Button Content="Rede e internet…" Tag="&#xE701;" Style="{StaticResource ActionRow}" Click="SysNetwork_Click"
+                                    ToolTip="Quando o Wi-Fi diz conectado mas nada abre: testa cada etapa e corrige a que falhou. Também compara o DNS e avisa sobre Wi-Fi em 2,4 GHz e VPNs antigas."/>
+                            <Button Content="Videochamadas…" Tag="&#xE714;" Style="{StaticResource ActionRow}" Click="SysMeeting_Click"
+                                    ToolTip="Quem está usando a câmera e o microfone, por que ninguém ouve você, se a conexão aguenta a chamada e o que está baixando em segundo plano."/>
                         </UniformGrid>
                         <TextBlock Text="Informações do computador" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
                         <ItemsControl x:Name="SysList" Focusable="False" AutomationProperties.Name="Informações do sistema">
@@ -1088,7 +1186,27 @@
                                        AutomationProperties.LiveSetting="Polite"/>
                         </WrapPanel>
                         <CheckBox x:Name="CfgStart" Content="Iniciar com o Windows (fica na bandeja)"/>
-                        <CheckBox x:Name="CfgTrayCpu" Content="Mostrar o uso da CPU (%) no ícone da bandeja"/>
+                        <!-- B01 e leva 10.3 -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="210"/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <TextBlock Text="Ícone da bandeja mostra" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CfgTrayIcon" Grid.Column="1" AutomationProperties.Name="Ícone da bandeja mostra"
+                                      ToolTip="Sem sensor de temperatura, ou com a nota ainda sendo calculada, o ícone volta para o logo.">
+                                <ComboBoxItem Content="Logo e bolinha de estado" Tag="Logo"/>
+                                <ComboBoxItem Content="Uso da CPU (%)" Tag="Cpu"/>
+                                <ComboBoxItem Content="Temperatura" Tag="Temperature"/>
+                                <ComboBoxItem Content="Nota de saúde" Tag="Score"/>
+                            </ComboBox>
+                            <TextBlock Grid.Row="1" Text="Clique do meio no ícone" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                            <ComboBox x:Name="CfgTrayMiddle" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" AutomationProperties.Name="Clique do meio no ícone">
+                                <ComboBoxItem Content="Não faz nada" Tag="Nothing"/>
+                                <ComboBoxItem Content="Abre o painel" Tag="OpenPanel"/>
+                                <ComboBoxItem Content="Liga ou desliga o mini-widget" Tag="MiniWidget"/>
+                                <ComboBoxItem Content="Limpa os temporários" Tag="CleanTemp"/>
+                                <ComboBoxItem Content="Limpa a área de transferência" Tag="ClearClipboard"/>
+                            </ComboBox>
+                        </Grid>
                         <CheckBox x:Name="CfgSounds" Content="Som discreto ao terminar uma limpeza"/>
                         <CheckBox x:Name="CfgStartMin" Content="Ao abrir pelo atalho, começar minimizado na barra de tarefas"/>
                         <CheckBox x:Name="CfgCloseExits" Content="Fechar a janela encerra o app (em vez de continuar na bandeja)"
@@ -1147,6 +1265,8 @@
                                   ToolTip="Nada é enviado pela internet. Os relatórios ficam na pasta de dados do app e vão no pacote para o suporte."/>
                         <CheckBox x:Name="CfgHotkey" Content="Atalho Ctrl+Alt+N abre o painel de qualquer lugar"/>
                         <CheckBox x:Name="CfgAccent" Content="Usar a cor de destaque do Windows (ajustada para manter a leitura)"/>
+                        <CheckBox x:Name="CfgPureBlack" Content="Preto puro no tema escuro (telas OLED gastam menos energia)"
+                                  ToolTip="Nas telas OLED, o pixel preto fica apagado. Os textos mantêm o mesmo contraste; o fundo Mica fica desligado com esta opção."/>
                         <!-- M43/M44: sem notificações em tela cheia ou no horário escolhido (os avisos continuam no Histórico) -->
                         <CheckBox x:Name="CfgQuietFull" Content="Sem notificações com app em tela cheia, jogo ou apresentação"/>
                         <WrapPanel>

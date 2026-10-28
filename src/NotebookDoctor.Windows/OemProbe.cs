@@ -33,8 +33,27 @@ $o.audio=@(Get-CimInstance -ClassName Win32_SoundDevice | ForEach-Object { "$($_
 $o | ConvertTo-Json -Compress -Depth 5
 """;
 
-    /// <summary>Roda o script (até 2 minutos). Falha devolve null: a tela diz que não deu para ler.</summary>
+    /// <summary>
+    /// Leva 9.3: lê o WMI direto e só roda o script do PowerShell quando a leitura direta falha ou não traz nem o fabricante.
+    /// Falha das duas devolve null: a tela diz que não deu para ler.
+    /// </summary>
     public static async Task<HardwareInventory?> InventoryAsync(CancellationToken ct = default)
+    {
+        var native = await NativeInventoryAsync(ct);
+        if (native is not null && native.Chassis.Manufacturer.Length > 0) return native;
+        return await ScriptInventoryAsync(ct);
+    }
+
+    /// <summary>O inventário pelo WMI, sem PowerShell (até 2 minutos). Null quando a leitura falha.</summary>
+    public static async Task<HardwareInventory?> NativeInventoryAsync(CancellationToken ct = default)
+    {
+        try { return OemRules.ParseInventory(await Task.Run(WmiReader.OemInventoryJson, ct).WaitAsync(TimeSpan.FromMinutes(2), ct)); }
+        catch (Exception ex) when (ex is TimeoutException or PlatformNotSupportedException or DllNotFoundException or TypeInitializationException
+                                   or System.Text.Json.JsonException or System.Runtime.InteropServices.COMException) { return null; }
+    }
+
+    /// <summary>Roda o script (até 2 minutos). Falha devolve null.</summary>
+    public static async Task<HardwareInventory?> ScriptInventoryAsync(CancellationToken ct = default)
     {
         try
         {

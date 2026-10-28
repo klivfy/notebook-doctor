@@ -388,7 +388,7 @@ public class TableTotalsTests
     public void Espaco_e_inicializacao()
     {
         Assert.Equal("1 item · 512 MB", TableTotals.Space([512L << 20], 1));
-        Assert.Equal("3 de 22 programas · 1 ativado", TableTotals.Startup(1, 3, 22));
+        Assert.Equal("3 de 22 programas (19 ocultos pelo filtro) · 1 ativado", TableTotals.Startup(1, 3, 22));
         Assert.Equal("22 programas · 14 ativados", TableTotals.Startup(14, 22, 22));
     }
 }

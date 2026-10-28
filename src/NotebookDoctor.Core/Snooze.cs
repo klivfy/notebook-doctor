@@ -68,6 +68,12 @@ public enum WatchAction { Wake, Resnooze }
 
 public static class SnoozeRules
 {
+    /// <summary>Leva 10.3: o candidato da soneca é dono de algum destes processos (nome do executável principal ou de fundo)?</summary>
+    public static bool Owns(SnoozeApp app, IEnumerable<string> processNames) =>
+        processNames.Any(n => app.MainExes.Contains(n, StringComparer.OrdinalIgnoreCase)
+                              || app.Background.Any(b => b.Name.Equals(n, StringComparison.OrdinalIgnoreCase))
+                              || app.Key.Equals(n, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Quantas verificações seguidas sem o programa aberto antes de voltar a dormir (evita dormir no meio de um reinício).</summary>
     public const int ResnoozeAfter = 3;
     /// <summary>De quanto em quanto tempo o app olha os processos enquanto há aplicativos em soneca.</summary>

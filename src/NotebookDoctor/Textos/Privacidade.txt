@@ -3,13 +3,19 @@ O Notebook Doctor funciona no seu computador e, a menos que você ligue ou peça
 O que fica guardado no computador
 • Uso de CPU, memória e disco a cada minuto, com os nomes dos programas mais pesados (Histórico, até 30 dias).
 • Suas preferências, as ações feitas pelo app (para "Desfazer") e os avisos mostrados.
+• O tamanho das pastas dos programas instalados, para a aba Programas abrir mais rápido.
+• O consumo da bateria em watts dos últimos 7 dias uma medida por dia da capacidade dela e quanto tempo ela ficou cheia na tomada, para estimar quanto a bateria dura, mostrar o desgaste e sugerir o limite de carga.
 • Se alguém definir uma senha para as configurações, só um código derivado dela (hash), nunca a senha em si.
 • Erros do app (erros.log) e, só se você ligar a opção, relatórios de falha sem nome de usuário, nome do computador ou pasta pessoal.
+• Ao limpar os recentes, restaurar o arquivo hosts ou tirar o script de proxy, uma cópia do que saiu fica no backup do app, para o Desfazer.
+As redes Wi-Fi salvas, o arquivo hosts e o tipo de conexão (para avisar quando você está na internet do celular) são lidos do Windows só para mostrar na tela. A senha do Wi-Fi aparece só quando você pede o código QR, com o app como administrador, e nunca é gravada nem enviada.
 Tudo fica na pasta de dados do app (botão "Abrir pasta de dados"). Desinstalar o app ou apagar a pasta remove esses dados.
 
 Quando o app usa a internet
 • Procurar atualização: consulta klivfy.com uma vez por dia, se a opção estiver ligada, ou quando você pede. A consulta não leva dados seus.
 • Teste de rede: só quando você clica, faz ping no roteador, em 1.1.1.1 e 8.8.8.8 e consulta o DNS de klivfy.com, github.com e wikipedia.org.
+• Videochamadas: o teste de conexão faz ping no roteador e em 1.1.1.1, só quando você clica. Quem usou a câmera e o microfone é lido do próprio Windows e não sai do computador.
+• Rede e internet: só quando você clica, testa o roteador, 1.1.1.1 e o DNS de klivfy.com; "Comparar DNS" consulta klivfy.com, github.com e wikipedia.org no seu DNS e em Cloudflare (1.1.1.1), Google (8.8.8.8) e Quad9 (9.9.9.9).
 • Abrir suporte: abre klivfy.com/suporte no seu navegador.
 • Avaliar o app: só quando você clica em “Enviar avaliação” (Configurações › Sobre). Antes de enviar, o app mostra o texto exato: a nota de 1 a 5, o comentário opcional, a versão e o idioma do app, com nome de usuário, e-mails, endereços IP e MAC, GUIDs e caminhos de arquivo trocados por marcadores. Vai para klivfy.com/notebookdoctor/avaliacao, sem identificador seu nem do computador. Sem clique, a nota fica só no seu computador.
 • Estatísticas de uso anônimas (Configurações › Privacidade): vêm desligadas. Se você ligar, o app conta quantas vezes cada ferramenta foi aberta e quantas falhas aconteceram, e envia só essa contagem, com a versão do app, o idioma, a família do Windows (10 ou 11) e a semana do ano, para klivfy.com/notebookdoctor/estatisticas, no máximo uma vez por semana. Não há identificador do computador nem da pessoa, e nunca vão nomes de arquivos ou de programas, endereços, números de série nem textos de erro. “Ver o que seria enviado” mostra o texto exato; desligar a opção apaga a contagem.

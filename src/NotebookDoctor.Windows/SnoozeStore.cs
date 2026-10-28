@@ -38,9 +38,7 @@ public sealed class SnoozeStore(string file)
             var list = Read();
             if (!change(list)) return;
             Directory.CreateDirectory(Path.GetDirectoryName(File)!);
-            string temp = File + ".tmp";
-            System.IO.File.WriteAllText(temp, JsonSerializer.Serialize(list, Json));
-            System.IO.File.Move(temp, File, overwrite: true);
+            AtomicFile.WriteAllText(File, JsonSerializer.Serialize(list, Json));
         }
     }
 

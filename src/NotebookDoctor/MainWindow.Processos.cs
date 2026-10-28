@@ -7,7 +7,106 @@ namespace NotebookDoctor;
 /// <summary>Aba Processos: lista, detalhe, encerrar, prioridade, modo eficiência e exceções de aviso.</summary>
 public partial class MainWindow
 {
-    private void ProcSearch_Changed(object sender, TextChangedEventArgs e) => ApplyFilter(ProcGrid, ProcSearch.Text, o => o is ProcRow r ? r.Name + " " + r.About : "");
+    private void ProcSearch_Changed(object sender, TextChangedEventArgs e) => ApplyProcFilter();
+
+    // Leva 10.2: busca e filtro rápido juntos
+    private void ApplyProcFilter()
+    {
+        if (ProcGrid.ItemsSource is null) return;
+        var view = System.Windows.Data.CollectionViewSource.GetDefaultView(ProcGrid.ItemsSource);
+        string q = ProcSearch.Text.Trim();
+        ProcGrid.Tag = q;
+        var filter = Host.Settings.ProcessFilter;
+        view.Filter = q.Length == 0 && filter == ProcessFilter.All ? null : o => o is ProcRow r
+            && (q.Length == 0 || (r.Name + " " + r.About).Contains(q, StringComparison.CurrentCultureIgnoreCase))
+            && ProcessView.Matches(filter, r.CpuPct, r.Hung, r.HasWindow, r.Safety, r.IsProtected);
+    }
+
+    private void ProcFilter_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton { Tag: string tag } || !Enum.TryParse<ProcessFilter>(tag, out var f) || !IsLoaded) return;
+        Host.Settings.ProcessFilter = f;
+        Host.Settings.Save();
+        ApplyProcFilter();
+        UpdateTotals(ProcGrid);
+    }
+
+    /// <summary>Marca a pílula salva ao abrir a janela.</summary>
+    private void LoadProcFilter()
+    {
+        foreach (var rb in ProcFilters.Children.OfType<RadioButton>())
+            if (rb.Tag is string tag && tag == Host.Settings.ProcessFilter.ToString()) rb.IsChecked = true;
+    }
+
+    private void ProcMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        bool pinned = ProcGrid.SelectedItem is ProcRow { Pinned: true };
+        ProcPinItem.Header = Loc.T(pinned ? "Desa_fixar do topo" : "Fi_xar no topo");
+        ProcAutoEcoItem.IsChecked = ProcGrid.SelectedItem is ProcRow r && r.Names.Any(n => Host.Settings.AutoEcoApps.Contains(n, StringComparer.OrdinalIgnoreCase));
+    }
+
+    private void ProcPin_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        var list = ProcessView.TogglePin(Host.Settings.PinnedProcesses, r.Name);
+        if (list is null) { ProcMsg.Text = Loc.F("Já há {0} programas fixados: desafixe um antes.", ProcessView.MaxPinned); return; }
+        Host.Settings.PinnedProcesses = list;
+        Host.Settings.Save();
+        ProcMsg.Text = r.Pinned ? Loc.F("{0} não fica mais no topo.", r.Name) : Loc.F("{0} fica no topo da lista.", r.Name);
+        if (Host.Latest is { } s) RefreshProcesses(s, force: true);
+    }
+
+    // Leva 10.3: da linha direto para a soneca e para o histórico do programa
+    private void ProcSnooze_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        new SnoozeWindow(this, r.Names).ShowDialog();
+    }
+
+    private void ProcHistory_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        ShowProgramHistory(r.Names);
+    }
+
+    // Leva 11.2, tarefa 10: modo eficiência sozinho quando o programa fica fora de foco
+    private void ProcAutoEco_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        if (r.IsProtected) { ProcMsg.Text = Loc.F("{0} é do sistema: a prioridade não é alterada.", r.Name); return; }
+        var s = Host.Settings;
+        bool on = r.Names.Any(n => s.AutoEcoApps.Contains(n, StringComparer.OrdinalIgnoreCase));
+        s.AutoEcoApps = on ? s.AutoEcoApps.Where(n => !r.Names.Contains(n, StringComparer.OrdinalIgnoreCase)).ToList()
+                           : AppSettings.ParseNames(string.Join("\n", s.AutoEcoApps.Concat(r.Names)));
+        s.Save();
+        ProcMsg.Text = on ? Loc.F("{0} não entra mais no modo eficiência sozinho.", r.Name)
+                          : Loc.F("{0} entra no modo eficiência quando você estiver em outra janela e sai ao voltar para ele.", r.Name);
+    }
+
+    // Leva 10.2: socorro rápido
+    private void ProcRestartExplorer_Click(object sender, RoutedEventArgs e)
+    {
+        if (Simulate("Reiniciar o Explorador de Arquivos", "Fecharia e abriria de novo o Explorador (barra de tarefas e janelas de pasta).")) return;
+        if (!Dialogs.Confirm(this, Loc.T("Reiniciar o Explorador de Arquivos?"),
+                Loc.T("A barra de tarefas e as janelas de pasta somem por alguns segundos e voltam sozinhas. Cópias de arquivos em andamento no Explorador são interrompidas."),
+                "Reiniciar")) return;
+        _ = Task.Run(FileUnlocker.RestartExplorer).ContinueWith(t => Dispatcher.Invoke(() =>
+        {
+            ProcMsg.Text = t.Result ? Loc.T("Explorador reiniciado.") : Loc.T("O Explorador não voltou sozinho: aperte Ctrl+Shift+Esc e use Arquivo › Executar nova tarefa › explorer.");
+            if (t.Result) ActionLog.Add("Explorador de Arquivos reiniciado");
+        }), TaskScheduler.Default);
+    }
+
+    private void ProcRestartVideo_Click(object sender, RoutedEventArgs e)
+    {
+        if (Simulate("Reiniciar o driver de vídeo", "Mandaria Windows+Ctrl+Shift+B: a tela piscaria e voltaria.")) return;
+        if (!Dialogs.Confirm(this, Loc.T("Reiniciar o driver de vídeo?"),
+                Loc.T("A tela fica preta por um ou dois segundos e o Windows toca um aviso. Nenhum programa é fechado. Use quando a imagem congelar ou ficar com defeito."),
+                "Reiniciar")) return;
+        GraphicsDriver.Restart();
+        ProcMsg.Text = Loc.T("Pedido enviado ao Windows: a tela deve piscar e voltar.");
+        ActionLog.Add("Driver de vídeo reiniciado", "Windows+Ctrl+Shift+B");
+    }
 
     // ---------- Detalhe do processo (A47) ----------
     private void ProcGrid_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -29,22 +128,47 @@ public partial class MainWindow
         else ProcMsg.Text = Loc.T("Selecione um programa na lista.");
     }
 
-    // ---------- Processos ----------
-    private void RefreshProcesses(Snapshot s)
+    // Fase 12, leva 12.2, tarefa 09: com quem o programa está conversando pela rede (endereços e portas, sem consultar nomes)
+    private void ProcConnections_Click(object sender, RoutedEventArgs e)
     {
+        if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
+        var pids = new HashSet<int>();
+        foreach (var name in r.Names)
+            foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
+                using (p) pids.Add(p.Id);
+        var conns = NetProbe.TcpConnections(pids);
+        string body = conns.Count == 0 ? Loc.T("Nenhuma conexão de rede aberta agora.")
+            : string.Join("\n", conns.Take(60).Select(c => c.State == "LISTEN"
+                ? Loc.F("• porta {0} aberta, {1}", c.LocalPort, NetworkDoctor.StateText(c.State))
+                : Loc.F("• {0}:{1} ← porta {2}, {3}", c.Remote, c.RemotePort, c.LocalPort, NetworkDoctor.StateText(c.State))))
+              + (conns.Count > 60 ? "\n" + Loc.F("… e mais {0}", conns.Count - 60) : "");
+        Dialogs.Info(this, Loc.F("Conexões de {0}", r.Name), body);
+    }
+
+    // ---------- Processos ----------
+    private void RefreshProcesses(Snapshot s, bool force = false)
+    {
+        // Leva 10.2: com o menu de clique direito aberto ou Espaço segurado na tabela, a ordem não muda embaixo do ponteiro
+        if (!force && ProcessView.HoldRefresh(ProcGrid.ContextMenu?.IsOpen == true,
+                ProcGrid.IsKeyboardFocusWithin && System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.Space))) return;
         // M25: guarda todos os selecionados (Ctrl/Shift), não só o primeiro, para a atualização a cada 3 s não desfazer a seleção
         var selected = ProcGrid.SelectedItems.OfType<ProcRow>().Select(r => r.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var sort = ProcGrid.Items.SortDescriptions.ToList();
         // M22: processos do mesmo aplicativo numa linha só (opção no topo da aba)
         var groups = Host.Settings.GroupByApp ? AppGroups.Merge(s.Groups) : AppGroups.Single(s.Groups);
-        ProcGrid.ItemsSource = groups.OrderByDescending(g => g.CpuPct).ThenByDescending(g => g.MemMB).Select(g =>
+        var pinned = Host.Settings.PinnedProcesses.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        ProcGrid.ItemsSource = groups
+            .OrderBy(g => ProcessView.Rank(pinned.Contains(g.Name), g.Hung)).ThenByDescending(g => g.CpuPct).ThenByDescending(g => g.MemMB).Select(g =>
         {
             var about = ProcessKnowledge.Describe(g.Main);
             string desc = g.Merged ? $"{about.Description} · {string.Join(", ", g.Members)}" : about.Description;
+            // Leva 10.2: numa linha juntada com uso, quem dentro dela pesa mais
+            if (g.Heaviest.Length > 0 && g.CpuPct >= 1) desc = Loc.F("Mais pesado: {0}", g.Heaviest) + " · " + desc;
             return new ProcRow(g.Name, g.Count, g.CpuPct, g.MemMB, g.IoKBs, g.Conns, desc, about.SafetyText, ProcessIcons.Get(g.Main),
-                               RowSeverity.Process(g.CpuPct, g.MemMB, s.RamTotalGB), g.Merged ? g.Members : null);
+                               RowSeverity.Process(g.CpuPct, g.MemMB, s.RamTotalGB), g.Merged ? g.Members : null,
+                               g.Hung, g.HasWindow, pinned.Contains(g.Name), about.Safety);
         }).ToList();
-        ApplyFilter(ProcGrid, ProcSearch.Text, o => o is ProcRow r ? r.Name + " " + r.About : "");
+        ApplyProcFilter();
         if (ProcGrid.Items.SortDescriptions.Count == 0) // B29: a ordenação salva já pode ter voltado sozinha
             foreach (var d in sort) ProcGrid.Items.SortDescriptions.Add(d);
         foreach (var row in ProcGrid.Items.OfType<ProcRow>().Where(r => selected.Contains(r.Name))) ProcGrid.SelectedItems.Add(row);

@@ -23,8 +23,18 @@ public partial class MiniWidget : Window
         Left = saved ? s.MiniLeft!.Value : area.Right - 270;
         Top = saved ? s.MiniTop!.Value : area.Bottom - 190;
         Host.SnapshotReady += Update;
+        Host.MediaChanged += ShowMedia;
         if (Host.Latest is { } snap) Update(snap);
-        Closed += (_, _) => Host.SnapshotReady -= Update;
+        ShowMedia(Meeting.InUseText(Host.Media));
+        Closed += (_, _) => { Host.SnapshotReady -= Update; Host.MediaChanged -= ShowMedia; };
+    }
+
+    // Leva 12.1: câmera ou microfone abertos agora
+    private void ShowMedia(string text)
+    {
+        MediaText.Text = text;
+        MediaRow.Visibility = text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        System.Windows.Automation.AutomationProperties.SetName(MediaRow, text.Length > 0 ? Loc.F("Em uso agora: {0}", text) : "");
     }
 
     private void Update(Snapshot s)

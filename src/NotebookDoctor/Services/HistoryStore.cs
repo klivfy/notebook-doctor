@@ -11,11 +11,12 @@ public sealed class HistoryStore
 
     public HistoryStore() => Prune(TimeSpan.FromDays(30));
 
-    public void Record(Snapshot s, int score = -1)
+    /// <param name="onBattery">Leva 11.2: para saber quem gastou bateria (null em computador sem bateria).</param>
+    public void Record(Snapshot s, int score = -1, bool? onBattery = null)
     {
         if ((s.Time - _lastWrite).TotalSeconds < 60) return;
         _lastWrite = s.Time;
-        string line = Line(s, score);
+        string line = Line(s, score, onBattery);
         lock (_lock) { try { File.AppendAllText(AppPaths.History, line + "\n"); } catch { } }
     }
 
@@ -26,7 +27,7 @@ public sealed class HistoryStore
         lock (_lock) { try { File.WriteAllLines(AppPaths.History, lines); } catch { } }
     }
 
-    private static string Line(Snapshot s, int score)
+    private static string Line(Snapshot s, int score, bool? onBattery = null)
     {
         var top = s.Heavy.Take(3).Select(g => g.Name).ToArray();
         // Os 8 que mais usam CPU e os 8 que mais usam memória: basta para a linha do tempo sem inchar o arquivo
@@ -34,7 +35,7 @@ public sealed class HistoryStore
             .Concat(s.Groups.OrderByDescending(g => g.MemMB).Take(8))
             .DistinctBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Name, g => new[] { Math.Round(g.CpuPct, 1), (double)g.MemMB }, StringComparer.OrdinalIgnoreCase);
-        return JsonSerializer.Serialize(new HistSample(s.Time, Math.Round(s.Cpu, 1), s.RamPct, Math.Round(s.DiskBusy, 1), Math.Round(s.DiskFreePct, 1), top, score, procs));
+        return JsonSerializer.Serialize(new HistSample(s.Time, Math.Round(s.Cpu, 1), s.RamPct, Math.Round(s.DiskBusy, 1), Math.Round(s.DiskFreePct, 1), top, score, procs, onBattery));
     }
 
     public List<HistSample> Load(TimeSpan window)

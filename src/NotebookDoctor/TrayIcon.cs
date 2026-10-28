@@ -13,12 +13,20 @@ public sealed class TrayIcon : IDisposable
 
     private readonly WinForms.NotifyIcon _icon = new() { Visible = true };
     private readonly WinForms.ContextMenuStrip _menu = new();
-    private readonly WinForms.ToolStripMenuItem _startItem, _miniItem, _usageItem, _healthItem;
+    private readonly WinForms.ToolStripMenuItem _startItem, _miniItem, _usageItem, _healthItem, _presentItem;
     private IntPtr _hIcon;
     private string _iconKey = "";
 
     public event Action? OpenRequested, CleanRequested, ExitRequested, SupportRequested, BalloonClicked;
-    public event Action<bool>? StartWithWindowsToggled, MiniToggled;
+    public event Action<bool>? StartWithWindowsToggled, MiniToggled, PresentationToggled;
+    public event Action? UnlockRequested;
+    public event Action<char>? EjectRequested;
+    public event Action<PowerPlan>? PowerPlanRequested;
+    public event Action? ClearClipboardRequested, MiddleClicked;
+
+    // Leva 10.3: CPU dos últimos 5 minutos (uma leitura a cada 3 s) para o minigráfico da dica
+    private readonly Queue<double> _recentCpu = new();
+    private const int RecentMax = 100;
 
     public TrayIcon(bool startWithWindows)
     {
@@ -32,6 +40,21 @@ public sealed class TrayIcon : IDisposable
         _menu.Items.Add(new WinForms.ToolStripSeparator());
         _menu.Items.Add(Loc.T("Abrir painel"), null, (_, _) => OpenRequested?.Invoke());
         _menu.Items.Add(Loc.T("Limpar temporários agora"), null, (_, _) => CleanRequested?.Invoke());
+        // Fase 10, leva 10.1: pendrives conectados, montados na hora de abrir o menu
+        var usb = new WinForms.ToolStripMenuItem(Loc.T("Pendrives"));
+        usb.DropDownItems.Add(new WinForms.ToolStripMenuItem("")); // mostra a seta antes da primeira abertura
+        usb.DropDownOpening += (_, _) => FillDrives(usb);
+        _menu.Items.Add(usb);
+        // Leva 10.3: plano de energia em 1 clique e limpar a área de transferência
+        var plans = new WinForms.ToolStripMenuItem(Loc.T("Plano de energia"));
+        plans.DropDownItems.Add(new WinForms.ToolStripMenuItem(""));
+        plans.DropDownOpening += (_, _) => FillPlans(plans);
+        _menu.Items.Add(plans);
+        _menu.Items.Add(Loc.T("Limpar a área de transferência"), null, (_, _) => ClearClipboardRequested?.Invoke());
+        // Leva 12.3: modo apresentação (sem notificações, tela acesa, ícones da área de trabalho escondidos)
+        _presentItem = new WinForms.ToolStripMenuItem(Loc.T("Modo apresentação")) { CheckOnClick = true };
+        _presentItem.Click += (_, _) => PresentationToggled?.Invoke(_presentItem.Checked);
+        _menu.Items.Add(_presentItem);
         _miniItem = new WinForms.ToolStripMenuItem(Loc.T("Mini-widget sempre visível")) { CheckOnClick = true };
         _miniItem.Click += (_, _) => MiniToggled?.Invoke(_miniItem.Checked);
         _menu.Items.Add(_miniItem);
@@ -43,10 +66,63 @@ public sealed class TrayIcon : IDisposable
         _menu.Items.Add(Loc.T("Sair"), null, (_, _) => ExitRequested?.Invoke());
         _icon.ContextMenuStrip = _menu;
         _icon.BalloonTipClicked += (_, _) => BalloonClicked?.Invoke();
-        _icon.MouseClick += (_, e) => { if (e.Button == WinForms.MouseButtons.Left) OpenRequested?.Invoke(); };
+        _icon.MouseClick += (_, e) =>
+        {
+            if (e.Button == WinForms.MouseButtons.Left) OpenRequested?.Invoke();
+            else if (e.Button == WinForms.MouseButtons.Middle) MiddleClicked?.Invoke();
+        };
         DrawIcon(TrayBand.Ok, null);
         _icon.Text = "Notebook Doctor";
         ApplyTheme();
+    }
+
+    // Leva 12.1: primeira linha do menu quando a câmera ou o microfone estão abertos
+    private WinForms.ToolStripMenuItem? _mediaItem;
+
+    public void SetMediaInUse(string text)
+    {
+        if (_mediaItem is null)
+        {
+            _mediaItem = new WinForms.ToolStripMenuItem("") { Visible = false, ForeColor = Bad };
+            _mediaItem.Click += (_, _) => OpenRequested?.Invoke();
+            _menu.Items.Insert(0, _mediaItem);
+        }
+        _mediaItem.Text = text.Length > 0 ? "● " + text : "";
+        _mediaItem.Visible = text.Length > 0;
+    }
+
+    private void FillPlans(WinForms.ToolStripMenuItem parent)
+    {
+        parent.DropDownItems.Clear();
+        var list = PowerPlans.List();
+        if (list.Count == 0) parent.DropDownItems.Add(new WinForms.ToolStripMenuItem(Loc.T("Não foi possível ler os planos")) { Enabled = false });
+        foreach (var plan in list)
+        {
+            var item = new WinForms.ToolStripMenuItem(plan.Name) { Checked = plan.Active };
+            item.Click += (_, _) => PowerPlanRequested?.Invoke(plan);
+            parent.DropDownItems.Add(item);
+        }
+        foreach (WinForms.ToolStripItem i in parent.DropDownItems) { i.BackColor = _menu.BackColor; i.ForeColor = _menu.ForeColor; }
+        parent.DropDown.BackColor = _menu.BackColor;
+    }
+
+    private void FillDrives(WinForms.ToolStripMenuItem parent)
+    {
+        parent.DropDownItems.Clear();
+        var drives = FileUnlocker.RemovableDrives();
+        if (drives.Count == 0) parent.DropDownItems.Add(new WinForms.ToolStripMenuItem(Loc.T("Nenhum pendrive conectado")) { Enabled = false });
+        foreach (var d in drives)
+        {
+            char letter = d.Name[0];
+            string label;
+            try { label = d.VolumeLabel; } catch (System.IO.IOException) { label = ""; }
+            string text = label.Length > 0 ? Loc.F("Ejetar {0} ({1})", $"{letter}:", label) : Loc.F("Ejetar {0}", $"{letter}:");
+            parent.DropDownItems.Add(text, null, (_, _) => EjectRequested?.Invoke(letter));
+        }
+        parent.DropDownItems.Add(new WinForms.ToolStripSeparator());
+        parent.DropDownItems.Add(Loc.T("Destravar arquivo ou pendrive…"), null, (_, _) => UnlockRequested?.Invoke());
+        foreach (WinForms.ToolStripItem i in parent.DropDownItems) { i.BackColor = _menu.BackColor; i.ForeColor = _menu.ForeColor; }
+        parent.DropDown.BackColor = _menu.BackColor;
     }
 
     public void ApplyTheme()
@@ -78,15 +154,19 @@ public sealed class TrayIcon : IDisposable
         public override Drawing.Color CheckSelectedBackground => hover;
     }
 
-    /// <param name="showCpu">B01: o ícone mostra o número da CPU em vez do logo com a bolinha.</param>
-    public void Update(Snapshot s, int score, bool showCpu)
+    /// <param name="shows">B01 e leva 10.3: o ícone mostra a CPU, a temperatura ou a nota em vez do logo com a bolinha.</param>
+    public void Update(Snapshot s, int score, TrayIconShows shows)
     {
         var band = Tray.Band(s.Cpu, s.RamPct);
-        string? label = showCpu ? Tray.CpuLabel(s.Cpu) : null;
+        string? label = Tray.IconLabel(shows, s, score);
         if ($"{band}{label}" != _iconKey) DrawIcon(band, label);
-        _icon.Text = $"CPU {s.Cpu:0}% · RAM {s.RamPct:0}% · Disco livre {s.DiskFreePct:0}%"; // limite do Windows: 63 caracteres
+        _recentCpu.Enqueue(s.Cpu);
+        while (_recentCpu.Count > RecentMax) _recentCpu.Dequeue();
+        _icon.Text = Tray.Tooltip(s, _recentCpu.ToList());
         (_usageItem.Text, _healthItem.Text) = Tray.MenuLines(s, score);
     }
+
+    public void SyncPresentation(bool value) { if (_presentItem.Checked != value) _presentItem.Checked = value; }
 
     public void SyncMini(bool value) { if (_miniItem.Checked != value) _miniItem.Checked = value; }
 

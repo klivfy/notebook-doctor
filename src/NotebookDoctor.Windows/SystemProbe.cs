@@ -155,8 +155,10 @@ public static class SystemProbe
         NvmlShutdown? shutdown = null;
         try
         {
-            string[] candidates = ["nvml.dll", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"NVIDIA Corporation\NVSMI\nvml.dll")];
-            if (!candidates.Any(c => NativeLibrary.TryLoad(c, out lib))) return result;
+            // Pelo nome, só da System32 (onde o driver instala); a pasta antiga do NVSMI vai pelo caminho completo
+            string nvsmi = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"NVIDIA Corporation\NVSMI\nvml.dll");
+            if (!NativeLibrary.TryLoad("nvml.dll", typeof(SystemProbe).Assembly, DllImportSearchPath.System32, out lib)
+                && !NativeLibrary.TryLoad(nvsmi, out lib)) return result;
             T Fn<T>(string name) where T : Delegate => Marshal.GetDelegateForFunctionPointer<T>(NativeLibrary.GetExport(lib, name));
 
             var init = Fn<NvmlInit>("nvmlInit_v2");
