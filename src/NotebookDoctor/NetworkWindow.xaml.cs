@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Threading;
 using NotebookDoctor.Services;
 
 namespace NotebookDoctor;
@@ -17,6 +18,8 @@ public partial class NetworkWindow : Window
     private readonly MainWindow _main;
     private string? _fixId;
     private DnsResult? _better;
+    private string? _qrPassword;
+    private readonly DispatcherTimer _qrPasswordTimer = new() { Interval = TimeSpan.FromSeconds(20) };
 
     public NetworkWindow(MainWindow main)
     {
@@ -25,6 +28,8 @@ public partial class NetworkWindow : Window
         Owner = main;
         SourceInitialized += (_, _) => ThemeManager.ApplyTitleBar(this);
         Loaded += async (_, _) => { await LoadWifiAsync(); await LoadProfilesAsync(); };
+        _qrPasswordTimer.Tick += (_, _) => HideQrPassword();
+        Closed += (_, _) => _qrPasswordTimer.Stop();
     }
 
     // ---------- conectado, mas não navega ----------
@@ -180,7 +185,7 @@ public partial class NetworkWindow : Window
     private void Profiles_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         QrBtn.IsEnabled = ProfilesGrid.SelectedItem is ProfileRow;
-        QrPanel.Visibility = Visibility.Collapsed;
+        HideQrPanel();
     }
 
     private void Qr_Click(object sender, RoutedEventArgs e)
@@ -198,8 +203,14 @@ public partial class NetworkWindow : Window
             ProfilesInfo.Text = Loc.T("O nome ou a senha da rede são longos demais para o código QR.");
             return;
         }
+        _qrPasswordTimer.Stop();
+        _qrPassword = p.Key;
         QrImage.Source = Render(matrix);
-        QrText.Text = Loc.F("Aponte a câmera do celular para entrar em {0}.", p.Ssid) + (p.Key is { } key ? "\n" + Loc.F("Senha: {0}", key) : "");
+        QrText.Text = Loc.F("Aponte a câmera do celular para entrar em {0}.", p.Ssid);
+        QrPasswordToggleBtn.Visibility = _qrPassword is null ? Visibility.Collapsed : Visibility.Visible;
+        QrPasswordToggleBtn.Content = Loc.T("Mostrar");
+        QrPasswordText.Visibility = Visibility.Collapsed;
+        QrPasswordText.Text = "";
         QrPanel.Visibility = Visibility.Visible;
     }
 
@@ -220,11 +231,44 @@ public partial class NetworkWindow : Window
         return image;
     }
 
-    private void QrHide_Click(object sender, RoutedEventArgs e)
+    private void QrHide_Click(object sender, RoutedEventArgs e) => HideQrPanel();
+
+    private void QrPasswordToggle_Click(object sender, RoutedEventArgs e)
     {
+        if (_qrPassword is null) return;
+
+        if (QrPasswordText.Visibility == Visibility.Visible)
+        {
+            HideQrPassword();
+            return;
+        }
+
+        QrPasswordText.Text = Loc.F("Senha: {0}", _qrPassword);
+        QrPasswordText.Visibility = Visibility.Visible;
+        QrPasswordToggleBtn.Content = Loc.T("Esconder");
+        _qrPasswordTimer.Stop();
+        _qrPasswordTimer.Start();
+    }
+
+    private void HideQrPassword()
+    {
+        _qrPasswordTimer.Stop();
+        QrPasswordText.Visibility = Visibility.Collapsed;
+        QrPasswordText.Text = "";
+        if (_qrPassword is not null) QrPasswordToggleBtn.Content = Loc.T("Mostrar");
+    }
+
+    private void HideQrPanel()
+    {
+        _qrPasswordTimer.Stop();
+        _qrPassword = null;
         QrPanel.Visibility = Visibility.Collapsed;
         QrImage.Source = null;
         QrText.Text = "";
+        QrPasswordText.Visibility = Visibility.Collapsed;
+        QrPasswordText.Text = "";
+        QrPasswordToggleBtn.Visibility = Visibility.Collapsed;
+        QrPasswordToggleBtn.Content = Loc.T("Mostrar");
     }
 
     private void Known_Click(object sender, RoutedEventArgs e) => AppInfo.OpenShell("ms-settings:network-wifisettings");

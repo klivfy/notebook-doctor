@@ -113,6 +113,63 @@ public class DiagnosisTests : IDisposable
     }
 
     [Fact]
+    public void Recomendacoes_prioritarias_trazem_transparencia_minima()
+    {
+        var f = Eval(Make.Snap(cpu: 80, ram: 90, diskBusy: 90, freePct: 5), Make.Health(tempBytes: 3L << 30) with { StartupEnabled = 12, RebootPending = true });
+
+        var ram = Assert.Single(f, x => x.Title == "Memória RAM quase cheia");
+        Assert.Contains("85%", ram.EvidenceText);
+        Assert.NotEmpty(ram.ProposedChangeText);
+        Assert.Equal("Alto", ram.RiskText);
+        Assert.Equal("Alta", ram.ConfidenceText);
+        Assert.NotEmpty(ram.UndoText);
+
+        var cpu = Assert.Single(f, x => x.Title == "CPU sobrecarregada");
+        Assert.Contains("70%", cpu.EvidenceText);
+        Assert.Equal("Alto", cpu.RiskText);
+        Assert.Equal("Alta", cpu.ConfidenceText);
+
+        var diskBusy = Assert.Single(f, x => x.Title == "Disco saturado");
+        Assert.Contains("80%", diskBusy.EvidenceText);
+        Assert.Equal("Alto", diskBusy.RiskText);
+        Assert.Equal("Alta", diskBusy.ConfidenceText);
+
+        var free = Assert.Single(f, x => x.Title == "Disco quase cheio");
+        Assert.Contains("10%", free.EvidenceText);
+
+        var reboot = Assert.Single(f, x => x.Title == "Reinício pendente");
+        Assert.Equal("Médio", reboot.RiskText);
+        Assert.Equal("Média", reboot.ConfidenceText);
+    }
+
+    [Fact]
+    public void Achados_de_atencao_ou_problema_tem_transparencia_e_confianca()
+    {
+        var groups = new[] { new ProcGroup("chrome", 20, 30, 2500), new ProcGroup("vmmemWSL", 1, 1, 4096) };
+        var s = Make.Snap(cpu: 82, ram: 88, diskBusy: 92, freePct: 8, groups: groups, cpuPerf: 45, tempC: 91);
+        var h = Make.Health(onAc: true, highGuid: "abc", tempBytes: 3L << 30) with
+        {
+            StartupEnabled = 12,
+            RebootPending = true,
+            DiskHealth = "Unhealthy",
+            DiskWearPct = 85,
+            DiskTempC = 72,
+            Security = new SecurityInfo(false, 10, [], ["Público"]) 
+        };
+
+        var findings = Diagnosis.Evaluate(Make.Minute(s), h, [new LeakSuspect("leaky", 100, 900, 30)], TimeSpan.FromDays(9));
+
+        foreach (var item in findings.Where(x => x.Level is "PROBLEMA" or "ATENCAO"))
+        {
+            Assert.NotEmpty(item.EvidenceText);
+            Assert.NotEmpty(item.ProposedChangeText);
+            Assert.NotEmpty(item.RiskText);
+            Assert.NotEmpty(item.ConfidenceText);
+            Assert.NotEmpty(item.UndoText);
+        }
+    }
+
+    [Fact]
     public void Reinicio_pendente_oferece_reiniciar() =>
         Assert.Equal("restart", Assert.Single(Eval(Make.Snap(), Make.Health() with { RebootPending = true })).FixId);
 

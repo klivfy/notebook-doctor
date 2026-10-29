@@ -265,6 +265,11 @@
                                                     <TextBlock Text="{Binding TitleText}" FontFamily="{StaticResource FontMedium}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                                     <TextBlock Text="{Binding Detail}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                                     <TextBlock Text="{Binding AdviceText}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="{Binding EvidenceText, StringFormat=Evidência observada: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="{Binding ProposedChangeText, StringFormat=Mudança proposta: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding RiskText, StringFormat=Risco: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding ConfidenceText, StringFormat=Confiança: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding UndoText, StringFormat=Como desfazer: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                                                     <ToggleButton x:Name="WhyToggle" Content="{Binding WhyLabel}" HorizontalAlignment="Left" Margin="0,4,0,0"
                                                                   Visibility="{Binding HasWhy, Converter={StaticResource B2V}}" Style="{StaticResource WhyToggle}"
                                                                   IsChecked="{Binding WhyOpen, Mode=OneWay}" Checked="WhyToggle_Changed" Unchecked="WhyToggle_Changed"
@@ -875,7 +880,7 @@
             <!-- AJUSTES DO WINDOWS (A31–A35) com simulação (A38) -->
             <TabItem Header="Ajustes">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
-                    <StackPanel HorizontalAlignment="Left" MaxWidth="820">
+                    <StackPanel HorizontalAlignment="Stretch">
                         <!-- Fase 11, leva 11.1: calor e bateria -->
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
@@ -1081,7 +1086,7 @@
                       <StackPanel>
                         <!-- Redesign V5: as ferramentas de segurança e do Windows como cartões-linha -->
                         <TextBlock Text="Ferramentas" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2" Margin="8,0,0,4"/>
-                        <UniformGrid Columns="2">
+                        <WrapPanel>
                             <Button Content="Verificar malware…" Tag="&#xE83D;" Style="{StaticResource ActionRow}" Click="SysSecurity_Click"
                                     ToolTip="Verifica o computador com o Microsoft Defender e a Ferramenta de Remoção de Software Mal-Intencionado (MRT) do Windows."/>
                             <Button Content="Ferramentas do Windows…" Tag="&#xE90F;" Style="{StaticResource ActionRow}" Click="SysTools_Click"
@@ -1090,7 +1095,7 @@
                                     ToolTip="Quando o Wi-Fi diz conectado mas nada abre: testa cada etapa e corrige a que falhou. Também compara o DNS e avisa sobre Wi-Fi em 2,4 GHz e VPNs antigas."/>
                             <Button Content="Videochamadas…" Tag="&#xE714;" Style="{StaticResource ActionRow}" Click="SysMeeting_Click"
                                     ToolTip="Quem está usando a câmera e o microfone, por que ninguém ouve você, se a conexão aguenta a chamada e o que está baixando em segundo plano."/>
-                        </UniformGrid>
+                        </WrapPanel>
                         <TextBlock Text="Informações do computador" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
                         <ItemsControl x:Name="SysList" Focusable="False" AutomationProperties.Name="Informações do sistema">
                             <ItemsControl.ItemTemplate>
@@ -1122,7 +1127,7 @@
             <!-- CONFIGURAÇÕES -->
             <TabItem Header="Configurações">
               <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
-               <StackPanel HorizontalAlignment="Left" MaxWidth="720">
+               <StackPanel HorizontalAlignment="Stretch">
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="Preferências" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>

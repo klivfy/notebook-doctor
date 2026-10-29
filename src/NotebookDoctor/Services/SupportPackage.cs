@@ -30,7 +30,9 @@ public static class SupportPackage
         Add("sistema.txt", SystemText(s, h));
         Add("diagnostico.txt", string.Join("\r\n", findings.Select(f => $"[{f.Level}] {f.Title} — {f.Detail}")));
         Add("historico-7-dias.csv", HistoryCsv.Build(week));
-        Add("configuracoes.json", JsonSerializer.Serialize(Services.AppSettings.Load(), new JsonSerializerOptions { WriteIndented = true }));
+        var cleanSettings = Services.AppSettings.Load();
+        cleanSettings.SettingsLock = null; // Nunca exporta o hash da senha de configurações no pacote de suporte
+        Add("configuracoes.json", JsonSerializer.Serialize(cleanSettings, new JsonSerializerOptions { WriteIndented = true }));
         Add("acoes.json", JsonSerializer.Serialize(ActionLog.Load(), new JsonSerializerOptions { WriteIndented = true }));
         Add("alertas.txt", string.Join("\r\n", AlertLog.Load(TimeSpan.FromDays(30)).Select(a => $"{a.TimeText}  {a.Title}: {a.Text}")));
         string errors = Path.Combine(AppPaths.Dir, "erros.log");

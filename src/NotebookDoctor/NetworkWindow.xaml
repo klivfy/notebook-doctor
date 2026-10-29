@@ -54,7 +54,11 @@
             </Border>
             <StackPanel Margin="16,0,0,0" VerticalAlignment="Center" MaxWidth="400">
                 <TextBlock x:Name="QrText" TextWrapping="Wrap" LineHeight="24"/>
-                <Button Content="Esconder" Style="{StaticResource TextButton}" Click="QrHide_Click" Margin="0,8,0,0" HorizontalAlignment="Left"/>
+                <WrapPanel Margin="0,8,0,0">
+                    <Button x:Name="QrPasswordToggleBtn" Content="Mostrar" Style="{StaticResource TextButton}" Click="QrPasswordToggle_Click" HorizontalAlignment="Left" Visibility="Collapsed"/>
+                    <Button Content="Esconder" Style="{StaticResource TextButton}" Click="QrHide_Click" Margin="8,0,0,0" HorizontalAlignment="Left"/>
+                </WrapPanel>
+                <TextBlock x:Name="QrPasswordText" Visibility="Collapsed" TextWrapping="Wrap" LineHeight="24" Margin="0,8,0,0"/>
             </StackPanel>
         </StackPanel>
 
