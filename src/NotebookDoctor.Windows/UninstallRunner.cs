@@ -20,7 +20,8 @@ public static class UninstallRunner
     /// <exception cref="System.ComponentModel.Win32Exception">1223 quando a pessoa cancela o UAC.</exception>
     public static async Task<UninstallRun> RunAsync(UninstallCommand cmd, Func<bool> userSaysDone, CancellationToken ct)
     {
-        using var root = Process.Start(new ProcessStartInfo(cmd.File, cmd.Arguments) { UseShellExecute = true });
+        string exe = Path.IsPathRooted(cmd.File) ? cmd.File : SystemExe.System32(cmd.File);
+        using var root = Process.Start(new ProcessStartInfo(exe, cmd.Arguments) { UseShellExecute = true, WorkingDirectory = Environment.SystemDirectory });
         if (root is null) return new UninstallRun(WaitState.Done, null); // o Shell entregou a outro processo já aberto
         var tracked = new HashSet<int> { root.Id };
         var watch = new UninstallWatch(DateTime.Now, Settle, Limit);
@@ -110,3 +111,4 @@ public static class ShortcutScan
         return list;
     }
 }
+

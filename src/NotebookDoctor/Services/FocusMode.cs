@@ -34,7 +34,7 @@ public sealed class FocusMode
 
         int fgPid = Native.ForegroundProcessId();
         string? fgName = null;
-        try { fgName = Process.GetProcessById(fgPid).ProcessName; } catch { }
+        try { fgName = Process.GetProcessById(fgPid).ProcessName; } catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { }
 
         // Programas pesados (não protegidos, que não são o da janela em uso) passam para prioridade "abaixo do normal"
         var targets = latest.Groups
@@ -55,7 +55,7 @@ public sealed class FocusMode
                                 p.PriorityClass = ProcessPriorityClass.BelowNormal;
                             }
                         }
-                        catch { /* sem permissão ou já fechou */ }
+                        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { /* sem permissão ou já fechou */ }
                     }
         });
         return $"{planMsg}{Pt.N(_original.Count, "processo", "processos")} em segundo plano com prioridade reduzida" + (fgName is null ? "." : $" (mantido: {fgName}).");
@@ -70,7 +70,7 @@ public sealed class FocusMode
         {
             foreach (var (pid, cls) in _original)
             {
-                try { using var p = Process.GetProcessById(pid); p.PriorityClass = cls; restored++; } catch { /* já fechou */ }
+                try { using var p = Process.GetProcessById(pid); p.PriorityClass = cls; restored++; } catch (Exception ex) when (ex is ArgumentException or System.ComponentModel.Win32Exception or InvalidOperationException) { /* já fechou */ }
             }
             _original.Clear();
         });

@@ -21,7 +21,7 @@ public static class StartMenu
             bool exists = File.Exists(path);
             return StartMenuLink.State(exists, exists ? ReadTarget(path) : null, Environment.ProcessPath ?? "");
         }
-        catch { return StartMenuState.Missing; }
+        catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException) { return StartMenuState.Missing; }
     }
 
     /// <summary>Cria ou substitui o atalho, apontando para o executável que está rodando.</summary>
@@ -43,11 +43,11 @@ public static class StartMenu
 
     public static void Remove()
     {
-        if (File.Exists(LinkPath)) File.Delete(LinkPath);
+        if (File.Exists(LinkPath)) SafeDelete.FileAtExactPath(LinkPath, ignoreReadOnly: false);
     }
 
     /// <summary>Destino do atalho, mesmo quando o arquivo de destino já não existe.</summary>
-    internal static string ReadTarget(string path)
+    public static string ReadTarget(string path)
     {
         var link = (IShellLinkW)new ShellLink();
         try
@@ -87,3 +87,4 @@ public static class StartMenu
         void SetPath([MarshalAs(UnmanagedType.LPWStr)] string pszFile);
     }
 }
+

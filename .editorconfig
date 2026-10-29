@@ -1,0 +1,43 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{cs,csproj,props,xaml,json}]
+indent_style = space
+indent_size = 4
+
+[*.{csproj,props,xaml}]
+indent_size = 2
+
+[*.cs]
+# ARC-06: segurança (CA21xx/CA23xx/CA3xxx/CA5xxx), confiabilidade/concorrência (CA20xx),
+# compatibilidade de plataforma (CA1416), interoperabilidade nativa e nulabilidade (CS86xx)
+# permanecem ativos como erro de compilação via TreatWarningsAsErrors=true.
+# Regras puramente estilísticas, de nomenclatura legada, cultura implícita de UI (Loc.Culture)
+# e classes Window/Application do WPF (cujo ciclo de vida é Closed/OnExit e não IDisposable)
+# ficam como sugestão para não exigir quebras artificiais de API pública.
+dotnet_diagnostic.CA1001.severity = suggestion
+dotnet_diagnostic.CA1068.severity = suggestion
+dotnet_diagnostic.CA1304.severity = suggestion
+dotnet_diagnostic.CA1305.severity = suggestion
+dotnet_diagnostic.CA1310.severity = suggestion
+dotnet_diagnostic.CA1311.severity = suggestion
+dotnet_diagnostic.CA1707.severity = suggestion
+dotnet_diagnostic.CA1711.severity = suggestion
+dotnet_diagnostic.CA1720.severity = suggestion
+dotnet_diagnostic.CA1725.severity = suggestion
+dotnet_diagnostic.CA1806.severity = suggestion
+dotnet_diagnostic.CA1816.severity = suggestion
+dotnet_diagnostic.CA1822.severity = suggestion
+dotnet_diagnostic.CA1838.severity = suggestion
+dotnet_diagnostic.CA1852.severity = suggestion
+dotnet_diagnostic.CA1859.severity = suggestion
+dotnet_diagnostic.CA1861.severity = suggestion
+dotnet_diagnostic.CA1866.severity = suggestion
+dotnet_diagnostic.CA1869.severity = suggestion
+dotnet_diagnostic.CA1875.severity = suggestion
+dotnet_diagnostic.CA2201.severity = suggestion
+dotnet_diagnostic.CA2263.severity = suggestion

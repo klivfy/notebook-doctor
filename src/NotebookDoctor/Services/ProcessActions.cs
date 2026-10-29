@@ -28,7 +28,7 @@ public static class ProcessActions
                 {
                     var st = new PowerThrottlingState { Version = 1, ControlMask = 1, StateMask = on ? 1u : 0u }; // 1 = EXECUTION_SPEED
                     if (!SetProcessInformation(h, 4 /* ProcessPowerThrottling */, ref st, Marshal.SizeOf<PowerThrottlingState>())) continue;
-                    try { p.PriorityClass = on ? ProcessPriorityClass.Idle : ProcessPriorityClass.Normal; } catch { }
+                    try { p.PriorityClass = on ? ProcessPriorityClass.Idle : ProcessPriorityClass.Normal; } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
                     n++;
                 }
                 finally { Native.CloseHandle(h); }
@@ -44,7 +44,7 @@ public static class ProcessActions
         foreach (var p in Process.GetProcessesByName(name))
             using (p)
             {
-                try { p.PriorityClass = priority; changed++; } catch { /* sem permissão ou já terminou */ }
+                try { p.PriorityClass = priority; changed++; } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { /* sem permissão ou já terminou */ }
             }
         return changed;
     }
@@ -58,7 +58,7 @@ public static class ProcessActions
         {
             using (p)
             {
-                try { p.Kill(); killed++; } catch { /* sem permissão ou já terminou */ }
+                try { p.Kill(); killed++; } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { /* sem permissão ou já terminou */ }
             }
         }
         return killed;

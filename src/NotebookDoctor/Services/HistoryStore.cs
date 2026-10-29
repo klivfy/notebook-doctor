@@ -17,14 +17,22 @@ public sealed class HistoryStore
         if ((s.Time - _lastWrite).TotalSeconds < 60) return;
         _lastWrite = s.Time;
         string line = Line(s, score, onBattery);
-        lock (_lock) { try { File.AppendAllText(AppPaths.History, line + "\n"); } catch { } }
+        lock (_lock)
+        {
+            try { File.AppendAllText(AppPaths.History, line + "\n"); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { ErrorJournal.Record(ex, "HistoryStore.Record", AppPaths.Dir); }
+        }
     }
 
     /// <summary>B26: grava de uma vez o histórico fictício da demonstração.</summary>
     public void Seed(IEnumerable<(Snapshot Snap, int Score)> samples)
     {
         var lines = samples.Select(x => Line(x.Snap, x.Score)).ToList();
-        lock (_lock) { try { File.WriteAllLines(AppPaths.History, lines); } catch { } }
+        lock (_lock)
+        {
+            try { File.WriteAllLines(AppPaths.History, lines); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { ErrorJournal.Record(ex, "HistoryStore.Seed", AppPaths.Dir); }
+        }
     }
 
     private static string Line(Snapshot s, int score, bool? onBattery = null)
@@ -50,10 +58,10 @@ public sealed class HistoryStore
                 foreach (var line in File.ReadLines(AppPaths.History))
                 {
                     try { var h = JsonSerializer.Deserialize<HistSample>(line); if (h is not null && h.T >= from) result.Add(h); }
-                    catch { /* linha corrompida: ignora */ }
+                    catch (JsonException) { /* linha corrompida: ignora */ }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
         return result;
     }
@@ -68,11 +76,12 @@ public sealed class HistoryStore
                 var from = DateTime.Now - keep;
                 var kept = File.ReadLines(AppPaths.History).Where(l =>
                 {
-                    try { return JsonSerializer.Deserialize<HistSample>(l)?.T >= from; } catch { return false; }
+                    try { return JsonSerializer.Deserialize<HistSample>(l)?.T >= from; }
+                    catch (JsonException) { return false; }
                 }).ToList();
                 File.WriteAllLines(AppPaths.History, kept);
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { ErrorJournal.Record(ex, "HistoryStore.Prune", AppPaths.Dir); }
         }
     }
 

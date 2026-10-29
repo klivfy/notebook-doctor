@@ -16,12 +16,14 @@ public static class FilePublisher
             string? cn = subject.Split(',').Select(p => p.Trim()).FirstOrDefault(p => p.StartsWith("CN=", StringComparison.OrdinalIgnoreCase))?[3..];
             return Loc.F("Assinado: {0}", cn?.Trim('"') ?? subject);
         }
-        catch
+        catch (Exception ex) when (ex is System.Security.Cryptography.CryptographicException or IOException or UnauthorizedAccessException)
         {
             // Sem assinatura Authenticode: mostra o fabricante que o próprio arquivo declara (não comprovado)
             string? company = null;
-            try { company = System.Diagnostics.FileVersionInfo.GetVersionInfo(path).CompanyName?.Trim(); } catch { }
+            try { company = System.Diagnostics.FileVersionInfo.GetVersionInfo(path).CompanyName?.Trim(); }
+            catch (Exception ex2) when (ex2 is IOException or UnauthorizedAccessException) { }
             return string.IsNullOrEmpty(company) ? Loc.T("Sem assinatura") : Loc.F("Sem assinatura ({0})", company);
         }
     }
 }
+

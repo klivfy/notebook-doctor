@@ -72,7 +72,7 @@ $o | ConvertTo-Json -Compress -Depth 6
         try
         {
             var task = Task.Run(WmiReader.SystemInfoJson);
-            return task.Wait(TimeSpan.FromMinutes(2)) ? SystemInfoParser.Parse(task.Result) : new RawSystem();
+            return task.Wait(TimeSpan.FromMinutes(2)) ? SystemInfoParser.Parse(task.GetAwaiter().GetResult()) : new RawSystem();
         }
         catch (AggregateException ex) when (ex.InnerException is PlatformNotSupportedException or DllNotFoundException or TypeInitializationException
                                             or System.Runtime.InteropServices.COMException) { return new RawSystem(); }
@@ -85,12 +85,13 @@ $o | ConvertTo-Json -Compress -Depth 6
         try
         {
             string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(Text));
-            using var p = Process.Start(new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
+            using var p = Process.Start(new ProcessStartInfo(SystemExe.PowerShell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
             { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, StandardOutputEncoding = Encoding.UTF8 });
             if (p is null) return new RawSystem();
             var output = p.StandardOutput.ReadToEndAsync();
-            if (!p.WaitForExit(120_000)) { try { p.Kill(); } catch (InvalidOperationException) { } return new RawSystem(); }
-            return SystemInfoParser.Parse(output.Result.Trim());
+            if (!p.WaitForExit(120_000)) { try { p.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { } return new RawSystem(); }
+            p.WaitForExit();
+            return SystemInfoParser.Parse(output.GetAwaiter().GetResult().Trim());
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or System.Text.Json.JsonException or InvalidOperationException) { return new RawSystem(); }
     }

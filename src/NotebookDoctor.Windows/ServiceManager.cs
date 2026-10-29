@@ -29,7 +29,7 @@ public static class ServiceManager
                 if (display.StartsWith('@')) display = name; // texto em recurso de DLL: o nome curto basta
                 list.Add(new ServiceInfo(name, display, image, start, k.GetValue("DelayedAutostart") is int d && d == 1));
             }
-            catch { /* chave sem permissão de leitura */ }
+            catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { /* chave sem permissão de leitura */ }
         }
         return list;
     }
@@ -42,3 +42,4 @@ public static class ServiceManager
         k.SetValue("Start", start, RegistryValueKind.DWord);
     }
 }
+

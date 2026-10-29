@@ -17,13 +17,14 @@ public static class PowerPlans
         {
             // powercfg escreve na página de código OEM do console (ex.: 850 no Brasil), não em UTF-8
             var oem = System.Text.Encoding.GetEncoding(System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
-            using var p = Process.Start(new ProcessStartInfo("powercfg.exe", args)
+            using var p = Process.Start(new ProcessStartInfo(SystemExe.System32("powercfg.exe"), args)
             { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true, StandardOutputEncoding = oem });
-            string output = p!.StandardOutput.ReadToEnd();
+            if (p is null) return "";
+            string output = p.StandardOutput.ReadToEnd();
             p.WaitForExit(5000);
             return output;
         }
-        catch { return ""; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException) { return ""; }
     }
 
     public static List<PowerPlan> List() =>
@@ -53,3 +54,4 @@ public static class PowerPlans
         return List().FirstOrDefault(p => !before.Contains(p.Guid));
     }
 }
+

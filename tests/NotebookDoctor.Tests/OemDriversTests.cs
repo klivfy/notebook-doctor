@@ -341,6 +341,7 @@ public class OemDriversTests
     public void Inventario_vazio_nao_quebra() => Assert.Equal("", OemRules.ParseInventory("").Chassis.Manufacturer);
 
     [Fact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     public void Procura_os_aplicativos_nas_duas_pastas_de_programas()
     {
         var all = OemProbe.Candidates(@"C:\Program Files", @"C:\Program Files (x86)").ToList();

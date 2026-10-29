@@ -105,18 +105,27 @@ public static class SecureEraser
     /// <summary>Sobrescreve o conteúdo (e os fluxos alternativos) com dados aleatórios, do mesmo tamanho. Não renomeia nem apaga.</summary>
     public static void Overwrite(string path, CancellationToken ct = default, Action<long>? onBytes = null)
     {
-        File.SetAttributes(path, File.GetAttributes(path) & ~FileAttributes.ReadOnly);
-        OverwriteStream(path, ct, onBytes);
-        foreach (var stream in AlternateStreams(path))
+        string fullMain = Path.GetFullPath(path);
+        if (SafeDelete.Root(Path.GetDirectoryName(fullMain) ?? "") is null)
+            throw new IOException(Loc.T("O caminho passa por um link ou atalho de pasta"));
+        var attr = File.GetAttributes(fullMain);
+        if (attr.HasFlag(FileAttributes.ReparsePoint))
+            throw new IOException(Loc.T("É um link ou um arquivo só na nuvem"));
+        if (attr.HasFlag(FileAttributes.ReadOnly))
+            File.SetAttributes(fullMain, attr & ~FileAttributes.ReadOnly);
+        OverwriteStream(fullMain, fullMain, ct, onBytes);
+        foreach (var stream in AlternateStreams(fullMain))
         {
-            try { OverwriteStream(path + ":" + stream, ct, null); }
+            try { OverwriteStream(fullMain + ":" + stream, fullMain, ct, null); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) { /* o fluxo some junto com o arquivo */ }
         }
     }
 
-    private static void OverwriteStream(string path, CancellationToken ct, Action<long>? onBytes)
+    private static void OverwriteStream(string path, string expectedMainPath, CancellationToken ct, Action<long>? onBytes)
     {
         using var fs = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.None, 1, FileOptions.WriteThrough);
+        if (!SafeDelete.VerifyExclusiveFileHandle(fs.SafeFileHandle, expectedMainPath))
+            throw new IOException(Loc.T("O caminho passa por um link ou atalho de pasta"));
         long length = fs.Length;
         var buffer = new byte[(int)Math.Min(Chunk, Math.Max(length, 1))];
         for (long pos = 0; pos < length; pos += buffer.Length)
@@ -144,9 +153,10 @@ public static class SecureEraser
         Overwrite(path, ct, onBytes);
 
         string dir = Path.GetDirectoryName(path)!;
-        string current = path;
+        string current = Path.GetFullPath(path);
         for (int i = 0; i < 3; i++)
         {
+            if (SafeDelete.Root(dir) is null) throw new IOException(Loc.T("O caminho passa por um link ou atalho de pasta"));
             string next = Path.Combine(dir, EraseRules.RandomName(rng));
             if (File.Exists(next) || Directory.Exists(next)) continue;
             File.Move(current, next);
@@ -154,25 +164,30 @@ public static class SecureEraser
         }
         using (var fs = new FileStream(current, FileMode.Open, FileAccess.Write, FileShare.None, 1, FileOptions.WriteThrough))
         {
+            if (!SafeDelete.VerifyExclusiveFileHandle(fs.SafeFileHandle, current))
+                throw new IOException(Loc.T("O caminho passa por um link ou atalho de pasta"));
             fs.SetLength(0);
             fs.Flush(true);
         }
-        File.Delete(current);
+        if (!SafeDelete.FileAtExactPath(current, ignoreReadOnly: true))
+            return Loc.T("O caminho passa por um link ou atalho de pasta");
         return null;
     }
 
     private static void EraseDirectory(string dir, Random rng)
     {
+        if (SafeDelete.Root(dir) is null) return;
         if (Directory.EnumerateFileSystemEntries(dir).Any()) return; // sobrou algo (arquivo pulado): a pasta fica
         string current = dir, parent = Path.GetDirectoryName(dir)!;
         for (int i = 0; i < 3; i++)
         {
+            if (SafeDelete.Root(parent) is null) return;
             string next = Path.Combine(parent, EraseRules.RandomName(rng));
             if (File.Exists(next) || Directory.Exists(next)) continue;
             Directory.Move(current, next);
             current = next;
         }
-        Directory.Delete(current, recursive: false);
+        SafeDelete.DirectoryAtExactPath(current);
     }
 
     public static EraseResult Erase(ErasePlan plan, IProgress<EraseProgress>? progress, CancellationToken ct)
@@ -235,6 +250,7 @@ public static class FreeSpaceWiper
         try
         {
             Directory.CreateDirectory(tempDir);
+            if (SafeDelete.Root(tempDir) is null) throw new IOException("Pasta temporária da limpeza passa por um link.");
             var drive = new DriveInfo(driveRoot);
             long target = WipeRules.Target(drive.AvailableFreeSpace, reserveBytes, maxBytes);
             var buffer = new byte[4 << 20];
@@ -273,7 +289,7 @@ public static class FreeSpaceWiper
         finally
         {
             foreach (var fs in open) { try { fs.Dispose(); } catch (IOException) { } } // DeleteOnClose apaga cada arquivo
-            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            try { if (Directory.Exists(tempDir)) SafeDelete.DirectoryAtExactPath(tempDir); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
         progress?.Report(new WipeProgress(written, written, open.Count));
         return new WipeResult(written, open.Count, cancelled, completed && !cancelled && error.Length == 0, error);

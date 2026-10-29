@@ -276,7 +276,7 @@ public partial class MainWindow
         if (ProcGrid.SelectedItem is not ProcRow r) { ProcMsg.Text = Loc.T("Selecione um programa na lista."); return; }
         if (ProcessIcons.ExePath(r.Names[0]) is not { } path) { ProcMsg.Text = Loc.F("O Windows não informa onde está {0} (processo do sistema ou de outro usuário).", r.Name); return; }
         // Argumento entre aspas: o Explorador só seleciona o arquivo, não o executa
-        try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
+        try { SystemExe.RevealInExplorer(path); } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
     }
 
     /// <summary>Leva 5.3: abre a aba Programas no programa instalado dono do processo.</summary>

@@ -58,7 +58,7 @@ $o | ConvertTo-Json -Compress -Depth 5
         try
         {
             string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(Script));
-            using var p = Process.Start(new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
+            using var p = Process.Start(new ProcessStartInfo(SystemExe.PowerShell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
             { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, StandardOutputEncoding = Encoding.UTF8 });
             if (p is null) return null;
             var output = p.StandardOutput.ReadToEndAsync(ct);

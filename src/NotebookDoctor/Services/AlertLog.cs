@@ -18,7 +18,8 @@ public static class AlertLog
     {
         lock (Lock)
         {
-            try { File.AppendAllText(FilePath, JsonSerializer.Serialize(new AlertEntry(DateTime.Now, title, text, silenced)) + "\n"); } catch { }
+            try { File.AppendAllText(FilePath, JsonSerializer.Serialize(new AlertEntry(DateTime.Now, title, text, silenced)) + "\n"); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { ErrorJournal.Record(ex, "AlertLog.Add", AppPaths.Dir); }
         }
     }
 
@@ -33,13 +34,13 @@ public static class AlertLog
             {
                 foreach (var line in File.ReadLines(FilePath))
                 {
-                    try { if (JsonSerializer.Deserialize<AlertEntry>(line) is { } a && a.Time >= from) list.Add(a); } catch { }
+                    try { if (JsonSerializer.Deserialize<AlertEntry>(line) is { } a && a.Time >= from) list.Add(a); } catch (JsonException) { }
                 }
                 // Mantém o arquivo pequeno: reescreve só quando passa de 256 KB
                 if (new FileInfo(FilePath).Length > 256 * 1024)
                     AtomicFile.WriteAllLines(FilePath, Load30().Select(a => JsonSerializer.Serialize(a)));
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { ErrorJournal.Record(ex, "AlertLog.Load", AppPaths.Dir); }
         }
         return list.OrderByDescending(a => a.Time).ToList();
     }
@@ -50,7 +51,7 @@ public static class AlertLog
         foreach (var line in File.ReadAllLines(FilePath))
         {
             AlertEntry? a = null;
-            try { a = JsonSerializer.Deserialize<AlertEntry>(line); } catch { }
+            try { a = JsonSerializer.Deserialize<AlertEntry>(line); } catch (JsonException) { }
             if (a is not null && a.Time >= from) yield return a;
         }
     }

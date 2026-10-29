@@ -188,13 +188,14 @@ try { Get-AppxPackage | Where-Object { $_.PackageFullName -eq '{{full}}' } | Res
         try
         {
             string enc = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
-            using var p = Process.Start(new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {enc}")
+            using var p = Process.Start(new ProcessStartInfo(SystemExe.PowerShell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {enc}")
             { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, StandardOutputEncoding = Encoding.UTF8 });
             if (p is null) return "";
             var output = p.StandardOutput.ReadToEndAsync();
-            if (!p.WaitForExit(timeoutMs)) { try { p.Kill(); } catch { } return ""; }
-            return output.Result;
+            if (!p.WaitForExit(timeoutMs)) { try { p.Kill(); } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { } return ""; }
+            p.WaitForExit();
+            return output.GetAwaiter().GetResult();
         }
-        catch { return ""; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException) { return ""; }
     }
 }

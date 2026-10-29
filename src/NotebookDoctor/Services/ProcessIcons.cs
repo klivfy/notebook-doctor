@@ -60,7 +60,7 @@ public static class ProcessIcons
             using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
             return icon is null ? null : ToImage(icon.Handle);
         }
-        catch { return null; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or ArgumentException or System.IO.IOException or ExternalException) { return null; }
         finally { if (large[0] != IntPtr.Zero) DestroyIcon(large[0]); }
     }
 

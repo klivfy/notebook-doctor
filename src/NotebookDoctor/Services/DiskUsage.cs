@@ -39,7 +39,8 @@ public static class DiskUsage
                 ct.ThrowIfCancellationRequested();
                 if (++seen % 3000 == 0) onProgress(Loc.F("{0:N0} arquivos verificados…", seen));
                 long len;
-                try { len = f.Length; } catch { continue; }
+                try { len = f.Length; }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { continue; }
                 if (len < minBytes) continue;
                 best.Add(new FolderUsage { Name = f.Name, Path = f.FullName, Bytes = len, IsFile = true });
                 if (best.Count > top * 2) best = best.OrderByDescending(x => x.Bytes).Take(top).ToList();
@@ -63,7 +64,8 @@ public static class DiskUsage
                 ct.ThrowIfCancellationRequested();
                 if (++seen % 3000 == 0) onProgress(Loc.F("{0:N0} arquivos verificados…", seen));
                 long len;
-                try { len = f.Length; } catch { continue; }
+                try { len = f.Length; }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { continue; }
                 if (len < minBytes || DuplicateRules.IsSystemPath(f.FullName, places)) continue; // o Windows e os programas não entram
                 if (!bySize.TryGetValue(len, out var l)) bySize[len] = l = new();
                 l.Add(f.FullName);
@@ -170,11 +172,12 @@ public static class DiskUsage
             foreach (var f in new DirectoryInfo(dir).EnumerateFiles("*", Opts))
             {
                 ct.ThrowIfCancellationRequested();
-                try { total += f.Length; } catch { }
+                try { total += f.Length; }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             }
         }
         catch (OperationCanceledException) { throw; }
-        catch { }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         return total;
     }
 
@@ -184,7 +187,8 @@ public static class DiskUsage
         await Task.Run(() =>
         {
             var entries = new List<(string name, string path)>();
-            try { entries.AddRange(Directory.EnumerateDirectories(root).Select(d => (System.IO.Path.GetFileName(d), d))); } catch { }
+            try { entries.AddRange(Directory.EnumerateDirectories(root).Select(d => (System.IO.Path.GetFileName(d), d))); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
 
             int done = 0;
             foreach (var (name, path) in entries)
@@ -194,7 +198,15 @@ public static class DiskUsage
                 onItem(new FolderUsage { Name = name, Path = path, Bytes = FolderSize(path, ct) });
             }
             long loose = 0;
-            try { foreach (var f in new DirectoryInfo(root).EnumerateFiles()) { try { loose += f.Length; } catch { } } } catch { }
+            try
+            {
+                foreach (var f in new DirectoryInfo(root).EnumerateFiles())
+                {
+                    try { loose += f.Length; }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             if (loose > 0) onItem(new FolderUsage { Name = "(arquivos soltos nesta pasta)", Path = root, Bytes = loose });
         }, ct);
     }

@@ -112,7 +112,7 @@ public partial class MainWindow
         if (SpaceGrid.SelectedItem is not FolderUsage f) { SpaceMsg.Text = Loc.T("Selecione um item na lista."); return; }
         if (f.IsFile && System.IO.File.Exists(f.Path))
         {
-            try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{f.Path}\""); } catch { }
+            try { SystemExe.RevealInExplorer(f.Path); } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
         }
         else if (System.IO.Directory.Exists(f.Path)) AppInfo.OpenShell(f.Path);
         else SpaceMsg.Text = Loc.T("Este item não informa uma pasta.");

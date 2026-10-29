@@ -570,7 +570,7 @@ public partial class DriversWindow : Window
         if (_busy) return;
         if (Readiness == RestoreReadiness.ProtectionOff)
         {
-            try { Process.Start(new ProcessStartInfo("SystemPropertiesProtection.exe") { UseShellExecute = true }); }
+            try { Process.Start(new ProcessStartInfo(SystemExe.System32("SystemPropertiesProtection.exe")) { UseShellExecute = true, WorkingDirectory = Environment.SystemDirectory }); }
             catch (Win32Exception) { Msg.Text = Loc.T("Não consegui abrir a Proteção do Sistema."); }
             return;
         }

@@ -26,16 +26,16 @@ public static class RestorePoint
             try
             {
                 string enc = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
-                using var p = Process.Start(new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {enc}")
+                using var p = Process.Start(new ProcessStartInfo(SystemExe.PowerShell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {enc}")
                 { CreateNoWindow = true, UseShellExecute = false, RedirectStandardError = true });
                 if (p is null) return "não criado";
-                if (!p.WaitForExit(90000)) { try { p.Kill(); } catch { } return "não criado (demorou demais)"; }
+                if (!p.WaitForExit(90000)) { try { p.Kill(); } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { } return "não criado (demorou demais)"; }
                 if (p.ExitCode != 0) return ProtectionOff;
                 settings.LastRestorePoint = DateTime.Now;
                 settings.Save();
                 return "criado";
             }
-            catch { return "não criado"; }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or System.IO.IOException) { return "não criado"; }
         });
     }
 }

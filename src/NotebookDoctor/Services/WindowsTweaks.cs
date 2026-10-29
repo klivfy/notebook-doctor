@@ -40,12 +40,13 @@ public static class WindowsTweaks
             var opts = new EnumerationOptions { AttributesToSkip = 0, IgnoreInaccessible = true };
             return new DirectoryInfo(SysRoot).EnumerateFiles(name, opts).FirstOrDefault()?.Length ?? 0;
         }
-        catch { return 0; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { return 0; }
     }
 
     private static int? ReadDword(RegistryKey root, string path, string name)
     {
-        try { using var k = root.OpenSubKey(path); return k?.GetValue(name) is int v ? v : null; } catch { return null; }
+        try { using var k = root.OpenSubKey(path); return k?.GetValue(name) is int v ? v : null; }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { return null; }
     }
 
     public static List<Tweak> Read(double ramGB, double diskFreePct)
@@ -114,7 +115,7 @@ public static class WindowsTweaks
     private static string[] ReadPaging()
     {
         try { using var k = Registry.LocalMachine.OpenSubKey(MemKey); return k?.GetValue("PagingFiles") as string[] ?? Array.Empty<string>(); }
-        catch { return Array.Empty<string>(); }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { return Array.Empty<string>(); }
     }
 
     /// <summary>Aplica o ajuste e devolve (mensagem, estado anterior para o desfazer). Lança com mensagem em português se falhar.</summary>
@@ -125,7 +126,7 @@ public static class WindowsTweaks
             case "hibernate":
             {
                 bool turningOff = t.ActionLabel.StartsWith("Desligar");
-                int code = await SystemIntegrity.RunAsync("powercfg.exe", turningOff ? "/hibernate off" : "/hibernate on", _ => { }, CancellationToken.None);
+                int code = await SystemIntegrity.RunAsync(SystemExe.System32("powercfg.exe"), turningOff ? "/hibernate off" : "/hibernate on", _ => { }, CancellationToken.None);
                 if (code != 0) throw new InvalidOperationException($"O powercfg terminou com código {code}.");
                 return (turningOff ? "Hibernação desligada; o espaço do hiberfil.sys foi liberado." : "Hibernação religada.", turningOff ? "on" : "off");
             }
@@ -178,9 +179,11 @@ public static class WindowsTweaks
         switch (id)
         {
             case "hibernate":
-                var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("powercfg.exe", previous == "on" ? "/hibernate on" : "/hibernate off") { CreateNoWindow = true, UseShellExecute = false });
-                p?.WaitForExit(15000);
-                return p?.ExitCode == 0 ? "Hibernação restaurada." : "O Windows recusou (abra o app como administrador e tente de novo).";
+                using (var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(SystemExe.System32("powercfg.exe"), previous == "on" ? "/hibernate on" : "/hibernate off") { CreateNoWindow = true, UseShellExecute = false }))
+                {
+                    p?.WaitForExit(15000);
+                    return p?.ExitCode == 0 ? "Hibernação restaurada." : "O Windows recusou (abra o app como administrador e tente de novo).";
+                }
             case "faststartup":
                 using (var k = Registry.LocalMachine.CreateSubKey(PowerKey, writable: true))
                     k.SetValue("HiberbootEnabled", int.Parse(previous), RegistryValueKind.DWord);
@@ -247,7 +250,7 @@ public static class VisualEffects
             using var k = Registry.CurrentUser.OpenSubKey(PersonalizeKey);
             d["transparency"] = k?.GetValue("EnableTransparency") is not int t || t != 0;
         }
-        catch { }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { }
         return d;
     }
 
@@ -264,7 +267,7 @@ public static class VisualEffects
         if (wanted.TryGetValue("transparency", out bool tr))
         {
             try { using var k = Registry.CurrentUser.CreateSubKey(PersonalizeKey, writable: true); k.SetValue("EnableTransparency", tr ? 1 : 0, RegistryValueKind.DWord); }
-            catch { }
+            catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { }
         }
     }
 }

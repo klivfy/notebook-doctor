@@ -46,7 +46,8 @@ public sealed class BackupStore(string root)
 
     public void Delete(string id)
     {
-        if (DirOf(id) is { } dir && Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
+        if (DirOf(id) is { } dir && Directory.Exists(dir) && SafeDelete.Root(dir) is not null)
+            Directory.Delete(dir, recursive: true);
     }
 
     /// <summary>Apaga as sessões vencidas (30 dias ou acima de 2 GB no total). Devolve quantas saíram.</summary>
@@ -104,6 +105,7 @@ public sealed class BackupStore(string root)
                     case BackupKind.Folder:
                         var folderZip = Zip(item);
                         Directory.CreateDirectory(item.OriginalPath);
+                        if (SafeDelete.Root(item.OriginalPath) is null) throw new IOException("pasta de destino passa por junção");
                         foreach (var entry in folderZip.Entries.Where(e => e.FullName.StartsWith(item.Archive + "/", StringComparison.Ordinal)))
                         {
                             // S3: entrada com ".." ou de outra pasta não escreve fora do lugar desta
@@ -136,7 +138,11 @@ public sealed class BackupStore(string root)
 
     private static void Extract(ZipArchiveEntry entry, string target)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+        string parent = Path.GetDirectoryName(target)!;
+        Directory.CreateDirectory(parent);
+        if (SafeDelete.Root(parent) is null) throw new IOException("pasta de destino passa por junção");
+        if (File.Exists(target) && new FileInfo(target).Attributes.HasFlag(FileAttributes.ReparsePoint))
+            throw new IOException("arquivo de destino é um link");
         entry.ExtractToFile(target, overwrite: true);
     }
 
@@ -150,12 +156,13 @@ public sealed class BackupStore(string root)
     internal static int Run(string exe, params string[] args) => Run(60_000, exe, args);
 
     /// <summary>
-    /// Roda um programa do Windows. S3: cada argumento vai separado (ArgumentList), então aspas num nome de chave ou de
-    /// tarefa não mudam o comando.
+    /// Roda um programa do Windows em System32. S3/S4: caminho absoluto em System32 e cada argumento separado (ArgumentList),
+    /// então nem um binário no diretório atual nem aspas num nome de chave ou de tarefa mudam o comando.
     /// </summary>
     internal static int Run(int timeoutMs, string exe, params string[] args)
     {
-        var info = new ProcessStartInfo(exe) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        string resolved = Path.IsPathRooted(exe) ? exe : SystemExe.System32(exe);
+        var info = new ProcessStartInfo(resolved) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var a in args) info.ArgumentList.Add(a);
         using var p = Process.Start(info);
         if (p is null) return -1;
@@ -203,9 +210,9 @@ public sealed class BackupSession : IDisposable
             using (var zip = new ZipArchive(fs, ZipArchiveMode.Create, leaveOpen: true)) fill(zip);
             fs.Flush(flushToDisk: true);
         }
-        catch
+        catch (Exception)
         {
-            try { File.Delete(path); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            if (File.Exists(path)) { try { SafeDelete.FileAtExactPath(path); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
             throw;
         }
         return name;

@@ -31,14 +31,20 @@ public static class RestorePoints
         try
         {
             string enc = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
-            using var p = Process.Start(new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {enc}")
+            using var p = Process.Start(new ProcessStartInfo(SystemExe.PowerShell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {enc}")
             { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, StandardOutputEncoding = Encoding.UTF8 });
             if (p is null) return "";
             var output = p.StandardOutput.ReadToEndAsync();
-            if (!p.WaitForExit(60000)) { try { p.Kill(); } catch { } return ""; }
-            return output.Result;
+            if (!p.WaitForExit(60000))
+            {
+                try { p.Kill(); }
+                catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { }
+                return "";
+            }
+            p.WaitForExit();
+            return output.GetAwaiter().GetResult();
         }
-        catch { return ""; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException) { return ""; }
     }
 }
 
@@ -63,6 +69,7 @@ public static class EventLogs
     public static Task<int> ClearAsync(string logName)
     {
         if (!EventLogRules.CanClear(logName)) throw new InvalidOperationException("Este log não é limpo pelo app.");
-        return SystemIntegrity.RunAsync("wevtutil.exe", $"cl \"{logName.Replace("\"", "")}\"", _ => { }, CancellationToken.None);
+        return SystemIntegrity.RunAsync(SystemExe.System32("wevtutil.exe"), $"cl \"{logName.Replace("\"", "")}\"", _ => { }, CancellationToken.None);
     }
 }
+

@@ -41,7 +41,7 @@ public static class Toasts
                 cmd.SetValue("", $"\"{exe}\" \"%1\"");
             }
         }
-        catch { /* sem permissão no registro: o app cai para o balão da bandeja */ }
+        catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException) { /* sem permissão no registro: o app cai para o balão da bandeja */ }
     }
 
     /// <summary>Mostra a notificação. Retorna false se não deu (o chamador usa o balão da bandeja).</summary>
@@ -66,10 +66,10 @@ $d.LoadXml([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{{xml64}
 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('{{Aumid}}').Show((New-Object Windows.UI.Notifications.ToastNotification $d))
 """;
             string enc = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
-            using var p = Process.Start(new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {enc}")
+            using var p = Process.Start(new ProcessStartInfo(SystemExe.PowerShell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {enc}")
             { CreateNoWindow = true, UseShellExecute = false });
             return p is not null;
         }
-        catch { return false; }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException) { return false; }
     }
 }

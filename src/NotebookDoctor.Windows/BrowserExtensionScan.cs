@@ -39,7 +39,7 @@ public static class BrowserExtensionScan
                 .Where(d => Directory.Exists(Path.Combine(d, "Extensions")))
                 .ToList();
         }
-        catch { return []; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return []; }
     }
 
     private static IEnumerable<BrowserExtension> ReadChromiumProfile(string browser, string profileDir)
@@ -101,7 +101,7 @@ public static class BrowserExtensionScan
     private static long FolderSize(string dir)
     {
         try { return new DirectoryInfo(dir).EnumerateFiles("*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true }).Sum(f => f.Length); }
-        catch { return 0; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return 0; }
     }
 
     /// <summary>Abre a página de extensões do navegador (o Windows acha o executável pelo registro "App Paths").</summary>
@@ -114,7 +114,8 @@ public static class BrowserExtensionScan
 
     private static void Start(string exe, string arg)
     {
-        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, arg) { UseShellExecute = true }); }
-        catch { /* navegador não instalado para este usuário */ }
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, arg) { UseShellExecute = true, WorkingDirectory = Environment.SystemDirectory }); }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { /* navegador não instalado para este usuário */ }
     }
 }
+

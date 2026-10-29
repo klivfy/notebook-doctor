@@ -27,7 +27,7 @@ public static class NetTest
         {
             var sw = Stopwatch.StartNew();
             try { await Dns.GetHostAddressesAsync(host); lines.Add(Loc.F("DNS {0}: {1} ms", host, sw.ElapsedMilliseconds)); }
-            catch { lines.Add(Loc.F("DNS {0}: falhou", host)); }
+            catch (Exception ex) when (ex is System.Net.Sockets.SocketException or ArgumentException or InvalidOperationException) { lines.Add(Loc.F("DNS {0}: falhou", host)); }
         }
         return lines;
     }
@@ -44,10 +44,11 @@ public static class NetTest
                 var r = await ping.SendPingAsync(host, 1500);
                 if (r.Status == IPStatus.Success) times.Add(r.RoundtripTime); else lost++;
             }
-            catch { lost++; }
+            catch (Exception ex) when (ex is PingException or System.Net.Sockets.SocketException or InvalidOperationException) { lost++; }
         }
         if (times.Count == 0) return Loc.F("{0}: sem resposta", label);
         string verdict = Loc.T(times.Average() < 30 ? "ótimo" : times.Average() < 80 ? "bom" : times.Average() < 150 ? "lento" : "muito lento");
         return Loc.F("{0}: {1:0} ms (mín {2} / máx {3}), perda {4}% · {5}", label, times.Average(), times.Min(), times.Max(), lost * 20, verdict);
     }
 }
+

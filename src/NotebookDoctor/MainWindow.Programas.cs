@@ -678,7 +678,7 @@ public partial class MainWindow
             // O Editor do Registro abre na última chave vista; "-m" abre outra janela mesmo com ele já aberto
             using (var k = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Applets\Regedit"))
                 k.SetValue("LastKey", ProgramRules.RegeditLastKey(k.GetValue("LastKey") as string, p.RegistryPath));
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("regedit.exe", "-m") { UseShellExecute = true });
+            using var _ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(SystemExe.RegEdit, "-m") { UseShellExecute = true, WorkingDirectory = Environment.SystemDirectory });
             ProgMsg.Text = Loc.T("O Editor do Registro abre na chave do programa. Só consulte: mudar valores ali pode quebrar a desinstalação.");
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1223) { ProgMsg.Text = Loc.T("Cancelado no aviso de permissão do Windows."); }

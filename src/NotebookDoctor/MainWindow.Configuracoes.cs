@@ -99,7 +99,7 @@ public partial class MainWindow
         PlanMsg.Text = ok ? Loc.F("Plano ativo: {0}", target.Name) : Loc.T("Não foi possível trocar o plano.");
         if (ok) ActionLog.Add(Loc.T("Plano de energia alterado"), Loc.F("{0} → {1}. Ponto de restauração: {2}", previous.Name, target.Name, Loc.T(restore)), "power", previous.Guid);
         _ = Host.RefreshHealthAsync();
-        LoadPlans();
+        await LoadPlansAsync();
         return ok;
     }
 
@@ -124,7 +124,7 @@ public partial class MainWindow
     // ---------- Energia e permissões ----------
     private List<PowerPlan> _plans = new();
 
-    private async void LoadPlans()
+    private async Task LoadPlansAsync()
     {
         _plans = await Task.Run(PowerPlans.List);
         PlanBox.ItemsSource = _plans;
@@ -147,7 +147,7 @@ public partial class MainWindow
         PlanMsg.Text = plan is null ? Loc.T("O Windows não permitiu criar o plano neste computador.") : Loc.F("Plano \"{0}\" criado.", plan.Name);
         if (plan is not null) ActionLog.Add("Plano de energia criado", plan.Name, "plan-created", plan.Guid);
         _ = Host.RefreshHealthAsync();
-        LoadPlans();
+        await LoadPlansAsync();
     }
 
     private void RefreshAdminCard()
@@ -176,7 +176,7 @@ public partial class MainWindow
             var findings = Diagnosis.Evaluate(Host.Recent, Host.Health, Host.Memory.Suspects, battery: Host.BatteryRecent, batteryLog: Host.BatteryLog, manufacturer: Host.Manufacturer);
             var health = Host.Health;
             string zip = await Task.Run(() => SupportPackage.Create(snap, findings, health, Host.History.Load(TimeSpan.FromDays(7))));
-            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{zip}\"");
+            SystemExe.RevealInExplorer(zip);
             ActionLog.Add("Pacote para o suporte gerado", System.IO.Path.GetFileName(zip));
             ShowSnack("Pacote criado", "Anexe o arquivo .zip selecionado no atendimento. Ele não leva seu nome de usuário nem o nome do computador.",
                       "Abrir suporte", AppInfo.OpenSupport, seconds: 15);
@@ -240,7 +240,7 @@ public partial class MainWindow
         UpdateMsg.Text = Loc.T("Procurando…");
         try
         {
-            var (result, info) = await Updater.CheckAsync();
+            var (result, info) = await Updater.CheckAsync(AppInfo.Version);
             Host.Settings.LastUpdateCheck = DateTime.Now;
             Host.Settings.Save();
             Host.SetPendingUpdate(result == UpdateCheck.Available ? info : null);
@@ -273,10 +273,10 @@ public partial class MainWindow
         try
         {
             var progress = new Progress<int>(p => UpdateMsg.Text = Loc.F("Baixando… {0}%", p));
-            string file = await Updater.DownloadAndVerifyAsync(info, progress);
+            using var installer = await Updater.DownloadLockedAsync(info, progress, AppPaths.Dir);
             UpdateMsg.Text = Loc.T("Instalador conferido. Abrindo…");
             ActionLog.Add(Loc.F("Atualização para {0}", info.Version), Loc.T("Instalador verificado (SHA-256 e assinatura Klivfy)."));
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(file) { UseShellExecute = true });
+            installer.Launch();
             Host.QuitForUpdate();
         }
         catch (Exception ex)

@@ -21,7 +21,7 @@ public static class CrashLog
             File.WriteAllText(Path.Combine(Dir, CrashReport.FileName(now)), SupportPackage.Redact(text));
             foreach (var old in CrashReport.Excess(Files())) File.Delete(old);
         }
-        catch { /* falhar ao registrar a falha não pode derrubar mais nada */ }
+        catch (Exception ex2) when (ex2 is IOException or UnauthorizedAccessException or System.Security.SecurityException) { /* falhar ao registrar a falha não pode derrubar mais nada */ }
     }
 
     public static string[] Files() =>
@@ -33,6 +33,6 @@ public static class CrashLog
         var last = Files().OrderByDescending(f => Path.GetFileName(f), StringComparer.Ordinal).FirstOrDefault();
         if (last is null) return "";
         try { return CrashReport.Headline(File.ReadAllText(last).Split("\r\n\r\n", 2).ElementAtOrDefault(1) ?? ""); }
-        catch { return ""; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return ""; }
     }
 }

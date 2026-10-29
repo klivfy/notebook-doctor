@@ -30,7 +30,7 @@ public static class AppInfo
     public static void OpenShell(string target)
     {
         try { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true }); }
-        catch { /* sem navegador padrão ou bloqueado: nada a fazer */ }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { /* sem navegador padrão ou bloqueado: nada a fazer */ }
     }
 
     /// <summary>Reabre o app com permissão de administrador (o Windows mostra o aviso do UAC). Retorna false se o usuário negar.</summary>

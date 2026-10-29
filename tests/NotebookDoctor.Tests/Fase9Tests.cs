@@ -47,6 +47,7 @@ public class Fase9Tests
 
     // Leva 9.2, tarefa 09
     [Fact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     public void Gravacao_atomica_troca_o_arquivo_inteiro_e_nao_deixa_temporario()
     {
         string dir = Directory.CreateTempSubdirectory("nd-atomic-").FullName;
@@ -64,6 +65,7 @@ public class Fase9Tests
     }
 
     [Fact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     public void Linhas_gravadas_atomicamente_terminam_cada_uma_com_quebra()
     {
         string dir = Directory.CreateTempSubdirectory("nd-atomic-").FullName;
@@ -80,6 +82,7 @@ public class Fase9Tests
     }
 
     [Fact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     public void Gravacao_que_falha_deixa_o_arquivo_antigo_intacto()
     {
         string dir = Directory.CreateTempSubdirectory("nd-atomic-").FullName;
@@ -97,6 +100,7 @@ public class Fase9Tests
     }
 
     [Fact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     public void Copia_de_arquivo_ilegivel_fica_ao_lado_e_sem_arquivo_nao_ha_copia()
     {
         string dir = Directory.CreateTempSubdirectory("nd-atomic-").FullName;

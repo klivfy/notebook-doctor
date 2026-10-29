@@ -31,7 +31,7 @@ public static class UsageStats
             if (!s.TelemetryEnabled || AppPaths.Demo || !Telemetry.Known(tool)) return;
             lock (Lock) Telemetry.Count(failure ? s.TelemetryFailures : s.TelemetryUses, tool);
         }
-        catch { /* contar nunca atrapalha o app */ }
+        catch (Exception ex) when (ex is NullReferenceException or InvalidOperationException) { /* contar nunca atrapalha o app */ }
     }
 
     private static readonly Dictionary<string, string> WindowTools = new()

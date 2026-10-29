@@ -186,7 +186,7 @@ public partial class ContextMenuWindow : Window
     {
         if (Current is not { } row || row.FileText.Length == 0) { Msg.Text = Loc.T("Este item não tem arquivo para mostrar."); return; }
         if (!File.Exists(row.FileText)) { Msg.Text = Loc.T("O arquivo não existe mais."); return; }
-        try { Process.Start("explorer.exe", $"/select,\"{row.FileText}\""); }
+        try { SystemExe.RevealInExplorer(row.FileText); }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException) { Msg.Text = ex.Message; }
     }
 }

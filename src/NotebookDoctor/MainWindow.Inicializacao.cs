@@ -103,6 +103,6 @@ public partial class MainWindow
         if (StartupGrid.SelectedItem is not StartupEntry entry) { StartupMsg.Text = Loc.T("Selecione um item na lista."); return; }
         if (entry.FilePath is not { } path) { StartupMsg.Text = Loc.F("{0}: o arquivo do comando não foi encontrado.", entry.Name); return; }
         // Argumento entre aspas: o Explorador só seleciona o arquivo, não o executa
-        try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
+        try { SystemExe.RevealInExplorer(path); } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
     }
 }

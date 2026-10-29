@@ -74,12 +74,16 @@ public static class LeftoverRemover
             case LeftoverKind.File:
             {
                 if (!File.Exists(l.Path)) return Ok(l);
+                if (SafeDelete.Root(Path.GetDirectoryName(l.Path) ?? "") is null || new FileInfo(l.Path).Attributes.HasFlag(FileAttributes.ReparsePoint))
+                    return new RemovalResult(l, false, false, "link");
                 backup.AddFile(l.Path);
                 return DeleteFile(l, isAdmin);
             }
             default:
             {
                 if (!Directory.Exists(l.Path)) return Ok(l);
+                if (SafeDelete.Root(l.Path) is not { } root)
+                    return new RemovalResult(l, false, false, "link");
                 if (l.Bytes > RecycleAbove)
                 {
                     if (!Recycle(l.Path)) return new RemovalResult(l, false, false, Loc.T("A Lixeira não aceitou a pasta."));
@@ -87,7 +91,7 @@ public static class LeftoverRemover
                     return Ok(l);
                 }
                 backup.AddFolder(l.Path);
-                return DeleteFolder(l, isAdmin);
+                return DeleteFolder(l, root, isAdmin);
             }
         }
     }
@@ -96,53 +100,56 @@ public static class LeftoverRemover
     {
         try
         {
-            File.SetAttributes(l.Path, FileAttributes.Normal);
-            File.Delete(l.Path);
-            return Ok(l);
+            return SafeDelete.FileAtExactPath(l.Path, ignoreReadOnly: true)
+                ? Ok(l)
+                : new RemovalResult(l, false, false, "link");
         }
-        catch (IOException) when (isAdmin && MoveFileEx(l.Path, null, DelayUntilReboot))
+        catch (IOException) when (isAdmin && SafeDelete.Root(Path.GetDirectoryName(l.Path) ?? "") is not null && MoveFileEx(l.Path, null, DelayUntilReboot))
         {
             return new RemovalResult(l, true, true, "");
         }
     }
 
     /// <summary>
-    /// Apaga arquivo por arquivo; os que estão em uso saem no reinício (com administrador) ou ficam, e a pasta fica
+    /// Apaga arquivo por arquivo pelo identificador; os que estão em uso saem no reinício (com administrador) ou ficam, e a pasta fica
     /// junto. Links e junções dentro da pasta são removidos sem entrar neles: o destino pode ser de outra pessoa ou programa.
     /// </summary>
-    private static RemovalResult DeleteFolder(Leftover l, bool isAdmin)
+    private static RemovalResult DeleteFolder(Leftover l, string root, bool isAdmin)
     {
         int busy = 0;
         bool pending = false;
 
-        void Fail(string path)
+        void Fail(string path, string parentDir)
         {
-            if (isAdmin && MoveFileEx(path, null, DelayUntilReboot)) pending = true;
+            if (isAdmin && SafeDelete.Root(parentDir) is { } pf && Paths.IsUnder(pf, root) && MoveFileEx(path, null, DelayUntilReboot)) pending = true;
             else busy++;
         }
 
         void Tree(string dir)
         {
+            if (SafeDelete.Root(dir) is not { } dirFinal || !Paths.IsUnder(dirFinal, root)) { busy++; return; }
             foreach (var entry in new DirectoryInfo(dir).EnumerateFileSystemInfos())
             {
                 try
                 {
                     if (entry.Attributes.HasFlag(FileAttributes.ReparsePoint))
                     {
-                        if (entry is DirectoryInfo) Directory.Delete(entry.FullName); // só o link
-                        else File.Delete(entry.FullName);
+                        if (!SafeDelete.ReparsePoint(entry.FullName, root)) Fail(entry.FullName, dir);
                     }
                     else if (entry is DirectoryInfo sub) Tree(sub.FullName);
                     else
                     {
-                        entry.Attributes = FileAttributes.Normal;
-                        entry.Delete();
+                        if (!SafeDelete.File(entry.FullName, root, ignoreReadOnly: true)) Fail(entry.FullName, dir);
                     }
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Fail(entry.FullName); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Fail(entry.FullName, dir); }
             }
-            try { Directory.Delete(dir); }
-            catch (IOException) { if (isAdmin && MoveFileEx(dir, null, DelayUntilReboot)) pending = true; } // um arquivo pendente segura a pasta até o reinício
+            try { if (!SafeDelete.Directory(dir, root)) busy++; }
+            catch (IOException)
+            {
+                if (isAdmin && SafeDelete.Root(dir) is { } df && Paths.IsUnder(df, root) && MoveFileEx(dir, null, DelayUntilReboot)) pending = true; // um arquivo pendente segura a pasta até o reinício
+                else busy++;
+            }
         }
 
         Tree(l.Path);

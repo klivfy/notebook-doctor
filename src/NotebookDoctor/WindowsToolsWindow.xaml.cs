@@ -53,7 +53,7 @@ public partial class WindowsToolsWindow : Window
         if (sender is not Button { Tag: WindowsTool tool } || !WindowsTools.IsSafe(tool)) return;
         try
         {
-            var psi = new ProcessStartInfo(tool.File, tool.Arguments) { UseShellExecute = true };
+            var psi = new ProcessStartInfo(SystemExe.ResolveWindowsTool(tool.File), tool.Arguments) { UseShellExecute = true, WorkingDirectory = Environment.SystemDirectory };
             using var _ = Process.Start(psi);
             Msg.Text = Loc.F("Abrindo: {0}", Loc.T(tool.Name));
         }

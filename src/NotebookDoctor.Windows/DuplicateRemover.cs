@@ -41,10 +41,9 @@ public static class DuplicateRemover
                     if (FileHash.Of(path, sampleOnly: false, ct) != referenceHash) { skipped.Add(path); continue; } // mudou desde a busca
                     if (permanent)
                     {
-                        File.SetAttributes(path, FileAttributes.Normal);
-                        File.Delete(path);
+                        if (!SafeDelete.FileAtExactPath(path, ignoreReadOnly: true)) { skipped.Add(path); continue; }
                     }
-                    else if (!Recycle(path)) { skipped.Add(path); continue; }
+                    else if (SafeDelete.Root(Path.GetDirectoryName(path) ?? "") is null || !Recycle(path)) { skipped.Add(path); continue; }
                     bytes += group.Size;
                     files++;
                 }

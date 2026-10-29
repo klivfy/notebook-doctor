@@ -1,7 +1,12 @@
+using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Security;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Win32;
 
@@ -52,12 +57,17 @@ $o | ConvertTo-Json -Compress -Depth 3
         try
         {
             string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(SecurityScript));
-            using var p = Process.Start(new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
+            using var p = Process.Start(new ProcessStartInfo(SystemExe.PowerShell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
             { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, StandardOutputEncoding = Encoding.UTF8 });
             if (p is null) return SecurityInfo.Empty;
             var output = p.StandardOutput.ReadToEndAsync();
-            if (!p.WaitForExit(45000)) { try { p.Kill(); } catch { } return SecurityInfo.Empty; }
-            using var doc = JsonDocument.Parse(output.Result.Trim());
+            if (!p.WaitForExit(45000))
+            {
+                try { p.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
+                return SecurityInfo.Empty;
+            }
+            p.WaitForExit();
+            using var doc = JsonDocument.Parse(output.GetAwaiter().GetResult().Trim());
             var r = doc.RootElement;
 
             static List<string> Strings(JsonElement root, string name)
@@ -76,7 +86,10 @@ $o | ConvertTo-Json -Compress -Depth 3
             var othersOn = Strings(r, "avon").Where(NotDefender).ToList();
             return new SecurityInfo(rt, sig, others, Strings(r, "fwoff"), othersOn);
         }
-        catch { return SecurityInfo.Empty; }
+        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException or JsonException)
+        {
+            return SecurityInfo.Empty;
+        }
     }
 
     public static async Task<HealthInfo> RunAsync()
@@ -92,21 +105,21 @@ $o | ConvertTo-Json -Compress -Depth 3
         var tOneDrive = Task.Run(OneDriveScan.Get);
         await Task.WhenAll(tPs, tBat, tPlan, tJunk, tStart, tUnsigned, tSec, tVhd, tOneDrive);
 
-        var (name, type, health, wear, temp, boots, drivers) = tPs.Result;
-        var (batPct, cycles) = tBat.Result;
-        var plans = tPlan.Result;
+        var ps = await tPs;
+        var (batPct, cycles) = await tBat;
+        var plans = await tPlan;
         var high = plans.FirstOrDefault(p => p.Name.Contains("desempenho", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("performance", StringComparison.OrdinalIgnoreCase));
-        int? bootLast = boots.Count > 0 ? boots[0] : null;
-        int? bootAvg = boots.Count > 1 ? (int)boots.Average() : null;
+        int? bootLast = ps.Boots.Count > 0 ? ps.Boots[0] : null;
+        int? bootAvg = ps.Boots.Count > 1 ? (int)ps.Boots.Average() : null;
 
-        return new HealthInfo(name, type, health, wear, temp, batPct, cycles, bootLast, bootAvg,
+        return new HealthInfo(ps.Name, ps.Type, ps.Health, ps.Wear, ps.Temp, batPct, cycles, bootLast, bootAvg,
             RebootPending(), System.Windows.SystemParameters.PowerLineStatus == System.Windows.PowerLineStatus.Online,
-            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, tStart.Result, tJunk.Result, drivers, tUnsigned.Result, tSec.Result, tVhd.Result, tOneDrive.Result,
-            _updates, _gpus, _maintenance, _bootDelays);
+            plans.FirstOrDefault(p => p.Active)?.Name ?? "", high?.Guid, await tStart, await tJunk, ps.Drivers, await tUnsigned, await tSec, await tVhd, await tOneDrive,
+            ps.Updates, ps.Gpus, ps.Maintenance, ps.BootDelays);
     }
 
     // Pastas de dados do usuário, onde malware costuma rodar. Pastas de desenvolvimento ficam de fora para evitar alarme falso.
-    private static readonly Dictionary<string, bool> SignedCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, bool> SignedCache = new(StringComparer.OrdinalIgnoreCase);
     private static readonly string[] DevMarkers = { @"\node_modules\", @"\bin\debug\", @"\bin\release\", @"\obj\", @"\.dotnet\", @"\.nuget\", @"\.vscode\", @"\.cargo\", @"\.rustup\", @"\npm\", @"\pnpm\", @"\python" };
 
     private static List<UnsignedApp> FindUnsigned()
@@ -124,7 +137,8 @@ $o | ConvertTo-Json -Compress -Depth 3
             using (p)
             {
                 string? path;
-                try { path = p.MainModule?.FileName; } catch { continue; } // processo protegido/de outro usuário
+                try { path = p.MainModule?.FileName; }
+                catch (Exception ex) when (ex is Win32Exception or InvalidOperationException) { continue; } // processo protegido/de outro usuário
                 if (path is null || found.ContainsKey(path)) continue;
                 if (p.Id == Environment.ProcessId || !roots.Any(r => path.StartsWith(r, StringComparison.OrdinalIgnoreCase))) continue;
                 if (DevMarkers.Any(m => path.Contains(m, StringComparison.OrdinalIgnoreCase))) continue;
@@ -135,16 +149,21 @@ $o | ConvertTo-Json -Compress -Depth 3
         return found.Values.ToList();
     }
 
-    private static bool IsSigned(string path)
-    {
-        lock (SignedCache)
+    private static bool IsSigned(string path) =>
+        SignedCache.GetOrAdd(path, static p =>
         {
-            if (SignedCache.TryGetValue(path, out bool s)) return s;
-            try { _ = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(path); s = true; }
-            catch { s = false; } // sem assinatura Authenticode (ou ilegível)
-            return SignedCache[path] = s;
-        }
-    }
+            try
+            {
+#pragma warning disable SYSLIB0057
+                using var _ = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(p);
+#pragma warning restore SYSLIB0057
+                return true;
+            }
+            catch (Exception ex) when (ex is CryptographicException or IOException or UnauthorizedAccessException or ArgumentException)
+            {
+                return false; // sem assinatura Authenticode (ou ilegível)
+            }
+        });
 
     /// <summary>
     /// M40: discos virtuais do WSL (distribuições da Microsoft Store e as instaladas com "wsl --install") e do Docker Desktop.
@@ -156,7 +175,8 @@ $o | ConvertTo-Json -Compress -Depth 3
         var found = new List<VirtualDisk>();
         void Add(string name, string path)
         {
-            try { if (File.Exists(path)) found.Add(new VirtualDisk(name, path, new FileInfo(path).Length)); } catch { }
+            try { if (File.Exists(path)) found.Add(new VirtualDisk(name, path, new FileInfo(path).Length)); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
         try
         {
@@ -168,7 +188,7 @@ $o | ConvertTo-Json -Compress -Depth 3
                 Add(name.Contains('.') ? name[(name.IndexOf('.') + 1)..] : name, Path.Combine(pkg, "LocalState", "ext4.vhdx"));
             }
         }
-        catch { }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         try
         {
             // WSL moderno: %LocalAppData%\wsl\{guid}\ext4.vhdx
@@ -176,7 +196,7 @@ $o | ConvertTo-Json -Compress -Depth 3
             if (Directory.Exists(wsl))
                 foreach (var dir in Directory.EnumerateDirectories(wsl)) Add("WSL", Path.Combine(dir, "ext4.vhdx"));
         }
-        catch { }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         Add("Docker Desktop", Path.Combine(local, @"Docker\wsl\data\ext4.vhdx"));
         Add("Docker Desktop", Path.Combine(local, @"Docker\wsl\disk\docker_data.vhdx"));
         return found;
@@ -190,15 +210,15 @@ $o | ConvertTo-Json -Compress -Depth 3
             using var b = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending");
             return a is not null || b is not null;
         }
-        catch { return false; }
+        catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException) { return false; }
     }
 
     private static (int? pct, int? cycles) ReadBattery()
     {
-        string file = Path.Combine(AppPaths.Dir, "bateria.xml");
+        string file = Path.Combine(AppPaths.Dir, $"bateria-{Guid.NewGuid():N}.xml");
         try
         {
-            using var p = Process.Start(new ProcessStartInfo("powercfg.exe", $"/batteryreport /xml /output \"{file}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true });
+            using var p = Process.Start(new ProcessStartInfo(SystemExe.System32("powercfg.exe"), $"/batteryreport /xml /output \"{file}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true });
             p?.WaitForExit(15000);
             if (!File.Exists(file)) return (null, null);
             var bat = XDocument.Load(file).Descendants().FirstOrDefault(e => e.Name.LocalName == "Battery");
@@ -207,44 +227,62 @@ $o | ConvertTo-Json -Compress -Depth 3
             int? cyc = int.TryParse(Val("CycleCount"), out int c) ? c : null;
             return ((int)Math.Round(full / design * 100), cyc);
         }
-        catch { return (null, null); }
-        finally { try { File.Delete(file); } catch { } }
+        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException or XmlException)
+        {
+            return (null, null);
+        }
+        finally { SafeDelete.FileAtExactPath(file, ignoreReadOnly: true); }
     }
 
-    // A22, A23 e A39: lidos pelo mesmo script do disco, numa só chamada ao PowerShell
-    private static UpdateStatus? _updates;
-    private static List<GpuDriver> _gpus = new();
-    private static WindowsMaintenance? _maintenance;
-    private static List<BootDelay> _bootDelays = new();
-
-    private static void ReadUpkeep(JsonElement root)
+    private sealed record PowerShellData(
+        string Name,
+        string Type,
+        string Health,
+        int? Wear,
+        int? Temp,
+        List<int> Boots,
+        List<string> Drivers,
+        UpdateStatus? Updates,
+        List<GpuDriver> Gpus,
+        WindowsMaintenance? Maintenance,
+        List<BootDelay> BootDelays)
     {
-        _updates = new UpdateStatus(
+        public static PowerShellData Empty => new("", "", "", null, null, [], [], null, [], null, []);
+    }
+
+    private static (UpdateStatus Updates, List<GpuDriver> Gpus, WindowsMaintenance Maintenance, List<BootDelay> BootDelays) ReadUpkeep(JsonElement root)
+    {
+        var updates = new UpdateStatus(
             root.TryGetProperty("wu", out var wu) ? UpdateRules.ParseHistory(wu) : new List<UpdateEntry>(),
             root.TryGetProperty("wuoff", out var off) && off.ValueKind == JsonValueKind.True,
             root.TryGetProperty("wupause", out var pause) && pause.ValueKind == JsonValueKind.String ? UpdateRules.ParsePause(pause.GetString()) : null);
-        _gpus = root.TryGetProperty("gpu", out var gpu) ? DriverRules.Parse(gpu) : new();
+        var gpus = root.TryGetProperty("gpu", out var gpu) ? DriverRules.Parse(gpu) : new();
         bool? defrag = root.TryGetProperty("defrag", out var df) && df.ValueKind is JsonValueKind.True or JsonValueKind.False ? df.GetBoolean() : null;
-        _maintenance = new WindowsMaintenance(defrag, root.TryGetProperty("maintoff", out var mo) && mo.ValueKind == JsonValueKind.True);
-        _bootDelays = root.TryGetProperty("slow", out var slow) ? BootDelays.Parse(slow) : new(); // leva 11.3
+        var maintenance = new WindowsMaintenance(defrag, root.TryGetProperty("maintoff", out var mo) && mo.ValueKind == JsonValueKind.True);
+        var bootDelays = root.TryGetProperty("slow", out var slow) ? BootDelays.Parse(slow) : new(); // leva 11.3
+        return (updates, gpus, maintenance, bootDelays);
     }
 
-    private static (string name, string type, string health, int? wear, int? temp, List<int> boots, List<string> drivers) RunPowerShell()
+    private static PowerShellData RunPowerShell()
     {
         var boots = new List<int>();
         var drivers = new List<string>();
-        _updates = null; _gpus = new(); _maintenance = null; _bootDelays = new();
         try
         {
             string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(Script));
-            using var p = Process.Start(new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
+            using var p = Process.Start(new ProcessStartInfo(SystemExe.PowerShell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
             { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, StandardOutputEncoding = Encoding.UTF8 });
-            if (p is null) return ("", "", "", null, null, boots, drivers);
+            if (p is null) return PowerShellData.Empty;
             var output = p.StandardOutput.ReadToEndAsync();
-            if (!p.WaitForExit(60000)) { try { p.Kill(); } catch { } return ("", "", "", null, null, boots, drivers); }
-            using var doc = JsonDocument.Parse(output.Result.Trim());
+            if (!p.WaitForExit(60000))
+            {
+                try { p.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
+                return PowerShellData.Empty;
+            }
+            p.WaitForExit();
+            using var doc = JsonDocument.Parse(output.GetAwaiter().GetResult().Trim());
             var root = doc.RootElement;
-            ReadUpkeep(root);
+            var (updates, gpus, maintenance, bootDelays) = ReadUpkeep(root);
 
             if (root.TryGetProperty("boot", out var b))
             {
@@ -258,11 +296,15 @@ $o | ConvertTo-Json -Compress -Depth 3
                 foreach (var e in items)
                     if (e.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(e.GetString())) drivers.Add(e.GetString()!);
             }
-            if (!root.TryGetProperty("disk", out var d)) return ("", "", "", null, null, boots, drivers);
+            if (!root.TryGetProperty("disk", out var d))
+                return new PowerShellData("", "", "", null, null, boots, drivers, updates, gpus, maintenance, bootDelays);
             string S(string n) => d.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";
             int? I(string n) => d.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out int i) ? i : null;
-            return (S("name"), S("type"), S("health"), I("wear"), I("temp"), boots, drivers);
+            return new PowerShellData(S("name"), S("type"), S("health"), I("wear"), I("temp"), boots, drivers, updates, gpus, maintenance, bootDelays);
         }
-        catch { return ("", "", "", null, null, boots, drivers); }
+        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException or JsonException)
+        {
+            return PowerShellData.Empty;
+        }
     }
 }

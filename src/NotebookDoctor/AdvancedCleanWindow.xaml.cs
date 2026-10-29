@@ -447,7 +447,7 @@ public partial class AdvancedCleanWindow : Window
     private void JunkReveal_Click(object sender, RoutedEventArgs e)
     {
         if (JunkGrid.SelectedItem is not JunkRow row) { Msg.Text = Loc.T("Selecione um item na lista."); return; }
-        try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{row.Path}\""); }
+        try { SystemExe.RevealInExplorer(row.Path); }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { Msg.Text = ex.Message; }
     }
 

@@ -8,7 +8,7 @@ namespace NotebookDoctor;
 public partial class MainWindow
 {
     // ---------- Histórico ----------
-    private async void LoadHistory()
+    private async Task LoadHistoryAsync()
     {
         var window = PeriodBox.SelectedIndex switch { 1 => TimeSpan.FromDays(7), 2 => TimeSpan.FromDays(30), _ => TimeSpan.FromHours(24) };
         // Tendências usam o mês inteiro, qualquer que seja o período escolhido
@@ -16,7 +16,7 @@ public partial class MainWindow
         var data = window.TotalDays >= 30 ? month : month.Where(d => d.T >= DateTime.Now - window).ToList();
         ShowTrends(month);
         _histData = data;
-        LoadTimeline(window, data);
+        await LoadTimelineAsync(window, data);
         FillProcTimeline(data);
         if (data.Count < 2)
         {
@@ -155,14 +155,14 @@ public partial class MainWindow
         try
         {
             string file = HistoryCsv.Export(_histData, PeriodLabel);
-            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{file}\"");
+            SystemExe.RevealInExplorer(file);
             ShowSnack("Histórico exportado", Loc.F("{0} em {1}. O Explorador abriu na pasta do arquivo.", Pt.N(_histData.Count, "amostra", "amostras"), System.IO.Path.GetFileName(file)));
         }
         catch (Exception ex) { ShowSnack("Não foi possível exportar", ex.Message); }
     }
 
     // ---------- M47: linha do tempo do período ----------
-    private async void LoadTimeline(TimeSpan window, List<HistSample> data)
+    private async Task LoadTimelineAsync(TimeSpan window, List<HistSample> data)
     {
         var from = DateTime.Now - window;
         var events = await Task.Run(() => Timeline.Merge(
@@ -242,6 +242,6 @@ public partial class MainWindow
 
     private void Period_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (IsLoaded && e.Source == PeriodBox) LoadHistory();
+        if (IsLoaded && e.Source == PeriodBox) FireAndForget(LoadHistoryAsync, nameof(LoadHistoryAsync));
     }
 }

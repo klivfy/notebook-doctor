@@ -47,13 +47,13 @@ public partial class MainWindow
                 break;
             case "open-folder" when f.FixArg is { } path:
                 // Abre o Explorador já com o arquivo selecionado (argumento entre aspas: não executa o programa)
-                try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{path}\""); } catch { }
+                try { SystemExe.RevealInExplorer(path); } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
                 break;
             case "open-apps":
                 AppInfo.OpenShell("ms-settings:appsfeatures");
                 break;
             case "open-devices":
-                AppInfo.OpenShell("devmgmt.msc");
+                AppInfo.OpenShell(SystemExe.System32("devmgmt.msc"));
                 break;
             // A22, A23 e A39
             case "open-update":
@@ -63,10 +63,10 @@ public partial class MainWindow
                 AppInfo.OpenShell("ms-settings:windowsupdate-optionalupdates");
                 break;
             case "open-defrag":
-                AppInfo.OpenShell("dfrgui.exe");
+                AppInfo.OpenShell(SystemExe.System32("dfrgui.exe"));
                 break;
             case "open-maintenance":
-                try { System.Diagnostics.Process.Start("control.exe", "/name Microsoft.ActionCenter"); } catch { }
+                try { using var _ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(SystemExe.System32("control.exe"), "/name Microsoft.ActionCenter") { UseShellExecute = true, WorkingDirectory = Environment.SystemDirectory }); } catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
                 break;
             case "open-backup":
                 AppInfo.OpenShell("ms-settings:backup");
@@ -212,7 +212,7 @@ public partial class MainWindow
     private readonly List<DateTime> _scoreTimes = new();
     private DateTime _lastPulse = DateTime.MinValue;
 
-    private async void SeedScorePulse()
+    private async Task SeedScorePulseAsync()
     {
         var data = await Task.Run(() => Host.History.Load(TimeSpan.FromHours(1)));
         foreach (var d in data.Where(d => d.Score >= 0)) { _scorePulse.Add(d.Score); _scoreTimes.Add(d.T); }

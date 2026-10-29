@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -32,6 +32,7 @@
   <ItemGroup>
     <!-- Uma parte do MainWindow por aba; aparecem agrupadas sob MainWindow.xaml no Visual Studio -->
     <Compile Update="MainWindow.*.cs" DependentUpon="MainWindow.xaml" />
+    <Compile Update="App.Monitoring.cs;App.Maintenance.cs" DependentUpon="App.xaml" />
   </ItemGroup>
 
   <ItemGroup>

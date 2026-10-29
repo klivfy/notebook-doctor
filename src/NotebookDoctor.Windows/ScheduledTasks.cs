@@ -19,7 +19,8 @@ public static class ScheduledTasks
         dynamic? service = null;
         try
         {
-            service = Activator.CreateInstance(Type.GetTypeFromProgID("Schedule.Service")!)!;
+            if (Type.GetTypeFromProgID("Schedule.Service") is not { } type) return result;
+            service = Activator.CreateInstance(type)!;
             service.Connect();
             Walk(service.GetFolder(@"\"), result);
         }
@@ -77,7 +78,8 @@ public static class ScheduledTasks
         dynamic? service = null;
         try
         {
-            service = Activator.CreateInstance(Type.GetTypeFromProgID("Schedule.Service")!)!;
+            var type = Type.GetTypeFromProgID("Schedule.Service") ?? throw new InvalidOperationException("Agendador de Tarefas indisponível.");
+            service = Activator.CreateInstance(type)!;
             service.Connect();
             int cut = path.LastIndexOf('\\');
             dynamic folder = service.GetFolder(cut <= 0 ? @"\" : path[..cut]);
@@ -88,3 +90,4 @@ public static class ScheduledTasks
         finally { if (service is not null) Marshal.FinalReleaseComObject(service); }
     }
 }
+

@@ -157,14 +157,14 @@ public partial class DuplicatesWindow : Window
     private void Reveal_Click(object sender, RoutedEventArgs e)
     {
         if (Grid.SelectedItem is not DupeRow row) { Msg.Text = Loc.T("Selecione uma cópia na lista."); return; }
-        try { System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{row.Path}\""); }
+        try { SystemExe.RevealInExplorer(row.Path); }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { Msg.Text = ex.Message; }
     }
 
-    private void Recycle_Click(object sender, RoutedEventArgs e) => Delete(permanent: false);
-    private void Permanent_Click(object sender, RoutedEventArgs e) => Delete(permanent: true);
+    private async void Recycle_Click(object sender, RoutedEventArgs e) => await DeleteAsync(permanent: false);
+    private async void Permanent_Click(object sender, RoutedEventArgs e) => await DeleteAsync(permanent: true);
 
-    private async void Delete(bool permanent)
+    private async Task DeleteAsync(bool permanent)
     {
         Grid.CommitEdit(DataGridEditingUnit.Row, true);
         var marked = _rows.Where(r => r.Selected).ToList();
@@ -186,6 +186,7 @@ public partial class DuplicatesWindow : Window
         var work = marked.GroupBy(r => r.Group).Select(g => (g.Key, (IReadOnlyList<string>)g.Select(r => r.Path).ToList())).ToList();
         DuplicateRemoval result;
         try { result = await Task.Run(() => DuplicateRemover.Remove(work, _places, KeepRule.Oldest, permanent)); }
+        catch (Exception ex) { App.LogError(ex, nameof(DeleteAsync)); Msg.Text = ex.Message; return; }
         finally { _busy = false; }
 
         RemovedAny |= result.Files > 0;

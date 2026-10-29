@@ -31,7 +31,7 @@ public static class WingetRunner
     /// <exception cref="Win32Exception">O winget não foi encontrado.</exception>
     public static async Task<WingetRun> RunAsync(string[] arguments, TimeSpan limit, CancellationToken ct = default, Action<string>? onLine = null, bool killOnTimeout = true)
     {
-        var psi = new ProcessStartInfo("winget")
+        var psi = new ProcessStartInfo(SystemExe.ResolveAppAliasOrSystem("winget"))
         {
             UseShellExecute = false, CreateNoWindow = true,
             RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true,

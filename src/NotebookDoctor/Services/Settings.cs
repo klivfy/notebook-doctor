@@ -41,7 +41,7 @@ public static class AppPaths
             File.Delete(probe);
             return docs;
         }
-        catch
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
             string local = Path.Combine(Dir, "exportacoes");
             Directory.CreateDirectory(local);
@@ -227,7 +227,7 @@ public sealed class AppSettings
             AtomicFile.KeepCopy(AppPaths.Settings, "ilegivel");
             s = new();
         }
-        catch { s = new(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { s = new(); }
         // Gravado por uma versão mais nova do app (a pessoa voltou para esta): guarda o original, com as opções que esta versão
         // não conhece e perderia ao gravar
         if (s.SchemaVersion > CurrentSchema) AtomicFile.KeepCopy(AppPaths.Settings, $"v{s.SchemaVersion}");
@@ -248,10 +248,10 @@ public sealed class AppSettings
     public void Save()
     {
         try { AtomicFile.WriteAllText(AppPaths.Settings, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true })); }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or JsonException or NotSupportedException)
         {
             // Sem permissão de escrita (ou valor inválido): as configurações valem só nesta sessão; fica registrado
-            try { File.AppendAllText(Path.Combine(AppPaths.Dir, "erros.log"), $"{DateTime.Now:s} Falha ao salvar configurações: {ex.Message}\n\n"); } catch { }
+            ErrorJournal.Record(ex, "AppSettings.Save", AppPaths.Dir);
         }
     }
 

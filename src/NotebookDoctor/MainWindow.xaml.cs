@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -56,7 +56,7 @@ public partial class MainWindow : Window
         Host.MiniChanged += on => CfgMini.IsChecked = on;
         RefreshStartup();
         Tabs.SelectedIndex = Math.Clamp(Host.Settings.LastTab, 0, Tabs.Items.Count - 1);
-        SeedScorePulse();
+        FireAndForget(SeedScorePulseAsync, nameof(SeedScorePulseAsync));
         SimChip.Visibility = Host.Settings.SimulationMode ? Visibility.Visible : Visibility.Collapsed;
         if (AppPaths.Demo)
         {
@@ -92,6 +92,18 @@ public partial class MainWindow : Window
         _ => null,
     };
 
+    /// <summary>ARC-02: dispara uma carga assíncrona a partir de um evento síncrono da interface sem deixar exceções sem tratamento.</summary>
+    internal void FireAndForget(Func<Task> work, string context)
+    {
+        _ = RunSafeAsync(work, context);
+        static async Task RunSafeAsync(Func<Task> action, string ctx)
+        {
+            try { await action(); }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { App.LogError(ex, ctx); }
+        }
+    }
+
     private void RefreshCurrentTab()
     {
         switch (Tabs.SelectedIndex)
@@ -100,10 +112,10 @@ public partial class MainWindow : Window
             case TabClean: Scan_Click(this, new RoutedEventArgs()); break;
             case TabPrograms: _ = LoadProgramsAsync(); break;
             case TabStartup: _ = LoadBatteryWeekAsync(); break;
-            case TabHistory: LoadHistory(); break;
+            case TabHistory: FireAndForget(LoadHistoryAsync, nameof(LoadHistoryAsync)); break;
             case TabActions: LoadActions(); break;
-            case TabTweaks: LoadTweaks(); RefreshEnergy(); break;
-            case TabSettings: LoadPlans(); break;
+            case TabTweaks: FireAndForget(LoadTweaksAsync, nameof(LoadTweaksAsync)); RefreshEnergy(); break;
+            case TabSettings: FireAndForget(LoadPlansAsync, nameof(LoadPlansAsync)); break;
         }
     }
 
@@ -335,12 +347,12 @@ public partial class MainWindow : Window
             case TabProcs when Host.Latest is { } s: RefreshProcesses(s); break;
             case TabClean when CleanGrid.ItemsSource is null: Scan_Click(this, new RoutedEventArgs()); break; // a análise só lê, então roda ao abrir
             case TabPrograms when !_progLoaded: _ = LoadProgramsAsync(); break;
-            case TabHistory: LoadHistory(); break;
+            case TabHistory: FireAndForget(LoadHistoryAsync, nameof(LoadHistoryAsync)); break;
             case TabActions: LoadActions(); break;
-            case TabTweaks: LoadTweaks(); RefreshEnergy(); break;
+            case TabTweaks: FireAndForget(LoadTweaksAsync, nameof(LoadTweaksAsync)); RefreshEnergy(); break;
             case TabStartup: _ = LoadBatteryWeekAsync(); break;
             case TabSystem when _sysSections is null: _ = LoadSystemAsync(); break;
-            case TabSettings: CfgMsg.Text = ""; LoadPlans(); RefreshLockCard(); break;
+            case TabSettings: CfgMsg.Text = ""; FireAndForget(LoadPlansAsync, nameof(LoadPlansAsync)); RefreshLockCard(); break;
         }
         Host.Settings.LastTab = Tabs.SelectedIndex;
         Host.Settings.Save();

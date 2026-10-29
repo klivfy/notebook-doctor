@@ -30,7 +30,7 @@ public static class FileRecoveryRunner
     public static async Task<RecoveryRun> RunAsync(string exe, string[] args, IProgress<int>? percent, IProgress<string>? lines, CancellationToken ct,
                                                    string? answer = "y", TimeSpan? limit = null)
     {
-        var psi = new ProcessStartInfo(exe)
+        var psi = new ProcessStartInfo(SystemExe.ResolveAppAliasOrSystem(exe))
         {
             UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true,
             StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,

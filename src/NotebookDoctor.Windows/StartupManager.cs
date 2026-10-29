@@ -23,7 +23,7 @@ public sealed class StartupEntry
     public string ImpactText { get; set; } = "";
     /// <summary>B32: "high" ou "mid" para destacar a linha.</summary>
     public string Severity => RowSeverity.Startup(Impact);
-    internal string ApprovalSubKey { get; init; } = "Run";
+    public string ApprovalSubKey { get; init; } = "Run";
     /// <summary>M27: arquivo que o item abre (o .exe, ou o atalho da pasta Inicializar).</summary>
     public string? FilePath { get; set; }
     /// <summary>M28: quem assinou o programa, ou o fabricante declarado quando não há assinatura.</summary>
@@ -71,11 +71,13 @@ public static class StartupManager
             {
                 try
                 {
-                    double cpu = 0; try { cpu = p.TotalProcessorTime.TotalSeconds; } catch { }
+                    double cpu = 0;
+                    try { cpu = p.TotalProcessorTime.TotalSeconds; }
+                    catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
                     var u = usage.GetValueOrDefault(p.ProcessName);
                     usage[p.ProcessName] = (u.cpuSec + cpu, u.mb + p.WorkingSet64 / 1048576);
                 }
-                catch { }
+                catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
             }
         }
         foreach (var e in entries)
@@ -94,7 +96,7 @@ public static class StartupManager
         string path;
         if (command.StartsWith('"')) { int end = command.IndexOf('"', 1); path = end > 1 ? command[1..end] : command[1..]; }
         else { int i = command.IndexOf(".exe", StringComparison.OrdinalIgnoreCase); path = i > 0 ? command[..(i + 4)] : command; }
-        try { return Path.GetFileNameWithoutExtension(path); } catch { return ""; }
+        try { return Path.GetFileNameWithoutExtension(path); } catch (ArgumentException) { return ""; }
     }
 
     private static void AddRun(List<StartupEntry> list, RegistryKey hive, string path, string origin)
@@ -138,5 +140,6 @@ public static class StartupManager
         key.SetValue(name, data, RegistryValueKind.Binary);
     }
 
-    internal static string SubKeyOf(StartupEntry e) => e.ApprovalSubKey;
+    public static string SubKeyOf(StartupEntry e) => e.ApprovalSubKey;
 }
+

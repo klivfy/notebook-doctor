@@ -18,6 +18,10 @@ public static class SettingsLockPolicy
             using var k = Registry.LocalMachine.OpenSubKey(KeyPath);
             return k?.GetValue(ValueName) is string s && PasswordHash.IsValidFormat(s) ? s.Trim() : null;
         }
-        catch { return null; } // sem permissão de leitura ou registro indisponível: segue sem política
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            return null; // sem permissão de leitura ou registro indisponível: segue sem política
+        }
     }
 }
+

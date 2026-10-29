@@ -140,7 +140,7 @@ public static class CleanExecutor
         IgnoreInaccessible = o.IgnoreInaccessible, AttributesToSkip = o.AttributesToSkip, RecurseSubdirectories = true,
     };
 
-    /// <summary>Apaga os arquivos inúteis marcados. .bak e .old vão para a Lixeira (podem ser da pessoa); o resto sai direto.</summary>
+    /// <summary>Apaga os arquivos inúteis marcados. .bak e .old vão para a Lixeira (podem ser da pessoa); o resto sai direto pelo identificador.</summary>
     public static RuleCleanResult DeleteJunk(IEnumerable<JunkItem> items, KnownPlaces places, CancellationToken ct = default)
     {
         long bytes = 0;
@@ -157,7 +157,7 @@ public static class CleanExecutor
                 if (i.IsFolder)
                 {
                     if (!JunkRules.IsLostFolder(Paths.Leaf(path)) || !Directory.Exists(path) || new DirectoryInfo(path).Attributes.HasFlag(FileAttributes.ReparsePoint)) { skipped++; continue; }
-                    if (!LeftoverRemover.Recycle(path)) { skipped++; continue; }
+                    if (SafeDelete.Root(Path.GetDirectoryName(path) ?? "") is null || !LeftoverRemover.Recycle(path)) { skipped++; continue; }
                     files++;
                     bytes += i.Bytes;
                     continue;
@@ -166,12 +166,11 @@ public static class CleanExecutor
                 if (JunkRules.Classify(Paths.Leaf(path), File.GetLastWriteTime(path), DateTime.Now, JunkRules.InUserContent(path, places)) is null) { skipped++; continue; } // mudou desde a busca
                 if (i.Kind is JunkKind.Backup or JunkKind.OldFile)
                 {
-                    if (!LeftoverRemover.Recycle(path)) { skipped++; continue; }
+                    if (SafeDelete.Root(Path.GetDirectoryName(path) ?? "") is null || !LeftoverRemover.Recycle(path)) { skipped++; continue; }
                 }
                 else
                 {
-                    File.SetAttributes(path, FileAttributes.Normal);
-                    File.Delete(path);
+                    if (!SafeDelete.FileAtExactPath(path, ignoreReadOnly: true)) { skipped++; continue; }
                 }
                 files++;
                 bytes += i.Bytes;
@@ -208,7 +207,7 @@ public static class DiskCleanupRunner
                 if (chosen.Contains(key)) k.SetValue(DiskCleanupRules.StateFlagsName, 2, RegistryValueKind.DWord);
                 else k.DeleteValue(DiskCleanupRules.StateFlagsName, throwOnMissingValue: false);
             }
-            using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cleanmgr.exe", DiskCleanupRules.Arguments) { UseShellExecute = false, CreateNoWindow = true });
+            using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(SystemExe.System32("cleanmgr.exe"), DiskCleanupRules.Arguments) { UseShellExecute = false, CreateNoWindow = true });
             if (p is null) return false;
             while (!p.WaitForExit(500))
                 if (ct.IsCancellationRequested) { try { p.Kill(true); } catch (InvalidOperationException) { } ct.ThrowIfCancellationRequested(); }

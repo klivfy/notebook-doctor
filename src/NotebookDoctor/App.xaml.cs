@@ -8,13 +8,17 @@ public sealed record HeavyAlertInfo(string Name, double CpuPct, long MemMB, Date
 
 public partial class App : Application
 {
-    private Mutex? _single;
-    private CancellationTokenSource _cts = new();
+    private SingleInstanceIpc? _singleIpc;
+    private readonly CancellationTokenSource _cts = new();
     private SystemMonitor _monitor = null!;
     private TrayIcon _tray = null!;
-    private readonly List<Snapshot> _recent = new();           // ~últimos 3 minutos ao vivo
-    private readonly Sustained _cpuHigh = new(), _ramHigh = new();
-    private DateTime _lastAlert = DateTime.MinValue, _lastDiskAlert = DateTime.MinValue, _lastHeatAlert = DateTime.MinValue;
+    private MiniWidget? _mini;
+    private readonly GlobalHotkey _hotkey = new();
+    private OverlayWindow? _overlay;
+    private readonly System.Windows.Threading.DispatcherTimer _overlayTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+    private string _appliedTheme = "";
+    private int _demoTick;
+    private bool _presentationHidIcons, _presentationStartedFocus;
 
     public AppSettings Settings { get; private set; } = new();
     public HistoryStore History { get; private set; } = null!;
@@ -22,65 +26,18 @@ public partial class App : Application
     public IReadOnlyList<Snapshot> Recent => _recent;
     // O mini-widget também precisa de números a cada 3 s
     public bool WindowVisible => MainWindow is { IsVisible: true } || _mini is { IsVisible: true };
-    private MiniWidget? _mini;
     public UpdateInfo? PendingUpdate { get; private set; }
     public event Action<Snapshot>? SnapshotReady;
     /// <summary>Leva 11.2: o notebook saiu (false) ou voltou (true) para a tomada.</summary>
     public event Action<bool>? PowerSourceChanged;
+    public event Action<bool>? MiniChanged;
+    public event Action<bool>? PresentationChanged;
 
-    // Saúde (dados lentos), nota e alerta de programa pesado
-    public HealthInfo Health { get; private set; } = HealthInfo.Empty;
-    public HealthScoreResult Score { get; private set; } = new(0, "Analisando");
-    public HeavyAlertInfo? HeavyAlert { get; private set; }
-    public MemoryTrend Memory { get; } = new();
-    public FocusMode Focus { get; } = new();
-    public event Action? HealthUpdated, HeavyAlertChanged;
-    private DateTime _lastProbe = DateTime.MinValue;
-
-    // ---------- Leva 12.1: câmera e microfone ----------
-    public IReadOnlyList<MediaUse> Media { get; private set; } = [];
-    public bool InCall => Media.Any(m => m.InUse);
-    private bool _callWarned;
-
-    private void CheckMedia(Snapshot snap)
-    {
-        Media = AppPaths.Demo ? DemoMedia() : MediaProbe.Uses();
-        string text = Meeting.InUseText(Media);
-        _tray.SetMediaInUse(text);
-        MediaChanged?.Invoke(text);
-        if (!InCall) { _callWarned = false; return; }
-        // Uma vez por chamada: downloads de fundo puxando a rede enquanto a câmera ou o microfone estão abertos
-        var busy = Meeting.BackgroundDownloads(snap.Groups, InCall);
-        if (busy.Count > 0 && !_callWarned)
-        {
-            _callWarned = true;
-            Notify(Loc.T("Downloads de fundo durante a chamada"),
-                   Loc.F("{0} está baixando enquanto você está em chamada. Em Sistema › Videochamadas dá para pôr no modo eficiência.", busy[0].Name));
-        }
-    }
-
-    private static List<MediaUse> DemoMedia() =>
-        [new("webcam", "Zoom.exe", DateTime.Now.AddMinutes(-12), null), new("microphone", "Zoom.exe", DateTime.Now.AddMinutes(-12), null),
-         new("microphone", "Microsoft.WindowsSoundRecorder", DateTime.Now.AddHours(-3), DateTime.Now.AddHours(-3).AddMinutes(4))];
-
-    /// <summary>Leva 12.1: quem está usando câmera ou microfone mudou ("Câmera: Zoom · Microfone: Zoom", ou vazio).</summary>
-    public event Action<string>? MediaChanged;
-
-    // ---------- Leva 11.1: bateria ----------
-    private readonly List<BatteryReading> _battery = new();
-    private DateTime _lastBattery = DateTime.MinValue, _lastBatterySave = DateTime.MinValue;
-    public BatteryReading? Battery => _battery.Count > 0 ? _battery[^1] : null;
-    public IReadOnlyList<BatteryReading> BatteryRecent => _battery;
-    public BatteryHistory BatteryLog { get; private set; } = new();
-    /// <summary>Leva 11.3: fabricante do notebook, para dizer onde fica o limite de carga.</summary>
-    public string Manufacturer { get; private set; } = "";
-    private static string BatteryFile => Path.Combine(AppPaths.Dir, "bateria.json");
-    private readonly BrowserWatch _browserWatch = new();
-    private bool _browserCleaning, _scheduleRan;
-    private DateTime _lastJunkCheck = DateTime.MinValue;
-    private bool _probing;
-    private readonly Dictionary<string, DateTime> _heavySince = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, DateTime> _heavyIgnored = new(StringComparer.OrdinalIgnoreCase);
+    public bool HotkeyActive => _hotkey.IsRegistered;
+    public bool Presenting { get; private set; }
+    /// <summary>Verdadeiro durante o encerramento: a janela deixa de se esconder na bandeja e fecha de fato.</summary>
+    public bool Quitting { get; private set; }
+    public LockSession Lock { get; } = new();
 
     public new static App Current => (App)Application.Current;
 
@@ -88,32 +45,28 @@ public partial class App : Application
     {
         base.OnStartup(e);
         // Reinício como administrador: espera a instância anterior fechar antes de assumir a instância única
-        var waitArg = e.Args.FirstOrDefault(a => a.StartsWith("--wait-parent="));
-        if (waitArg is not null && int.TryParse(waitArg[14..], out int parentPid))
-        {
-            try { System.Diagnostics.Process.GetProcessById(parentPid).WaitForExit(15000); } catch { }
-        }
+        SingleInstanceIpc.WaitParentExit(e.Args);
         string? uri = e.Args.FirstOrDefault(a => a.StartsWith(Toasts.Scheme + ":", StringComparison.OrdinalIgnoreCase));
         // A demonstração é uma instância à parte: abre mesmo com o app de verdade rodando
-        _single = new Mutex(true, @"Local\NotebookDoctor.SingleInstance" + (AppPaths.Demo ? ".Demo" : ""), out bool first);
-        if (!first)
+        _singleIpc = SingleInstanceIpc.Acquire(AppPaths.Demo);
+        if (!_singleIpc.IsFirstInstance)
         {
             // Já está rodando: repassa o pedido (abrir o painel ou o link clicado na notificação) para a instância aberta
-            // --tab=N (jump list, atalhos) vira o mesmo pedido que a notificação usa para abrir uma aba
-            var tabRequest = e.Args.FirstOrDefault(a => a.StartsWith("--tab="));
-            SendToRunningInstance(uri ?? (tabRequest is not null ? $"{Toasts.Scheme}:tab/{tabRequest[6..]}" : $"{Toasts.Scheme}:open"));
+            SingleInstanceIpc.TrySend(_singleIpc.PipeName, SingleInstanceIpc.BuildActivationMessage(e.Args, Toasts.Scheme));
+            _singleIpc.Dispose();
+            _singleIpc = null;
             Shutdown();
             return;
         }
 
-        DispatcherUnhandledException += (_, a) => { LogError(a.Exception); CrashLog.Save(a.Exception, "tela (o app continuou aberto)"); a.Handled = true; };
+        DispatcherUnhandledException += (_, a) => { LogError(a.Exception, "Dispatcher"); CrashLog.Save(a.Exception, "tela (o app continuou aberto)"); a.Handled = true; };
         AppDomain.CurrentDomain.UnhandledException += (_, a) =>
         {
             if (a.ExceptionObject is not Exception ex) return;
-            LogError(ex);
+            LogError(ex, "AppDomain");
             CrashLog.Save(ex, "segundo plano (o app fechou)");
         };
-        TaskScheduler.UnobservedTaskException += (_, a) => { LogError(a.Exception); CrashLog.Save(a.Exception, "tarefa em segundo plano"); a.SetObserved(); };
+        TaskScheduler.UnobservedTaskException += (_, a) => { LogError(a.Exception, "UnobservedTask"); CrashLog.Save(a.Exception, "tarefa em segundo plano"); a.SetObserved(); };
 
         Settings = AppPaths.Demo ? StartDemo() : AppSettings.Load();
         ApplyLanguage();
@@ -184,10 +137,11 @@ public partial class App : Application
 
         // A jump list e o registro das notificações são do app instalado, não da demonstração
         if (!AppPaths.Demo) { _ = Task.Run(Toasts.EnsureRegistered); SetJumpList(); }
-        _ = Task.Run(() => { try { new BackupStore(AppPaths.Backups).Prune(DateTime.Now); } catch (Exception ex) { LogError(ex); } }); // Fase 5: backups vencidos
+        _ = Task.Run(() => { try { new BackupStore(AppPaths.Backups).Prune(DateTime.Now); } catch (Exception ex) { LogError(ex, "BackupStore.Prune"); } }); // Fase 5: backups vencidos
         _overlayTimer.Tick += (_, _) => UpdateOverlay();
         _overlayTimer.Start();
-        _ = ListenForOtherInstancesAsync(_cts.Token);
+        string pipeName = _singleIpc.PipeName;
+        _ = SingleInstanceIpc.ListenAsync(pipeName, msg => Dispatcher.BeginInvoke(() => HandleUri(msg)), ex => LogError(ex, "SingleInstanceIpc"), _cts.Token);
         if (Settings.LastWeeklySummary == DateTime.MinValue) { Settings.LastWeeklySummary = DateTime.Now; Settings.Save(); }
         if (!Settings.FirstRunDone && !e.Args.Contains("--background") && !e.Args.Any(a => a.StartsWith("--tab=")))
             Dispatcher.BeginInvoke(() => { Dialogs.ShowWelcome(win, Settings); ApplySettingsChanged(); win.ReloadSettings(); },
@@ -228,19 +182,13 @@ public partial class App : Application
         MiniChanged?.Invoke(on);
     }
 
-    public event Action<bool>? MiniChanged;
-
     // ---------- M01: atalho global ----------
-    private readonly GlobalHotkey _hotkey = new();
-
     /// <summary>Liga ou desliga o atalho conforme a configuração. Retorna false se outro programa já usa a combinação.</summary>
     public bool ApplyHotkey()
     {
         if (!Settings.GlobalHotkey) { _hotkey.Unregister(); return true; }
         return _hotkey.Register();
     }
-
-    public bool HotkeyActive => _hotkey.IsRegistered;
 
     /// <summary>Atalho: abre o painel; se ele já está na frente, esconde.</summary>
     private void ToggleWindow()
@@ -255,7 +203,7 @@ public partial class App : Application
     {
         try { await Task.Delay(TimeSpan.FromMinutes(1), ct); } catch (OperationCanceledException) { return; }
         if (!Settings.CheckUpdates || (DateTime.Now - Settings.LastUpdateCheck).TotalHours < 24) return;
-        var (result, info) = await Updater.CheckAsync();
+        var (result, info) = await Updater.CheckAsync(AppInfo.Version);
         if (result is UpdateCheck.Offline) return; // tenta de novo na próxima abertura
         Settings.LastUpdateCheck = DateTime.Now;
         Settings.Save();
@@ -275,54 +223,6 @@ public partial class App : Application
 
     public void SetPendingUpdate(UpdateInfo? info) => PendingUpdate = info;
 
-    // ---------- Instância única + links "notebookdoctor:" ----------
-    private static string PipeName => $"NotebookDoctor.{Environment.UserName}" + (AppPaths.Demo ? ".Demo" : "");
-
-    private static void SendToRunningInstance(string message)
-    {
-        try
-        {
-            using var client = new System.IO.Pipes.NamedPipeClientStream(".", PipeName, System.IO.Pipes.PipeDirection.Out, System.IO.Pipes.PipeOptions.CurrentUserOnly);
-            client.Connect(2000);
-            using var w = new StreamWriter(client);
-            w.WriteLine(message.Length > 200 ? message[..200] : message);
-        }
-        catch { /* a outra instância está fechando: nada a fazer */ }
-    }
-
-    private async Task ListenForOtherInstancesAsync(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                using var server = new System.IO.Pipes.NamedPipeServerStream(PipeName, System.IO.Pipes.PipeDirection.In, 1,
-                    System.IO.Pipes.PipeTransmissionMode.Byte, System.IO.Pipes.PipeOptions.Asynchronous | System.IO.Pipes.PipeOptions.CurrentUserOnly);
-                await server.WaitForConnectionAsync(ct);
-                using var r = new StreamReader(server);
-                string? msg = await r.ReadLineAsync(ct);
-                if (msg is not null) HandleUri(msg);
-            }
-            catch (OperationCanceledException) { break; }
-            catch (Exception ex) { LogError(ex); await Task.Delay(1000, CancellationToken.None); }
-        }
-    }
-
-    private bool _onAc;
-
-    private async Task OnPowerSourceChangedAsync()
-    {
-        bool onAc = SystemParameters.PowerLineStatus == PowerLineStatus.Online;
-        if (onAc == _onAc) return; // StatusChange também dispara quando só a carga da bateria muda
-        _onAc = onAc;
-        _ = RefreshHealthAsync();
-        if (!Settings.AlertsEnabled) return;
-        var plans = await Task.Run(PowerPlans.List);
-        if (PowerAdvice.Suggest(onAc, plans) is not { } s) return;
-        if (MainWindow is NotebookDoctor.MainWindow { IsVisible: true } win) win.ShowPowerSuggestion(s);
-        else if (!IsQuietNow()) Notify(s.Title, s.Reason, ("Ver energia", Tab(AppTabs.Settings)));
-    }
-
     /// <summary>Ação de botão de notificação que abre uma aba, pelo nome (continua certa se a ordem das abas mudar).</summary>
     private static string Tab(int index) => "tab/" + AppTabs.Name(index);
 
@@ -340,29 +240,12 @@ public partial class App : Application
             case "heavy": win.SelectTab(AppTabs.Panel); break;
             case "report": win.ExportReport(); break;
             case "update": win.SelectTab(AppTabs.Settings); win.OfferUpdate(); break;
-            case "protection": AppInfo.OpenShell("SystemPropertiesProtection.exe"); break; // só abre a tela do Windows
+            case "protection": AppInfo.OpenShell(SystemExe.System32("SystemPropertiesProtection.exe")); break; // só abre a tela do Windows
             case var t when t.StartsWith("tab/") && AppTabs.Parse(t[4..]) is int i: win.SelectTab(i); break;
         }
     }
 
-    /// <summary>Notificação nativa com botões; se o Windows não aceitar, usa o balão da bandeja.</summary>
-    /// <summary>Aviso de problema: entra no histórico de alertas (M46) e vira notificação.</summary>
-    private void Alert(string title, string text, params (string label, string action)[] buttons)
-    {
-        (title, text) = (Loc.T(title), Loc.T(text)); // o registro de avisos guarda o texto no idioma em que foi mostrado
-        bool quiet = IsQuietNow();
-        AlertLog.Add(title, text, silenced: quiet);
-        if (!quiet) Notify(title, text, buttons);
-    }
-
-    /// <summary>M43/M44: horário silencioso ou alguém em tela cheia, jogo ou apresentação.</summary>
-    private bool IsQuietNow() => Presenting || Settings.InQuietHours(DateTime.Now) || (Settings.QuietFullscreen && Native.IsFullscreenOrPresenting());
-
     // ---------- Leva 12.3: modo apresentação ----------
-    public bool Presenting { get; private set; }
-    private bool _presentationHidIcons, _presentationStartedFocus;
-    public event Action<bool>? PresentationChanged;
-
     /// <summary>
     /// Para compartilhar a tela: avisos do app em silêncio, ícones da área de trabalho escondidos, tela sem apagar e Modo Foco.
     /// Desligar devolve cada coisa como estava; sair do app também.
@@ -384,36 +267,6 @@ public partial class App : Application
         ActionLog.Add(on ? "Modo apresentação ligado" : "Modo apresentação desligado",
                       on ? Loc.T("Avisos em silêncio, ícones da área de trabalho escondidos, tela sempre acesa e Modo Foco") : Loc.T("Tudo voltou como estava"));
         PresentationChanged?.Invoke(on);
-    }
-
-    // ---------- Leva 12.3: franquia do celular ----------
-    private bool _hotspotWarned;
-    private DateTime _lastMobileCheck = DateTime.MinValue;
-
-    /// <summary>
-    /// Na internet do celular (rede limitada ou com cara de hotspot), avisa uma vez por conexão quando programas em segundo
-    /// plano estão gastando os dados.
-    /// </summary>
-    private void CheckMobileData(Snapshot snap)
-    {
-        bool metered = false;
-        try
-        {
-            var profile = global::Windows.Networking.Connectivity.NetworkInformation.GetInternetConnectionProfile();
-            var cost = profile?.GetConnectionCost();
-            metered = cost is not null && (cost.NetworkCostType is global::Windows.Networking.Connectivity.NetworkCostType.Fixed or global::Windows.Networking.Connectivity.NetworkCostType.Variable || cost.Roaming);
-        }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or InvalidOperationException) { }
-        var adapter = AppPaths.Demo ? null : NetProbe.ActiveAdapter();
-        string? ssid = AppPaths.Demo ? null : SystemProbe.Wifi()?.Ssid;
-        bool mobile = metered || NetworkPrivacy.LooksLikeHotspot(ssid, adapter?.Gateway);
-        if (!mobile) { _hotspotWarned = false; return; }
-        var hogs = NetworkPrivacy.DataHogs(snap.Groups, mobile);
-        if (hogs.Count == 0 || _hotspotWarned) return;
-        _hotspotWarned = true;
-        Notify(Loc.T("Usando a internet do celular"),
-               Loc.F("{0} está baixando em segundo plano e gastando a franquia.", hogs[0].Name) + " "
-               + (metered ? Loc.T("Feche o programa se não precisar dele agora.") : Loc.T("Marque esta rede como conexão limitada (Configurações › Wi-Fi › propriedades da rede) para o Windows segurar as atualizações.")));
     }
 
     public void Notify(string title, string text, params (string label, string action)[] buttons)
@@ -500,8 +353,6 @@ public partial class App : Application
                ("Ver em Configurações", Tab(AppTabs.Settings)));
     }
 
-    private string _appliedTheme = "";
-
     /// <summary>Aplica o tema escolhido; no modo por horário, o claro ou o escuro conforme a hora.</summary>
     private void ApplyTheme()
     {
@@ -528,399 +379,6 @@ public partial class App : Application
         Resources["CardGap"] = new Thickness(Density.CardMargin(compact));
         Resources["RowMin"] = Density.RowHeight(compact);
         (MainWindow as NotebookDoctor.MainWindow)?.ApplyNavDensity();
-    }
-
-    private async Task RunLoopAsync(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                var snap = AppPaths.Demo ? DemoData.Sample(DateTime.Now, _demoTick++) : await Task.Run(_monitor.Sample, ct);
-                Latest = snap;
-                _recent.Add(snap);
-                Sampling.TrimRecent(_recent, snap.Time); // M42: com amostras espaçadas, a nota não usa dados velhos
-                Score = Insights.Score(_recent, Health);
-                var powerNow = Native.PowerStatus();
-                History.Record(snap, Score.Score, powerNow.Percent >= 0 ? powerNow.OnBattery : null);
-                ApplyAutoEco(snap);
-                CheckMedia(snap);
-                if ((DateTime.Now - _lastMobileCheck).TotalSeconds >= 60) { _lastMobileCheck = DateTime.Now; CheckMobileData(snap); }
-                _tray.Update(snap, Score.Score, Settings.TrayIcon);
-                if (Settings.ThemeMode == ThemeSchedule.Mode && Settings.EffectiveTheme(DateTime.Now) != _appliedTheme) ApplyTheme(); // B37
-                CheckAlerts(snap);
-                CheckHeavyPrograms(snap);
-                CheckHeat(snap);
-                CheckWeeklySummary();
-                Memory.Feed(snap);
-                if ((DateTime.Now - _lastBattery).TotalSeconds >= 30) await ReadBatteryAsync();
-                if ((DateTime.Now - _lastProbe).TotalMinutes >= 30) _ = RefreshHealthAsync();
-                await CheckWeeklyAsync();
-                await CheckJunkMonitorAsync();
-                await CheckBrowserCloseAsync();
-                SnapshotReady?.Invoke(snap);
-                if (_overlay is { IsVisible: true }) _overlay.Update(snap);
-            }
-            catch (OperationCanceledException) { break; }
-            catch (Exception ex) { LogError(ex); }
-
-            // M42: 3 s à vista; em segundo plano, 15 s na tomada e 30–60 s na bateria
-            var power = Native.PowerStatus();
-            var wait = Sampling.Interval(WindowVisible || _overlay is { IsVisible: true }, power.OnBattery, power.Saver, power.Percent);
-            try { await Task.Delay(wait, ct); } catch (OperationCanceledException) { break; }
-        }
-    }
-
-    /// <summary>Leva 11.1: bateria a cada 30 s (watts, histórico de consumo, carregador) e a volta do Modo sobrevivência na tomada.</summary>
-    private async Task ReadBatteryAsync()
-    {
-        _lastBattery = DateTime.Now;
-        var b = AppPaths.Demo ? DemoData.Battery(DateTime.Now, _demoTick) : await Task.Run(PowerProbe.ReadBattery);
-        if (b is null) return;
-        if (Manufacturer.Length == 0)
-            Manufacturer = AppPaths.Demo ? "LENOVO" : await Task.Run(() => WmiReader.Query("SELECT Manufacturer FROM Win32_ComputerSystem").Select(m => WmiReader.Str(m, "Manufacturer")).FirstOrDefault() ?? "");
-        bool? wasOnAc = _battery.Count > 0 ? _battery[^1].OnAc : null;
-        _battery.Add(b);
-        if (_battery.Count > 20) _battery.RemoveAt(0);
-        if (wasOnAc is { } before && before != b.OnAc)
-        {
-            ApplyDynamicHz(b.OnAc);
-            PowerSourceChanged?.Invoke(b.OnAc);
-        }
-        if (BatteryLog.Add(b) && (DateTime.Now - _lastBatterySave).TotalMinutes >= 5 && !AppPaths.Demo)
-        {
-            _lastBatterySave = DateTime.Now;
-            try { AtomicFile.WriteAllText(BatteryFile, BatteryLog.Serialize()); }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
-        }
-        if (b.OnAc && SurvivalState.Parse(Settings.SurvivalState) is { } state) EndSurvival(state, Loc.T("Na tomada: o Modo sobrevivência foi desligado e tudo voltou como estava."));
-    }
-
-    /// <summary>Leva 11.3, tarefa 14: abre, 2 minutos depois de entrar no Windows, os itens de inicialização atrasados.</summary>
-    private async Task LaunchDelayedAsync()
-    {
-        await Task.Delay(DelayedStartupItem.Delay);
-        foreach (var item in Settings.DelayedStartup.ToList())
-        {
-            var (exe, args) = CommandLine.Split(item.Command);
-            if (exe is null || !File.Exists(exe)) continue;
-            try
-            {
-                // Atalho da pasta Inicializar abre pelo Windows; .exe direto, sem passar por um shell
-                bool shortcut = exe.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase);
-                using var _ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, args) { UseShellExecute = shortcut, WorkingDirectory = Path.GetDirectoryName(exe) ?? "" });
-            }
-            catch (System.ComponentModel.Win32Exception ex) { LogError(ex); }
-        }
-    }
-
-    /// <summary>Leva 11.2, tarefa 08: tela em 60 Hz na bateria, a taxa de antes na tomada.</summary>
-    private void ApplyDynamicHz(bool onAc)
-    {
-        if (!Settings.DynamicHz || AppPaths.Demo || Settings.SurvivalState is not null) return;
-        if (PowerProbe.RefreshRates() is not { } rates) return;
-        if (PowerAudit.DynamicHzTarget(onAc, rates.Current, rates.Supported, Settings.DynamicHzHigh) is not { } target) return;
-        if (!PowerProbe.SetRefreshRate(target)) return;
-        Settings.DynamicHzHigh = onAc ? null : rates.Current;
-        Settings.Save();
-    }
-
-    // Leva 11.2, tarefa 10: programas marcados entram no modo eficiência fora de foco e saem ao voltar ao foco
-    private readonly HashSet<string> _autoEcoOn = new(StringComparer.OrdinalIgnoreCase);
-
-    private void ApplyAutoEco(Snapshot snap)
-    {
-        if (Settings.AutoEcoApps.Count == 0 && _autoEcoOn.Count == 0) return;
-        if (AppPaths.Demo || Settings.SimulationMode) return;
-        string? foreground = null;
-        try { using var p = System.Diagnostics.Process.GetProcessById(Native.ForegroundProcessId()); foreground = p.ProcessName; }
-        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { }
-        var running = snap.Groups.Select(g => g.Name).ToList();
-        // Desmarcado na lista: sai do modo eficiência na hora
-        foreach (var gone in _autoEcoOn.Where(n => !Settings.AutoEcoApps.Contains(n, StringComparer.OrdinalIgnoreCase)).ToList())
-        {
-            ProcessActions.SetEfficiency(gone, false);
-            _autoEcoOn.Remove(gone);
-        }
-        _autoEcoOn.RemoveWhere(n => !running.Contains(n, StringComparer.OrdinalIgnoreCase));
-        var (on, off) = PowerAudit.AutoEco(Settings.AutoEcoApps, running, foreground, _autoEcoOn);
-        foreach (var n in on) if (ProcessActions.SetEfficiency(n, true) > 0) _autoEcoOn.Add(n);
-        foreach (var n in off) { ProcessActions.SetEfficiency(n, false); _autoEcoOn.Remove(n); }
-    }
-
-    /// <summary>Devolve o que o Modo sobrevivência mudou e avisa.</summary>
-    public void EndSurvival(SurvivalState state, string message)
-    {
-        Survival.Restore(state);
-        Settings.SurvivalState = null;
-        Settings.Save();
-        ActionLog.Add("Modo sobrevivência desligado", message);
-        Notify(Loc.T("Modo sobrevivência"), message);
-    }
-
-    /// <summary>Atualiza SMART, bateria, boot, plano de energia e lixo (fora da thread de interface).</summary>
-    public async Task RefreshHealthAsync()
-    {
-        if (_probing) return;
-        _probing = true;
-        _lastProbe = DateTime.Now;
-        try
-        {
-            Health = AppPaths.Demo ? DemoData.Health() : await HealthProbe.RunAsync();
-            HealthUpdated?.Invoke();
-        }
-        catch (Exception ex) { LogError(ex); }
-        finally { _probing = false; }
-    }
-
-    /// <summary>
-    /// Um programa (não protegido) usando 25%+ da CPU por 3+ minutos vira um alerta com botão "Encerrar".
-    /// "Ignorar" silencia esse programa por 1 hora.
-    /// </summary>
-    private void CheckHeavyPrograms(Snapshot s)
-    {
-        const double thresholdPct = 25;
-        // Programas protegidos e os da lista de exceções (M20) nunca viram aviso
-        var heavy = s.Groups.Where(g => g.CpuPct >= thresholdPct && !ProcessTools.IsProtected(g.Name) && !Settings.IsAlertException(g.Name)).ToList();
-        foreach (var name in _heavySince.Keys.Where(k => !heavy.Any(g => g.Name.Equals(k, StringComparison.OrdinalIgnoreCase))).ToList())
-            _heavySince.Remove(name);
-        foreach (var g in heavy) _heavySince.TryAdd(g.Name, s.Time);
-
-        var culprit = heavy
-            .Where(g => (s.Time - _heavySince[g.Name]).TotalMinutes >= 3)
-            .Where(g => !_heavyIgnored.TryGetValue(g.Name, out var until) || until < DateTime.Now)
-            .OrderByDescending(g => g.CpuPct).FirstOrDefault();
-
-        var next = culprit is null ? null : new HeavyAlertInfo(culprit.Name, culprit.CpuPct, culprit.MemMB, _heavySince[culprit.Name]);
-        if (next?.Name == HeavyAlert?.Name) { HeavyAlert = next; return; } // mesmo programa: só atualiza os números
-        HeavyAlert = next;
-        if (next is not null && Settings.AlertsEnabled)
-            Alert("Programa pesado", Loc.F("{0} usa {1:0}% da CPU há mais de 3 minutos.", next.Name, next.CpuPct), ("Abrir painel", "heavy"));
-        HeavyAlertChanged?.Invoke();
-    }
-
-    /// <summary>
-    /// A42: superaquecimento. Com sensor: 90 °C+ por 2 minutos. Sem sensor (comum em notebooks): a CPU sob carga
-    /// rodando bem abaixo da frequência máxima por ~1 minuto, que é o sintoma de limitação térmica.
-    /// </summary>
-    private void CheckHeat(Snapshot s)
-    {
-        if (!Settings.AlertsEnabled || (DateTime.Now - _lastHeatAlert).TotalMinutes < 30) return;
-        var last = _recent.Where(x => (s.Time - x.Time).TotalMinutes <= 2).ToList();
-        string? msg = null;
-        if (last.Count >= 6 && last.All(x => x.TempC >= 90))
-            msg = Loc.F("Temperatura em {0} há 2 minutos.", Units.Temp(s.TempC));
-        else
-        {
-            var loaded = _recent.TakeLast(12).Where(x => x.Cpu >= 70 && x.CpuPerf >= 0).ToList();
-            if (loaded.Count >= 8 && loaded.Average(x => x.CpuPerf) < 60)
-                msg = Loc.F("O processador está rodando a {0:0}% da velocidade máxima mesmo sob carga — sinal de calor ou limite de energia.", loaded.Average(x => x.CpuPerf));
-        }
-        if (msg is null) return;
-        _lastHeatAlert = DateTime.Now;
-        Alert("Possível superaquecimento", msg + " Verifique a ventilação e use a tomada.", ("Abrir painel", "open"));
-    }
-
-    /// <summary>A49: uma vez por semana, um resumo dos últimos 7 dias com botão para o relatório completo.</summary>
-    private void CheckWeeklySummary()
-    {
-        if ((DateTime.Now - Settings.LastWeeklySummary).TotalDays < 7) return;
-        Settings.LastWeeklySummary = DateTime.Now;
-        Settings.Save();
-        var week = History.Load(TimeSpan.FromDays(7));
-        if (week.Count < 60) return; // menos de 1 h de dados na semana: não há o que resumir
-        var scores = week.Where(w => w.Score >= 0).Select(w => w.Score).ToList();
-        var top = week.SelectMany(w => w.Top).GroupBy(n => n).OrderByDescending(g => g.Count()).Take(3).Select(g => g.Key);
-        string text = (scores.Count > 0 ? Loc.F("Nota média {0:0}.", scores.Average()) + " " : "") +
-                      Loc.F("CPU média {0:0}%, RAM média {1:0}%. Mais pesados: {2}.", week.Average(w => w.Cpu), week.Average(w => w.Ram), string.Join(", ", top));
-        Notify("Resumo da semana", text, ("Ver relatório", "report"), ("Abrir histórico", Tab(AppTabs.History)));
-    }
-
-    public void IgnoreHeavy(string name)
-    {
-        _heavyIgnored[name] = DateTime.Now.AddHours(1);
-        HeavyAlert = null;
-        HeavyAlertChanged?.Invoke();
-    }
-
-    private void CheckAlerts(Snapshot s)
-    {
-        if (!Settings.AlertsEnabled) return;
-        // Disco quase cheio tem aviso próprio (a cada 6 h), independente do alerta de CPU/RAM
-        if (s.DiskFreePct < 10 && (DateTime.Now - _lastDiskAlert).TotalHours >= 6)
-        {
-            _lastDiskAlert = DateTime.Now;
-            Alert("Pouco espaço no disco", Loc.F("Só {0:0}% livre ({1}).", s.DiskFreePct, Units.Gb(s.DiskFreeGB, "0")), ("Abrir Limpeza", Tab(AppTabs.Clean)), ("Ver o que ocupa", Tab(AppTabs.Space)));
-        }
-        string? msg = null;
-        int minutes = Settings.AlertMinutes;
-        if (_cpuHigh.Update(s.Cpu >= Settings.CpuAlertPct, s.Time, minutes))
-        {
-            var top = s.TopByCpu.FirstOrDefault();
-            if (top is not null && Settings.IsAlertException(top.Name)) top = null; // carga esperada: não avisa
-            else msg = Loc.F("CPU em {0:0}% há {1} ou mais.", s.Cpu, Pt.N(minutes, "minuto", "minutos")) + (top is null ? "" : " " + Loc.F("Maior consumo: {0} ({1:0}%).", top.Name, top.CpuPct));
-        }
-
-        if (_ramHigh.Update(s.RamPct >= Settings.RamAlertPct, s.Time, minutes) && msg is null)
-        {
-            var top = s.TopByMem.FirstOrDefault();
-            if (top is null || !Settings.IsAlertException(top.Name)) msg = Loc.F("Memória em {0:0}%.", s.RamPct) + (top is null ? "" : " " + Loc.F("Maior consumo: {0} ({1} MB).", top.Name, top.MemMB));
-        }
-        if (msg is not null && (DateTime.Now - _lastAlert).TotalMinutes >= 30)
-        {
-            _lastAlert = DateTime.Now;
-            Alert(msg.StartsWith("CPU") ? "CPU alta" : "Memória alta", msg, ("Abrir painel", "open"), ("Ver processos", Tab(AppTabs.Processes)));
-        }
-    }
-
-    /// <summary>Limpeza automática (C17): ao abrir, todo dia, toda semana ou todo mês, sempre com o PC parado.</summary>
-    private async Task CheckWeeklyAsync()
-    {
-        if (AppPaths.Demo || !Settings.WeeklyCleanup) return;
-        if (!ScheduleRules.Due(ScheduleRules.Parse(Settings.ScheduleKind), Settings.LastWeeklyRun, DateTime.Now, _scheduleRan)) return;
-        // A39: manutenção em horário ocioso: 10 minutos sem uso, fora do Modo Foco e na tomada
-        if (!MaintenanceRules.CanRunIdleTask(Native.IdleTime(), Focus.Active, Native.PowerStatus().OnBattery)) return;
-        _scheduleRan = true;
-        Settings.LastWeeklyRun = DateTime.Now;
-        Settings.Save();
-        await QuickCleanAsync(notify: true);
-        if (Settings.ScheduleBrowser) await CleanBrowsersAsync(null, quiet: false);
-    }
-
-    /// <summary>C15: a cada hora, com o PC parado, olha o lixo e avisa uma vez por dia quando passa do limite.</summary>
-    private async Task CheckJunkMonitorAsync()
-    {
-        var now = DateTime.Now;
-        if (AppPaths.Demo || !Settings.JunkMonitor || !JunkMonitorRules.CheckDue(_lastJunkCheck, now)) return;
-        if (!MaintenanceRules.CanRunIdleTask(Native.IdleTime(), Focus.Active, Native.PowerStatus().OnBattery)) return;
-        _lastJunkCheck = now;
-        int days = Settings.TempDays;
-        long bytes = await Task.Run(() => Cleaner.SafeJunkBytes(days));
-        long limit = Settings.JunkMonitorLimitMb * 1024L * 1024L;
-        if (!JunkMonitorRules.ShouldNotify(bytes, limit, Settings.LastJunkNotice, now)) return;
-        Settings.LastJunkNotice = now;
-        Settings.Save();
-        // Link só navega: a pessoa abre a Limpeza e decide
-        Alert("Lixo acumulado", Loc.F("Há cerca de {0} de temporários para limpar.", Cleaner.FormatBytes(bytes)), ("Abrir Limpeza", Tab(AppTabs.Clean)));
-    }
-
-    // ---------- Leva 7.3 (C12): modo soneca, acordar ao abrir ----------
-    public SnoozeStore Snooze { get; } = new(System.IO.Path.Combine(AppPaths.Dir, "snooze.json"));
-    private readonly ISnoozeSystem _snoozeSystem = new WindowsSnoozeSystem();
-    private Dictionary<string, int> _snoozeAbsent = new();
-
-    /// <summary>
-    /// Enquanto há aplicativo em soneca com "acordar ao abrir", olha de poucos em poucos segundos os nomes dos processos
-    /// abertos: quando o programa principal abre, devolve as peças dele; quando fecha, volta a dormir.
-    /// </summary>
-    private async Task SnoozeWatchAsync(CancellationToken ct)
-    {
-        if (AppPaths.Demo) return;
-        while (!ct.IsCancellationRequested)
-        {
-            TimeSpan wait = TimeSpan.FromSeconds(30);
-            try
-            {
-                var apps = Snooze.Load();
-                if (apps.Any(a => a.WakeOnOpen && a.MainExes.Count > 0))
-                {
-                    var running = await Task.Run(SnoozeScanner.RunningNames, ct);
-                    _snoozeAbsent = SnoozeRules.CountAbsent(apps, running, _snoozeAbsent);
-                    foreach (var (app, action) in SnoozeRules.Decide(apps, running, _snoozeAbsent))
-                        await Task.Run(() => ApplySnoozeDecision(app.Key, action), ct);
-                    wait = Native.PowerStatus().OnBattery ? TimeSpan.FromSeconds(10) : SnoozeRules.WatchEvery;
-                }
-            }
-            catch (OperationCanceledException) { break; }
-            catch (Exception ex) { LogError(ex); }
-            try { await Task.Delay(wait, ct); } catch (OperationCanceledException) { break; }
-        }
-    }
-
-    private void ApplySnoozeDecision(string key, WatchAction action)
-    {
-        string? log = null;
-        Snooze.Update(list =>
-        {
-            var rec = list.FirstOrDefault(a => a.Key == key);
-            if (rec is null) return false;
-            if (action == WatchAction.Wake)
-            {
-                SnoozeEngine.Wake(rec, _snoozeSystem);
-                rec.Awake = true;
-                log = Loc.F("Soneca: {0} acordou porque você abriu", rec.Name);
-            }
-            else
-            {
-                SnoozeEngine.Apply(rec, _snoozeSystem); // idempotente; deixa Awake = false
-                _snoozeAbsent.Remove(key);
-                log = Loc.F("Soneca: {0} voltou a dormir", rec.Name);
-            }
-            return true;
-        });
-        if (log is not null) ActionLog.Add(log, "");
-    }
-
-    /// <summary>C16: quando um navegador fecha, limpa os dados escolhidos (sem janela).</summary>
-    private async Task CheckBrowserCloseAsync()
-    {
-        if (AppPaths.Demo || !Settings.BrowserCleanOnClose || _browserCleaning || Settings.BrowserKinds.Count == 0) return;
-        var running = await Task.Run(BrowserCleaner.RunningIds);
-        var closed = _browserWatch.Step(running, DateTime.Now, TimeSpan.FromSeconds(10));
-        if (closed.Count == 0) return;
-        _browserCleaning = true;
-        try { await CleanBrowsersAsync(closed, quiet: true); }
-        finally { _browserCleaning = false; }
-    }
-
-    /// <summary>
-    /// Limpa os dados de navegador escolhidos nas configurações. <paramref name="browserIds"/> nulo = todos os que estiverem fechados.
-    /// Navegador aberto é pulado, nunca fechado à força.
-    /// </summary>
-    public async Task<BrowserCleanResult?> CleanBrowsersAsync(IEnumerable<string>? browserIds, bool quiet)
-    {
-        var kinds = Settings.BrowserKinds.Select(k => Enum.TryParse<BrowserDataKind>(k, out var kind) ? kind : (BrowserDataKind?)null).OfType<BrowserDataKind>().ToList();
-        if (kinds.Count == 0) return null;
-        var ids = browserIds?.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var keep = Settings.BrowserKeepSites.ToList();
-        var places = WindowsPlaces.Current(AppPaths.Dir);
-        var result = await Task.Run(() =>
-        {
-            var running = BrowserCleaner.RunningIds();
-            var profiles = BrowserProfiles.Discover(places, new WindowsCleanSystem())
-                .Where(p => (ids is null || ids.Contains(p.Browser.Id)) && !running.Contains(p.Browser.Id)).ToList();
-            if (profiles.Count == 0) return null;
-            if (Settings.SimulationMode)
-                return new BrowserCleanResult(profiles.Sum(p => BrowserCleaner.Estimate(p, kinds, keep)), 0, 0, []);
-            return BrowserCleaner.Clean(profiles, kinds, keep);
-        });
-        if (result is null) return null;
-        string detail = Loc.F("{0} liberados em dados de navegadores.", Cleaner.FormatBytes(result.Bytes));
-        if (Settings.SimulationMode) Notify("Simulação de limpeza", Loc.F("Seriam liberados até {0} de dados de navegadores. Nada foi apagado.", Cleaner.FormatBytes(result.Bytes)));
-        else
-        {
-            ActionLog.Add(Loc.T("Limpeza de navegadores"), detail);
-            if (!quiet || result.Bytes > 0) Notify("Navegadores limpos", detail, ("Ver ações", Tab(AppTabs.Actions)));
-        }
-        return result;
-    }
-
-    /// <summary>Limpeza rápida de temporários. A Lixeira só é esvaziada pela aba Limpeza, com confirmação.</summary>
-    public async Task<long> QuickCleanAsync(bool notify)
-    {
-        int days = Settings.TempDays;
-        if (Settings.SimulationMode)
-        {
-            // A38: só mede; nada é apagado nem registrado
-            long would = await Task.Run(() => Cleaner.SafeJunkBytes(days));
-            if (notify) Notify("Simulação de limpeza", Loc.F("Seriam liberados cerca de {0} de temporários com mais de {1} dias. Nada foi apagado.", Cleaner.FormatBytes(would), days));
-            return 0;
-        }
-        long freed = await Task.Run(() => Cleaner.QuickClean(days));
-        ActionLog.Add(Loc.T("Limpeza de temporários"), Loc.F("{0} liberados (arquivos com mais de {1} dias)", Cleaner.FormatBytes(freed), days));
-        _ = RefreshHealthAsync();
-        if (notify) Notify("Limpeza concluída", Loc.F("{0} liberados de temporários antigos.", Cleaner.FormatBytes(freed)), ("Ver ações", Tab(AppTabs.Actions)));
-        return freed;
     }
 
     /// <summary>Fecha este processo e abre outro com privilégios de administrador (se o usuário aceitar o UAC).</summary>
@@ -956,17 +414,21 @@ public partial class App : Application
                 $"--wait-parent={Environment.ProcessId}" + (AppPaths.Demo ? " --demo" : "")) { UseShellExecute = false });
             Quit();
         }
-        catch { /* sem permissão para iniciar: a pessoa reabre pelo atalho */ }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            // Sem permissão para iniciar: a pessoa reabre pelo atalho
+        }
     }
 
     // ---------- B26: modo demonstração ----------
-    private int _demoTick;
-
     /// <summary>Começa do zero a cada abertura: apaga a pasta da demonstração anterior e liga a simulação.</summary>
     private static AppSettings StartDemo()
     {
         foreach (var f in Directory.GetFiles(AppPaths.Dir))
-            try { File.Delete(f); } catch { }
+        {
+            try { SafeDelete.FileAtExactPath(f, ignoreReadOnly: true); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        }
         var s = new AppSettings
         {
             FirstRunDone = true, SimulationMode = true, CheckUpdates = false, GlobalHotkey = false, NativeNotifications = false,
@@ -977,9 +439,6 @@ public partial class App : Application
     }
 
     // ---------- M03: overlay em jogos ----------
-    private OverlayWindow? _overlay;
-    private readonly System.Windows.Threading.DispatcherTimer _overlayTimer = new() { Interval = TimeSpan.FromSeconds(2) };
-
     /// <summary>A cada 2 s confere se tem jogo ou app em tela cheia e mostra ou esconde o overlay no monitor dele.</summary>
     private void UpdateOverlay()
     {
@@ -1011,18 +470,13 @@ public partial class App : Application
             System.Windows.Shell.JumpList.SetJumpList(this, list);
             list.Apply();
         }
-        catch (Exception ex) { LogError(ex); } // a jump list é só conveniência
+        catch (Exception ex) { LogError(ex, "JumpList"); } // a jump list é só conveniência
     }
 
     /// <summary>Fecha para o instalador poder substituir o executável.</summary>
     public void QuitForUpdate() => Quit();
 
-    /// <summary>Verdadeiro durante o encerramento: a janela deixa de se esconder na bandeja e fecha de fato.</summary>
-    public bool Quitting { get; private set; }
-
     // ---------- B38: senha das configurações ----------
-    public LockSession Lock { get; } = new();
-
     /// <summary>Hash que vale agora: o da política da empresa (HKLM) ou o definido no app. Null = sem senha.</summary>
     public string? LockHash => AppPaths.Demo ? null
         : SettingsLockPolicy.Read() ?? (PasswordHash.IsValidFormat(Settings.SettingsLock) ? Settings.SettingsLock : null);
@@ -1065,13 +519,14 @@ public partial class App : Application
         _hotkey.Dispose();
         _tray.Dispose();
         _monitor.Dispose();
-        _single?.ReleaseMutex();
+        _singleIpc?.Dispose();
+        _singleIpc = null;
         Shutdown();
     }
 
-    private static void LogError(Exception ex)
+    internal static void LogError(Exception ex, string? context = null)
     {
-        try { File.AppendAllText(Path.Combine(AppPaths.Dir, "erros.log"), $"{DateTime.Now:s} {ex}\n\n"); } catch { }
+        ErrorJournal.Record(ex, context, AppPaths.Dir);
         UsageStats.Failure(); // M18: só a contagem, se a pessoa ligou as estatísticas; o texto do erro nunca sai do computador
     }
 }

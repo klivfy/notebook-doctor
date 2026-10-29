@@ -160,7 +160,7 @@ try {
 
     private static async Task<int> PnpUtilAsync(string[] args)
     {
-        var psi = new ProcessStartInfo("pnputil.exe") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+        var psi = new ProcessStartInfo(SystemExe.System32("pnputil.exe")) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var a in args) psi.ArgumentList.Add(a);
         using var p = Process.Start(psi) ?? throw new Win32Exception("pnputil não iniciou.");
         var drain = Task.WhenAll(p.StandardOutput.ReadToEndAsync(), p.StandardError.ReadToEndAsync());
@@ -178,7 +178,7 @@ try {
     private static async Task<(string Output, bool TimedOut)> PowerShellAsync(string script, TimeSpan limit, CancellationToken ct, bool killOnTimeout = true)
     {
         string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
-        var psi = new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
+        var psi = new ProcessStartInfo(SystemExe.PowerShell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
         { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, StandardOutputEncoding = Encoding.UTF8 };
         using var p = Process.Start(psi) ?? throw new Win32Exception("powershell não iniciou.");
         var output = p.StandardOutput.ReadToEndAsync();

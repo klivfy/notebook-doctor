@@ -100,6 +100,8 @@ public static class BrowserCleaner
         {
             ct.ThrowIfCancellationRequested();
             if (running.Contains(profile.Browser.Id)) { errors.Add(Loc.F("{0}: o navegador está aberto.", profile.Display)); continue; }
+            if (!Directory.Exists(profile.Dir)) continue;
+            if (SafeDelete.Root(profile.Dir) is not { } profileRoot) { errors.Add($"{profile.Display}: {profile.Dir}"); continue; }
             foreach (var step in BrowserPlans.For(profile, kindList, keepSites))
             {
                 if (!BrowserSafety.IsAllowedStep(step)) continue; // o Core já filtra; aqui é a segunda barreira
@@ -111,14 +113,13 @@ public static class BrowserCleaner
                             try
                             {
                                 long len = new FileInfo(file).Length;
-                                File.SetAttributes(file, FileAttributes.Normal);
-                                File.Delete(file);
+                                if (!SafeDelete.File(file, profileRoot, ignoreReadOnly: true)) { errors.Add($"{profile.Display}: {Path.GetFileName(file)}"); continue; }
                                 bytes += len;
                                 files++;
                             }
                             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { errors.Add($"{profile.Display}: {Path.GetFileName(file)}"); }
                     }
-                    else if (step is SqlStep s && CleanDb(profile, s) is { } freed)
+                    else if (step is SqlStep s && CleanDb(profile, profileRoot, s) is { } freed)
                     {
                         bytes += freed;
                         dbs++;
@@ -131,10 +132,11 @@ public static class BrowserCleaner
     }
 
     /// <summary>Executa os comandos num banco, tudo ou nada. Null quando o banco não existe neste perfil.</summary>
-    private static long? CleanDb(BrowserProfile profile, SqlStep step)
+    private static long? CleanDb(BrowserProfile profile, string profileRoot, SqlStep step)
     {
         string path = Full(profile, step.Db);
         if (!Paths.IsUnder(path, profile.Dir) || !File.Exists(path) || new FileInfo(path).Attributes.HasFlag(FileAttributes.ReparsePoint)) return null;
+        if (SafeDelete.Root(Path.GetDirectoryName(path) ?? "") is not { } dbDir || !Paths.IsUnder(dbDir, profileRoot)) return null;
         long before = LengthOf(path);
         using (var db = SqliteDb.Open(path))
         {
@@ -144,7 +146,7 @@ public static class BrowserCleaner
                 foreach (var sql in step.Statements) db.Execute(sql);
                 db.Execute("COMMIT");
             }
-            catch
+            catch (Exception)
             {
                 try { db.Execute("ROLLBACK"); } catch (SqliteException) { }
                 throw;
@@ -182,7 +184,7 @@ public static class BrowserCleaner
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException) { locked++; }
-            finally { try { File.Delete(copy); } catch (IOException) { } }
+            finally { try { SafeDelete.FileAtExactPath(copy); } catch (IOException) { } }
         }
         return new CookieSiteScan(counts.OrderByDescending(kv => kv.Value).Select(kv => (kv.Key, kv.Value)).ToList(), locked);
     }

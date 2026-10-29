@@ -1,4 +1,4 @@
-﻿namespace NotebookDoctor.Services;
+namespace NotebookDoctor.Services;
 
 /// <summary>
 /// Leva 8.1 (S01–S03): junta tudo o que a aba Sistema mostra. O WMI e o registro são lidos direto (leva 9.3; o PowerShell fica de reserva); a tabela SMBIOS, a rede, o
@@ -15,6 +15,6 @@ public static class SystemInfoCollector
         var nvidia = Task.Run(SystemProbe.NvidiaTemperatures, ct);
         var firmware = Task.Run(SystemProbe.FirmwareKind, ct);
         await Task.WhenAll(raw, smbios, net, wifi, nvidia, firmware);
-        return SystemInfoBuilder.Build(raw.Result, smbios.Result, Loc.T(firmware.Result), net.Result, wifi.Result, nvidia.Result, machine);
+        return SystemInfoBuilder.Build(await raw, await smbios, Loc.T(await firmware), await net, await wifi, await nvidia, machine);
     }
 }

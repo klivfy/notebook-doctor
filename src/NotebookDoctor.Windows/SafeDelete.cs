@@ -21,6 +21,7 @@ public static class SafeDelete
     /// </summary>
     public static string? Root(string dir)
     {
+        if (string.IsNullOrWhiteSpace(dir)) return null;
         using var h = Open(dir, Access.ReadAttributes, openReparsePoint: false);
         if (h is null || FinalPath(h) is not { } final) return null;
         return Paths.Same(final, LongPath(dir)) ? final : null;
@@ -36,6 +37,55 @@ public static class SafeDelete
     /// <summary>Apaga uma pasta vazia dentro de <paramref name="root"/> (ou a própria raiz), com as mesmas conferências.</summary>
     public static bool Directory(string path, string root) => Delete(path, root, ignoreReadOnly: false, directory: true);
 
+    /// <summary>
+    /// Apaga um arquivo avulso garantindo pelo identificador que nem ele nem nenhuma pasta do caminho dele é um link ou junção.
+    /// Devolve false se a pasta-mãe passou por link/junção ou se o item é um link.
+    /// </summary>
+    public static bool FileAtExactPath(string path, bool ignoreReadOnly = true)
+    {
+        if (Path.GetDirectoryName(path) is not { Length: > 0 } dir || Root(dir) is not { } root) return false;
+        return Delete(path, root, ignoreReadOnly, directory: false);
+    }
+
+    /// <summary>Apaga uma pasta vazia avulsa garantindo pelo identificador que nem ela nem o caminho-pai é um link ou junção.</summary>
+    public static bool DirectoryAtExactPath(string path)
+    {
+        if (Path.GetDirectoryName(path) is not { Length: > 0 } parent || Root(parent) is not { } root) return false;
+        return Delete(path, root, ignoreReadOnly: false, directory: true);
+    }
+
+    /// <summary>
+    /// Remove exclusivamente um link simbólico ou junção dentro de <paramref name="root"/>, sem seguir o destino.
+    /// Devolve false se o item não for um reparse point ou se a pasta-mãe tiver saído de <paramref name="root"/>.
+    /// </summary>
+    public static bool ReparsePoint(string path, string root)
+    {
+        if (Path.GetDirectoryName(path) is not { Length: > 0 } parent || Root(parent) is not { } parentFinal) return false;
+        if (!Paths.IsUnder(parentFinal, root)) return false;
+        using var h = Open(path, Access.Delete | Access.ReadAttributes, openReparsePoint: true) ?? throw Error(Marshal.GetLastWin32Error(), path);
+        if (!GetFileInformationByHandle(h, out var info)) throw Error(Marshal.GetLastWin32Error(), path);
+        var attributes = (FileAttributes)info.FileAttributes;
+        if (!attributes.HasFlag(FileAttributes.ReparsePoint)) return false;
+        return MarkDeleted(h, attributes, ignoreReadOnly: true, path);
+    }
+
+    /// <summary>
+    /// Confere num identificador já aberto para escrita que ele aponta para um arquivo comum (sem link nem hardlink extra)
+    /// exatamente no caminho esperado, impedindo sobrescrita fora do lugar (TOCTOU em apagamento seguro).
+    /// </summary>
+    public static bool VerifyExclusiveFileHandle(SafeFileHandle handle, string expectedMainPath)
+    {
+        if (handle.IsInvalid || !GetFileInformationByHandle(handle, out var info)) return false;
+        var attributes = (FileAttributes)info.FileAttributes;
+        if (attributes.HasFlag(FileAttributes.ReparsePoint) || attributes.HasFlag(FileAttributes.Directory)) return false;
+        if (info.NumberOfLinks > 1) return false;
+        if (FinalPath(handle) is not { } final) return false;
+        // Em fluxos alternativos (:nome:$DATA), o caminho final pode trazer o sufixo do fluxo após o nome do arquivo
+        int colon = final.IndexOf(':', final.StartsWith(@"\\", StringComparison.Ordinal) ? 2 : 3);
+        string mainFinal = colon > 0 ? final[..colon] : final;
+        return Paths.Same(mainFinal, LongPath(expectedMainPath));
+    }
+
     private static bool Delete(string path, string root, bool ignoreReadOnly, bool directory)
     {
         // Só pede para mudar atributos quando precisa: apagar exige menos permissão que isso
@@ -46,7 +96,11 @@ public static class SafeDelete
         if (attributes.HasFlag(FileAttributes.ReparsePoint)) return false; // link ou junção: o destino não é desta pasta
         if (attributes.HasFlag(FileAttributes.Directory) != directory) return false; // virou outra coisa desde a lista
         if (FinalPath(h) is not { } final || !Paths.IsUnder(final, root)) return false;
+        return MarkDeleted(h, attributes, ignoreReadOnly, path);
+    }
 
+    private static bool MarkDeleted(SafeFileHandle h, FileAttributes attributes, bool ignoreReadOnly, string path)
+    {
         // Windows 10 1809 ou mais novo: apaga e ignora "somente leitura" numa chamada só
         var ex = new DispositionEx { Flags = DispositionDelete | (ignoreReadOnly ? DispositionIgnoreReadOnly : 0) };
         if (SetFileInformationByHandle(h, FileDispositionInfoEx, ref ex, Marshal.SizeOf<DispositionEx>())) return true;

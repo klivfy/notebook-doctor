@@ -147,7 +147,7 @@ internal static class Native
     public static int NotificationState()
     {
         try { return SHQueryUserNotificationState(out int state) == 0 ? state : 0; }
-        catch { return 0; }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException or SEHException) { return 0; }
     }
 
     // ---------- M03: monitor da janela em primeiro plano ----------

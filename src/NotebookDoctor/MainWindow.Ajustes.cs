@@ -8,15 +8,15 @@ namespace NotebookDoctor;
 public partial class MainWindow
 {
     // ---------- Ajustes do Windows (A31–A35) ----------
-    private async void LoadTweaks()
+    private async Task LoadTweaksAsync()
     {
         SimMode.IsChecked = Host.Settings.SimulationMode;
         var s = Host.Latest;
         TweaksList.ItemsSource = await Task.Run(() => WindowsTweaks.Read(s?.RamTotalGB ?? 8, s?.DiskFreePct ?? 50));
-        LoadServices();
-        LoadTasks();
-        LoadExtensions();
-        LoadSystemCleanup();
+        await Task.WhenAll(LoadServicesAsync(), LoadTasksAsync(), LoadExtensionsAsync(), LoadSystemCleanupAsync());
+
+
+
     }
 
     // ---------- M37/M36: pontos de restauração e logs de eventos ----------
@@ -24,7 +24,7 @@ public partial class MainWindow
     private List<RestorePointInfo> _restorePoints = new();
 
     /// <summary>Usa o PowerShell (alguns segundos): roda na primeira vez que a aba abre e em "Verificar".</summary>
-    private async void LoadSystemCleanup(bool force = false)
+    private async Task LoadSystemCleanupAsync(bool force = false)
     {
         if (_systemCleanupLoaded && !force) return;
         _systemCleanupLoaded = true;
@@ -41,7 +41,7 @@ public partial class MainWindow
             : Loc.F("{0} de {1} ({2} no total). O de Segurança nunca entra.", Pt.N(logs.Count, "log passa", "logs passam"), min, Pt.Bytes(logs.Sum(l => l.Bytes)));
     }
 
-    private void SystemCleanupRefresh_Click(object sender, RoutedEventArgs e) => LoadSystemCleanup(force: true);
+    private void SystemCleanupRefresh_Click(object sender, RoutedEventArgs e) => FireAndForget(() => LoadSystemCleanupAsync(force: true), nameof(LoadSystemCleanupAsync));
 
     /// <summary>Sem administrador, oferece reabrir e devolve true (quem chamou para).</summary>
     private bool AskAdmin(string what)
@@ -68,7 +68,7 @@ public partial class MainWindow
         ActionLog.Add(Loc.T("Pontos de restauração antigos apagados"), Loc.F("{0} de {1}; mantido o de {2}", ok, delete.Count, keepText));
         ShowSnack(ok == delete.Count ? Pt.N(ok, "ponto antigo apagado", "pontos antigos apagados") : Loc.F("{0} de {1} apagados", ok, delete.Count),
                   ok == delete.Count ? Loc.F("Ficou o de {0}.", keepText) : "O Windows recusou alguns; tente de novo como administrador.");
-        LoadSystemCleanup(force: true);
+        await LoadSystemCleanupAsync(force: true);
     }
 
     private async void EventLogClear_Click(object sender, RoutedEventArgs e)
@@ -85,15 +85,15 @@ public partial class MainWindow
             ShowSnack(code == 0 ? Loc.F("{0} limpo", log.Name) : "O Windows não limpou o log", code == 0 ? Loc.F("Cerca de {0} liberados.", log.SizeText) : Loc.F("wevtutil terminou com código {0}.", code));
         }
         catch (Exception ex) { ShowSnack("Não foi possível limpar", ex.Message); }
-        LoadSystemCleanup(force: true);
+        await LoadSystemCleanupAsync(force: true);
     }
 
-    private void EventViewer_Click(object sender, RoutedEventArgs e) => AppInfo.OpenShell("eventvwr.msc");
+    private void EventViewer_Click(object sender, RoutedEventArgs e) => AppInfo.OpenShell(SystemExe.System32("eventvwr.msc"));
 
     // ---------- M29: tarefas agendadas de terceiros ----------
     public sealed record TaskRow(string Path, string Name, string When, string Advice, string Reason, string Command, bool CanChange);
 
-    private async void LoadTasks()
+    private async Task LoadTasksAsync()
     {
         var rows = await Task.Run(() => TaskRules.Candidates(ScheduledTasks.List())
             .Select(c => new TaskRow(c.Task.Path, c.Task.Name, TaskRules.When(c.Task),
@@ -104,7 +104,7 @@ public partial class MainWindow
         TasksMsg.Text = rows.Count == 0 ? Loc.T("Nenhuma tarefa de terceiros ativa.") : Loc.F("{0} de terceiros.", Pt.N(rows.Count, "tarefa ativa", "tarefas ativas"));
     }
 
-    private void TasksRefresh_Click(object sender, RoutedEventArgs e) => LoadTasks();
+    private void TasksRefresh_Click(object sender, RoutedEventArgs e) => FireAndForget(LoadTasksAsync, nameof(LoadTasksAsync));
 
     private async void TaskDisable_Click(object sender, RoutedEventArgs e)
     {
@@ -119,7 +119,7 @@ public partial class MainWindow
             await Task.Run(() => ScheduledTasks.SetEnabled(r.Path, false));
             ActionLog.Add(Loc.F("Tarefa agendada desativada: {0}", r.Name), Loc.F("{0}. Ponto de restauração: {1}", r.Path, Loc.T(restore)), "task", r.Path);
             ShowSnack(Loc.F("{0} desativada", r.Name), "Ela não roda mais até ser reativada.", "Ver em Ações", () => Tabs.SelectedIndex = TabActions);
-            LoadTasks();
+        await LoadTasksAsync();
         }
         catch (UnauthorizedAccessException)
         {
@@ -133,7 +133,7 @@ public partial class MainWindow
     }
 
     // ---------- M31: extensões de navegador ----------
-    private async void LoadExtensions()
+    private async Task LoadExtensionsAsync()
     {
         var list = await Task.Run(BrowserExtensionScan.List);
         ExtensionsGrid.ItemsSource = list;
@@ -142,7 +142,7 @@ public partial class MainWindow
             : Pt.N(list.Count, "extensão", "extensões") + (heavy > 0 ? $", {Pt.N(heavy, "pesada", "pesadas")}." : ".");
     }
 
-    private void ExtensionsRefresh_Click(object sender, RoutedEventArgs e) => LoadExtensions();
+    private void ExtensionsRefresh_Click(object sender, RoutedEventArgs e) => FireAndForget(LoadExtensionsAsync, nameof(LoadExtensionsAsync));
 
     private void ExtensionsOpen_Click(object sender, RoutedEventArgs e)
     {
@@ -154,7 +154,7 @@ public partial class MainWindow
     // ---------- M30: serviços de terceiros que iniciam com o Windows ----------
     public sealed record ServiceRow(string Name, string DisplayName, string Advice, string Reason, string Path, bool CanChange);
 
-    private async void LoadServices()
+    private async Task LoadServicesAsync()
     {
         var rows = await Task.Run(() => ServiceRules.Candidates(ServiceManager.List(), ServiceManager.SystemRoot)
             .Select(c => new ServiceRow(c.Service.Name, c.Service.DisplayName,
@@ -184,7 +184,7 @@ public partial class MainWindow
             ServiceManager.SetStart(r.Name, 3);
             ActionLog.Add(Loc.F("Serviço em manual: {0}", r.DisplayName), Loc.F("{0}. Ponto de restauração: {1}", r.Name, Loc.T(restore)), "service", r.Name, "2");
             ShowSnack(Loc.F("{0} em manual", r.DisplayName), "Vale a partir do próximo boot.", "Ver em Ações", () => Tabs.SelectedIndex = TabActions);
-            LoadServices();
+            await LoadServicesAsync();
         }
         catch (Exception ex) { ShowSnack("O Windows recusou a mudança", ex.Message); }
     }
@@ -218,6 +218,6 @@ public partial class MainWindow
         }
         catch (UnauthorizedAccessException) { ShowSnack("O Windows recusou a mudança", "Abra o app como administrador e tente de novo."); }
         catch (Exception ex) { ShowSnack("Ajuste não aplicado", ex.Message); }
-        finally { btn.IsEnabled = true; LoadTweaks(); }
+        finally { btn.IsEnabled = true; await LoadTweaksAsync(); }
     }
 }

@@ -155,7 +155,8 @@ public static class Cleaner
         foreach (var f in new DirectoryInfo(dir).EnumerateFiles(item.Pattern, Opts))
         {
             bool ok;
-            try { ok = item.IgnoreAge || f.LastWriteTime < cutoff; } catch { ok = false; }
+            try { ok = item.IgnoreAge || f.LastWriteTime < cutoff; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException) { ok = false; }
             if (ok) yield return f;
         }
     }
@@ -165,14 +166,19 @@ public static class Cleaner
     {
         var list = new List<PreviewFile>();
         foreach (var f in Files(item, days))
-            try { list.Add(new PreviewFile(f.FullName, f.Length, f.LastWriteTime)); } catch { /* sumiu ou sem permissão */ }
+            try { list.Add(new PreviewFile(f.FullName, f.Length, f.LastWriteTime)); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentOutOfRangeException) { /* sumiu ou sem permissão */ }
         return list;
     }
 
     private static void Measure(CleanItem item, int days)
     {
         long bytes = 0; int n = 0;
-        foreach (var f in Files(item, days)) { try { bytes += f.Length; n++; } catch { } }
+        foreach (var f in Files(item, days))
+        {
+            try { bytes += f.Length; n++; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        }
         item.Bytes = bytes; item.Files = n;
     }
 
@@ -249,7 +255,7 @@ public static class Cleaner
                 foreach (var f in Files(item, dir, days).ToList())
                 {
                     try { long len = f.Length; if (SafeDelete.File(f.FullName, root, ignoreReadOnly: false)) freed += len; }
-                    catch { /* em uso ou sem permissão */ }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* em uso ou sem permissão */ }
                 }
                 if (item.Pattern == "*") RemoveEmptyDirs(dir, root);
             }
@@ -263,10 +269,11 @@ public static class Cleaner
         {
             foreach (var d in new DirectoryInfo(dir).EnumerateDirectories("*", Opts).OrderByDescending(d => d.FullName.Length))
             {
-                try { if (!d.EnumerateFileSystemInfos().Any()) SafeDelete.Directory(d.FullName, root); } catch { }
+                try { if (!d.EnumerateFileSystemInfos().Any()) SafeDelete.Directory(d.FullName, root); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             }
         }
-        catch { }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
     /// <summary>"Otimizar agora": só os itens seguros (sem navegadores e sem Lixeira). Retorna bytes liberados.</summary>
@@ -283,9 +290,9 @@ public static class Cleaner
     {
         try
         {
-            using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("defrag.exe", $"{Path.GetPathRoot(Environment.SystemDirectory)?.TrimEnd('\\')} /L") { CreateNoWindow = true, UseShellExecute = false });
+            using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(SystemExe.System32("defrag.exe"), $"{Path.GetPathRoot(Environment.SystemDirectory)?.TrimEnd('\\')} /L") { CreateNoWindow = true, UseShellExecute = false });
             p?.WaitForExit(120000);
         }
-        catch { }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException) { }
     }
 }

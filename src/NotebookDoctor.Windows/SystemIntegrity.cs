@@ -16,14 +16,19 @@ public static class SystemIntegrity
         {
             try
             {
-                using var p = Process.Start(new ProcessStartInfo(exe, args)
+                string fullExe = Path.IsPathRooted(exe) ? exe : SystemExe.System32(exe);
+                using var p = Process.Start(new ProcessStartInfo(fullExe, args)
                 {
                     UseShellExecute = false, CreateNoWindow = true,
                     RedirectStandardOutput = true, RedirectStandardError = true,
                     StandardOutputEncoding = encoding ?? Encoding.UTF8,
                 });
                 if (p is null) return -1;
-                using var reg = ct.Register(() => { try { p.Kill(true); } catch { } });
+                using var reg = ct.Register(() =>
+                {
+                    try { p.Kill(true); }
+                    catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { }
+                });
                 string? line;
                 while ((line = p.StandardOutput.ReadLine()) is not null)
                 {
@@ -33,7 +38,11 @@ public static class SystemIntegrity
                 p.WaitForExit();
                 return p.ExitCode;
             }
-            catch (Exception ex) { onLine("Falha ao iniciar: " + ex.Message); return -1; }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
+            {
+                onLine("Falha ao iniciar: " + ex.Message);
+                return -1;
+            }
         }, ct);
     }
 
@@ -43,9 +52,10 @@ public static class SystemIntegrity
 
     public static async Task<int> Dism(bool repair, Action<string> onLine, CancellationToken ct)
     {
-        string oem = System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage.ToString();
+        int oem = System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage;
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        var enc = Encoding.GetEncoding(int.Parse(oem));
+        var enc = Encoding.GetEncoding(oem);
         return await RunAsync("dism.exe", repair ? "/Online /Cleanup-Image /RestoreHealth" : "/Online /Cleanup-Image /ScanHealth", onLine, ct, enc);
     }
 }
+

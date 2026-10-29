@@ -82,9 +82,10 @@ public static class OneDriveScan
                     if (mounts!.GetValue(v) is string mount && Path.IsPathFullyQualified(mount)) list.Add(mount);
             }
         }
-        catch { }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { }
         foreach (var v in new[] { "OneDrive", "OneDriveConsumer", "OneDriveCommercial" })
             if (Environment.GetEnvironmentVariable(v) is { Length: > 0 } f) list.Add(f);
         return list.Distinct(StringComparer.OrdinalIgnoreCase);
     }
 }
+

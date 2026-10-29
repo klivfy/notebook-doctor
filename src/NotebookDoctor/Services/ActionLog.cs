@@ -21,13 +21,14 @@ public static class ActionLog
                 AtomicFile.KeepCopy(FilePath, "ilegivel");
                 return new();
             }
-            catch { return new(); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { return new(); }
         }
     }
 
     private static void Save(List<ActionEntry> list)
     {
-        try { AtomicFile.WriteAllText(FilePath, JsonSerializer.Serialize(list.OrderByDescending(e => e.Time).Take(200).ToList())); } catch { }
+        try { AtomicFile.WriteAllText(FilePath, JsonSerializer.Serialize(list.OrderByDescending(e => e.Time).Take(200).ToList())); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { ErrorJournal.Record(ex, "ActionLog.Save", AppPaths.Dir); }
     }
 
     public static void Add(string title, string detail = "", string undoKind = "", string arg1 = "", string arg2 = "")
