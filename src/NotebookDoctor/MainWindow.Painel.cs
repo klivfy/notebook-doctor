@@ -259,9 +259,9 @@ public partial class MainWindow
     /// Diagnóstico com os botões Corrigir vai para uma coluna ao lado. Estreita, tudo volta para a coluna única. É o mesmo cartão
     /// trocado de lugar, então nomes, foco e leitura de tela não mudam; a rolagem continua uma só.
     /// </summary>
-    private void ApplyPainelLayout()
+    internal void ApplyPainelLayout(double? forcedWidth = null)
     {
-        bool wide = Density.PainelSideColumn(ActualWidth, TextScale.Factor);
+        bool wide = Density.PainelSideColumn(forcedWidth ?? ActualWidth, TextScale.Factor);
         if (wide == PainelTwoColumns) return;
         if (wide)
         {

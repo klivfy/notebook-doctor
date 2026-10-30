@@ -1,4 +1,4 @@
-﻿namespace NotebookDoctor.Services;
+namespace NotebookDoctor.Services;
 
 /// <summary>
 /// Um achado do diagnóstico. Quando há correção, <see cref="FixId"/> diz qual:
@@ -92,6 +92,11 @@ public sealed record Finding(string Level, string Title, string Detail, string A
     public string RiskText => Loc.T(Risk ?? FallbackRisk);
     public string ConfidenceText => Loc.T(Confidence ?? FallbackConfidence);
     public string UndoText => Loc.T(Undo ?? FallbackUndo);
+    public string EvidenceLine => $"{Loc.T("Evidência observada:")} {EvidenceText}";
+    public string ProposedChangeLine => $"{Loc.T("Mudança proposta:")} {ProposedChangeText}";
+    public string RiskLine => $"{Loc.T("Risco:")} {RiskText}";
+    public string ConfidenceLine => $"{Loc.T("Confiança:")} {ConfidenceText}";
+    public string UndoLine => $"{Loc.T("Como desfazer:")} {UndoText}";
     public bool HasTransparency => HasFix || Level != "OK";
 
     /// <summary>A explicação está aberta na tela (sobrevive à atualização da lista a cada 3 s).</summary>
@@ -294,14 +299,14 @@ public static class Diagnosis
                       "open-folder", "Abrir local", u.Path) { TitleShown = Loc.F("Programa sem assinatura digital: {0}", u.Name) });
 
         if (h.OnAc && h.IsBalancedPlan && cpuAvg >= 25)
-            f.Add(new("ATENCAO", "Plano de energia limita a velocidade", Loc.F("Plano \"{0}\" com o notebook na tomada", h.ActivePlan),
+            f.Add(new("ATENCAO", "Plano de energia limita a velocidade", Loc.F("Plano \"{0}\" com o notebook na tomada", Loc.T(h.ActivePlan)),
                       "O plano Equilibrado reduz a frequência do processador. Alto desempenho deixa o notebook mais ágil na tomada.",
                       h.HighPlanGuid is not null ? "power-high" : $"tab:{TabSettings}",
                       h.HighPlanGuid is not null ? "Ativar Alto desempenho" : "Criar plano", h.HighPlanGuid));
 
         // A02: na bateria, o Alto desempenho só gasta carga e esquenta
         if (!h.OnAc && h.HasBattery && Profile.Matches("high", h.ActivePlan))
-            f.Add(new("ATENCAO", "Plano Alto desempenho na bateria", Loc.F("Plano \"{0}\" sem a tomada", h.ActivePlan),
+            f.Add(new("ATENCAO", "Plano Alto desempenho na bateria", Loc.F("Plano \"{0}\" sem a tomada", Loc.T(h.ActivePlan)),
                       "Na bateria, o Equilibrado dura bem mais e esquenta menos. Volte ao Alto desempenho quando ligar na tomada.",
                       $"tab:{TabSettings}", "Ver energia"));
 

@@ -134,6 +134,8 @@ public partial class App : Application
         // Verificação visual da CI: só na demonstração, que não toca no computador
         if (AppPaths.Demo && Smoke.FolderFromArgs(e.Args) is { } smoke)
             Dispatcher.BeginInvoke(async () => await Smoke.RunAsync(win, smoke), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        else if (AppPaths.Demo && Smoke.StoreFolderFromArgs(e.Args) is { } storeFolder)
+            Dispatcher.BeginInvoke(async () => await Smoke.RunStoreScreenshotsAsync(win, storeFolder), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
         // A jump list e o registro das notificações são do app instalado, não da demonstração
         if (!AppPaths.Demo) { _ = Task.Run(Toasts.EnsureRegistered); SetJumpList(); }

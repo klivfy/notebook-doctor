@@ -73,7 +73,7 @@ Ao cadastrar a submissão no Partner Center, o sistema exigirá uma declaração
      - Política de Privacidad: `https://klivfy.com/es-ES/privacidade`
      - Términos de Uso: `https://klivfy.com/es-ES/termos-de-uso`
      - Soporte: `https://klivfy.com/suporte`
-   - Capturas de tela: gere com `NotebookDoctor.exe --demo --smoke=capturas` ou anexe as imagens em português, inglês e espanhol.
+   - Capturas de tela e kit completo da vitrine: consulte `packaging/store/vitrine/` (`listagem-pt-BR.md`, `listagem-en-US.md`, `listagem-es-ES.md`, `questionario-iarc-e-certificacao.md`, `artes/` e `screenshots/{pt-BR,en-US,es-ES}/`). Para regerar as capturas em `1920×1080`, execute `NotebookDoctor.exe --demo --store-screenshots=<pasta>`.
 4. **Pacotes:**
    - Faça upload de `NotebookDoctor-x64.msix` e `NotebookDoctor-arm64.msix`.
 
