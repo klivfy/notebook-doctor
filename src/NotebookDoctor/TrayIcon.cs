@@ -16,6 +16,7 @@ public sealed class TrayIcon : IDisposable
     private readonly WinForms.ToolStripMenuItem _startItem, _miniItem, _usageItem, _healthItem, _presentItem;
     private IntPtr _hIcon;
     private string _iconKey = "";
+    private bool _disposed;
 
     public event Action? OpenRequested, CleanRequested, ExitRequested, SupportRequested, BalloonClicked;
     public event Action<bool>? StartWithWindowsToggled, MiniToggled, PresentationToggled;
@@ -81,6 +82,7 @@ public sealed class TrayIcon : IDisposable
 
     public void SetMediaInUse(string text)
     {
+        if (_disposed) return;
         if (_mediaItem is null)
         {
             _mediaItem = new WinForms.ToolStripMenuItem("") { Visible = false, ForeColor = Bad };
@@ -127,6 +129,7 @@ public sealed class TrayIcon : IDisposable
 
     public void ApplyTheme()
     {
+        if (_disposed) return;
         var bg = ToDrawing(ThemeManager.Get("CardFill"));
         var fg = ToDrawing(ThemeManager.Get("TextPrimary"));
         _menu.Renderer = new WinForms.ToolStripProfessionalRenderer(new MenuColors(bg, ToDrawing(ThemeManager.Get("SurfaceVariant"))));
@@ -157,6 +160,7 @@ public sealed class TrayIcon : IDisposable
     /// <param name="shows">B01 e leva 10.3: o ícone mostra a CPU, a temperatura ou a nota em vez do logo com a bolinha.</param>
     public void Update(Snapshot s, int score, TrayIconShows shows)
     {
+        if (_disposed) return;
         var band = Tray.Band(s.Cpu, s.RamPct);
         string? label = Tray.IconLabel(shows, s, score);
         if ($"{band}{label}" != _iconKey) DrawIcon(band, label);
@@ -172,10 +176,15 @@ public sealed class TrayIcon : IDisposable
 
     public void SyncStartWithWindows(bool value) { if (_startItem.Checked != value) _startItem.Checked = value; }
 
-    public void Notify(string title, string text) => _icon.ShowBalloonTip(5000, title, text, WinForms.ToolTipIcon.Warning);
+    public void Notify(string title, string text)
+    {
+        if (_disposed) return;
+        _icon.ShowBalloonTip(5000, title, text, WinForms.ToolTipIcon.Warning);
+    }
 
     private void DrawIcon(TrayBand band, string? cpuLabel)
     {
+        if (_disposed) return;
         _iconKey = $"{band}{cpuLabel}";
         var color = band switch { TrayBand.Red => Bad, TrayBand.Amber => Warn, _ => Ok };
         using var bmp = new Drawing.Bitmap(32, 32);
@@ -235,6 +244,8 @@ public sealed class TrayIcon : IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         _icon.Visible = false;
         _icon.Dispose();
         _menu.Dispose();
