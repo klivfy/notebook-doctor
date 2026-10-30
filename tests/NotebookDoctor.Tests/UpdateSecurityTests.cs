@@ -123,8 +123,20 @@ public class KlivfyUrlsTests
     [Fact]
     public void Termos_e_privacidade_ficam_no_site_da_Klivfy()
     {
-        Assert.Equal("https://klivfy.com/termos", KlivfyUrls.Terms);
-        Assert.Equal("https://klivfy.com/privacidade", KlivfyUrls.Privacy);
+        Assert.Equal("https://klivfy.com/pt-BR/termos-de-uso", KlivfyUrls.Terms);
+        Assert.Equal("https://klivfy.com/pt-BR/privacidade", KlivfyUrls.Privacy);
+        Assert.Equal("https://klivfy.com/en-US/termos-de-uso", KlivfyUrls.TermsFor("en"));
+        Assert.Equal("https://klivfy.com/es-ES/termos-de-uso", KlivfyUrls.TermsFor("es"));
+        Assert.Equal("https://klivfy.com/pt-BR/termos-de-uso", KlivfyUrls.TermsFor("pt"));
+        Assert.Equal("https://klivfy.com/en-US/privacidade", KlivfyUrls.PrivacyFor("en"));
+        Assert.Equal("https://klivfy.com/es-ES/privacidade", KlivfyUrls.PrivacyFor("es"));
+        Assert.Equal("https://klivfy.com/pt-BR/privacidade", KlivfyUrls.PrivacyFor("pt"));
+        Assert.True(KlivfyUrls.IsTrusted(KlivfyUrls.Terms));
+        Assert.True(KlivfyUrls.IsTrusted(KlivfyUrls.Privacy));
+        Assert.True(KlivfyUrls.IsTrusted(KlivfyUrls.TermsEn));
+        Assert.True(KlivfyUrls.IsTrusted(KlivfyUrls.TermsEs));
+        Assert.True(KlivfyUrls.IsTrusted(KlivfyUrls.PrivacyEn));
+        Assert.True(KlivfyUrls.IsTrusted(KlivfyUrls.PrivacyEs));
     }
 }
 

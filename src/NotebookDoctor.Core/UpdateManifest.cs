@@ -12,8 +12,26 @@ public static class KlivfyUrls
 {
     public const string Host = "klivfy.com";
     public const string Support = "https://klivfy.com/suporte";
-    public const string Terms = "https://klivfy.com/termos";
-    public const string Privacy = "https://klivfy.com/privacidade";
+    public const string Terms = "https://klivfy.com/pt-BR/termos-de-uso";
+    public const string Privacy = "https://klivfy.com/pt-BR/privacidade";
+    public const string TermsEn = "https://klivfy.com/en-US/termos-de-uso";
+    public const string TermsEs = "https://klivfy.com/es-ES/termos-de-uso";
+    public const string PrivacyEn = "https://klivfy.com/en-US/privacidade";
+    public const string PrivacyEs = "https://klivfy.com/es-ES/privacidade";
+
+    public static string TermsFor(string? language = null) => (language ?? Loc.Language) switch
+    {
+        Loc.English => TermsEn,
+        Loc.Spanish => TermsEs,
+        _ => Terms,
+    };
+
+    public static string PrivacyFor(string? language = null) => (language ?? Loc.Language) switch
+    {
+        Loc.English => PrivacyEn,
+        Loc.Spanish => PrivacyEs,
+        _ => Privacy,
+    };
     public const string Manifest = "https://klivfy.com/notebookdoctor/versao.json";
     /// <summary>B25 e M18: recebem o que a pessoa mandar ("Enviar avaliação") e as estatísticas anônimas, se ela ligar a opção.</summary>
     public const string Rating = "https://klivfy.com/notebookdoctor/avaliacao";

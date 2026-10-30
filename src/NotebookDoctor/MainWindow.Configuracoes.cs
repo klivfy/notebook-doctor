@@ -189,7 +189,16 @@ public partial class MainWindow
     // Só os endereços fixos do XAML chegam aqui; AppInfo.OpenKlivfy ainda confere https e o domínio da Klivfy
     private void KlivfyPage_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is DependencyObject d && ActionRow.GetTarget(d) is { } url) AppInfo.OpenKlivfy(url);
+        if (sender is DependencyObject d && ActionRow.GetTarget(d) is { } raw)
+        {
+            string url = raw switch
+            {
+                "termos" or "https://klivfy.com/termos" or KlivfyUrls.Terms => KlivfyUrls.TermsFor(Loc.Language),
+                "privacidade" or "https://klivfy.com/privacidade" or KlivfyUrls.Privacy => KlivfyUrls.PrivacyFor(Loc.Language),
+                var u => u,
+            };
+            AppInfo.OpenKlivfy(url);
+        }
     }
 
     private void AboutText_Click(object sender, RoutedEventArgs e)

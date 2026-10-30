@@ -60,10 +60,19 @@ Ao cadastrar a submissão no Partner Center, o sistema exigirá uma declaração
 2. **Propriedades:**
    - Categoria: *Utilitários e Ferramentas* (Utilities & Tools).
    - Classificação etária: Livre / Todas as idades (IARC).
-3. **Listagem na Loja:**
-   - URL de Política de Privacidade: `https://klivfy.com/privacidade`
-   - URL de Suporte: `https://klivfy.com/suporte`
-   - Termos de Uso: `https://klivfy.com/termos`
+3. **Listagem na Loja por Idioma (Store Listings):**
+   - **Português (Brasil):**
+     - Política de Privacidade: `https://klivfy.com/pt-BR/privacidade`
+     - Termos de Uso: `https://klivfy.com/pt-BR/termos-de-uso`
+     - Suporte: `https://klivfy.com/suporte`
+   - **English (United States):**
+     - Privacy Policy: `https://klivfy.com/en-US/privacidade`
+     - Terms of Use: `https://klivfy.com/en-US/termos-de-uso`
+     - Support: `https://klivfy.com/suporte`
+   - **Español (España / Latam):**
+     - Política de Privacidad: `https://klivfy.com/es-ES/privacidade`
+     - Términos de Uso: `https://klivfy.com/es-ES/termos-de-uso`
+     - Soporte: `https://klivfy.com/suporte`
    - Capturas de tela: gere com `NotebookDoctor.exe --demo --smoke=capturas` ou anexe as imagens em português, inglês e espanhol.
 4. **Pacotes:**
    - Faça upload de `NotebookDoctor-x64.msix` e `NotebookDoctor-arm64.msix`.
