@@ -8,6 +8,9 @@
 .PARAMETER PublisherId
     Identificador do editor atribuído pelo Partner Center (ex: "CN=A1B2C3D4-E5F6-...").
 
+.PARAMETER PublisherDisplayName
+    Nome de exibição do fornecedor cadastrado no Partner Center (padrão: "Klivfy Tecnologia").
+
 .PARAMETER PackageIdentityName
     Nome da identidade do pacote reservado no Partner Center (padrão: "KlivfyTecnologia.NotebookDoctor").
 
@@ -24,6 +27,7 @@
 param(
     [string]$Versao,
     [string]$PublisherId = "CN=REPLACE_WITH_PARTNER_CENTER_PUBLISHER_ID",
+    [string]$PublisherDisplayName = "Klivfy Tecnologia",
     [string]$PackageIdentityName = "KlivfyTecnologia.NotebookDoctor",
     [string]$Saida = "msix-out",
     [string[]]$Arquiteturas = @("x64", "arm64"),
@@ -51,6 +55,7 @@ if ($fourPartVersion -notmatch '^\d+\.\d+\.\d+\.\d+$') {
 Write-Host "=== Empacotamento Microsoft Store (MSIX) ===" -ForegroundColor Cyan
 Write-Host "Versão do pacote: $fourPartVersion"
 Write-Host "Publisher ID: $PublisherId"
+Write-Host "Publisher Display Name: $PublisherDisplayName"
 Write-Host "Package Identity: $PackageIdentityName"
 Write-Host "Arquiteturas: $([string]::Join(', ', $Arquiteturas))"
 
@@ -112,6 +117,7 @@ foreach ($arch in $Arquiteturas) {
     $archManifest = $manifestTemplate `
         -replace 'Name="KlivfyTecnologia\.NotebookDoctor"', "Name=`"$PackageIdentityName`"" `
         -replace 'Publisher="CN=REPLACE_WITH_PARTNER_CENTER_PUBLISHER_ID"', "Publisher=`"$PublisherId`"" `
+        -replace '<PublisherDisplayName>[^<]+</PublisherDisplayName>', "<PublisherDisplayName>$PublisherDisplayName</PublisherDisplayName>" `
         -replace 'Version="1\.1\.0\.0"', "Version=`"$fourPartVersion`"" `
         -replace 'ProcessorArchitecture="neutral"', "ProcessorArchitecture=`"$arch`""
 

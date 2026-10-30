@@ -10,7 +10,11 @@ O script `scripts/release/empacotar-msix.ps1` compila o aplicativo com o símbol
 
 ```powershell
 # Gerar pacotes para x64 e Arm64
-pwsh scripts/release/empacotar-msix.ps1 -PublisherId "CN=SEU-PUBLISHER-ID-DO-PARTNER-CENTER" -PackageIdentityName "KlivfyTecnologia.NotebookDoctor" -Saida "msix-out"
+pwsh scripts/release/empacotar-msix.ps1 `
+    -PublisherId "CN=SEU-PUBLISHER-ID-DO-PARTNER-CENTER" `
+    -PublisherDisplayName "Klivfy Tecnologia" `
+    -PackageIdentityName "KlivfyTecnologia.NotebookDoctor" `
+    -Saida "msix-out"
 ```
 
 Os pacotes gerados em `msix-out/` serão:

@@ -14,7 +14,7 @@
 
   <Properties>
     <DisplayName>Notebook Doctor</DisplayName>
-    <PublisherDisplayName>Klivfy Tecnologia e Consultoria em TI LTDA</PublisherDisplayName>
+    <PublisherDisplayName>Klivfy Tecnologia</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <Description>Diagnóstico de saúde, limpeza segura e monitoramento do seu notebook.</Description>
   </Properties>
