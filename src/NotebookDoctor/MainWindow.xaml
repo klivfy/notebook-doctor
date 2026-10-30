@@ -1,4 +1,4 @@
-﻿<Window x:Class="NotebookDoctor.MainWindow"
+<Window x:Class="NotebookDoctor.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:NotebookDoctor"
@@ -661,7 +661,7 @@
                             <Button Content="Desinstalar…" Click="ProgUninstall_Click" Margin="0,0,8,8"
                                     ToolTip="Abre o desinstalador do próprio programa (Delete na lista)."/>
                             <!-- U8: uma ação principal, duas secundárias e o resto em Mais (antes eram onze botões lado a lado) -->
-                            <Button Content="Atualizar programas…" Style="{StaticResource TonalButton}" Click="ProgUpdates_Click" Margin="0,0,8,8"
+                            <Button x:Name="ProgUpdatesBtn" Content="Atualizar programas…" Style="{StaticResource TonalButton}" Click="ProgUpdates_Click" Margin="0,0,8,8"
                                     ToolTip="Procura versões novas pelo WinGet e atualiza os que você marcar. Dá para pular uma versão ou pausar um programa."/>
                             <Button Content="Mirar numa janela" Style="{StaticResource TextButton}" Margin="0,0,8,8" Click="ProgHunt_Click"
                                     PreviewMouseLeftButtonDown="ProgHunt_Down" PreviewMouseLeftButtonUp="ProgHunt_Up"
@@ -1379,7 +1379,7 @@
                 </Border>
 
                 <!-- Leva 7.2 (C13): drivers só pelo Windows Update -->
-                <Border Style="{StaticResource Card}">
+                <Border x:Name="DriversSectionCard" Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="Drivers" Style="{StaticResource CardTitle}" AutomationProperties.HeadingLevel="Level2"/>
                         <TextBlock Text="Procura drivers novos só pelo Windows Update e mostra o que é mais novo que o instalado. Antes de instalar, cria um ponto de restauração e guarda uma cópia do driver atual, para voltar quando precisar. Em “Do fabricante”, mostra de onde vem cada driver (fabricante do notebook ou da peça) e abre o site oficial." Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
@@ -1493,7 +1493,7 @@
 
                 <!-- Redesign V5: atualização, textos do app, páginas do site e suporte como cartões-linha -->
                 <TextBlock Text="Informações e suporte" Style="{StaticResource GroupTitle}" AutomationProperties.HeadingLevel="Level2"/>
-                <HeaderedContentControl Header="Atualização" Tag="&#xE895;" Style="{StaticResource SettingRow}"
+                <HeaderedContentControl x:Name="UpdateSettingRow" Header="Atualização" Tag="&#xE895;" Style="{StaticResource SettingRow}"
                                         ToolTip="Procura uma versão nova no site da Klivfy, só quando você clica aqui ou se “Procurar nova versão uma vez por dia” estiver ligado.">
                     <Button x:Name="UpdateBtn" Content="Procurar agora" Click="CheckUpdate_Click" Margin="0" AutomationProperties.Name="Procurar atualização"/>
                 </HeaderedContentControl>

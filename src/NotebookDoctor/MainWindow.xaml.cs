@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         foreach (var grid in new[] { ProcGrid, SpaceGrid, ProgGrid, StartupGrid })
             ((System.Collections.Specialized.INotifyCollectionChanged)grid.Items).CollectionChanged += (_, _) => UpdateTotals(grid);
         AboutCopyright.Text = AppInfo.Copyright;
+        ApplyEdition();
         AboutText.Text = Loc.F("Notebook Doctor {0}\nSuporte: klivfy.com/suporte", AppInfo.Version)
                          + (AppPaths.Portable ? "\n" + Loc.F("Modo portátil: dados em {0}", AppPaths.Dir) : "");
         RefreshAdminCard();
@@ -356,5 +357,17 @@ public partial class MainWindow : Window
         }
         Host.Settings.LastTab = Tabs.SelectedIndex;
         Host.Settings.Save();
+    }
+
+    private void ApplyEdition()
+    {
+        if (Edition.IsStore)
+        {
+            if (ProgUpdatesBtn is not null) ProgUpdatesBtn.Visibility = Visibility.Collapsed;
+            if (DriversSectionCard is not null) DriversSectionCard.Visibility = Visibility.Collapsed;
+            if (UpdateSettingRow is not null) UpdateSettingRow.Visibility = Visibility.Collapsed;
+            if (UpdateMsg is not null) UpdateMsg.Visibility = Visibility.Collapsed;
+            if (CfgUpdates is not null) CfgUpdates.Visibility = Visibility.Collapsed;
+        }
     }
 }

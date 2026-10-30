@@ -507,6 +507,7 @@ public partial class MainWindow
     // Leva 7.1 (C14): atualizador de programas pelo WinGet
     private void ProgUpdates_Click(object sender, RoutedEventArgs e)
     {
+        if (!Edition.ThirdPartyInstalls) return;
         if (_progBusy) { ProgMsg.Text = Loc.T("Espere a desinstalação atual terminar."); return; }
         var dlg = new UpdatesWindow(this);
         dlg.ShowDialog();

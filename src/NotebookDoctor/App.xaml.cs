@@ -157,7 +157,7 @@ public partial class App : Application
             if (a.PropertyName == nameof(SystemParameters.HighContrast)) Dispatcher.BeginInvoke(() => ApplyTheme());
         };
         _ = RunLoopAsync(_cts.Token);
-        _ = CheckUpdatesLaterAsync(_cts.Token);
+        if (Edition.SelfUpdate) _ = CheckUpdatesLaterAsync(_cts.Token);
         _ = SendUsageLaterAsync(_cts.Token);
         UsageStats.WatchWindows();
         _ = SnoozeWatchAsync(_cts.Token);
@@ -201,6 +201,7 @@ public partial class App : Application
     /// <summary>Um minuto depois de abrir, no máximo uma vez por dia. Sem internet ou sem manifesto publicado: silêncio.</summary>
     private async Task CheckUpdatesLaterAsync(CancellationToken ct)
     {
+        if (!Edition.SelfUpdate) return;
         try { await Task.Delay(TimeSpan.FromMinutes(1), ct); } catch (OperationCanceledException) { return; }
         if (!Settings.CheckUpdates || (DateTime.Now - Settings.LastUpdateCheck).TotalHours < 24) return;
         var (result, info) = await Updater.CheckAsync(AppInfo.Version);

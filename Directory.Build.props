@@ -11,4 +11,9 @@
     <Deterministic>true</Deterministic>
   </PropertyGroup>
 
+  <!-- Edição da Microsoft Store: dotnet build -p:StoreBuild=true (ver packaging/store/LEIA-ME.md) -->
+  <PropertyGroup Condition="'$(StoreBuild)' == 'true'">
+    <DefineConstants>$(DefineConstants);STORE</DefineConstants>
+  </PropertyGroup>
+
 </Project>

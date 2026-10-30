@@ -20,3 +20,16 @@ smoke-out/
 .env.*
 # Saída do graphify (grafo local do código)
 graphify-out/
+
+# Saídas de teste e empacotamento
+TestResults/
+*.trx
+publish-store/
+publish-inst/
+msix-out/
+msix-test/
+instalador-out/
+*.msix
+*.msixbundle
+*.appx
+*.appxbundle

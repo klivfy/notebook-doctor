@@ -78,7 +78,7 @@ public partial class MainWindow
     }
 
     // Leva 7.2 (C13)
-    private void Drivers_Click(object sender, RoutedEventArgs e) => new DriversWindow(this).ShowDialog();
+    private void Drivers_Click(object sender, RoutedEventArgs e) { if (!Edition.ThirdPartyInstalls) return; new DriversWindow(this).ShowDialog(); }
     private void DriversOem_Click(object sender, RoutedEventArgs e) => new DriversWindow(this, oem: true).ShowDialog();
 
     private async void IntegrityCheck_Click(object sender, RoutedEventArgs e) => await RunIntegrityAsync(repair: false);
@@ -236,6 +236,11 @@ public partial class MainWindow
     // ---------- Atualização (A50) ----------
     private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
     {
+        if (!Edition.SelfUpdate)
+        {
+            UpdateMsg.Text = Loc.T("Na edição da Microsoft Store, as atualizações são automáticas pela própria loja.");
+            return;
+        }
         UpdateBtn.IsEnabled = false;
         UpdateMsg.Text = Loc.T("Procurando…");
         try
@@ -259,6 +264,7 @@ public partial class MainWindow
     /// <summary>Mostra a versão nova e, com confirmação, baixa, confere a assinatura e abre o instalador.</summary>
     public void OfferUpdate()
     {
+        if (!Edition.SelfUpdate) return;
         if (Host.PendingUpdate is not { } info) return;
         UpdateMsg.Text = Loc.F("Versão {0} disponível. {1}", info.Version, info.Notes).Trim();
         ShowSnack(Loc.F("Versão {0} disponível", info.Version), info.Notes, "Instalar", () => _ = InstallUpdateAsync(info), seconds: 20);

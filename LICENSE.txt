@@ -1,0 +1,10 @@
+Copyright (c) 2026 Klivfy Tecnologia e Consultoria em TI LTDA.
+Todos os direitos reservados. / All rights reserved.
+
+Este software e seus arquivos associados são de propriedade exclusiva da Klivfy Tecnologia e Consultoria em TI LTDA.
+O código-fonte é disponibilizado publicamente para fins de inspeção, auditoria de transparência e colaboração.
+Nenhum direito de redistribuição comercial, modificação proprietária, sublicenciamento ou publicação em lojas de aplicativos sob outra titularidade é concedido sem prévia autorização por escrito da Klivfy.
+
+Para informações sobre licenças comerciais ou suporte, entre em contato em:
+https://klivfy.com/suporte
+
