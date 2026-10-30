@@ -12,7 +12,7 @@
     Nome de exibição do fornecedor cadastrado no Partner Center (padrão: "Klivfy Tecnologia").
 
 .PARAMETER PackageIdentityName
-    Nome da identidade do pacote reservado no Partner Center (padrão: "KlivfyTecnologia.NotebookDoctor").
+    Nome da identidade do pacote reservado no Partner Center (padrão: "4886C74A9BC5.NotebookDoctor").
 
 .PARAMETER Saida
     Diretório de saída para os arquivos .msix e .msixbundle.
@@ -28,7 +28,7 @@ param(
     [string]$Versao,
     [string]$PublisherId = "CN=REPLACE_WITH_PARTNER_CENTER_PUBLISHER_ID",
     [string]$PublisherDisplayName = "Klivfy Tecnologia",
-    [string]$PackageIdentityName = "KlivfyTecnologia.NotebookDoctor",
+    [string]$PackageIdentityName = "4886C74A9BC5.NotebookDoctor",
     [string]$Saida = "msix-out",
     [string[]]$Arquiteturas = @("x64", "arm64"),
     [switch]$PularCompilacao
@@ -115,11 +115,11 @@ foreach ($arch in $Arquiteturas) {
 
     # Customizar AppxManifest
     $archManifest = $manifestTemplate `
-        -replace 'Name="KlivfyTecnologia\.NotebookDoctor"', "Name=`"$PackageIdentityName`"" `
-        -replace 'Publisher="CN=REPLACE_WITH_PARTNER_CENTER_PUBLISHER_ID"', "Publisher=`"$PublisherId`"" `
+        -replace '(?<=<Identity\s+[^>]*Name=")[^"]+', $PackageIdentityName `
+        -replace '(?<=<Identity\s+[^>]*Publisher=")[^"]+', $PublisherId `
         -replace '<PublisherDisplayName>[^<]+</PublisherDisplayName>', "<PublisherDisplayName>$PublisherDisplayName</PublisherDisplayName>" `
-        -replace 'Version="1\.1\.0\.0"', "Version=`"$fourPartVersion`"" `
-        -replace 'ProcessorArchitecture="neutral"', "ProcessorArchitecture=`"$arch`""
+        -replace '(?<=<Identity\s+[^>]*Version=")[^"]+', $fourPartVersion `
+        -replace '(?<=<Identity\s+[^>]*ProcessorArchitecture=")[^"]+', $arch
 
     $manifestDest = Join-Path $layoutDir "AppxManifest.xml"
     [System.IO.File]::WriteAllText($manifestDest, $archManifest, [System.Text.UTF8Encoding]::new($false))

@@ -13,7 +13,7 @@ O script `scripts/release/empacotar-msix.ps1` compila o aplicativo com o símbol
 pwsh scripts/release/empacotar-msix.ps1 `
     -PublisherId "CN=SEU-PUBLISHER-ID-DO-PARTNER-CENTER" `
     -PublisherDisplayName "Klivfy Tecnologia" `
-    -PackageIdentityName "KlivfyTecnologia.NotebookDoctor" `
+    -PackageIdentityName "4886C74A9BC5.NotebookDoctor" `
     -Saida "msix-out"
 ```
 
