@@ -266,10 +266,10 @@
                                                     <TextBlock Text="{Binding Detail}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                                     <TextBlock Text="{Binding AdviceText}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                                     <TextBlock Text="{Binding EvidenceText, StringFormat=Evidência observada: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                                                    <TextBlock Text="{Binding ProposedChangeText, StringFormat=Mudança proposta: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
-                                                    <TextBlock Text="{Binding RiskText, StringFormat=Risco: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
-                                                    <TextBlock Text="{Binding ConfidenceText, StringFormat=Confiança: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
-                                                    <TextBlock Text="{Binding UndoText, StringFormat=Como desfazer: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding ProposedChangeText, StringFormat=Mudança proposta: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="{Binding RiskText, StringFormat=Risco: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="{Binding ConfidenceText, StringFormat=Confiança: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="{Binding UndoText, StringFormat=Como desfazer: {0}}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                                     <ToggleButton x:Name="WhyToggle" Content="{Binding WhyLabel}" HorizontalAlignment="Left" Margin="0,4,0,0"
                                                                   Visibility="{Binding HasWhy, Converter={StaticResource B2V}}" Style="{StaticResource WhyToggle}"
                                                                   IsChecked="{Binding WhyOpen, Mode=OneWay}" Checked="WhyToggle_Changed" Unchecked="WhyToggle_Changed"
