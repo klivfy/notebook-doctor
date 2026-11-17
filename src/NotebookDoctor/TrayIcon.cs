@@ -16,6 +16,8 @@ public sealed class TrayIcon : IDisposable
     private readonly WinForms.ToolStripMenuItem _startItem, _miniItem, _usageItem, _healthItem, _presentItem;
     private IntPtr _hIcon;
     private string _iconKey = "";
+    private TrayBand _band;
+    private string? _label;
     private bool _disposed;
 
     public event Action? OpenRequested, CleanRequested, ExitRequested, SupportRequested, BalloonClicked;
@@ -137,6 +139,8 @@ public sealed class TrayIcon : IDisposable
         _menu.ForeColor = fg;
         _menu.Font = new Drawing.Font("Google Sans Flex", 10f);
         foreach (WinForms.ToolStripItem i in _menu.Items) { i.BackColor = bg; i.ForeColor = fg; }
+        // O Alto Contraste liga e desliga com o app aberto: o ícone acompanha na hora, sem esperar a próxima leitura
+        if (_iconKey.Length > 0) DrawIcon(_band, _label);
     }
 
     private static Drawing.Color ToDrawing(System.Windows.Media.Color c) => Drawing.Color.FromArgb(c.R, c.G, c.B);
@@ -163,7 +167,7 @@ public sealed class TrayIcon : IDisposable
         if (_disposed) return;
         var band = Tray.Band(s.Cpu, s.RamPct);
         string? label = Tray.IconLabel(shows, s, score);
-        if ($"{band}{label}" != _iconKey) DrawIcon(band, label);
+        if (IconKey(band, label) != _iconKey) DrawIcon(band, label);
         _recentCpu.Enqueue(s.Cpu);
         while (_recentCpu.Count > RecentMax) _recentCpu.Dequeue();
         _icon.Text = Tray.Tooltip(s, _recentCpu.ToList());
@@ -182,16 +186,22 @@ public sealed class TrayIcon : IDisposable
         _icon.ShowBalloonTip(5000, title, text, WinForms.ToolTipIcon.Warning);
     }
 
+    /// <summary>Identifica o desenho atual: o ícone só é refeito quando algo muda (estado, número ou Alto Contraste).</summary>
+    private static string IconKey(TrayBand band, string? label) => $"{band}{label}{(ThemeManager.HighContrast ? "|alto-contraste" : "")}";
+
     private void DrawIcon(TrayBand band, string? cpuLabel)
     {
         if (_disposed) return;
-        _iconKey = $"{band}{cpuLabel}";
+        _band = band;
+        _label = cpuLabel;
+        _iconKey = IconKey(band, cpuLabel);
         var color = band switch { TrayBand.Red => Bad, TrayBand.Amber => Warn, _ => Ok };
         using var bmp = new Drawing.Bitmap(32, 32);
         using (var g = Drawing.Graphics.FromImage(bmp))
         {
             g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            if (cpuLabel is not null) DrawNumber(g, color, band, cpuLabel);
+            if (ThemeManager.HighContrast) DrawHighContrast(g, band, cpuLabel);
+            else if (cpuLabel is not null) DrawNumber(g, color, band, cpuLabel);
             else DrawLogo(g, color);
         }
         IntPtr h = bmp.GetHicon();
@@ -228,6 +238,59 @@ public sealed class TrayIcon : IDisposable
         using var ink = new Drawing.SolidBrush(band == TrayBand.Red ? Drawing.Color.White : Drawing.Color.Black);
         using var center = new Drawing.StringFormat { Alignment = Drawing.StringAlignment.Center, LineAlignment = Drawing.StringAlignment.Center };
         g.DrawString(label, font, ink, new Drawing.RectangleF(-2, 0, 36, 33), center);
+    }
+
+    /// <summary>
+    /// Alto Contraste: só as cores do sistema (fundo da janela e texto da janela), sem verde, laranja nem vermelho. O estado vai pela forma:
+    /// no logo, a marca de <see cref="Tray.Marker"/> (anel, círculo ou quadrado); no número, a moldura (fina, grossa) e, no problema, o
+    /// quadrado invertido (cheio na cor do texto, com o número na cor do fundo).
+    /// </summary>
+    private static void DrawHighContrast(Drawing.Graphics g, TrayBand band, string? label)
+    {
+        var window = Drawing.SystemColors.Window;
+        var text = Drawing.SystemColors.WindowText;
+        if (label is not null)
+        {
+            bool red = band == TrayBand.Red;
+            float t = band == TrayBand.Amber ? 5f : 2.4f;
+            var (back, ink) = red ? (text, window) : (window, text);
+            using (var path = RoundedRect(new Drawing.RectangleF(0, 0, 32, 32), 6))
+            using (var fill = new Drawing.SolidBrush(back))
+                g.FillPath(fill, path);
+            if (!red)
+            {
+                using var frame = RoundedRect(new Drawing.RectangleF(t / 2, t / 2, 32 - t, 32 - t), 5);
+                using var pen = new Drawing.Pen(text, t);
+                g.DrawPath(pen, frame);
+            }
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            float size = label.Length == 1 ? 22 : 17;
+            using var font = new Drawing.Font("Segoe UI", size, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel);
+            using var brush = new Drawing.SolidBrush(ink);
+            using var center = new Drawing.StringFormat { Alignment = Drawing.StringAlignment.Center, LineAlignment = Drawing.StringAlignment.Center };
+            g.DrawString(label, font, brush, new Drawing.RectangleF(-2, 0, 36, 33), center);
+            return;
+        }
+
+        using (var path = RoundedRect(new Drawing.RectangleF(1, 1, 30, 30), 7))
+        using (var fill = new Drawing.SolidBrush(window))
+        using (var outline = new Drawing.Pen(text, 2))
+        {
+            g.FillPath(fill, path);
+            g.DrawPath(outline, path);
+        }
+        using (var pulse = new Drawing.Pen(text, 2.6f) { LineJoin = Drawing.Drawing2D.LineJoin.Round, StartCap = Drawing.Drawing2D.LineCap.Round, EndCap = Drawing.Drawing2D.LineCap.Round })
+            g.DrawLines(pulse, new[] { new Drawing.PointF(4, 16.6f), new Drawing.PointF(10.5f, 16.6f), new Drawing.PointF(13.4f, 9), new Drawing.PointF(17.6f, 24.3f), new Drawing.PointF(20.2f, 14.7f), new Drawing.PointF(22, 16.6f), new Drawing.PointF(25.6f, 16.6f) });
+        using var clear = new Drawing.SolidBrush(window);
+        using var ink2 = new Drawing.SolidBrush(text);
+        using var ring = new Drawing.Pen(text, 2.4f);
+        g.FillRectangle(clear, 16, 16, 16, 16); // limpa o canto para a marca não se misturar com o pulso
+        switch (Tray.Marker(band))
+        {
+            case TrayMarker.Square: g.FillRectangle(ink2, 18, 18, 12, 12); break;
+            case TrayMarker.Dot: g.FillEllipse(ink2, 18, 18, 12, 12); break;
+            default: g.DrawEllipse(ring, 18, 18, 12, 12); break;
+        }
     }
 
     private static Drawing.Drawing2D.GraphicsPath RoundedRect(Drawing.RectangleF r, float radius)
