@@ -29,6 +29,22 @@ public partial class MainWindow
     }
 
     // Mesmo detalhe do clique duplo, alcançável pelo teclado
+    /// <summary>O botão direito também seleciona a linha: as ações do menu valem para o programa sob o cursor.</summary>
+    private void ProcGrid_RightClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        for (var d = e.OriginalSource as DependencyObject; d is not null;
+             d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+            if (d is DataGridRow row) { row.IsSelected = true; break; }
+    }
+
+    private void ProcMore_Click(object sender, RoutedEventArgs e)
+    {
+        var menu = (ContextMenu)FindResource("ProcActionsMenu");
+        menu.PlacementTarget = (UIElement)sender;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.IsOpen = true;
+    }
+
     private void ProcDetails_Click(object sender, RoutedEventArgs e)
     {
         if (ProcGrid.SelectedItem is ProcRow r) Dialogs.ShowProcessDetails(this, r.Name);

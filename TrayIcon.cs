@@ -16,6 +16,7 @@ public sealed class TrayIcon : IDisposable
     private readonly WinForms.ToolStripMenuItem _startItem, _miniItem;
     private IntPtr _hIcon;
     private string _band = "";
+    private Drawing.Color _bandColor = Ok;
 
     public event Action? OpenRequested, CleanRequested, ExitRequested, SupportRequested, BalloonClicked;
     public event Action<bool>? StartWithWindowsToggled, MiniToggled;
@@ -50,6 +51,7 @@ public sealed class TrayIcon : IDisposable
         _menu.ForeColor = fg;
         _menu.Font = new Drawing.Font("Google Sans Flex", 10f);
         foreach (WinForms.ToolStripItem i in _menu.Items) { i.BackColor = bg; i.ForeColor = fg; }
+        if (_band.Length > 0) SetBand(_bandColor, _band); // o Alto Contraste liga e desliga com o app aberto: o ícone acompanha
     }
 
     private static Drawing.Color ToDrawing(System.Windows.Media.Color c) => Drawing.Color.FromArgb(c.R, c.G, c.B);
@@ -87,27 +89,66 @@ public sealed class TrayIcon : IDisposable
     private void SetBand(Drawing.Color color, string band)
     {
         _band = band;
+        _bandColor = color;
         using var bmp = new Drawing.Bitmap(32, 32);
         using (var g = Drawing.Graphics.FromImage(bmp))
         {
             g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            // Logo do app (mesma geometria do app.ico): quadrado arredondado azul→roxo com pulso
-            using (var path = RoundedRect(new Drawing.RectangleF(1, 1, 30, 30), 7))
-            using (var grad = new Drawing.Drawing2D.LinearGradientBrush(new Drawing.PointF(1, 1), new Drawing.PointF(31, 31),
-                       Drawing.ColorTranslator.FromHtml("#00188f"), Drawing.ColorTranslator.FromHtml("#68217a")))
-                g.FillPath(grad, path);
-            using (var pulse = new Drawing.Pen(Drawing.Color.White, 2.6f) { LineJoin = Drawing.Drawing2D.LineJoin.Round, StartCap = Drawing.Drawing2D.LineCap.Round, EndCap = Drawing.Drawing2D.LineCap.Round })
-                g.DrawLines(pulse, new[] { new Drawing.PointF(4, 16.6f), new Drawing.PointF(10.5f, 16.6f), new Drawing.PointF(13.4f, 9), new Drawing.PointF(17.6f, 24.3f), new Drawing.PointF(20.2f, 14.7f), new Drawing.PointF(22, 16.6f), new Drawing.PointF(25.6f, 16.6f) });
-            // Bolinha de status (verde/laranja/vermelha) no canto inferior direito
-            using var b = new Drawing.SolidBrush(color);
-            g.FillEllipse(b, 17, 17, 14, 14);
-            using var pen = new Drawing.Pen(Drawing.Color.White, 2);
-            g.DrawEllipse(pen, 17, 17, 14, 14);
+            if (ThemeManager.HighContrast) DrawHighContrast(g, band);
+            else DrawNormal(g, color);
         }
         IntPtr h = bmp.GetHicon();
         _icon.Icon = Drawing.Icon.FromHandle(h); // não possui o HICON: o app o libera abaixo
         if (_hIcon != IntPtr.Zero) Native.DestroyIcon(_hIcon); // evita vazamento de objetos GDI
         _hIcon = h;
+    }
+
+    private static readonly Drawing.PointF[] Pulse =
+        { new(4, 16.6f), new(10.5f, 16.6f), new(13.4f, 9), new(17.6f, 24.3f), new(20.5f, 16.6f), new(28, 16.6f) };
+
+    private static void DrawNormal(Drawing.Graphics g, Drawing.Color color)
+    {
+        // Logo do app (mesma geometria do app.ico): quadrado arredondado azul→roxo com pulso
+        using (var path = RoundedRect(new Drawing.RectangleF(1, 1, 30, 30), 7))
+        using (var grad = new Drawing.Drawing2D.LinearGradientBrush(new Drawing.PointF(1, 1), new Drawing.PointF(31, 31),
+                   Drawing.ColorTranslator.FromHtml("#00188f"), Drawing.ColorTranslator.FromHtml("#68217a")))
+            g.FillPath(grad, path);
+        using (var pulse = new Drawing.Pen(Drawing.Color.White, 2.6f) { LineJoin = Drawing.Drawing2D.LineJoin.Round, StartCap = Drawing.Drawing2D.LineCap.Round, EndCap = Drawing.Drawing2D.LineCap.Round })
+            g.DrawLines(pulse, Pulse);
+        // Bolinha de status (verde/laranja/vermelha) no canto inferior direito
+        using var b = new Drawing.SolidBrush(color);
+        g.FillEllipse(b, 17, 17, 14, 14);
+        using var pen = new Drawing.Pen(Drawing.Color.White, 2);
+        g.DrawEllipse(pen, 17, 17, 14, 14);
+    }
+
+    /// <summary>
+    /// Alto Contraste: só as cores do sistema, e o estado vai pela forma, não pela cor
+    /// (anel = normal, círculo cheio = atenção, quadrado cheio = problema).
+    /// </summary>
+    private static void DrawHighContrast(Drawing.Graphics g, string band)
+    {
+        var window = Drawing.SystemColors.Window;
+        var text = Drawing.SystemColors.WindowText;
+        using (var path = RoundedRect(new Drawing.RectangleF(1, 1, 30, 30), 7))
+        using (var fill = new Drawing.SolidBrush(window))
+        using (var outline = new Drawing.Pen(text, 2))
+        {
+            g.FillPath(fill, path);
+            g.DrawPath(outline, path);
+        }
+        using (var pulse = new Drawing.Pen(text, 2.6f) { LineJoin = Drawing.Drawing2D.LineJoin.Round, StartCap = Drawing.Drawing2D.LineCap.Round, EndCap = Drawing.Drawing2D.LineCap.Round })
+            g.DrawLines(pulse, Pulse);
+        using var window2 = new Drawing.SolidBrush(window);
+        using var ink = new Drawing.SolidBrush(text);
+        using var pen = new Drawing.Pen(text, 2.4f);
+        g.FillRectangle(window2, 16, 16, 16, 16); // limpa o canto para o marcador não se misturar com o pulso
+        switch (band)
+        {
+            case "red": g.FillRectangle(ink, 18, 18, 12, 12); break;
+            case "amber": g.FillEllipse(ink, 18, 18, 12, 12); break;
+            default: g.DrawEllipse(pen, 18, 18, 12, 12); break;
+        }
     }
 
     private static Drawing.Drawing2D.GraphicsPath RoundedRect(Drawing.RectangleF r, float radius)

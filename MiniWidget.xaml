@@ -8,7 +8,7 @@
         MouseLeftButtonDown="Drag" MouseDoubleClick="Open" KeyDown="Window_KeyDown"
         AutomationProperties.Name="Mini-widget do Notebook Doctor">
     <Border Background="{DynamicResource SurfaceContainer}" BorderBrush="{DynamicResource OutlineVariant}" BorderThickness="1"
-            CornerRadius="12" Padding="14,10,8,12" Margin="8" Width="230">
+            CornerRadius="12" Padding="14,10,8,12" Margin="8" MinWidth="230">
         <Border.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.28"/></Border.Effect>
         <Border.ContextMenu>
             <ContextMenu>
@@ -20,21 +20,21 @@
             <DockPanel Margin="0,0,0,6">
                 <Button DockPanel.Dock="Right" Content="&#xE711;" Style="{StaticResource IconButton}" Width="28" Height="28"
                         FontSize="10" Margin="0" AutomationProperties.Name="Fechar mini-widget" ToolTip="Fechar (Esc)" Click="Close_Click"/>
-                <TextBlock x:Name="ScoreText" Text="Nota –" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center"
+                <TextBlock x:Name="ScoreText" Typography.NumeralAlignment="Tabular" Text="Nota –" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center"
                            ToolTip="Clique duplo abre o painel; arraste para mover"/>
             </DockPanel>
             <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="44"/></Grid.ColumnDefinitions>
                 <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
                 <TextBlock Text="CPU" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,3,10,3"/>
                 <ProgressBar x:Name="CpuBar" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Processador"/>
-                <TextBlock x:Name="CpuText" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock x:Name="CpuText" Typography.NumeralAlignment="Tabular" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                 <TextBlock Grid.Row="1" Text="Memória" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,3,10,3"/>
                 <ProgressBar x:Name="RamBar" Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Memória"/>
-                <TextBlock x:Name="RamText" Grid.Row="1" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock x:Name="RamText" Typography.NumeralAlignment="Tabular" Grid.Row="1" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                 <TextBlock Grid.Row="2" Text="Disco" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,3,10,3"/>
                 <ProgressBar x:Name="DiskBar" Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" AutomationProperties.Name="Atividade do disco"/>
-                <TextBlock x:Name="DiskText" Grid.Row="2" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock x:Name="DiskText" Typography.NumeralAlignment="Tabular" Grid.Row="2" Grid.Column="2" Text="–" TextAlignment="Right" FontFamily="{StaticResource FontMedium}" VerticalAlignment="Center" Margin="0,0,6,0"/>
             </Grid>
             <TextBlock x:Name="TopText" Style="{StaticResource Muted}" Margin="0,6,6,0" TextTrimming="CharacterEllipsis"/>
         </StackPanel>

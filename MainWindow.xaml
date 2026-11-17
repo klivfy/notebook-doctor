@@ -9,6 +9,19 @@
         WindowStartupLocation="CenterScreen" SourceInitialized="Window_SourceInitialized" SizeChanged="Window_SizeChanged">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="B2V"/>
+        <!-- Ações do programa selecionado em Processos: menu de contexto da tabela e botão "Mais ações" (cada uso cria o seu menu) -->
+        <ContextMenu x:Key="ProcActionsMenu" x:Shared="False">
+            <MenuItem Header="Detalhes" Click="ProcDetails_Click"
+                      ToolTip="Cada processo do programa selecionado, com PID, memória e caminho."/>
+            <MenuItem Header="Encerrar programa" Click="KillSelected_Click"/>
+            <MenuItem Header="Baixar prioridade" Click="LowerPriority_Click"
+                      ToolTip="O programa continua aberto, mas cede CPU aos demais. Reversível."/>
+            <MenuItem Header="Restaurar prioridade" Click="RestorePriority_Click"/>
+            <MenuItem Header="Modo eficiência" Click="Efficiency_Click"
+                      ToolTip="Como no Gerenciador de Tarefas: o programa continua aberto, mas roda devagar e econômico. Desfaça em Ações."/>
+            <MenuItem Header="Não avisar sobre este" Click="AlertException_Click"
+                      ToolTip="O programa continua na lista, mas não gera mais avisos de uso alto. Desfaça em Configurações › Exceções."/>
+        </ContextMenu>
     </Window.Resources>
 
     <Grid>
@@ -85,7 +98,7 @@
                                 <StackPanel x:Name="ScoreLeft" Margin="0,0,28,0">
                                     <TextBlock Text="Nota de saúde" Style="{StaticResource Label}"/>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock x:Name="ScoreText" Text="–" FontFamily="{StaticResource FontDisplay}" FontSize="{DynamicResource FsHero}"/>
+                                        <TextBlock x:Name="ScoreText" Typography.NumeralAlignment="Tabular" Text="–" FontFamily="{StaticResource FontDisplay}" FontSize="{DynamicResource FsHero}"/>
                                         <TextBlock Text="/100" Style="{StaticResource Muted}" VerticalAlignment="Bottom" Margin="4,0,0,12"/>
                                     </StackPanel>
                                     <Border x:Name="ScoreChip" CornerRadius="8" Padding="10,4" HorizontalAlignment="Left" Background="{DynamicResource SurfaceVariant}">
@@ -128,7 +141,7 @@
                             <UniformGrid Columns="3">
                                 <StackPanel Margin="0,0,20,0">
                                     <DockPanel>
-                                        <TextBlock x:Name="CpuText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
+                                        <TextBlock x:Name="CpuText" Typography.NumeralAlignment="Tabular" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
                                         <TextBlock Text="Processador" Style="{StaticResource Label}" VerticalAlignment="Center"/>
                                     </DockPanel>
                                     <ProgressBar x:Name="CpuBar" Margin="0,6,0,8" AutomationProperties.Name="Uso do processador"/>
@@ -138,7 +151,7 @@
                                 </StackPanel>
                                 <StackPanel Margin="0,0,20,0">
                                     <DockPanel>
-                                        <TextBlock x:Name="RamText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
+                                        <TextBlock x:Name="RamText" Typography.NumeralAlignment="Tabular" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
                                         <TextBlock Text="Memória" Style="{StaticResource Label}" VerticalAlignment="Center"/>
                                     </DockPanel>
                                     <ProgressBar x:Name="RamBar" Margin="0,6,0,8" AutomationProperties.Name="Uso da memória"/>
@@ -148,7 +161,7 @@
                                 </StackPanel>
                                 <StackPanel>
                                     <DockPanel>
-                                        <TextBlock x:Name="DiskText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
+                                        <TextBlock x:Name="DiskText" Typography.NumeralAlignment="Tabular" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontMedium}" FontSize="{DynamicResource FsTitleLarge}"/>
                                         <TextBlock Text="Disco (atividade)" Style="{StaticResource Label}" VerticalAlignment="Center"/>
                                     </DockPanel>
                                     <ProgressBar x:Name="DiskBar" Margin="0,6,0,8" AutomationProperties.Name="Atividade do disco"/>
@@ -219,10 +232,10 @@
                             <TextBox x:Name="ProcSearch" Grid.Column="1" Tag="Buscar programa…" VerticalAlignment="Top" TextChanged="ProcSearch_Changed"
                                      AutomationProperties.Name="Buscar programa"/>
                         </Grid>
-                        <DataGrid x:Name="ProcGrid" Grid.Row="1" MouseDoubleClick="ProcGrid_DoubleClick" AutomationProperties.Name="Programas em execução">
+                        <DataGrid x:Name="ProcGrid" Grid.Row="1" FrozenColumnCount="1" ContextMenu="{StaticResource ProcActionsMenu}" PreviewMouseRightButtonDown="ProcGrid_RightClick" MouseDoubleClick="ProcGrid_DoubleClick" AutomationProperties.Name="Programas em execução">
                             <DataGrid.Columns>
                                 <!-- Ícone, nome e, numa segunda linha, o que é o programa -->
-                                <DataGridTemplateColumn Header="Programa" Width="*" MinWidth="160" SortMemberPath="Name">
+                                <DataGridTemplateColumn Header="Programa" Width="230" MinWidth="160" SortMemberPath="Name">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Grid Margin="0,6" ToolTip="{Binding About}">
@@ -246,7 +259,7 @@
                                 <DataGridTextColumn Header="Memória (MB)" Binding="{Binding MemMB, StringFormat=N0}" Width="92" MinWidth="92"/>
                                 <DataGridTextColumn Header="Disco e rede (KB/s)" Binding="{Binding IoKBs, StringFormat=N0}" Width="110" MinWidth="110"/>
                                 <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="84" MinWidth="84"/>
-                                <DataGridTextColumn Header="Pode fechar?" Binding="{Binding SafetyText}" Width="130" MinWidth="120">
+                                <DataGridTextColumn Header="Pode fechar?" Binding="{Binding SafetyText}" Width="*" MinWidth="120">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
                                     </DataGridTextColumn.ElementStyle>
@@ -257,13 +270,8 @@
                             <Button Content="Detalhes" Style="{StaticResource TonalButton}" Click="ProcDetails_Click" Margin="0,0,8,6"
                                     ToolTip="Cada processo do programa selecionado, com PID, memória e caminho (ou clique duplo na linha)."/>
                             <Button Content="Encerrar programa selecionado" Style="{StaticResource TonalButton}" Click="KillSelected_Click" Margin="0,0,8,6"/>
-                            <Button Content="Baixar prioridade" Style="{StaticResource TextButton}" Click="LowerPriority_Click" Margin="0,0,8,6"
-                                    ToolTip="O programa continua aberto, mas cede CPU aos demais. Reversível."/>
-                            <Button Content="Restaurar prioridade" Style="{StaticResource TextButton}" Click="RestorePriority_Click" Margin="0,0,8,6"/>
-                            <Button Content="Modo eficiência" Style="{StaticResource TextButton}" Click="Efficiency_Click" Margin="0,0,8,6"
-                                    ToolTip="Como no Gerenciador de Tarefas: o programa continua aberto, mas roda devagar e econômico (bom para os que ficam em segundo plano). Desfaça em Ações."/>
-                            <Button x:Name="ExceptionBtn" Content="Não avisar sobre este" Style="{StaticResource TextButton}" Click="AlertException_Click" Margin="0,0,8,6"
-                                    ToolTip="O programa continua na lista, mas não gera mais avisos de uso alto. Desfaça em Configurações › Exceções."/>
+                            <Button x:Name="ProcMoreBtn" Content="Mais ações" Style="{StaticResource TextButton}" Click="ProcMore_Click" Margin="0,0,8,6"
+                                    ToolTip="Baixar ou restaurar a prioridade, modo eficiência e não avisar sobre o programa. Também no botão direito da linha."/>
                             <TextBlock x:Name="ProcMsg" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="8,0,0,6" TextWrapping="Wrap"
                                        AutomationProperties.LiveSetting="Polite"/>
                         </WrapPanel>
