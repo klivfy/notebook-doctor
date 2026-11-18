@@ -285,8 +285,9 @@ public sealed class TrayIcon : IDisposable
             g.FillPath(fill, path);
             g.DrawPath(outline, path);
         }
+        // Mesmo pulso do logo até o último pico; o trecho depois dele fica sob a marca e, recortado, sobrava como um ponto solto
         using (var pulse = new Drawing.Pen(text, 2.6f) { LineJoin = Drawing.Drawing2D.LineJoin.Round, StartCap = Drawing.Drawing2D.LineCap.Round, EndCap = Drawing.Drawing2D.LineCap.Round })
-            g.DrawLines(pulse, new[] { new Drawing.PointF(4, 16.6f), new Drawing.PointF(10.5f, 16.6f), new Drawing.PointF(13.4f, 9), new Drawing.PointF(17.6f, 24.3f), new Drawing.PointF(20.2f, 14.7f), new Drawing.PointF(22, 16.6f), new Drawing.PointF(25.6f, 16.6f) });
+            g.DrawLines(pulse, new[] { new Drawing.PointF(4, 16.6f), new Drawing.PointF(10.5f, 16.6f), new Drawing.PointF(13.4f, 9), new Drawing.PointF(17.6f, 24.3f), new Drawing.PointF(20.2f, 14.7f) });
         using var clear = new Drawing.SolidBrush(window);
         using var ink2 = new Drawing.SolidBrush(text);
         using var ring = new Drawing.Pen(text, 2.4f);
