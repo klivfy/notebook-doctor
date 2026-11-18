@@ -291,14 +291,16 @@ public sealed class TrayIcon : IDisposable
         using var clear = new Drawing.SolidBrush(window);
         using var ink2 = new Drawing.SolidBrush(text);
         using var ring = new Drawing.Pen(text, 2.4f);
-        // Halo redondo na cor do fundo em volta da marca, como o anel branco do logo normal: separa a marca do pulso sem deixar
-        // sobra do traço (um recorte quadrado deixava um tracinho solto entre o pico e a marca)
-        g.FillEllipse(clear, 14.5f, 14.5f, 19, 19);
-        switch (Tray.Marker(band))
+        // Marca no canto (11 px) com um halo justo, da mesma forma, na cor do fundo: separa a marca do pulso como o anel branco do logo
+        // normal. Halo maior apagava a subida e deixava só a ponta do pico, solta, entre o pulso e a marca
+        var marker = Tray.Marker(band);
+        if (marker == TrayMarker.Square) g.FillRectangle(clear, 18.5f, 18.5f, 14, 14);
+        else g.FillEllipse(clear, 18.3f, 18.3f, 14.4f, 14.4f);
+        switch (marker)
         {
-            case TrayMarker.Square: g.FillRectangle(ink2, 18, 18, 12, 12); break;
-            case TrayMarker.Dot: g.FillEllipse(ink2, 18, 18, 12, 12); break;
-            default: g.DrawEllipse(ring, 18, 18, 12, 12); break;
+            case TrayMarker.Square: g.FillRectangle(ink2, 20, 20, 11, 11); break;
+            case TrayMarker.Dot: g.FillEllipse(ink2, 20, 20, 11, 11); break;
+            default: g.DrawEllipse(ring, 20.6f, 20.6f, 9.8f, 9.8f); break;
         }
     }
 
