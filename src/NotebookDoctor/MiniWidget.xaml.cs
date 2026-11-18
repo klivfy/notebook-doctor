@@ -43,7 +43,7 @@ public partial class MiniWidget : Window
         Set(RamBar, RamText, s.RamPct);
         Set(DiskBar, DiskText, s.DiskBusy);
         int score = Host.Score.Score;
-        ScoreText.Text = score > 0 ? Loc.F("Nota {0} · {1}", score, Host.Score.Label) : Loc.T("Nota –");
+        ScoreText.Text = score > 0 ? Loc.F("Nota {0} · {1}", score, Loc.T(Host.Score.Label)) : Loc.T("Nota –");
         var top = s.TopByCpu.FirstOrDefault();
         TopText.Text = top is null ? "" : Loc.F("Maior: {0} ({1:0}%)", top.Name, top.CpuPct);
     }
