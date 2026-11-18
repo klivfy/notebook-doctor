@@ -195,19 +195,27 @@ public sealed class TrayIcon : IDisposable
         _band = band;
         _label = cpuLabel;
         _iconKey = IconKey(band, cpuLabel);
-        var color = band switch { TrayBand.Red => Bad, TrayBand.Amber => Warn, _ => Ok };
-        using var bmp = new Drawing.Bitmap(32, 32);
-        using (var g = Drawing.Graphics.FromImage(bmp))
-        {
-            g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            if (ThemeManager.HighContrast) DrawHighContrast(g, band, cpuLabel);
-            else if (cpuLabel is not null) DrawNumber(g, color, band, cpuLabel);
-            else DrawLogo(g, color);
-        }
+        using var bmp = Render(band, cpuLabel, ThemeManager.HighContrast, Drawing.SystemColors.Window, Drawing.SystemColors.WindowText);
         IntPtr h = bmp.GetHicon();
         _icon.Icon = Drawing.Icon.FromHandle(h); // não possui o HICON: o app o libera abaixo
         if (_hIcon != IntPtr.Zero) Native.DestroyIcon(_hIcon); // evita vazamento de objetos GDI
         _hIcon = h;
+    }
+
+    /// <summary>
+    /// Desenha o ícone de 32 × 32 sem tocar na bandeja. Em Alto Contraste usa as duas cores dadas (fundo e texto da janela): o app passa
+    /// as do Windows, e a verificação visual (<c>--smoke</c>) passa as dos esquemas preto e branco, que a CI não tem ligados.
+    /// </summary>
+    internal static Drawing.Bitmap Render(TrayBand band, string? label, bool highContrast, Drawing.Color window, Drawing.Color text)
+    {
+        var color = band switch { TrayBand.Red => Bad, TrayBand.Amber => Warn, _ => Ok };
+        var bmp = new Drawing.Bitmap(32, 32);
+        using var g = Drawing.Graphics.FromImage(bmp);
+        g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        if (highContrast) DrawHighContrast(g, band, label, window, text);
+        else if (label is not null) DrawNumber(g, color, band, label);
+        else DrawLogo(g, color);
+        return bmp;
     }
 
     private static void DrawLogo(Drawing.Graphics g, Drawing.Color color)
@@ -245,10 +253,8 @@ public sealed class TrayIcon : IDisposable
     /// no logo, a marca de <see cref="Tray.Marker"/> (anel, círculo ou quadrado); no número, a moldura (fina, grossa) e, no problema, o
     /// quadrado invertido (cheio na cor do texto, com o número na cor do fundo).
     /// </summary>
-    private static void DrawHighContrast(Drawing.Graphics g, TrayBand band, string? label)
+    private static void DrawHighContrast(Drawing.Graphics g, TrayBand band, string? label, Drawing.Color window, Drawing.Color text)
     {
-        var window = Drawing.SystemColors.Window;
-        var text = Drawing.SystemColors.WindowText;
         if (label is not null)
         {
             bool red = band == TrayBand.Red;

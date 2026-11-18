@@ -34,7 +34,7 @@ public static class ThemeManager
     public static void Apply(string mode)
     {
         if (Application.Current is null) return; // app encerrando (ex.: "Sair" com a tela de boas-vindas aberta)
-        HighContrast = SystemParameters.HighContrast;
+        HighContrast = SystemParameters.HighContrast || SimulateHighContrast;
         bool dark = mode switch { "dark" => true, "light" => false, _ => SystemPrefersDark() };
         var dicts = Application.Current.Resources.MergedDictionaries;
         // M08: com Alto Contraste do Windows ligado, só as cores do sistema valem (o tema e a paleta ficam de fora)
@@ -53,6 +53,12 @@ public static class ThemeManager
     }
 
     public static bool HighContrast { get; private set; }
+
+    /// <summary>
+    /// Só para a verificação visual (<c>--smoke</c>): aplica o mapeamento de Alto Contraste com as cores do sistema atual, porque a CI
+    /// roda com o Alto Contraste desligado. O app nunca liga isto.
+    /// </summary>
+    internal static bool SimulateHighContrast { get; set; }
 
     /// <summary>Cor de destaque escolhida em Configurações › Personalização › Cores (formato 0xAABBGGRR).</summary>
     private static Rgb? ReadAccent()
