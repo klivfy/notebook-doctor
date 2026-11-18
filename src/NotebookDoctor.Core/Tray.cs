@@ -9,8 +9,19 @@ public enum TrayIconShows { Logo, Cpu, Temperature, Score }
 /// <summary>Leva 10.3: o que o clique do meio (roda do mouse) no ícone faz.</summary>
 public enum TrayMiddleAction { Nothing, OpenPanel, MiniWidget, CleanTemp, ClearClipboard }
 
+/// <summary>Alto Contraste: o estado do ícone vai pela forma da marca, porque a cor não é mais a mesma (todas viram a cor do sistema).</summary>
+public enum TrayMarker { Ring, Dot, Square }
+
 public static class Tray
 {
+    /// <summary>Marca do estado no ícone em Alto Contraste: anel = normal, círculo cheio = atenção, quadrado cheio = problema.</summary>
+    public static TrayMarker Marker(TrayBand band) => band switch
+    {
+        TrayBand.Red => TrayMarker.Square,
+        TrayBand.Amber => TrayMarker.Dot,
+        _ => TrayMarker.Ring,
+    };
+
     /// <summary>Cor do ícone pelo recurso mais carregado (CPU ou RAM).</summary>
     public static TrayBand Band(double cpu, double ramPct)
     {
