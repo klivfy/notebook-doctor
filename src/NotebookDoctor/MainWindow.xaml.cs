@@ -369,5 +369,6 @@ public partial class MainWindow : Window
             if (UpdateMsg is not null) UpdateMsg.Visibility = Visibility.Collapsed;
             if (CfgUpdates is not null) CfgUpdates.Visibility = Visibility.Collapsed;
         }
+        if (!Edition.RegistryCleanup && RegistryCheckBtn is not null) RegistryCheckBtn.Visibility = Visibility.Collapsed;
     }
 }

@@ -18,4 +18,17 @@ public static class Edition
 
     /// <summary>Atualizar programas pelo WinGet e instalar drivers (Windows Update ou fabricante).</summary>
     public static bool ThirdPartyInstalls => !IsStore;
+
+    /// <summary>
+    /// Apagar entradas do registro (Limpeza › Verificar registro). Fora da Store, só com prova de que a entrada está quebrada,
+    /// com backup e Desfazer. Fica de fora da primeira edição da Store: a Microsoft não dá suporte a limpadores de registro
+    /// (KB 2563254) e a certificação avalia isso; pode voltar depois, com a certificação aprovada e uma justificativa por escrito.
+    /// </summary>
+    public static bool RegistryCleanup => !IsStore;
+
+    /// <summary>
+    /// Importar e usar regras de limpeza de um arquivo winapp2.ini escolhido pela pessoa (Limpeza avançada › Rastros e programas).
+    /// Na Store ficam só as regras que vão no app: um arquivo externo poderia apontar para qualquer pasta.
+    /// </summary>
+    public static bool CommunityRules => !IsStore;
 }
