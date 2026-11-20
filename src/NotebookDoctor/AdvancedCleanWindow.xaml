@@ -34,7 +34,7 @@
                                     ToolTip="Lista os arquivos e as chaves do registro da linha selecionada, sem apagar nada (clique duplo faz o mesmo)."/>
                             <Button Content="Marcar todos" Style="{StaticResource TextButton}" Click="RulesAll_Click" Margin="0,0,8,8"/>
                             <Button Content="Desmarcar todos" Style="{StaticResource TextButton}" Click="RulesNone_Click" Margin="0,0,8,8"/>
-                            <Button Content="Importar regras…" Style="{StaticResource TextButton}" Click="RulesImport_Click" Margin="0,0,8,8"
+                            <Button x:Name="RulesImportBtn" Content="Importar regras…" Style="{StaticResource TextButton}" Click="RulesImport_Click" Margin="0,0,8,8"
                                     ToolTip="Carrega um arquivo no formato winapp2.ini (regras da comunidade). Só aparecem as regras de programas que existem neste computador, todas desmarcadas."/>
                             <Button x:Name="RulesRemoveBtn" Content="Remover regras importadas" Style="{StaticResource TextButton}" Click="RulesRemoveImported_Click" Margin="0,0,8,8"/>
                         </WrapPanel>

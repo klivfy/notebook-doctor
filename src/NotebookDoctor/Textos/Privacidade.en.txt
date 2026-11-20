@@ -12,7 +12,7 @@ Saved Wi-Fi networks, the hosts file and the connection type (to warn you when y
 Everything stays in the app's data folder ("Open data folder" button). Uninstalling the app or deleting the folder removes this data.
 
 When the app uses the internet
-• Check for updates: contacts klivfy.com once a day, if the option is on, or when you ask. The request carries no data about you.
+• Check for updates: contacts klivfy.com once a day, if the option is on, or when you ask. The request carries no data about you. In the Microsoft Store edition, the Store itself updates the app and the app makes no such request.
 • Network test: only when you click, it pings the router, 1.1.1.1 and 8.8.8.8 and queries the DNS of klivfy.com, github.com and wikipedia.org.
 • Video calls: the connection test pings the router and 1.1.1.1, only when you click. Who used the camera and microphone is read from Windows itself and never leaves the computer.
 • Network and internet: only when you click, tests the router, 1.1.1.1 and the DNS of klivfy.com; "Compare DNS" looks up klivfy.com, github.com and wikipedia.org on your DNS and on Cloudflare (1.1.1.1), Google (8.8.8.8) and Quad9 (9.9.9.9).

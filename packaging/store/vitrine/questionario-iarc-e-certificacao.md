@@ -20,6 +20,7 @@ Notebook Doctor is a native Windows desktop system diagnostics, hardware monitor
 2. Microsoft Store Policy 10.2.4 Compliance (Store Edition Build):
    - This MSIX package was compiled with "-p:StoreBuild=true" (Edition.IsStore == true).
    - The self-updater (GitHub Releases updater) and third-party software/driver downloaders (WinGet / Windows Update COM installer) are completely disabled at compile time and hidden from the UI. Updates are delivered exclusively through the Microsoft Store.
+   - The registry verifier ("Verify registry") and the import of external cleanup rule files (winapp2.ini) are also disabled in this edition. Cleanup in the Store edition only uses the rules shipped inside the app.
 
 3. Testing Instructions for Reviewer:
    - No login or external account is required. The app works 100% locally and offline.

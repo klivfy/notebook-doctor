@@ -10,6 +10,34 @@ public sealed class StoreEditionTests
     {
         Assert.Equal(!Edition.IsStore, Edition.SelfUpdate);
         Assert.Equal(!Edition.IsStore, Edition.ThirdPartyInstalls);
+        Assert.Equal(!Edition.IsStore, Edition.RegistryCleanup);
+        Assert.Equal(!Edition.IsStore, Edition.CommunityRules);
+    }
+
+    /// <summary>
+    /// A CI não compila a edição da Store: este teste confere que as duas funções que a certificação pode reprovar
+    /// (apagar do registro e regras de limpeza vindas de arquivo externo) ficam atrás de <c>Edition</c> no código.
+    /// </summary>
+    [Fact]
+    public void Registro_e_regras_externas_ficam_atras_da_edicao()
+    {
+        string app = RepoPaths.App;
+        string main = File.ReadAllText(Path.Combine(app, "MainWindow.xaml.cs"));
+        Assert.Contains("!Edition.RegistryCleanup && RegistryCheckBtn", main);
+        Assert.Contains("x:Name=\"RegistryCheckBtn\"", File.ReadAllText(Path.Combine(app, "MainWindow.xaml")));
+
+        string advanced = File.ReadAllText(Path.Combine(app, "AdvancedCleanWindow.xaml.cs"));
+        Assert.Contains("!Edition.CommunityRules", advanced);
+        Assert.Contains("Edition.CommunityRules && File.Exists(CommunityFile)", advanced);
+        Assert.Contains("x:Name=\"RulesImportBtn\"", File.ReadAllText(Path.Combine(app, "AdvancedCleanWindow.xaml")));
+    }
+
+    /// <summary>O manifesto da Store declara o Windows 11 24H2 como a versão testada (a de 21H2 estava velha).</summary>
+    [Fact]
+    public void Manifesto_declara_versao_testada_recente()
+    {
+        string manifest = File.ReadAllText(Path.Combine(RepoPaths.Root, "packaging", "store", "AppxManifest.xml"));
+        Assert.Contains("MaxVersionTested=\"10.0.26100.0\"", manifest);
     }
 
     [Fact]
