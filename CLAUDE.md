@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Notebook Doctor: guia para agentes
 
 App de bandeja para Windows (WPF, .NET 8) que mostra o que deixa o notebook lento e corrige com segurança. Interface em português do Brasil, com inglês e espanhol. Produto da Klivfy.
@@ -29,7 +33,17 @@ dotnet build NotebookDoctor.sln -c Release -p:EnableWindowsTargeting=true
 dotnet test tests/NotebookDoctor.Tests -c Release -p:EnableWindowsTargeting=true
 ```
 
-A CI (`.github/workflows/ci.yml`) roda os testes no Linux e no Windows, publica para Arm64 e abre todas as telas com `NotebookDoctor.exe --demo --smoke=pasta`. O artefato **telas** traz as imagens e o `smoke.txt`, que lista ligação quebrada, texto sem tradução e texto com cara de português na interface em inglês.
+Um teste só (classe ou método): `dotnet test tests/NotebookDoctor.Tests -c Release -p:EnableWindowsTargeting=true --filter "FullyQualifiedName~LocTests"`.
+
+Não há linter à parte: `Directory.Build.props` liga `TreatWarningsAsErrors` com `AnalysisLevel latest-recommended`, então qualquer aviso quebra o build. As regras de estilo puro já estão rebaixadas para sugestão no `.editorconfig`; não rebaixe outra só para passar.
+
+A CI (`.github/workflows/ci.yml`) roda os testes no Linux e no Windows, publica para Arm64 e abre todas as telas com `NotebookDoctor.exe --demo --smoke=pasta`. O artefato **telas** traz as imagens e o `smoke.txt`, que lista ligação quebrada, texto sem tradução e texto com cara de português na interface em inglês. O job `capturas` (fotos de divulgação em português) só roda quando o título do PR tem `[capturas]`.
+
+## O que exige ler mais de um arquivo
+
+- **Edição da Microsoft Store.** `-p:StoreBuild=true` define `STORE` (em `Directory.Build.props`) e `Edition.IsStore` (Core) passa a ser verdadeiro. O que a certificação da Loja não aceita (atualizador próprio, WinGet, drivers) fica atrás de `Edition.*` e é escondido em `MainWindow.ApplyEdition`. A CI não compila essa edição: confira com `dotnet build ... -p:StoreBuild=true` e cubra o gate com teste. Pacote e textos da Loja ficam em `packaging/store/` (`LEIA-ME.md`), e `scripts/release/empacotar-msix.ps1` gera os `.msix` (precisa do Windows SDK, não roda no Linux).
+- **Verificação visual (`Smoke*.cs`).** Janela ou ferramenta nova entra na lista `Tools(...)` de `Smoke.cs`; sem isso a CI não a fotografa nem confere a tradução dela. O que só existe num Windows de verdade fica em `Smoke.Windows.cs`.
+- **Testes de tela no Linux.** Não dá para abrir WPF no Linux, então vários testes leem o código-fonte (`RepoPaths.App`) e conferem nomes e chamadas. `[WindowsFact]` só roda no job Windows.
 
 ## Fluxo de uma leva
 
