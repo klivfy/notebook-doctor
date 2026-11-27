@@ -117,7 +117,7 @@
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <StackPanel Margin="0,0,32,0">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock x:Name="ScoreText" Text="–" FontFamily="{StaticResource FontDisplay}" FontSize="{DynamicResource FsHero}"/>
+                                            <TextBlock x:Name="ScoreText" Typography.NumeralAlignment="Tabular" Text="–" FontFamily="{StaticResource FontDisplay}" FontSize="{DynamicResource FsHero}"/>
                                             <TextBlock Text="/100" Style="{StaticResource Muted}" VerticalAlignment="Bottom" Margin="4,0,0,12"/>
                                         </StackPanel>
                                         <Border x:Name="ScoreChip" CornerRadius="{StaticResource RadiusPill}" Padding="12,4" HorizontalAlignment="Left" Background="{DynamicResource SurfaceVariant}">
@@ -213,7 +213,7 @@
                             <UniformGrid Columns="3">
                                 <StackPanel Margin="0,0,20,0">
                                     <DockPanel>
-                                        <TextBlock x:Name="CpuText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsTitle}"/>
+                                        <TextBlock x:Name="CpuText" Typography.NumeralAlignment="Tabular" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsTitle}"/>
                                         <TextBlock Text="Processador" Style="{StaticResource Label}" VerticalAlignment="Center" ToolTip="Quanto do processador está ocupado. Picos curtos são normais; acima de 85% por minutos seguidos deixa tudo lento." AutomationProperties.HelpText="Quanto do processador está ocupado. Picos curtos são normais; acima de 85% por minutos seguidos deixa tudo lento."/>
                                     </DockPanel>
                                     <ProgressBar x:Name="CpuBar" Margin="0,8,0,8" AutomationProperties.Name="Uso do processador"/>
@@ -223,7 +223,7 @@
                                 </StackPanel>
                                 <StackPanel Margin="0,0,20,0">
                                     <DockPanel>
-                                        <TextBlock x:Name="RamText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsTitle}"/>
+                                        <TextBlock x:Name="RamText" Typography.NumeralAlignment="Tabular" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsTitle}"/>
                                         <TextBlock Text="Memória" Style="{StaticResource Label}" VerticalAlignment="Center" ToolTip="Memória RAM em uso. Acima de 85%, o Windows começa a usar o disco como memória e fica lento." AutomationProperties.HelpText="Memória RAM em uso. Acima de 85%, o Windows começa a usar o disco como memória e fica lento."/>
                                     </DockPanel>
                                     <ProgressBar x:Name="RamBar" Margin="0,8,0,8" AutomationProperties.Name="Uso da memória"/>
@@ -233,7 +233,7 @@
                                 </StackPanel>
                                 <StackPanel>
                                     <DockPanel>
-                                        <TextBlock x:Name="DiskText" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsTitle}"/>
+                                        <TextBlock x:Name="DiskText" Typography.NumeralAlignment="Tabular" Text="–" DockPanel.Dock="Right" FontFamily="{StaticResource FontTitle}" FontSize="{DynamicResource FsTitle}"/>
                                         <TextBlock Text="Disco (atividade)" Style="{StaticResource Label}" VerticalAlignment="Center" ToolTip="Quanto do tempo o disco está ocupado lendo ou gravando. Perto de 100% por muito tempo trava abrir programas e arquivos." AutomationProperties.HelpText="Quanto do tempo o disco está ocupado lendo ou gravando. Perto de 100% por muito tempo trava abrir programas e arquivos."/>
                                     </DockPanel>
                                     <ProgressBar x:Name="DiskBar" Margin="0,8,0,8" AutomationProperties.Name="Atividade do disco"/>
@@ -402,11 +402,11 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Processos" Binding="{Binding Count}" Width="96" MinWidth="96"/>
-                                    <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPct, StringFormat=0.0}" Width="64" MinWidth="64"/>
-                                    <DataGridTextColumn Header="Memória (MB)" Binding="{Binding MemMB, StringFormat=N0}" Width="92" MinWidth="92"/>
-                                    <DataGridTextColumn Header="Disco e rede (KB/s)" Binding="{Binding IoKBs, StringFormat=N0}" Width="110" MinWidth="110"/>
-                                    <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" Width="92" MinWidth="92"/>
+                                    <DataGridTextColumn Header="Processos" Binding="{Binding Count}" ElementStyle="{StaticResource NumericCell}" Width="96" MinWidth="96"/>
+                                    <DataGridTextColumn Header="CPU %" Binding="{Binding CpuPct, StringFormat=0.0}" ElementStyle="{StaticResource NumericCell}" Width="64" MinWidth="64"/>
+                                    <DataGridTextColumn Header="Memória (MB)" Binding="{Binding MemMB, StringFormat=N0}" ElementStyle="{StaticResource NumericCell}" Width="92" MinWidth="92"/>
+                                    <DataGridTextColumn Header="Disco e rede (KB/s)" Binding="{Binding IoKBs, StringFormat=N0}" ElementStyle="{StaticResource NumericCell}" Width="110" MinWidth="110"/>
+                                    <DataGridTextColumn Header="Conexões" Binding="{Binding Conns}" ElementStyle="{StaticResource NumericCell}" Width="92" MinWidth="92"/>
                                     <DataGridTextColumn Header="Pode fechar?" Binding="{Binding SafetyText}" Width="130" MinWidth="120">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
@@ -460,8 +460,8 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Local" Binding="{Binding Label}" Width="*"/>
-                                <DataGridTextColumn Header="Arquivos" Binding="{Binding Files, StringFormat=N0}" Width="110"/>
-                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="120"/>
+                                <DataGridTextColumn Header="Arquivos" Binding="{Binding Files, StringFormat=N0}" ElementStyle="{StaticResource NumericCell}" Width="110"/>
+                                <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" ElementStyle="{StaticResource NumericCell}" Width="120"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <WrapPanel Grid.Row="2" Margin="0,16,0,0">
@@ -554,7 +554,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" Width="110"/>
+                                    <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" ElementStyle="{StaticResource NumericCell}" Width="110"/>
                                     <DataGridTemplateColumn Header="Proporção" Width="*">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -649,7 +649,7 @@
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="Versão" Binding="{Binding Version}" Width="120"/>
-                                    <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" SortMemberPath="Bytes" Width="100"/>
+                                    <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" ElementStyle="{StaticResource NumericCell}" SortMemberPath="Bytes" Width="100"/>
                                     <DataGridTextColumn Header="Instalado em" Binding="{Binding InstallDateText}" SortMemberPath="InstallDate" Width="110"/>
                                     <DataGridTextColumn Header="Tipo" Binding="{Binding KindText}" Width="150"/>
                                     <DataGridTextColumn Header="Instalado para" Binding="{Binding ScopeText}" Width="140"/>
@@ -1017,7 +1017,7 @@
                                 <DataGrid x:Name="EventLogsGrid" MaxHeight="220" AutomationProperties.Name="Logs de eventos grandes">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Log" Binding="{Binding Name}" Width="*"/>
-                                        <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" SortMemberPath="Bytes" Width="110"/>
+                                        <DataGridTextColumn Header="Tamanho" Binding="{Binding SizeText}" ElementStyle="{StaticResource NumericCell}" SortMemberPath="Bytes" Width="110"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
                                 <WrapPanel Margin="0,12,0,0">

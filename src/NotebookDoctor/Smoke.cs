@@ -108,6 +108,26 @@ public static partial class Smoke
             }
             TextScale.Force(1);
 
+            // M08: a CI roda com o Alto Contraste desligado. O mapeamento de Alto Contraste é aplicado com as cores do sistema atual
+            // (fundo, texto e realce da janela), para ver as abas e o mini-widget só com essas cores; e o ícone da bandeja é desenhado
+            // nos esquemas preto e branco, em bandeja.png
+            ThemeManager.SimulateHighContrast = true;
+            ThemeManager.Apply("light");
+            await Idle(600);
+            for (int tab = 0; tab <= AppTabs.Settings; tab++)
+            {
+                await Step($"contraste-aba-{tab:00}", async () =>
+                {
+                    main.SelectTab(tab);
+                    await Idle(500);
+                    Save(main, folder, $"contraste-aba-{tab:00}");
+                });
+            }
+            await Tool("contraste", folder, "mini-widget", () => new MiniWidget());
+            ThemeManager.SimulateHighContrast = false;
+            ThemeManager.Apply("light");
+            await Step("bandeja", () => { TraySheet(folder); return Task.CompletedTask; });
+
             // Prioridade 6: o que só um Windows de verdade responde (árvore do Narrador, teclado, efeito de clique, COM do WinGet)
             await Step("windows-real", () => RealWindowsAsync(main, folder));
         }
@@ -262,6 +282,8 @@ public static partial class Smoke
         ("atualizar-programas", () => new UpdatesWindow(main)),
         ("ferramentas-do-windows", () => new WindowsToolsWindow(main)),
         ("verificar-malware", () => new SecurityWindow(main)),
+        // A janelinha sempre visível: cresce com o texto (texto 150% e 200% abaixo) e mostra os números em largura fixa
+        ("mini-widget", () => new MiniWidget()),
     ];
 
     private const double SmallWidth = 911, SmallHeight = 480;

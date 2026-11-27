@@ -43,7 +43,15 @@
             </DataTrigger>
         </Style.Triggers>
     </Style>
-    <Style x:Key="Value" TargetType="TextBlock">
+    <!-- Números que mudam ao vivo ou se alinham em coluna: algarismos de largura fixa, para o valor não "tremer" a cada atualização -->
+    <Style x:Key="Numeric" TargetType="TextBlock">
+        <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
+    </Style>
+    <!-- Célula de tabela com número: mesma margem do texto padrão da célula, com algarismos tabulares -->
+    <Style x:Key="NumericCell" TargetType="TextBlock" BasedOn="{StaticResource Numeric}">
+        <Setter Property="Margin" Value="2,0"/>
+    </Style>
+    <Style x:Key="Value" TargetType="TextBlock" BasedOn="{StaticResource Numeric}">
         <Setter Property="FontFamily" Value="{StaticResource FontMedium}"/>
         <Setter Property="FontSize" Value="{DynamicResource FsCardTitle}"/>
         <Setter Property="Margin" Value="0,4,0,0"/>
