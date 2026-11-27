@@ -34,6 +34,8 @@ Para cumprir estritamente as políticas de segurança e distribuição da Micros
 | **Atualizador Próprio** | Ativo (`Updater.cs`, download de `klivfy.com`) | **Desativado** | Política 10.2.5: atualizações são gerenciadas exclusivamente pela Microsoft Store. |
 | **Atualizador WinGet** | Ativo (aba Programas › Atualizar programas) | **Desativado** | Política 10.2.3: proibição de instalação de softwares secundários de terceiros. |
 | **Drivers pelo Windows Update** | Ativo (Configurações › Drivers) | **Desativado** | Política 10.2.4: restrição para manipulação de drivers de terceiros. |
+| **Verificador de registro** (Limpeza › Verificar registro) | Ativo | **Desativado** (`Edition.RegistryCleanup`) | A Microsoft não dá suporte a limpadores de registro (KB 2563254) e a certificação avalia isso. Pode voltar depois da aprovação, com justificativa por escrito. |
+| **Regras de limpeza de arquivo externo** (winapp2.ini importado) | Ativo | **Desativado** (`Edition.CommunityRules`) | Um arquivo externo poderia apontar para qualquer pasta. Na Store ficam só as regras que vão no app. |
 | **Drivers / App do Fabricante** | Ativo (links informativos OEM) | **Ativo** | Apenas orienta o usuário para o aplicativo do fabricante do notebook. |
 | **Diagnóstico e Limpeza** | Ativo (CPU, RAM, Disco, Bateria, Lixo) | **Ativo** | Recursos centrais do produto. |
 | **Privacidade** | Sem telemetria por padrão | **Sem telemetria por padrão** | Política de privacidade pública em `https://klivfy.com/privacidade`. |

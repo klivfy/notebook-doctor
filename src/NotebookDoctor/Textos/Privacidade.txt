@@ -12,7 +12,7 @@ As redes Wi-Fi salvas, o arquivo hosts e o tipo de conexão (para avisar quando 
 Tudo fica na pasta de dados do app (botão "Abrir pasta de dados"). Desinstalar o app ou apagar a pasta remove esses dados.
 
 Quando o app usa a internet
-• Procurar atualização: consulta klivfy.com uma vez por dia, se a opção estiver ligada, ou quando você pede. A consulta não leva dados seus.
+• Procurar atualização: consulta klivfy.com uma vez por dia, se a opção estiver ligada, ou quando você pede. A consulta não leva dados seus. Na edição da Microsoft Store, quem atualiza o app é a própria Store e o app não faz essa consulta.
 • Teste de rede: só quando você clica, faz ping no roteador, em 1.1.1.1 e 8.8.8.8 e consulta o DNS de klivfy.com, github.com e wikipedia.org.
 • Videochamadas: o teste de conexão faz ping no roteador e em 1.1.1.1, só quando você clica. Quem usou a câmera e o microfone é lido do próprio Windows e não sai do computador.
 • Rede e internet: só quando você clica, testa o roteador, 1.1.1.1 e o DNS de klivfy.com; "Comparar DNS" consulta klivfy.com, github.com e wikipedia.org no seu DNS e em Cloudflare (1.1.1.1), Google (8.8.8.8) e Quad9 (9.9.9.9).

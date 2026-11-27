@@ -129,6 +129,8 @@ public partial class AdvancedCleanWindow : Window
         InitializeComponent();
         _main = main;
         Owner = main;
+        // Edição da Store: sem regras vindas de arquivo externo (ver Edition.CommunityRules)
+        if (!Edition.CommunityRules) RulesImportBtn.Visibility = RulesRemoveBtn.Visibility = Visibility.Collapsed;
         RulesGrid.ItemsSource = _rules;
         JunkGrid.ItemsSource = _junk;
         DiskGrid.ItemsSource = _disk;
@@ -183,7 +185,7 @@ public partial class AdvancedCleanWindow : Window
         community = 0;
         try
         {
-            if (File.Exists(CommunityFile) && new FileInfo(CommunityFile).Length < 20 << 20)
+            if (Edition.CommunityRules && File.Exists(CommunityFile) && new FileInfo(CommunityFile).Length < 20 << 20)
             {
                 var imported = Winapp2Parser.Parse(File.ReadAllText(CommunityFile));
                 community = imported.Count;

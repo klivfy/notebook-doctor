@@ -12,7 +12,7 @@ Las redes Wi-Fi guardadas, el archivo hosts y el tipo de conexión (para avisar 
 Todo queda en la carpeta de datos de la app (botón "Abrir carpeta de datos"). Desinstalar la app o borrar la carpeta elimina estos datos.
 
 Cuándo la app usa internet
-• Buscar actualización: consulta klivfy.com una vez al día, si la opción está activada, o cuando lo pides. La consulta no lleva datos tuyos.
+• Buscar actualización: consulta klivfy.com una vez al día, si la opción está activada, o cuando lo pides. La consulta no lleva datos tuyos. En la edición de Microsoft Store, la propia Store actualiza la app y la app no hace esa consulta.
 • Prueba de red: solo cuando haces clic, hace ping al router, a 1.1.1.1 y a 8.8.8.8 y consulta el DNS de klivfy.com, github.com y wikipedia.org.
 • Videollamadas: la prueba de conexión hace ping al router y a 1.1.1.1, solo cuando haces clic. Quién usó la cámara y el micrófono se lee del propio Windows y no sale del equipo.
 • Red e internet: solo cuando haces clic, prueba el router, 1.1.1.1 y el DNS de klivfy.com; "Comparar DNS" consulta klivfy.com, github.com y wikipedia.org en tu DNS y en Cloudflare (1.1.1.1), Google (8.8.8.8) y Quad9 (9.9.9.9).
